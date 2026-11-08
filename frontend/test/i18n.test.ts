@@ -21,17 +21,26 @@ describe("dictionaryFor", () => {
 describe("createLocalize", () => {
   it("fills placeholders", () => {
     const t = createLocalize("de");
-    expect(t("welcome.title", { garden: "Schrebergarten" })).toBe("Willkommen in Schrebergarten");
-    expect(t("meta.version", { version: "0.1.0" })).toBe("Version 0.1.0");
+    expect(t("plants.empty_title", { garden: "Schrebergarten" })).toBe(
+      "Willkommen in Schrebergarten",
+    );
+    expect(t("detail.uploading", { current: 2, total: 5 })).toBe("Lade Foto 2 von 5 hoch …");
   });
 
   it("keeps unknown placeholders visible instead of dropping them", () => {
     const t = createLocalize("en");
-    expect(t("welcome.title")).toBe("Welcome to {garden}");
-    expect(t("welcome.title", { other: 1 })).toBe("Welcome to {garden}");
+    expect(t("plants.empty_title")).toBe("Welcome to {garden}");
+    expect(t("plants.empty_title", { other: 1 })).toBe("Welcome to {garden}");
   });
 
   it("has the same keys in every language", () => {
     expect(Object.keys(de).sort()).toEqual(Object.keys(en).sort());
+  });
+
+  it("uses the same placeholders in every language", () => {
+    const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+    for (const key of Object.keys(en) as (keyof typeof en)[]) {
+      expect(placeholders(de[key]), key).toEqual(placeholders(en[key]));
+    }
   });
 });

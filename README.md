@@ -1,6 +1,6 @@
 # Plant Garden for Home Assistant
 
-> **Status: early development (0.1.0).** The integration installs and adds a sidebar panel; the garden planner, plant journal, water balance and AI features are being built step by step (see [roadmap](#roadmap)).
+> **Status: early development (0.1.0).** Plants, photos and growth measurements work; the garden plan, irrigation tracking, water balance and AI features are being built step by step (see [roadmap](#roadmap)).
 
 Plant Garden turns Home Assistant into a garden planner and plant journal:
 
@@ -11,6 +11,8 @@ Plant Garden turns Home Assistant into a garden planner and plant journal:
 - **AI assistant (bring your own key)** – plant identification, diagnosis of problem photos and care tips via OpenAI, Anthropic Claude, Google Gemini, Mistral, OpenRouter, Azure OpenAI, any OpenAI-compatible endpoint, Ollama, Pl@ntNet or Plant.id – with a page that shows tokens and costs.
 
 Plant Garden never switches your valves; it only reads their state and offers recommendations as entities for your own automations.
+
+Photos are stored in `<config>/plant_garden/` (three sizes per photo, metadata such as GPS removed) and are therefore part of your Home Assistant backups.
 
 ## Requirements
 
@@ -29,8 +31,8 @@ Plant Garden never switches your valves; it only reads their state and offers re
 | Milestone | Content | State |
 |---|---|---|
 | M0 | Scaffolding, CI, dev environment, sidebar panel | ✅ |
-| M1 | Plants, photos, storage | ⏳ |
-| M2 | AI providers, identification, token & cost page | |
+| M1 | Plants, photos, growth measurements | ✅ |
+| M2 | AI providers, identification, token & cost page | ⏳ |
 | M3 | Graphical garden editor | |
 | M4 | Irrigation zones linked to HA entities | |
 | M5 | Weather, evapotranspiration, water balance | |

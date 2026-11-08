@@ -1,78 +1,111 @@
-import {
-  mdiAlertCircleOutline,
-  mdiCreationOutline,
-  mdiFloorPlan,
-  mdiImageMultipleOutline,
-  mdiMenu,
-  mdiRefresh,
-  mdiWaterOutline,
-} from "@mdi/js";
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiMenu, mdiRefresh } from "@mdi/js";
 import { LitElement, css, html, nothing, type PropertyValues } from "lit";
 
 import { errorMessage, fetchInfo, type GardenInfo } from "./api/client";
-import { heroIllustration, heroStyles } from "./components/hero";
-import { createLocalize, type Localize, type TranslationKey } from "./i18n";
+import { icon } from "./components/base";
+import { createLocalize, type Localize } from "./i18n";
+import { GardenStore } from "./state/garden-store";
+import { shared } from "./styles/shared";
 import { tokens } from "./styles/tokens";
-import type { HomeAssistant, PanelInfo, PlantGardenPanelConfig } from "./types/hass";
+import type { HomeAssistant, PanelInfo, PlantGardenPanelConfig, Route } from "./types/hass";
+import { navigate } from "./util/navigate";
+import "./views/plant-detail";
+import "./views/plants-view";
 
-interface Feature {
-  icon: string;
-  title: TranslationKey;
-  body: TranslationKey;
+export type View = { name: "plants" } | { name: "plant"; plantId: string };
+
+const FRESHNESS_CHECK_MS = 15 * 60 * 1000;
+
+/** Map the part of the URL after the panel prefix to a view. */
+export function parseRoute(path: string | undefined): View {
+  const match = /^\/plants\/([0-9A-Za-z]+)\/?$/.exec(path ?? "");
+  return match?.[1] ? { name: "plant", plantId: match[1] } : { name: "plants" };
 }
-
-const FEATURES: Feature[] = [
-  { icon: mdiFloorPlan, title: "feature.plan.title", body: "feature.plan.body" },
-  { icon: mdiImageMultipleOutline, title: "feature.plants.title", body: "feature.plants.body" },
-  { icon: mdiWaterOutline, title: "feature.water.title", body: "feature.water.body" },
-  { icon: mdiCreationOutline, title: "feature.ai.title", body: "feature.ai.body" },
-];
-
-const icon = (path: string) =>
-  html`<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d=${path}></path></svg>`;
 
 export class PlantGardenPanel extends LitElement {
   static override properties = {
     hass: { attribute: false },
     narrow: { type: Boolean },
+    route: { attribute: false },
     panel: { attribute: false },
     _info: { state: true },
-    _error: { state: true },
+    _infoError: { state: true },
   };
 
   declare hass: HomeAssistant;
   declare narrow: boolean;
+  declare route: Route | undefined;
   declare panel: PanelInfo<PlantGardenPanelConfig>;
   declare _info: GardenInfo | undefined;
-  declare _error: string | undefined;
+  declare _infoError: string | undefined;
 
-  private _loading = false;
+  private readonly _store = new GardenStore(() => this.hass);
+  private _started = false;
   private _localize: Localize = createLocalize("en");
   private _language = "";
 
+  private _freshnessTimer?: ReturnType<typeof setInterval>;
+
+  private readonly _onStoreChange = () => this.requestUpdate();
+  /**
+   * Photo URLs are signed for 24 h. Reload data that is older than an hour when
+   * the tab becomes visible, and every 15 minutes for panels that stay open
+   * (wall tablets), so images never point at expired URLs.
+   */
+  private readonly _refreshIfStale = () => {
+    if (document.visibilityState === "visible" && this._store.stale) void this._store.refresh();
+  };
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this._store.addEventListener("change", this._onStoreChange);
+    document.addEventListener("visibilitychange", this._refreshIfStale);
+    this._freshnessTimer = setInterval(this._refreshIfStale, FRESHNESS_CHECK_MS);
+    if (this.hass) this._start();
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this._store.removeEventListener("change", this._onStoreChange);
+    document.removeEventListener("visibilitychange", this._refreshIfStale);
+    clearInterval(this._freshnessTimer);
+    void this._store.disconnect();
+    this._started = false;
+  }
+
   protected override willUpdate(changed: PropertyValues): void {
     if (!changed.has("hass") || !this.hass) return;
-
     const language = this.hass.locale?.language ?? this.hass.language;
     if (language !== this._language) {
       this._language = language;
       this._localize = createLocalize(language);
     }
     this.toggleAttribute("dark", Boolean(this.hass.themes?.darkMode));
-
-    if (!this._info && !this._error && !this._loading) void this._load();
+    if (!this._started && this.isConnected) this._start();
   }
 
-  private async _load(): Promise<void> {
-    this._loading = true;
-    this._error = undefined;
+  private _start(): void {
+    this._started = true;
+    void this._loadInfo();
+    void this._store.connect();
+  }
+
+  private async _loadInfo(): Promise<void> {
     try {
       this._info = await fetchInfo(this.hass);
+      this._infoError = undefined;
     } catch (err) {
-      this._error = errorMessage(err);
-    } finally {
-      this._loading = false;
+      this._infoError = errorMessage(err);
     }
+  }
+
+  private _retry(): void {
+    void this._loadInfo();
+    void this._store.connect().then(() => this._store.refresh());
+  }
+
+  private get _prefix(): string {
+    return this.route?.prefix ?? `/${this.panel?.url_path ?? "plant-garden"}`;
   }
 
   private _toggleSidebar(): void {
@@ -81,73 +114,77 @@ export class PlantGardenPanel extends LitElement {
 
   protected override render() {
     const t = this._localize;
-    const title = this._info?.garden_name ?? this.panel?.title ?? "Plant Garden";
+    const view = parseRoute(this.route?.path);
+    const gardenName = this._info?.garden_name ?? this.panel?.title ?? "Plant Garden";
+    const title =
+      view.name === "plant" ? (this._store.getPlant(view.plantId)?.name ?? gardenName) : gardenName;
+
     return html`
       <header class="toolbar">
         ${
-          this.narrow
+          view.name === "plant"
             ? html`<button
                 class="icon-button"
-                @click=${this._toggleSidebar}
-                aria-label=${t("panel.open_sidebar")}
-                title=${t("panel.open_sidebar")}
+                @click=${() => navigate(this._prefix)}
+                aria-label=${t("panel.back")}
+                title=${t("panel.back")}
               >
-                ${icon(mdiMenu)}
+                ${icon(mdiArrowLeft)}
               </button>`
-            : nothing
+            : this.narrow
+              ? html`<button
+                  class="icon-button"
+                  @click=${this._toggleSidebar}
+                  aria-label=${t("panel.open_sidebar")}
+                  title=${t("panel.open_sidebar")}
+                >
+                  ${icon(mdiMenu)}
+                </button>`
+              : nothing
         }
         <h1>${title}</h1>
       </header>
-      <main>${this._renderBody(t, title)}</main>
+      <main>${this._renderBody(t, view, gardenName)}</main>
     `;
   }
 
-  private _renderBody(t: Localize, title: string) {
-    if (this._error) {
+  private _renderBody(t: Localize, view: View, gardenName: string) {
+    const error = this._infoError ?? (this._store.loaded ? undefined : this._store.error);
+    if (error) {
       return html`
         <section class="card state" role="alert">
           ${icon(mdiAlertCircleOutline)}
           <h2>${t("panel.error_title")}</h2>
-          <p class="muted">${this._error}</p>
+          <p class="muted">${error}</p>
           <p class="muted">${t("panel.error_hint")}</p>
-          <button class="button" @click=${this._load}>
+          <button class="button" @click=${this._retry}>
             ${icon(mdiRefresh)} ${t("panel.retry")}
           </button>
         </section>
       `;
     }
-    if (!this._info) {
+    if (!this._store.loaded || !this._info) {
       return html`<p class="muted loading" aria-live="polite">${t("panel.loading")}</p>`;
     }
-    return html`
-      <section class="hero card">
-        ${heroIllustration}
-        <div class="hero-text">
-          <h2>${t("welcome.title", { garden: title })}</h2>
-          <p class="muted">${t("welcome.lead")}</p>
-        </div>
-      </section>
-      <section class="features" aria-label=${t("feature.coming")}>
-        ${FEATURES.map(
-          (feature) => html`
-            <article class="card feature">
-              <div class="feature-icon">${icon(feature.icon)}</div>
-              <h3>${t(feature.title)}</h3>
-              <p class="muted">${t(feature.body)}</p>
-              <span class="badge">${t("feature.coming")}</span>
-            </article>
-          `,
-        )}
-      </section>
-      <footer class="muted">
-        ${t("meta.version", { version: this._info.version })} · ${t("meta.connected")}
-      </footer>
-    `;
+    if (view.name === "plant") {
+      return html`<pg-plant-detail
+        .hass=${this.hass}
+        .store=${this._store}
+        .plantId=${view.plantId}
+        .prefix=${this._prefix}
+      ></pg-plant-detail>`;
+    }
+    return html`<pg-plants-view
+      .hass=${this.hass}
+      .store=${this._store}
+      .gardenName=${gardenName}
+      .prefix=${this._prefix}
+    ></pg-plants-view>`;
   }
 
   static override styles = [
     tokens,
-    heroStyles,
+    shared,
     css`
       :host {
         display: block;
@@ -155,134 +192,37 @@ export class PlantGardenPanel extends LitElement {
         background: var(--pg-bg);
         color: var(--pg-text);
         font-family: var(--pg-font);
+        -webkit-font-smoothing: antialiased;
       }
       .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 3;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 4px;
         height: var(--header-height, 56px);
-        padding: 0 16px;
+        padding: 0 12px;
         background: var(--app-header-background-color, var(--pg-accent));
         color: var(--app-header-text-color, #fff);
         border-bottom: var(--app-header-border-bottom, none);
-        box-sizing: border-box;
       }
       .toolbar h1 {
-        margin: 0;
+        margin: 0 0 0 8px;
         font-size: 20px;
         font-weight: 400;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      .icon {
-        width: 24px;
-        height: 24px;
-        fill: currentColor;
-        flex: none;
-      }
-      .icon-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        margin-left: -8px;
-        border: none;
-        border-radius: 50%;
-        background: transparent;
-        color: inherit;
-        cursor: pointer;
-      }
-      .icon-button:hover {
-        background: rgba(255, 255, 255, 0.12);
-      }
-      .icon-button:focus-visible,
-      .button:focus-visible {
-        outline: 2px solid currentColor;
-        outline-offset: 2px;
-      }
       main {
-        max-width: 1040px;
+        max-width: 1200px;
         margin: 0 auto;
-        padding: 24px 16px 40px;
-        display: grid;
-        gap: 16px;
-      }
-      .card {
-        background: var(--pg-surface);
-        border-radius: var(--pg-radius);
-        box-shadow: var(--pg-shadow);
-      }
-      .muted {
-        color: var(--pg-text-muted);
+        padding: 20px 16px 32px;
       }
       .loading {
         text-align: center;
         padding: 48px 0;
-      }
-      .hero {
-        overflow: hidden;
-        display: grid;
-      }
-      .hero svg {
-        display: block;
-        width: 100%;
-        height: auto;
-        max-height: 260px;
-      }
-      .hero-text {
-        padding: 8px 24px 24px;
-      }
-      .hero h2 {
-        margin: 8px 0;
-        font-size: 26px;
-        font-weight: 500;
-      }
-      .hero p {
-        margin: 0;
-        max-width: 64ch;
-        line-height: 1.5;
-      }
-      .features {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 16px;
-      }
-      .feature {
-        position: relative;
-        padding: 20px;
-        transition:
-          transform 160ms ease,
-          box-shadow 160ms ease;
-      }
-      .feature:hover {
-        transform: translateY(-2px);
-      }
-      .feature h3 {
-        margin: 12px 0 4px;
-        font-size: 16px;
-        font-weight: 500;
-      }
-      .feature p {
-        margin: 0 0 12px;
-        line-height: 1.45;
-        font-size: 14px;
-      }
-      .feature-icon {
-        display: inline-flex;
-        padding: 10px;
-        border-radius: 12px;
-        background: var(--pg-leaf-soft);
-        color: var(--pg-leaf);
-      }
-      .badge {
-        display: inline-block;
-        padding: 2px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        background: color-mix(in srgb, var(--pg-accent) 14%, transparent);
-        color: var(--pg-accent);
       }
       .state {
         padding: 32px 24px;
@@ -300,34 +240,8 @@ export class PlantGardenPanel extends LitElement {
         margin: 8px 0 4px;
         font-weight: 500;
       }
-      .button {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
+      .state .button {
         margin-top: 12px;
-        padding: 8px 16px;
-        border: none;
-        border-radius: 999px;
-        background: var(--pg-accent);
-        color: var(--text-primary-color, #fff);
-        font: inherit;
-        cursor: pointer;
-      }
-      .button .icon {
-        width: 18px;
-        height: 18px;
-      }
-      footer {
-        text-align: center;
-        font-size: 13px;
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .feature {
-          transition: none;
-        }
-        .feature:hover {
-          transform: none;
-        }
       }
     `,
   ];

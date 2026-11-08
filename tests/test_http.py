@@ -71,9 +71,15 @@ async def test_upload_and_download(
     thumb = Image.open(io.BytesIO(await resp.read()))
     assert max(thumb.size) == 360
 
-    # ... the plain URL does not.
+    # ... the plain URL or a tampered signature does not. Without an Authorization
+    # header this is 403, so HA's IP ban does not count it as a failed login.
     plain = photo["urls"]["original"].split("?")[0]
     resp = await anonymous.get(plain)
+    assert resp.status == HTTPStatus.FORBIDDEN
+    resp = await anonymous.get(photo["urls"]["thumb"] + "x")
+    assert resp.status == HTTPStatus.FORBIDDEN
+    # A wrong bearer token is a real failed login attempt.
+    resp = await anonymous.get(plain, headers={"Authorization": "Bearer nope"})
     assert resp.status == HTTPStatus.UNAUTHORIZED
 
     resp = await client.get(plain)

@@ -10,6 +10,7 @@ WebSocket command answers. Started by scripts/smoke; can also be run on its own:
 from __future__ import annotations
 
 import asyncio
+import io
 import sys
 
 import aiohttp
@@ -102,6 +103,68 @@ async def check_bundle(session: aiohttp.ClientSession, base: str, module_url: st
         print(f"  bundle served: {len(body)} bytes, {resp.headers.get('Content-Type')}")
 
 
+def _jpeg(width: int = 1600, height: int = 1200) -> bytes:
+    from PIL import Image  # noqa: PLC0415 - only needed here
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (width, height), (60, 140, 70)).save(buffer, format="JPEG")
+    return buffer.getvalue()
+
+
+async def check_plants_and_photos(
+    session: aiohttp.ClientSession, base: str, token: str, headers: dict[str, str]
+) -> None:
+    ws_url = base.replace("http", "ws", 1) + "/api/websocket"
+    async with session.ws_connect(ws_url) as ws:
+        await ws.receive_json()
+        await ws.send_json({"type": "auth", "access_token": token})
+        await ws.receive_json()
+        ids = iter(range(10, 100))
+
+        async def call(**msg: object) -> dict:
+            await ws.send_json({"id": next(ids), **msg})
+            reply = await ws.receive_json()
+            assert reply["success"], reply
+            return reply["result"]
+
+        plant = await call(
+            type="plant_garden/plants/create", name="Smoke-Tomate", category="vegetable"
+        )
+        print(f"  plant created: {plant['name']} ({plant['id']})")
+
+        form = aiohttp.FormData()
+        form.add_field("plant_id", plant["id"])
+        form.add_field("taken_at", "2026-06-01T09:00:00+02:00")
+        form.add_field("file", _jpeg(), filename="tomate.jpg", content_type="image/jpeg")
+        async with session.post(
+            f"{base}/api/plant_garden/photos", data=form, headers=headers
+        ) as resp:
+            assert resp.status == 200, await resp.text()
+            photo = await resp.json()
+        print(f"  photo uploaded: {photo['width']}x{photo['height']}, taken {photo['taken_at']}")
+
+        # signed URLs work without the Authorization header (that is what <img> does)
+        async with aiohttp.ClientSession() as anonymous:
+            for variant in ("thumb", "medium", "original"):
+                async with anonymous.get(f"{base}{photo['urls'][variant]}") as resp:
+                    assert resp.status == 200, (variant, resp.status)
+            async with anonymous.get(f"{base}{photo['urls']['thumb'].split('?')[0]}") as resp:
+                assert resp.status == 403, resp.status
+        print("  signed photo URLs served, unsigned URL rejected with 403")
+
+        await call(
+            type="plant_garden/measurements/add",
+            plant_id=plant["id"],
+            measured_on="2026-06-01",
+            height_cm=35,
+        )
+        detail = await call(type="plant_garden/plants/get", plant_id=plant["id"])
+        assert detail["plant"]["photo_count"] == 1, detail
+        assert detail["plant"]["height_cm"] == 35, detail
+        await call(type="plant_garden/plants/delete", plant_id=plant["id"])
+        print("  measurement added, plant deleted")
+
+
 async def main(base: str) -> None:
     async with aiohttp.ClientSession() as session:
         print(f"waiting for {base} ...")
@@ -113,6 +176,7 @@ async def main(base: str) -> None:
         await add_garden(session, base, headers)
         module_url = await check_websocket(session, base, token)
         await check_bundle(session, base, module_url)
+        await check_plants_and_photos(session, base, token, headers)
     print("SMOKE TEST OK")
 
 

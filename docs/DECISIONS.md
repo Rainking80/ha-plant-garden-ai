@@ -15,10 +15,12 @@ voluptuous` to probatio for backwards compatibility, and type hints such as
 runtime through the alias, but mypy fights the types on every schema and the alias is
 a compatibility shim that will eventually go away. Rejected.
 
-## D-002 One garden per installation (2026-11-08)
+## D-002 One garden per installation (2026-11-08, revised in M1)
 
-`single_config_entry: true`. One panel, one data set. Storage will still be keyed by
-config entry id, so multiple gardens can be added later without migration pain.
+`single_config_entry: true`. One panel, one data set. Data is **not** keyed by the
+config entry id: removing and re-adding the integration must not orphan years of
+photos. Should multiple gardens ever be needed, a `garden_id` will be introduced
+with a migration.
 
 ## D-003 Development on WSL2 / devcontainer, venv outside the repo (2026-11-08)
 
@@ -58,4 +60,39 @@ placeholder; no submission to the home-assistant/brands repository is needed.
 
 The garden is a household tool, so `require_admin=False`. Admin-only functions
 (settings, API keys, costs) will be protected per WebSocket command with
-`require_admin`.
+`require_admin`. Every authenticated user may create, edit and delete plants.
+
+## D-009 Store for plants, SQLite for growing records (2026-11-08)
+
+Plants are few and edited as a whole → HA `Store` (JSON, versioned). Photos and
+measurements grow without bound and are queried per plant and in aggregate (photo
+count, latest size) → SQLite in WAL mode under `<config>/plant_garden/`, schema
+versioned with `PRAGMA user_version`. Later time series (irrigation events, weather,
+water balance, AI usage) go into the same database. The recorder database is not
+used: it belongs to HA and is purged.
+
+## D-010 Photo pipeline (2026-11-08)
+
+The browser reads the EXIF capture time and downsizes large photos before upload
+(phones produce 5–10 MB files). The server never trusts the client: it decodes with
+Pillow, rejects unknown formats and huge pixel counts, applies EXIF orientation,
+writes three variants **without any metadata** (GPS must not leak into backups or
+AI requests) and names files by generated ULIDs only. Preset photo tags
+(`development`, `problem`, `flowering`, `harvest`) are stored language-neutral
+because later features (problem diagnosis) rely on them.
+
+## D-011 Photo downloads: signed URLs, 403 instead of 401 (2026-11-08)
+
+`<img>` cannot send an Authorization header, so photo URLs are signed with
+`async_sign_path` (24 h). HA counts a 401 as a failed login; a panel left open
+overnight would then request expired URLs and could get its own IP banned when
+IP banning is configured. The file view therefore checks authentication itself
+(like HA's brands integration): 401 only when a bad bearer token was sent, 403
+otherwise. The panel also refreshes data older than one hour every 15 minutes and
+when the tab becomes visible.
+
+## D-012 Edits send only changed fields (2026-11-08)
+
+Every field the backend receives is recorded with source `user`. The form therefore
+sends only fields that changed; otherwise saving a plant would silently turn all
+AI suggestions (M2) into "entered by you".

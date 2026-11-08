@@ -19,6 +19,8 @@ export interface HomeAssistant {
   user?: { id: string; name: string; is_admin: boolean };
   auth: { data: { access_token: string } };
   callWS<T>(msg: MessageBase): Promise<T>;
+  /** fetch() against the HA API with a valid (refreshed) access token. */
+  fetchWithAuth(path: string, init?: RequestInit): Promise<Response>;
 }
 
 /** The `panel` property Home Assistant hands to a custom panel element. */
@@ -28,6 +30,12 @@ export interface PanelInfo<C extends object = Record<string, unknown>> {
   icon: string | null;
   title: string | null;
   url_path: string;
+}
+
+/** The `route` property: prefix is the panel URL, path the rest. */
+export interface Route {
+  prefix: string;
+  path: string;
 }
 
 /** Config the backend passes in `panel_custom.async_register_panel(config=...)`. */

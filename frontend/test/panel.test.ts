@@ -2,50 +2,49 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import "../src/main";
-import type { GardenInfo } from "../src/api/client";
-import type { PlantGardenPanel } from "../src/panel";
-import type { HomeAssistant, PanelInfo, PlantGardenPanelConfig } from "../src/types/hass";
-
-const INFO: GardenInfo = {
-  entry_id: "abc",
-  garden_name: "Schrebergarten",
-  version: "0.1.0",
-  is_admin: true,
-};
+import { parseRoute, type PlantGardenPanel } from "../src/panel";
+import type { PanelInfo, PlantGardenPanelConfig } from "../src/types/hass";
+import {
+  deepGet,
+  deepQuery,
+  deepText,
+  fakeBackend,
+  makePhoto,
+  makePlant,
+  type FakeBackend,
+} from "./fixtures";
 
 const PANEL: PanelInfo<PlantGardenPanelConfig> = {
   component_name: "custom",
-  config: { entry_id: "abc" },
+  config: { entry_id: "e" },
   icon: "mdi:flower",
   title: "Schrebergarten",
   url_path: "plant-garden",
 };
 
-function fakeHass(callWS: HomeAssistant["callWS"], overrides: Partial<HomeAssistant> = {}) {
-  return {
-    callWS,
-    language: "de",
-    locale: { language: "de" },
-    themes: { darkMode: false },
-    states: {},
-    ...overrides,
-  } as unknown as HomeAssistant;
-}
-
-async function mount(hass: HomeAssistant, narrow = false): Promise<PlantGardenPanel> {
+async function mount(backend: FakeBackend, path = "", narrow = false): Promise<PlantGardenPanel> {
   const el = document.createElement("plant-garden-panel") as PlantGardenPanel;
-  el.hass = hass;
+  el.hass = backend.hass;
   el.narrow = narrow;
   el.panel = PANEL;
+  el.route = { prefix: "/plant-garden", path };
   document.body.append(el);
   await el.updateComplete;
   return el;
 }
 
-const text = (el: PlantGardenPanel) => el.shadowRoot?.textContent ?? "";
-
 afterEach(() => {
   document.body.innerHTML = "";
+});
+
+describe("parseRoute", () => {
+  it("maps paths to views", () => {
+    expect(parseRoute("")).toEqual({ name: "plants" });
+    expect(parseRoute(undefined)).toEqual({ name: "plants" });
+    expect(parseRoute("/plants/01JABC")).toEqual({ name: "plant", plantId: "01JABC" });
+    expect(parseRoute("/plants/01JABC/")).toEqual({ name: "plant", plantId: "01JABC" });
+    expect(parseRoute("/plants/../x")).toEqual({ name: "plants" });
+  });
 });
 
 describe("plant-garden-panel", () => {
@@ -53,56 +52,139 @@ describe("plant-garden-panel", () => {
     expect(customElements.get("plant-garden-panel")).toBeDefined();
   });
 
-  it("loads the garden info once and renders the welcome page", async () => {
-    const callWS = vi.fn().mockResolvedValue(INFO);
-    const hass = fakeHass(callWS);
-    const el = await mount(hass);
-
-    await vi.waitFor(() => expect(text(el)).toContain("Willkommen in Schrebergarten"));
-    expect(text(el)).toContain("Version 0.1.0");
-    expect(callWS).toHaveBeenCalledWith({ type: "plant_garden/info" });
-
-    // HA hands over a new hass object on every state change: no refetch.
-    el.hass = fakeHass(callWS);
-    await el.updateComplete;
-    expect(callWS).toHaveBeenCalledTimes(1);
+  it("welcomes a new garden with an empty state", async () => {
+    const el = await mount(fakeBackend());
+    await vi.waitFor(() => expect(deepText(el)).toContain("Willkommen in Schrebergarten"));
+    expect(deepText(el)).toContain("Pflanze hinzufügen");
   });
 
-  it("follows the HA language", async () => {
-    const el = await mount(
-      fakeHass(vi.fn().mockResolvedValue(INFO), { language: "en", locale: { language: "en" } }),
+  it("lists plants, filters by search and follows the HA language", async () => {
+    const backend = fakeBackend({
+      language: "en",
+      plants: [
+        makePlant({ id: "A", name: "Hortensie", age_months_now: 26, photo_count: 3 }),
+        makePlant({ id: "B", name: "Rose", status: "problem" }),
+      ],
+    });
+    const el = await mount(backend);
+    await vi.waitFor(() => expect(deepText(el)).toContain("Rose"));
+    expect(deepText(el)).toContain("2 years, 2 months");
+    expect(deepText(el)).toContain("3 photos");
+
+    const search = deepGet<HTMLInputElement>(el, "input[type=search]");
+    search.value = "rose";
+    search.dispatchEvent(new Event("input"));
+    await vi.waitFor(() => expect(deepText(el)).not.toContain("Hortensie"));
+  });
+
+  it("updates the list when another client changes a plant", async () => {
+    const backend = fakeBackend({ plants: [makePlant({ id: "A", name: "Hortensie" })] });
+    const el = await mount(backend);
+    await vi.waitFor(() => expect(deepText(el)).toContain("Hortensie"));
+    backend.plants = [...backend.plants, makePlant({ id: "B", name: "Lavendel" })];
+    backend.emit({ kind: "plant", plant_id: "B" });
+    await vi.waitFor(() => expect(deepText(el)).toContain("Lavendel"));
+  });
+
+  it("navigates to a plant when its card is clicked", async () => {
+    const backend = fakeBackend({ plants: [makePlant({ id: "A1", name: "Hortensie" })] });
+    const el = await mount(backend);
+    await vi.waitFor(() => expect(deepQuery(el, "a.card")).not.toBeNull());
+    const changed = vi.fn();
+    window.addEventListener("location-changed", changed);
+    deepGet<HTMLAnchorElement>(el, "a.card").click();
+    expect(window.location.pathname).toBe("/plant-garden/plants/A1");
+    expect(changed).toHaveBeenCalledTimes(1);
+    window.removeEventListener("location-changed", changed);
+  });
+
+  it("shows the detail view with facts, growth and photos", async () => {
+    const plant = makePlant({
+      id: "A1",
+      name: "Hortensie",
+      scientific_name: "Hydrangea macrophylla",
+      light: "partial_shade",
+      age_months_now: 14,
+      height_cm: 80,
+      photo_count: 2,
+      cover: { id: "P2", urls: makePhoto("P2", "2026-07-01T10:00:00Z").urls },
+      sources: {
+        light: { source: "ai", confidence: 0.82, model: "x", updated_at: "2026-06-01T00:00:00Z" },
+      },
+    });
+    const backend = fakeBackend({
+      plants: [plant],
+      details: {
+        A1: {
+          plant,
+          photos: [
+            makePhoto("P2", "2026-07-01T10:00:00Z", { tags: ["problem"] }),
+            makePhoto("P1", "2026-06-01T10:00:00Z"),
+          ],
+          measurements: [
+            {
+              id: "M1",
+              plant_id: "A1",
+              measured_on: "2026-06-01",
+              height_cm: 80,
+              width_cm: 60,
+              source: "user",
+              confidence: null,
+              photo_id: null,
+              note: "",
+            },
+          ],
+        },
+      },
+    });
+    const el = await mount(backend, "/plants/A1");
+    await vi.waitFor(() => expect(deepText(el)).toContain("Hydrangea macrophylla"));
+    const text = deepText(el);
+    expect(text).toContain("Halbschatten");
+    expect(text).toContain("1 Jahr, 2 Monate");
+    expect(text).toContain("80 cm");
+    expect(text).toContain("Wachstum");
+    expect(text).toContain("Problem");
+    expect(deepQuery(el, ".source-ai")?.getAttribute("title")).toBe("KI-Vorschlag (82 %)");
+    // toolbar shows the plant name and a back button
+    expect(el.shadowRoot?.querySelector("h1")?.textContent).toBe("Hortensie");
+    expect(el.shadowRoot?.querySelector(".toolbar .icon-button")?.getAttribute("aria-label")).toBe(
+      "Zurück",
     );
-    await vi.waitFor(() => expect(text(el)).toContain("Welcome to Schrebergarten"));
+  });
+
+  it("explains when a plant does not exist", async () => {
+    const el = await mount(fakeBackend(), "/plants/GONE");
+    await vi.waitFor(() => expect(deepText(el)).toContain("Diese Pflanze gibt es nicht mehr."));
   });
 
   it("shows an error with a working retry button", async () => {
-    const callWS = vi
-      .fn()
-      .mockRejectedValueOnce({ code: "not_loaded", message: "Plant Garden is not set up" })
-      .mockResolvedValueOnce(INFO);
-    const el = await mount(fakeHass(callWS));
-
-    await vi.waitFor(() => expect(text(el)).toContain("Plant Garden is not set up"));
+    const backend = fakeBackend();
+    backend.callWS.mockRejectedValueOnce({
+      code: "not_loaded",
+      message: "Plant Garden is not set up",
+    });
+    const el = await mount(backend);
+    await vi.waitFor(() => expect(deepText(el)).toContain("Plant Garden is not set up"));
     el.shadowRoot?.querySelector<HTMLButtonElement>(".state .button")?.click();
-    await vi.waitFor(() => expect(text(el)).toContain("Willkommen in Schrebergarten"));
-    expect(callWS).toHaveBeenCalledTimes(2);
+    await vi.waitFor(() => expect(deepText(el)).toContain("Willkommen in Schrebergarten"));
   });
 
-  it("offers the sidebar toggle only in narrow mode", async () => {
-    const wide = await mount(fakeHass(vi.fn().mockResolvedValue(INFO)));
-    expect(wide.shadowRoot?.querySelector(".icon-button")).toBeNull();
+  it("offers the sidebar toggle only in narrow mode on the list", async () => {
+    const wide = await mount(fakeBackend());
+    expect(wide.shadowRoot?.querySelector(".toolbar .icon-button")).toBeNull();
 
-    const narrow = await mount(fakeHass(vi.fn().mockResolvedValue(INFO)), true);
+    const narrow = await mount(fakeBackend(), "", true);
     const toggled = vi.fn();
     document.body.addEventListener("hass-toggle-menu", toggled);
-    narrow.shadowRoot?.querySelector<HTMLButtonElement>(".icon-button")?.click();
+    narrow.shadowRoot?.querySelector<HTMLButtonElement>(".toolbar .icon-button")?.click();
     expect(toggled).toHaveBeenCalledTimes(1);
   });
 
   it("switches to the dark palette with the HA theme", async () => {
-    const el = await mount(
-      fakeHass(vi.fn().mockResolvedValue(INFO), { themes: { darkMode: true } }),
-    );
+    const backend = fakeBackend();
+    (backend.hass.themes as { darkMode: boolean }).darkMode = true;
+    const el = await mount(backend);
     expect(el.hasAttribute("dark")).toBe(true);
   });
 });

@@ -9,8 +9,8 @@ from __future__ import annotations
 from http import HTTPStatus
 import logging
 
-from aiohttp import BodyPartReader, web
-from homeassistant.components.http import KEY_HASS, HomeAssistantView
+from aiohttp import BodyPartReader, hdrs, web
+from homeassistant.components.http import KEY_AUTHENTICATED, KEY_HASS, HomeAssistantView
 from homeassistant.components.http.const import KEY_HASS_REFRESH_TOKEN_ID
 from homeassistant.util import dt as dt_util
 
@@ -93,13 +93,24 @@ class PhotoUploadView(HomeAssistantView):
 
 
 class PhotoFileView(HomeAssistantView):
-    """GET one size variant of a photo."""
+    """GET one size variant of a photo.
+
+    Authentication is checked here instead of by HA (requires_auth = False) for
+    one reason: an expired signed URL from a panel left open must not count as a
+    failed login, or users with IP banning enabled would lock themselves out.
+    Same approach as HA's brands integration: 401 only for a real (bad) bearer
+    token, 403 otherwise.
+    """
 
     url = PHOTO_FILE_URL
     name = "api:plant_garden:photos:file"
-    requires_auth = True
+    requires_auth = False
 
     async def get(self, request: web.Request, photo_id: str, variant: str) -> web.StreamResponse:
+        if not request.get(KEY_AUTHENTICATED, False):
+            if hdrs.AUTHORIZATION in request.headers:
+                raise web.HTTPUnauthorized
+            raise web.HTTPForbidden
         hass = request.app[KEY_HASS]
         manager = get_manager(hass)
         if manager is None:

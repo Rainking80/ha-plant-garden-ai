@@ -4,6 +4,10 @@ import { css } from "lit";
  * Design tokens. Everything derives from Home Assistant theme variables so that
  * user themes and dark mode apply automatically; the garden palette only adds
  * nature colours that HA themes do not define.
+ *
+ * Only the panel root includes these styles. Nested elements inherit the custom
+ * properties through their shadow roots; redefining them on a nested :host would
+ * reset the dark-mode values.
  */
 export const tokens = css`
   :host {
@@ -20,6 +24,7 @@ export const tokens = css`
       0 2px 8px rgba(0, 0, 0, 0.06)
     );
     --pg-font: var(--ha-font-family-body, var(--paper-font-body1_-_font-family, system-ui));
+    --pg-input-bg: color-mix(in srgb, var(--pg-text) 4%, var(--pg-surface));
 
     --pg-leaf: #4f8a5b;
     --pg-leaf-soft: #cfe5c2;
