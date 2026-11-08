@@ -123,6 +123,17 @@ export class GardenStore extends EventTarget {
     this._emit("change");
   }
 
+  /** Take over a layout from the backend (after moving the origin) and reload the plants. */
+  async applyLayout(layout: Layout): Promise<void> {
+    this.layout = layout;
+    try {
+      this.plants = await listPlants(this._hass()); // their positions changed too
+    } catch {
+      // the refresh triggered by the change event brings them
+    }
+    this._emit("change");
+  }
+
   // ------------------------------------------------------------ internals
   private async _load(): Promise<void> {
     try {

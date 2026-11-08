@@ -13,7 +13,9 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.util import dt as dt_util
 from homeassistant.util.ulid import ulid_now
 
+from .const import PLAN_EXTENT_M
 from .database import GardenDatabase
+from .geo import reproject
 from .models import (
     ENUM_FIELDS,
     NUMBER_FIELDS,
@@ -44,6 +46,10 @@ class NotFoundError(Exception):
     """A plant, photo or measurement does not exist."""
 
 
+class OutOfRangeError(ValueError):
+    """Something would end up further than PLAN_EXTENT_M from the plan origin."""
+
+
 @dataclass(slots=True, frozen=True)
 class GardenChange:
     """Sent to subscribers whenever garden data changes.
@@ -62,6 +68,16 @@ def _clean_text(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _shift_geometry(
+    geometry: dict[str, Any], shift: Callable[[float, float], tuple[float, float]]
+) -> dict[str, Any]:
+    """Move a shape's reference points; sizes in metres stay the same."""
+    if geometry["type"] == "polygon":
+        return {**geometry, "points": [list(shift(x, y)) for x, y in geometry["points"]]}
+    cx, cy = shift(geometry["cx"], geometry["cy"])
+    return {**geometry, "cx": cx, "cy": cy}
 
 
 def _clean_tags(tags: list[str]) -> list[str]:
@@ -262,6 +278,63 @@ class GardenManager:
             raise NotFoundError(shape_id)
         self._schedule_save()
         self._notify("layout", shape_id=shape_id)
+
+    # ------------------------------------------------------------ origin
+    async def async_set_origin(
+        self, latitude: float, longitude: float, *, move_content: bool = False
+    ) -> None:
+        """Move the plan origin, e.g. for an allotment away from HA's home location.
+
+        By default everything keeps its place on the map (coordinates are
+        recalculated for the new origin). With `move_content` the plan
+        coordinates stay as they are, so the drawing moves along with the origin.
+        """
+        new = GeoPoint(latitude=latitude, longitude=longitude)
+        old = self._layout.origin
+        moved_plants: list[str] = []
+        if old is not None and not move_content and old != new:
+
+            def shift(x: float, y: float) -> tuple[float, float]:
+                return reproject(old, new, x, y)
+
+            # Check everything before changing anything.
+            for x, y in self._content_points():
+                if max(abs(c) for c in shift(x, y)) > PLAN_EXTENT_M:
+                    raise OutOfRangeError(
+                        f"content would be more than {PLAN_EXTENT_M} m from the new location"
+                    )
+            for plant in self._plants.values():
+                if plant.position is not None:
+                    plant.position = Point(*shift(plant.position.x, plant.position.y))
+                    moved_plants.append(plant.id)
+            for shape in self._layout.shapes.values():
+                shape.geometry = _shift_geometry(shape.geometry, shift)
+            for marker in self._layout.markers.values():
+                marker.x, marker.y = shift(marker.x, marker.y)
+            background = self._layout.background
+            if background and background.get("type") == "image":
+                x, y = shift(background["x"], background["y"])
+                self._layout.background = {**background, "x": x, "y": y}
+        self._layout.origin = new
+        self._schedule_save()
+        self._notify("layout")
+        for plant_id in moved_plants:
+            self._notify("plant", plant_id)
+
+    def _content_points(self) -> list[tuple[float, float]]:
+        """Every stored plan coordinate (reference points only, not sizes)."""
+        points = [(p.position.x, p.position.y) for p in self._plants.values() if p.position]
+        for shape in self._layout.shapes.values():
+            geometry = shape.geometry
+            if geometry["type"] == "polygon":
+                points.extend((x, y) for x, y in geometry["points"])
+            else:
+                points.append((geometry["cx"], geometry["cy"]))
+        points.extend((m.x, m.y) for m in self._layout.markers.values())
+        background = self._layout.background
+        if background and background.get("type") == "image":
+            points.append((background["x"], background["y"]))
+        return points
 
     # ------------------------------------------------------------ background
     async def async_upload_background(self, data: bytes) -> dict[str, Any]:

@@ -234,6 +234,10 @@ export const en = {
   "plan.marker_history": "Last 24 hours",
   "plan.marker_label": "Label",
   "plan.delete_marker": "Remove sensor",
+  "plan.too_far":
+    "Too far from the garden's location (at most {extent}). Move the location here first.",
+  "plan.far_hint": "You are {distance} away from the garden's location.",
+  "plan.far_action": "Move location here",
 
   "marker.on": "On",
   "marker.off": "Off",
@@ -267,6 +271,24 @@ export const en = {
     "A site plan, a photo of a sketch or a screenshot. After applying: use “Calibrate scale” on two points with a known distance and “Move background” to line it up.",
   "background.need_image": "Please upload a picture first.",
   "background.need_wms": "Please enter an https address and a layer.",
+
+  "origin.title": "Garden location",
+  "origin.intro":
+    "The plan measures metres from this point; aerial imagery and photo locations depend on it. If your garden is not at Home Assistant's home location – an allotment, say – set it here. Everything on the plan must be within {extent}.",
+  "origin.use_center": "Map centre",
+  "origin.use_home": "Home in Home Assistant",
+  "origin.latitude": "Latitude",
+  "origin.longitude": "Longitude",
+  "origin.paste_hint":
+    "Tip: you can paste a copied pair such as “52.52, 13.40” into the first field.",
+  "origin.distance": "{distance} from the current location",
+  "origin.same": "Same as the current location.",
+  "origin.content": "What is already drawn",
+  "origin.keep": "stays where it is on the map",
+  "origin.move": "moves along to the new location",
+  "origin.invalid": "Please enter latitude and longitude as decimal numbers, e.g. 52.52 and 13.40.",
+  "origin.too_far":
+    "Some of it would then be more than {extent} from the new location. Choose “moves along” or remove it first.",
 
   "picker.title": "Choose entity",
   "picker.search": "Search entities",

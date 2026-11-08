@@ -9,6 +9,10 @@ DOMAIN: Final = "plant_garden"
 
 CONF_GARDEN_NAME: Final = "garden_name"
 
+# Plan coordinates are metres around the origin (the garden's location). A
+# garden is far smaller; the limit keeps the map projection accurate (D-017).
+PLAN_EXTENT_M: Final = 10000
+
 # Frontend panel
 PANEL_URL_PATH: Final = "plant-garden"
 PANEL_WEBCOMPONENT: Final = "plant-garden-panel"

@@ -8,6 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Garden location: the plan can be moved to where the garden really is (e.g. an
+  allotment away from home) – to the map centre, Home Assistant's home or pasted
+  coordinates. Everything already drawn stays in place on the map or, if you
+  choose, moves along; undo works. In edit mode the plan offers this as soon as
+  you are more than 1 km away. Drawing more than 10 km from the location now
+  explains what to do instead of showing a raw validation error.
 - M3 plan backgrounds and markers:
   - Official aerial imagery (orthophotos) of 12 German states as plan background,
     to scale, with the required source attribution; the matching state is

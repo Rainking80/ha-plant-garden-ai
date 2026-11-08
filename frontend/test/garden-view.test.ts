@@ -6,6 +6,7 @@ import type { PgGardenCanvas } from "../src/components/garden-canvas";
 import { GardenStore } from "../src/state/garden-store";
 import "../src/views/garden-view";
 import type { PgGardenView } from "../src/views/garden-view";
+import { planToGeo } from "../src/util/wms";
 import { deepGet, deepQuery, deepText, fakeBackend, makePlant, type FakeBackend } from "./fixtures";
 
 const BED: Shape = {
@@ -343,5 +344,125 @@ describe("pg-garden-view M3: markers, background, calibration", () => {
     await vi.waitFor(() => expect(store.layout?.background).toMatchObject({ width_m: 20 }));
     await clickButton(view, "Rückgängig");
     await vi.waitFor(() => expect(store.layout?.background).toBeNull());
+  });
+});
+
+describe("pg-garden-view: garden location", () => {
+  const HOME = { latitude: 52.4, longitude: 13.06 };
+
+  it("offers to move the location when far away, keeps everything in place and can undo", async () => {
+    localStorage.setItem(
+      "plant-garden.viewport.v1",
+      JSON.stringify({ cx: 2000, cy: 0, width: 40 }),
+    );
+    const backend = fakeBackend({
+      plants: [makePlant({ id: "A", position: { x: 2005, y: 0 } })],
+      shapes: [BED],
+    });
+    const { view, store } = await mount(backend);
+    expect(deepText(view)).not.toContain("vom Garten-Standort entfernt"); // only when editing
+    await clickButton(view, "Bearbeiten");
+    expect(deepText(view)).toContain("Du bist 2 km vom Garten-Standort entfernt.");
+
+    await clickButton(view, "Standort hierher verlegen");
+    const dialog = deepGet<HTMLElement>(view, "pg-origin-dialog");
+    await vi.waitFor(() => expect(deepText(dialog)).toContain("2 km vom bisherigen Standort"));
+    deepGet<HTMLFormElement>(dialog, "form").requestSubmit();
+
+    await vi.waitFor(() =>
+      expect(calls(backend, "plant_garden/layout/set_origin")).toHaveLength(1),
+    );
+    const sent = calls(backend, "plant_garden/layout/set_origin")[0];
+    const center = planToGeo(HOME, { x: 2000, y: 0 });
+    expect(sent?.latitude).toBeCloseTo(center.latitude, 5);
+    expect(sent?.longitude).toBeCloseTo(center.longitude, 5);
+    expect(sent?.move_content).toBe(false);
+
+    // same place on the map, new numbers; the view stays where it was
+    await vi.waitFor(() => expect(store.getPlant("A")?.position?.x).toBeCloseTo(5, 0));
+    expect(store.getShape(BED.id)?.geometry).toMatchObject({ type: "rect", w: 4, h: 2 });
+    expect((store.getShape(BED.id)?.geometry as { cx: number }).cx).toBeCloseTo(-1995, 0);
+    await vi.waitFor(() => expect(canvasOf(view).viewport.cx).toBeCloseTo(0, 0));
+    await vi.waitFor(() => expect(deepText(view)).not.toContain("vom Garten-Standort entfernt"));
+
+    await clickButton(view, "Rückgängig");
+    await vi.waitFor(() => expect(store.layout?.origin).toEqual(HOME));
+    await vi.waitFor(() => expect(canvasOf(view).viewport.cx).toBeCloseTo(2000, 0));
+    expect(store.getPlant("A")?.position?.x).toBeCloseTo(2005, 1);
+  });
+
+  it("moves the drawing along when asked to", async () => {
+    const backend = fakeBackend({ plants: [makePlant({ id: "A", position: { x: 3, y: 4 } })] });
+    const { view, store } = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    await clickButton(view, "Garten-Standort");
+    const dialog = deepGet<HTMLElement>(view, "pg-origin-dialog");
+    const lat = await vi.waitFor(() => deepGet<HTMLInputElement>(dialog, "input[inputmode]"));
+    // a pair pasted into the first field fills both
+    lat.value = "48.13743, 11.57549";
+    lat.dispatchEvent(new Event("input"));
+    deepGet<HTMLInputElement>(dialog, 'input[type="radio"]:not(:checked)').click();
+    await view.updateComplete;
+    deepGet<HTMLFormElement>(dialog, "form").requestSubmit();
+
+    await vi.waitFor(() => expect(store.layout?.origin?.latitude).toBe(48.13743));
+    expect(calls(backend, "plant_garden/layout/set_origin")[0]).toMatchObject({
+      latitude: 48.13743,
+      longitude: 11.57549,
+      move_content: true,
+    });
+    expect(store.getPlant("A")?.position).toEqual({ x: 3, y: 4 });
+  });
+
+  it("checks the coordinates before sending them", async () => {
+    const backend = fakeBackend();
+    const { view } = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    await clickButton(view, "Garten-Standort");
+    const dialog = deepGet<HTMLElement>(view, "pg-origin-dialog");
+    const lat = await vi.waitFor(() => deepGet<HTMLInputElement>(dialog, "input[inputmode]"));
+    lat.value = "Berlin";
+    lat.dispatchEvent(new Event("input"));
+    deepGet<HTMLFormElement>(dialog, "form").requestSubmit();
+    await vi.waitFor(() => expect(deepText(dialog)).toContain("als Dezimalzahlen"));
+    expect(calls(backend, "plant_garden/layout/set_origin")).toHaveLength(0);
+  });
+
+  it("refuses to save beyond 10 km and explains why", async () => {
+    const backend = fakeBackend();
+    const { view, store } = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    canvasOf(view).dispatchEvent(
+      new CustomEvent("create-shape", {
+        detail: {
+          geometry: {
+            type: "polygon",
+            points: [
+              [20560, 0],
+              [20575, 0],
+              [20570, 12],
+            ],
+          },
+        },
+      }),
+    );
+    await vi.waitFor(() =>
+      expect(deepText(view)).toContain("Zu weit vom Garten-Standort entfernt (höchstens 10 km)"),
+    );
+    expect(store.layout?.shapes).toEqual([]);
+    expect(calls(backend, "plant_garden/layout/shapes/save")).toHaveLength(0);
+  });
+
+  it("explains when moving the location would leave things behind", async () => {
+    const backend = fakeBackend();
+    const { view } = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    backend.callWS.mockRejectedValueOnce({ code: "out_of_range", message: "too far" });
+    deepGet(view, "pg-origin-dialog").dispatchEvent(
+      new CustomEvent("origin-change", {
+        detail: { latitude: 48.1, longitude: 11.5, moveContent: false },
+      }),
+    );
+    await vi.waitFor(() => expect(deepText(view)).toContain("Wähle „wandert mit“"));
   });
 });

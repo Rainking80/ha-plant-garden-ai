@@ -12,8 +12,8 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 import probatio
 
-from .const import DOMAIN
-from .garden import GardenChange, GardenManager, NotFoundError
+from .const import DOMAIN, PLAN_EXTENT_M
+from .garden import GardenChange, GardenManager, NotFoundError, OutOfRangeError
 from .models import (
     Light,
     LocationType,
@@ -33,6 +33,7 @@ type GardenHandler = Callable[
 ]
 
 ERR_NOT_LOADED = "not_loaded"
+ERR_OUT_OF_RANGE = "out_of_range"
 
 
 def _text(max_length: int) -> Any:
@@ -49,8 +50,7 @@ def _number(minimum: float, maximum: float) -> Any:
 
 TAGS = [probatio.All(str, probatio.Length(max=40))]
 
-# Plan coordinates in metres around the origin; a garden is far smaller than 10 km.
-COORD = _number(-10000, 10000)
+COORD = _number(-PLAN_EXTENT_M, PLAN_EXTENT_M)
 POINT = {probatio.Required("x"): COORD, probatio.Required("y"): COORD}
 ID = probatio.Match(r"^[0-9A-Z]{26}$")
 LENGTH_M = _number(0.01, 5000)
@@ -172,6 +172,7 @@ def async_register_websocket_commands(hass: HomeAssistant) -> None:
         ws_shapes_save,
         ws_shapes_delete,
         ws_set_background,
+        ws_set_origin,
         ws_markers_save,
         ws_markers_delete,
         ws_photos_update,
@@ -209,6 +210,8 @@ def garden_command(
                 result = await func(hass, connection, msg, manager)
             except NotFoundError as err:
                 connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, f"Not found: {err}")
+            except OutOfRangeError as err:
+                connection.send_error(msg["id"], ERR_OUT_OF_RANGE, str(err))
             except ValueError as err:
                 connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, str(err))
             else:
@@ -478,6 +481,27 @@ async def ws_set_background(
 ) -> dict[str, Any]:
     """Aerial imagery (WMS), an uploaded image or none. Returns the layout."""
     await manager.async_set_background(msg["background"])
+    return layout_dict(hass, manager.layout, manager.shapes(), connection.refresh_token_id)
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/layout/set_origin",
+        probatio.Required("latitude"): _number(-85, 85),
+        probatio.Required("longitude"): _number(-180, 180),
+        probatio.Optional("move_content", default=False): bool,
+    }
+)
+async def ws_set_origin(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Move the plan origin (the garden's location). Returns the layout."""
+    await manager.async_set_origin(
+        msg["latitude"], msg["longitude"], move_content=msg["move_content"]
+    )
     return layout_dict(hass, manager.layout, manager.shapes(), connection.refresh_token_id)
 
 

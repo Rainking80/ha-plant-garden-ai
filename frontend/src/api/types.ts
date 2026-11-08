@@ -86,7 +86,10 @@ export interface PlantFields {
   tags: string[];
 }
 
-/** Plan coordinates: metres east (x) and south (y) of the origin (zone.home). */
+/**
+ * Plan coordinates: metres east (x) and south (y) of the origin, the garden's
+ * location (initially Home Assistant's home, can be moved).
+ */
 export interface Point {
   x: number;
   y: number;

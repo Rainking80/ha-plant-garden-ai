@@ -241,6 +241,10 @@ export const de: Translations = {
   "plan.marker_history": "Letzte 24 Stunden",
   "plan.marker_label": "Beschriftung",
   "plan.delete_marker": "Sensor entfernen",
+  "plan.too_far":
+    "Zu weit vom Garten-Standort entfernt (höchstens {extent}). Verlege zuerst den Standort hierher.",
+  "plan.far_hint": "Du bist {distance} vom Garten-Standort entfernt.",
+  "plan.far_action": "Standort hierher verlegen",
 
   "marker.on": "An",
   "marker.off": "Aus",
@@ -274,6 +278,25 @@ export const de: Translations = {
     "Ein Lageplan, ein Foto einer Skizze oder ein Screenshot. Nach dem Übernehmen: mit „Maßstab kalibrieren“ zwei Punkte mit bekanntem Abstand antippen und mit „Hintergrund verschieben“ ausrichten.",
   "background.need_image": "Bitte lade zuerst ein Bild hoch.",
   "background.need_wms": "Bitte gib eine https-Adresse und einen Layer an.",
+
+  "origin.title": "Garten-Standort",
+  "origin.intro":
+    "Der Plan misst in Metern ab diesem Punkt; Luftbild und Foto-Standorte richten sich danach. Liegt dein Garten nicht beim Zuhause von Home Assistant – etwa ein Kleingarten –, setze ihn hier. Alles im Plan muss innerhalb von {extent} liegen.",
+  "origin.use_center": "Kartenmitte",
+  "origin.use_home": "Zuhause in Home Assistant",
+  "origin.latitude": "Breitengrad",
+  "origin.longitude": "Längengrad",
+  "origin.paste_hint":
+    "Tipp: Ein kopiertes Paar wie „52.52, 13.40“ kannst du komplett ins erste Feld einfügen.",
+  "origin.distance": "{distance} vom bisherigen Standort entfernt",
+  "origin.same": "Entspricht dem bisherigen Standort.",
+  "origin.content": "Bereits Gezeichnetes",
+  "origin.keep": "bleibt an seinem Ort auf der Karte",
+  "origin.move": "wandert mit zum neuen Standort",
+  "origin.invalid":
+    "Bitte gib Breiten- und Längengrad als Dezimalzahlen an, z. B. 52.52 und 13.40.",
+  "origin.too_far":
+    "Einiges läge dann mehr als {extent} vom neuen Standort entfernt. Wähle „wandert mit“ oder entferne es vorher.",
 
   "picker.title": "Entität auswählen",
   "picker.search": "Entitäten suchen",

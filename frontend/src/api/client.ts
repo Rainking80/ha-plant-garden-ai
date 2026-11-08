@@ -111,6 +111,25 @@ export function setBackground(hass: HomeAssistant, background: Background | null
   return hass.callWS<Layout>({ type: `${WS_PREFIX}/layout/set_background`, background: payload });
 }
 
+/**
+ * Move the plan origin (the garden's location). Without `moveContent`
+ * everything keeps its place on the map; with it the drawing moves along.
+ * Returns the updated layout; plant positions change as well.
+ */
+export function setOrigin(
+  hass: HomeAssistant,
+  latitude: number,
+  longitude: number,
+  moveContent: boolean,
+): Promise<Layout> {
+  return hass.callWS<Layout>({
+    type: `${WS_PREFIX}/layout/set_origin`,
+    latitude,
+    longitude,
+    move_content: moveContent,
+  });
+}
+
 export interface UploadedBackground {
   image_id: string;
   width_px: number;

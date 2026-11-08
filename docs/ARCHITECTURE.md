@@ -27,7 +27,7 @@ Browser (HA frontend)                              Home Assistant core
 | `__init__.py` | `async_setup`: static path, HTTP views, WebSocket commands (once per HA run). `async_setup_entry`: creates the `GardenManager` (DB errors → `ConfigEntryNotReady`), registers the panel. `async_unload_entry`: removes the panel, flushes and closes storage. |
 | `config_flow.py` | One step: garden name. `single_config_entry` limits it to one garden. |
 | `models.py` | Dataclasses and enums: `Plant` (with per-field provenance `sources`, plan `position` and `crown_diameter_m`), `AgeReference`, `Photo`, `Measurement`, `Point`, `Shape`/`ShapeKind`, `GeoPoint`, `Layout`. Explicit `as_dict`/`from_dict`. |
-| `garden.py` | `GardenManager`: the only way to read or change data. Validates/normalises fields, records provenance, coordinates Store + SQLite + files, sets the plan origin from `zone.home` once, notifies subscribers (`GardenChange` with `kind` plant / plant_removed / layout). |
+| `garden.py` | `GardenManager`: the only way to read or change data. Validates/normalises fields, records provenance, coordinates Store + SQLite + files, sets the plan origin from `zone.home` once (moving it later reprojects everything), notifies subscribers (`GardenChange` with `kind` plant / plant_removed / layout). |
 | `storage.py` | `GardenStore` (HA `Store`, key `plant_garden.garden`, version 1.2 with step-wise migrations; 1.2 added the layout). Holds plants and layout. Writes are delayed by 2 s to batch edits. |
 | `database.py` | `GardenDatabase`: SQLite in WAL mode, schema migrations via `PRAGMA user_version`. Tables `photos`, `measurements`. Blocking; always called through the executor; a lock serialises access. |
 | `photos.py` | `process_image` (Pillow, executor): validates format/pixel count, reads EXIF capture time, applies EXIF orientation, strips all metadata, renders `original` (≤2560 px JPEG), `medium` (1024 px WebP), `thumb` (360 px WebP). `process_background` (≤4096 px JPEG). `PhotoFiles` / `BackgroundFiles` write atomically; IDs must be ULIDs (no path tricks). |
@@ -70,8 +70,11 @@ Nothing is keyed by config entry id: removing and re-adding the integration keep
 | `layout/shapes/delete` | |
 | `layout/set_background` | `{type: none}`, `{type: wms, preset \| url+layers+attribution, opacity}` (https only) or `{type: image, image_id, width_px, height_px, x, y, width_m, rotation, opacity}`; returns the layout, image backgrounds with a signed `url` |
 | `layout/markers/save`, `layout/markers/delete` | entity markers `{id?, entity_id, x, y, label}` |
+| `layout/set_origin` | `{latitude, longitude, move_content?}` moves the garden's location; without `move_content` all coordinates are reprojected so everything keeps its place on the map (error `out_of_range` if something would end up beyond 10 km); returns the layout |
 
-Plan coordinates are metres east (x) and south (y) of the origin (D-017). Shape
+Plan coordinates are metres east (x) and south (y) of the origin (D-017, D-022),
+at most 10 km (`const.PLAN_EXTENT_M`); `geo.py` mirrors the panel's projection
+helpers in `util/wms.ts`. Shape
 geometry is one of `rect` (centre, width, height, rotation in degrees clockwise),
 `circle` (centre, radius) or `polygon` (3–500 points), validated in
 `websocket_api.GEOMETRY`. Deleting a plant unlinks shapes that referenced it.
@@ -110,7 +113,7 @@ geometry is one of `rect` (centre, width, height, rotation in degrees clockwise)
 
 - Python venv in `~/.venvs/ha-plant-garden` (outside the repo). All scripts source `scripts/env.sh`.
 - `scripts/develop`: HA with config dir `~/.ha-plant-garden-dev`, integration and `dev/*.yaml` symlinked; demo irrigation entities in `dev/demo_garden.yaml`.
-- `scripts/smoke`: throw-away HA; checks onboarding → config flow → panel → WebSocket → bundle → plant + photo upload + signed URLs (403 for unsigned) → measurement → plan (origin, shape, placement) → WMS background, uploaded background with signed URL, marker → delete.
+- `scripts/smoke`: throw-away HA; checks onboarding → config flow → panel → WebSocket → bundle → plant + photo upload + signed URLs (403 for unsigned) → measurement → plan (origin, shape, placement) → WMS background, uploaded background with signed URL, marker → move the garden location and back → delete.
 - `scripts/demo.py`: prepares the dev instance (login `dev` with a random password on first run, long-lived token in the HA config dir), an invented demo garden, sensor markers and the aerial background.
 - `scripts/test-min-version`: tests against HA 2026.9.0 in a separate venv.
 

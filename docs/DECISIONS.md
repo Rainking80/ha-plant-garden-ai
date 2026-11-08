@@ -143,8 +143,8 @@ M5 weather and water balance, M6 AI, M7 assistant, M8 release.
 ## D-017 Plan coordinates (2026-11-08)
 
 Origin is `zone.home`, stored when the plan is created so that moving "home" later
-does not shift the garden. Units are metres, x east, y south (SVG direction), the
-plan is north-up. The viewport (centre and width in metres) is stored per device,
+does not shift the garden; the user can move it explicitly (D-022). Units are
+metres, x east, y south (SVG direction), the plan is north-up. The viewport (centre and width in metres) is stored per device,
 not with the garden, so a wall tablet and a phone do not fight over it; it never
 changes object positions.
 
@@ -175,3 +175,19 @@ data itself is never stored (the server strips all metadata).
 HA passes a new `hass` object on every state change in the house. The canvas only
 re-renders when the language changes; marker values arrive as a separate `states`
 object that changes only when one of the marker entities changes.
+
+## D-022 The garden's location can be moved; the plan reaches 10 km (2026-11-08)
+
+Not every garden is at Home Assistant's home location (allotments, a second
+property), and drawing far from the origin failed with a raw schema error.
+`layout/set_origin` moves the origin. By default every stored coordinate is
+reprojected so that everything keeps its place on the map (the panel keeps the
+view on the same spot); with `move_content` the coordinates stay and the drawing
+travels with the origin. Undo moves it back.
+
+Plan coordinates stay limited to ±10 km (`PLAN_EXTENT_M`): the plan uses one
+Mercator scale factor for the whole garden, which is exact at the origin and off
+by about 0.3 % at 10 km north or south. If reprojecting would push anything past
+the limit, nothing changes and the backend answers `out_of_range`. The panel checks
+the limit before saving and explains it; in edit mode it offers "move location
+here" once the view is more than 1 km away (photo GPS suggestions also stop there).

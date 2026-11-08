@@ -95,7 +95,7 @@ Ablauf:
 
 ### 4.4 Gartenplan (grafischer Editor)
 
-- **Koordinaten:** Nullpunkt ist `zone.home` (Breite und Länge aus der HA-Konfiguration, beim Anlegen des Plans gespeichert, damit ein späteres Verschieben von „Zuhause" den Garten nicht verschiebt). Alle Objekte liegen in **Metern relativ zum Nullpunkt**, x zeigt nach Osten, y nach Süden (SVG-Richtung). Der Plan ist genordet.
+- **Koordinaten:** Nullpunkt ist `zone.home` (Breite und Länge aus der HA-Konfiguration, beim Anlegen des Plans gespeichert, damit ein späteres Verschieben von „Zuhause" den Garten nicht verschiebt). Der Nutzer kann ihn als „Garten-Standort“ bewusst verlegen, z. B. für einen Kleingarten; Gezeichnetes bleibt dabei an seinem Ort auf der Karte oder wandert auf Wunsch mit (D-022). Koordinaten reichen bis 10 km um den Nullpunkt. Alle Objekte liegen in **Metern relativ zum Nullpunkt**, x zeigt nach Osten, y nach Süden (SVG-Richtung). Der Plan ist genordet.
 - **Ansicht:** Ausschnitt (Mittelpunkt und Breite in Metern) wird getrennt von den Objekten gespeichert, und zwar pro Gerät. Verschieben oder Zoomen ändert nie eine Objektposition. Eine Schaltfläche „Alles anzeigen" passt den Ausschnitt an den Inhalt an.
 - **Zwei Modi:** **Ansicht** (Tippen zeigt Infos, nichts lässt sich versehentlich verschieben; Standard auf Handy und Wandtablet) und **Bearbeiten** (Ziehen, Größe ändern, Zeichnen, Löschen).
 - **Hintergrund**, wählbar:

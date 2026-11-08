@@ -66,6 +66,21 @@ export function outline(g: Geometry): Point[] {
   return [];
 }
 
+/**
+ * How far from the origin (the garden's location) plan coordinates may go;
+ * the backend enforces the same limit (PLAN_EXTENT_M in const.py).
+ */
+export const PLAN_EXTENT_M = 10000;
+
+/** Points the backend stores for a shape: centre or polygon corners (sizes are extra). */
+export function anchorPoints(g: Geometry): Point[] {
+  return g.type === "polygon" ? polygonPoints(g) : [{ x: g.cx, y: g.cy }];
+}
+
+export function insidePlan(p: Point): boolean {
+  return Math.abs(p.x) <= PLAN_EXTENT_M && Math.abs(p.y) <= PLAN_EXTENT_M;
+}
+
 export function geometryBounds(g: Geometry): Bounds {
   if (g.type === "circle") {
     return { minX: g.cx - g.r, minY: g.cy - g.r, maxX: g.cx + g.r, maxY: g.cy + g.r };

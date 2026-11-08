@@ -2,6 +2,7 @@ import { vi } from "vitest";
 
 import type { Background, Marker, Photo, Plant, PlantDetail, Point, Shape } from "../src/api/types";
 import type { HomeAssistant } from "../src/types/hass";
+import { reproject, type GeoOrigin } from "../src/util/wms";
 
 export function makePlant(overrides: Partial<Plant> = {}): Plant {
   return {
@@ -79,8 +80,31 @@ export interface FakeBackend {
   shapes: Shape[];
   markers: Marker[];
   background: Background | null;
+  origin: GeoOrigin;
   todo: Record<string, { uid: string; summary: string; status: string }[]>;
   details: Record<string, PlantDetail>;
+}
+
+/** What the backend does to stored coordinates when the origin moves (keeping places). */
+function moveOrigin(backend: FakeBackend, to: GeoOrigin): void {
+  const from = backend.origin;
+  const shift = (p: Point): Point => reproject(from, to, p);
+  backend.plants = backend.plants.map((plant) =>
+    plant.position ? { ...plant, position: shift(plant.position) } : plant,
+  );
+  backend.markers = backend.markers.map((marker) => ({ ...marker, ...shift(marker) }));
+  backend.shapes = backend.shapes.map((shape) => {
+    const g = shape.geometry;
+    if (g.type === "polygon") {
+      const points = g.points.map(([x, y]) => {
+        const p = shift({ x, y });
+        return [p.x, p.y] as [number, number];
+      });
+      return { ...shape, geometry: { ...g, points } };
+    }
+    const c = shift({ x: g.cx, y: g.cy });
+    return { ...shape, geometry: { ...g, cx: c.x, cy: c.y } };
+  });
 }
 
 /** A hass object whose callWS answers the plant_garden commands from in-memory data. */
@@ -102,10 +126,11 @@ export function fakeBackend(
     details: options.details ?? {},
     markers: options.markers ?? [],
     background: options.background ?? null,
+    origin: { latitude: 52.4, longitude: 13.06 },
     todo: options.todo ?? {},
   } as FakeBackend;
   const layout = () => ({
-    origin: { latitude: 52.4, longitude: 13.06 },
+    origin: backend.origin,
     shapes: backend.shapes,
     background: backend.background,
     markers: backend.markers,
@@ -139,6 +164,12 @@ export function fakeBackend(
         if (backend.background?.type === "image") {
           backend.background = { ...backend.background, url: "/bg.jpg?authSig=x" };
         }
+        return layout();
+      }
+      case "plant_garden/layout/set_origin": {
+        const to = { latitude: Number(msg.latitude), longitude: Number(msg.longitude) };
+        if (!msg.move_content) moveOrigin(backend, to);
+        backend.origin = to;
         return layout();
       }
       case "plant_garden/layout/markers/save": {
@@ -191,6 +222,7 @@ export function fakeBackend(
     language,
     locale: { language },
     themes: { darkMode: false },
+    config: { latitude: 52.4, longitude: 13.06 },
     states: options.states ?? {},
     connection: {
       subscribeMessage: vi.fn(async (callback: (event: unknown) => void) => {

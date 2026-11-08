@@ -186,6 +186,21 @@ export function geoToPlan(origin: GeoOrigin, lat: number, lon: number): Point {
   return { x: (m.mx - o.mx) / k, y: -(m.my - o.my) / k };
 }
 
+/** Plan metres -> geographic position. */
+export function planToGeo(origin: GeoOrigin, p: Point): GeoOrigin {
+  const { mx, my } = planToMercator(origin, p);
+  return {
+    latitude: (2 * Math.atan(Math.exp(my / R)) - Math.PI / 2) / RAD,
+    longitude: mx / R / RAD,
+  };
+}
+
+/** The same place on the map, in plan metres of another origin. */
+export function reproject(from: GeoOrigin, to: GeoOrigin, p: Point): Point {
+  const geo = planToGeo(from, p);
+  return geoToPlan(to, geo.latitude, geo.longitude);
+}
+
 export const MAX_WMS_PX = 2048;
 const FINEST_M_PER_PX = 0.1; // DOP20 has 20 cm pixels; finer requests only cost bandwidth
 

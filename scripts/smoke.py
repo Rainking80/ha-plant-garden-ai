@@ -90,24 +90,27 @@ async def check_websocket(session: aiohttp.ClientSession, base: str, token: str)
         assert (await ws.receive_json())["type"] == "auth_ok"
 
         # what the HA frontend asks right after login; if one of these fails the
-        # whole UI hangs on "loading" (happened with a broken dev environment)
+        # whole UI hangs on "loading" (happened with a broken dev environment).
+        # Message ids must increase within a connection.
         for msg_id, msg_type in enumerate(
-            ("get_config", "get_services", "get_states", "frontend/get_themes"), start=100
+            ("get_config", "get_services", "get_states", "frontend/get_themes"), start=1
         ):
             await ws.send_json({"id": msg_id, "type": msg_type})
             reply = await ws.receive_json()
             assert reply.get("success"), (msg_type, reply)
         print("  HA frontend start-up calls answer (get_config, get_services, …)")
 
-        await ws.send_json({"id": 1, "type": "get_panels"})
-        panels = (await ws.receive_json())["result"]
+        await ws.send_json({"id": 10, "type": "get_panels"})
+        reply = await ws.receive_json()
+        assert reply.get("success"), reply
+        panels = reply["result"]
         panel = panels.get("plant-garden")
         assert panel, f"panel missing, got {sorted(panels)}"
         assert panel["title"] == GARDEN_NAME, panel
         module_url: str = panel["config"]["_panel_custom"]["module_url"]
         print(f"  panel registered: /{panel['url_path']} -> {module_url}")
 
-        await ws.send_json({"id": 2, "type": "plant_garden/info"})
+        await ws.send_json({"id": 11, "type": "plant_garden/info"})
         info = await ws.receive_json()
         assert info["success"], info
         print(f"  plant_garden/info: {info['result']}")
@@ -251,6 +254,21 @@ async def check_background_and_markers(
     result = await call(type="plant_garden/layout/set_background", background=image_background)
     assert "authSig=" in result["background"]["url"], result
     print(f"  background: WMS preset, then uploaded image {upload['width_px']}px; marker saved")
+
+    # Move the garden's location 0.001° north and back: the marker keeps its place.
+    origin = result["origin"]
+    moved = await call(
+        type="plant_garden/layout/set_origin",
+        latitude=origin["latitude"] + 0.001,
+        longitude=origin["longitude"],
+    )
+    shifted = next(m for m in moved["markers"] if m["id"] == marker["id"])
+    assert abs(shifted["y"] - (1 + 111.3)) < 0.5, shifted
+    back = await call(type="plant_garden/layout/set_origin", **origin)
+    restored = next(m for m in back["markers"] if m["id"] == marker["id"])
+    assert abs(restored["y"] - 1) < 0.01, restored
+    print("  garden location moved and back; marker stayed in place")
+
     await call(type="plant_garden/layout/markers/delete", marker_id=marker["id"])
     await call(type="plant_garden/layout/set_background", background={"type": "none"})
 

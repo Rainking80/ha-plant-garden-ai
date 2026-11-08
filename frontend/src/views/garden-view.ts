@@ -9,6 +9,7 @@ import {
   mdiLayersOutline,
   mdiMagnify,
   mdiMapMarkerPlusOutline,
+  mdiMapMarkerRadiusOutline,
   mdiMapMarkerRemoveOutline,
   mdiOpenInNew,
   mdiPencilOutline,
@@ -32,6 +33,7 @@ import {
   saveMarker,
   saveShape,
   setBackground,
+  setOrigin,
   updatePlant,
 } from "../api/client";
 import {
@@ -68,6 +70,12 @@ import type {
 } from "../components/garden-canvas";
 import "../components/number-dialog";
 import type { PgNumberDialog } from "../components/number-dialog";
+import "../components/origin-dialog";
+import {
+  formatDistance,
+  type OriginChangeDetail,
+  type PgOriginDialog,
+} from "../components/origin-dialog";
 import { plantPath } from "../components/plant-card";
 import "../components/plant-form";
 import type { PgPlantForm, PlantSavedDetail } from "../components/plant-form";
@@ -76,17 +84,46 @@ import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
 import { sparklinePath } from "../util/chart";
 import { formatAge, formatDate, formatLength, formatNumber } from "../util/format";
-import { area, crownDiameter, distance, snapPoint } from "../util/geometry";
+import {
+  PLAN_EXTENT_M,
+  anchorPoints,
+  area,
+  crownDiameter,
+  distance,
+  insidePlan,
+  snapPoint,
+} from "../util/geometry";
 import { History, type Command } from "../util/history";
 import { markerName, markerValue } from "../util/markers";
 import { navigate } from "../util/navigate";
 import { ulid } from "../util/ulid";
+import { MAX_SUGGESTION_DISTANCE_M } from "../util/upload";
 import { isViewport, type Viewport } from "../util/viewport";
+import { planToGeo, reproject, type GeoOrigin } from "../util/wms";
 import { matchesQuery } from "./plants-view";
 
 const VIEWPORT_KEY = "plant-garden.viewport.v1";
 const SNAP_KEY = "plant-garden.snap.v1";
 const SNAP_STEPS = [0, 0.1, 0.25, 0.5, 1];
+
+/**
+ * From this distance between the view and the garden's location the plan
+ * suggests moving the location (photo GPS suggestions stop working beyond it).
+ */
+const FAR_FROM_ORIGIN_M = MAX_SUGGESTION_DISTANCE_M;
+
+/** Something would land further than PLAN_EXTENT_M from the garden's location. */
+class OutOfPlanError extends Error {}
+
+function checkInsidePlan(...points: Point[]): void {
+  if (!points.every(insidePlan)) throw new OutOfPlanError("out of plan");
+}
+
+function errorCode(err: unknown): string | undefined {
+  return typeof err === "object" && err !== null && "code" in err
+    ? String((err as { code: unknown }).code)
+    : undefined;
+}
 
 /** Drawing order of new shapes: ground cover below, buildings on top. */
 const KIND_Z: Record<ShapeKind, number> = {
@@ -181,6 +218,7 @@ export class PgGardenView extends PgElement {
     _drag: { state: true },
     _historyTick: { state: true },
     _markerHistory: { state: true },
+    _farM: { state: true },
   };
 
   declare store: GardenStore;
@@ -198,6 +236,8 @@ export class PgGardenView extends PgElement {
   declare _drag: TrayDrag | null;
   declare _historyTick: number;
   declare _markerHistory: MarkerHistory | null;
+  /** Distance of the view from the garden's location when that is far (else 0). */
+  declare _farM: number;
 
   private readonly _history = new History();
   private _fitted = false;
@@ -227,6 +267,7 @@ export class PgGardenView extends PgElement {
     this._drag = null;
     this._historyTick = 0;
     this._markerHistory = null;
+    this._farM = 0;
   }
 
   override connectedCallback(): void {
@@ -250,6 +291,7 @@ export class PgGardenView extends PgElement {
     if (saved && this._canvas) {
       this._canvas.viewport = saved;
       this._fitted = true;
+      this._trackDistance(saved);
     }
     this._initViewport();
   }
@@ -341,12 +383,20 @@ export class PgGardenView extends PgElement {
   }
 
   private _showError(err: unknown): void {
-    this._error = this.t("plan.save_failed", { message: errorMessage(err) });
+    const extent = formatDistance(PLAN_EXTENT_M, this.language);
+    if (err instanceof OutOfPlanError) {
+      this._error = this.t("plan.too_far", { extent });
+    } else if (errorCode(err) === "out_of_range") {
+      this._error = this.t("origin.too_far", { extent });
+    } else {
+      this._error = this.t("plan.save_failed", { message: errorMessage(err) });
+    }
     clearTimeout(this._errorTimer);
-    this._errorTimer = setTimeout(() => (this._error = ""), 6000);
+    this._errorTimer = setTimeout(() => (this._error = ""), 8000);
   }
 
   private async _setPosition(plantId: string, position: Point | null): Promise<void> {
+    if (position) checkInsidePlan(position);
     const before = this.store.getPlant(plantId)?.position ?? null;
     this.store.patchPlant(plantId, { position });
     try {
@@ -369,6 +419,7 @@ export class PgGardenView extends PgElement {
   }
 
   private async _putShape(shape: Shape): Promise<void> {
+    checkInsidePlan(...anchorPoints(shape.geometry));
     const before = this.store.getShape(shape.id);
     this.store.putShape(shape);
     try {
@@ -391,6 +442,7 @@ export class PgGardenView extends PgElement {
   }
 
   private async _putMarker(marker: Marker): Promise<void> {
+    checkInsidePlan(marker);
     const before = this.store.getMarker(marker.id);
     this.store.putMarker(marker);
     try {
@@ -413,6 +465,7 @@ export class PgGardenView extends PgElement {
   }
 
   private async _applyBackground(background: Background | null): Promise<void> {
+    if (background?.type === "image") checkInsidePlan(background);
     const before = this._background;
     this.store.setBackground(background);
     try {
@@ -456,6 +509,20 @@ export class PgGardenView extends PgElement {
       run: () => this._applyBackground(to),
       undo: () => this._applyBackground(from),
     });
+  }
+
+  /**
+   * Move the garden's location from `from` to `to`. The view stays on the same
+   * spot of the map; with `moveContent` the drawing travels to the new place.
+   */
+  private async _applyOrigin(from: GeoOrigin, to: GeoOrigin, moveContent: boolean): Promise<void> {
+    const layout = await setOrigin(this.hass, to.latitude, to.longitude, moveContent);
+    await this.store.applyLayout(layout);
+    const canvas = this._canvas;
+    if (!canvas) return;
+    const view = canvas.viewport;
+    const center = reproject(from, to, { x: view.cx, y: view.cy });
+    canvas.centerOn(insidePlan(center) ? center : { x: 0, y: 0 }, view.width);
   }
 
   // ------------------------------------------------------------ canvas events
@@ -600,6 +667,12 @@ export class PgGardenView extends PgElement {
 
   private _onViewport(event: CustomEvent<{ viewport: Viewport }>): void {
     writeStorage(VIEWPORT_KEY, event.detail.viewport);
+    this._trackDistance(event.detail.viewport);
+  }
+
+  private _trackDistance(viewport: Viewport): void {
+    const metres = Math.hypot(viewport.cx, viewport.cy);
+    this._farM = metres > FAR_FROM_ORIGIN_M ? Math.round(metres / 100) * 100 : 0;
   }
 
   private readonly _onKeyDown = (event: KeyboardEvent): void => {
@@ -641,6 +714,26 @@ export class PgGardenView extends PgElement {
 
   private _onBackgroundChange(event: CustomEvent<{ background: Background | null }>): void {
     void this._changeBackground(event.detail.background);
+  }
+
+  private _openOrigin(): void {
+    const origin = this.store?.layout?.origin;
+    const view = this._canvas?.viewport;
+    const center = origin && view ? planToGeo(origin, { x: view.cx, y: view.cy }) : null;
+    this.renderRoot.querySelector<PgOriginDialog>("pg-origin-dialog")?.open(center);
+  }
+
+  private _onOriginChange(event: CustomEvent<OriginChangeDetail>): void {
+    const from = this.store?.layout?.origin;
+    if (!from) return;
+    const { latitude, longitude, moveContent } = event.detail;
+    const to = { latitude, longitude };
+    this._selection = null;
+    void this._execute({
+      label: "origin",
+      run: () => this._applyOrigin(from, to, moveContent),
+      undo: () => this._applyOrigin(to, from, moveContent),
+    });
   }
 
   private _openEntityPicker(): void {
@@ -783,6 +876,11 @@ export class PgGardenView extends PgElement {
         .origin=${this.store?.layout?.origin ?? null}
         @background-change=${this._onBackgroundChange}
       ></pg-background-dialog>
+      <pg-origin-dialog
+        .hass=${this.hass}
+        .origin=${this.store?.layout?.origin ?? null}
+        @origin-change=${this._onOriginChange}
+      ></pg-origin-dialog>
       <pg-entity-picker
         .hass=${this.hass}
         .heading=${this.t("plan.add_marker")}
@@ -862,6 +960,14 @@ export class PgGardenView extends PgElement {
                 >
                   ${icon(mdiLayersOutline)}
                 </button>
+                <button
+                  class="tool"
+                  @click=${this._openOrigin}
+                  aria-label=${t("origin.title")}
+                  title=${t("origin.title")}
+                >
+                  ${icon(mdiMapMarkerRadiusOutline)}
+                </button>
                 ${
                   imageBackground
                     ? html`${this._toolButton("calibrate", mdiRulerSquareCompass, "plan.tool_calibrate")}
@@ -924,6 +1030,7 @@ export class PgGardenView extends PgElement {
   private _renderHint() {
     const { t } = this;
     const armed = this._armed;
+    const editing = this._mode === "edit";
     let text = "";
     if (armed?.kind === "plant") {
       text = t("plan.place_hint", { name: this.store.getPlant(armed.plantId)?.name ?? "" });
@@ -931,16 +1038,21 @@ export class PgGardenView extends PgElement {
       text = t("plan.marker_place_hint", {
         name: markerName(this.hass?.states[armed.entityId], armed.entityId),
       });
-    } else if (this._mode === "edit" && this._tool === "polygon") {
+    } else if (editing && this._farM > PLAN_EXTENT_M) {
+      // drawing here would fail, so this beats the drawing instructions
+      return this._renderFarHint();
+    } else if (editing && this._tool === "polygon") {
       text = t("plan.polygon_hint");
-    } else if (this._mode === "edit" && (this._tool === "rect" || this._tool === "circle")) {
+    } else if (editing && (this._tool === "rect" || this._tool === "circle")) {
       text = t("plan.draw_hint");
-    } else if (this._mode === "edit" && this._tool === "calibrate") {
+    } else if (editing && this._tool === "calibrate") {
       text = t("plan.calibrate_hint");
-    } else if (this._mode === "edit" && this._tool === "background") {
+    } else if (editing && this._tool === "background") {
       text = t("plan.background_hint");
+    } else if (editing && this._farM > 0) {
+      return this._renderFarHint();
     } else if (
-      this._mode === "view" &&
+      !editing &&
       !this._shapes.length &&
       !this._markers.length &&
       !this._plants.some((p) => p.position)
@@ -957,6 +1069,14 @@ export class PgGardenView extends PgElement {
             </button>`
           : nothing
       }
+    </div>`;
+  }
+
+  private _renderFarHint() {
+    const distance = formatDistance(this._farM, this.language);
+    return html`<div class="hint" role="status">
+      <span>${this.t("plan.far_hint", { distance })}</span>
+      <button class="button text" @click=${this._openOrigin}>${this.t("plan.far_action")}</button>
     </div>`;
   }
 

@@ -12,8 +12,10 @@ import {
   WMS_PRESETS,
   geoToPlan,
   getMapRequest,
+  planToGeo,
   planToMercator,
   presetFor,
+  reproject,
   resolveWms,
   toMercator,
 } from "../src/util/wms";
@@ -123,6 +125,25 @@ describe("coordinates", () => {
     expect(suggestedPosition({ latitude: 48.1, longitude: 11.5 }, POTSDAM)).toBeNull();
     expect(suggestedPosition(null, POTSDAM)).toBeNull();
     expect(suggestedPosition({ latitude: 52.4, longitude: 13.06 }, null)).toBeNull();
+  });
+
+  it("converts plan points back to latitude/longitude", () => {
+    const geo = planToGeo(POTSDAM, { x: 67.9, y: -111.3 });
+    expect(geo.latitude).toBeCloseTo(52.401, 5);
+    expect(geo.longitude).toBeCloseTo(13.061, 5);
+    const back = geoToPlan(POTSDAM, geo.latitude, geo.longitude);
+    expect(back.x).toBeCloseTo(67.9, 6);
+    expect(back.y).toBeCloseTo(-111.3, 6);
+  });
+
+  it("reprojects a point for another origin, keeping its place", () => {
+    const other = planToGeo(POTSDAM, { x: 1000, y: -500 });
+    const p = reproject(POTSDAM, other, { x: 1010, y: -490 });
+    expect(p.x).toBeCloseTo(10, 2);
+    expect(p.y).toBeCloseTo(10, 2);
+    const there = reproject(other, POTSDAM, p);
+    expect(there.x).toBeCloseTo(1010, 6);
+    expect(there.y).toBeCloseTo(-490, 6);
   });
 });
 
