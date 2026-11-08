@@ -1,0 +1,64 @@
+# Plant Garden for Home Assistant
+
+> **Status: early development (0.1.0).** The integration installs and adds a sidebar panel; the garden planner, plant journal, water balance and AI features are being built step by step (see [roadmap](#roadmap)).
+
+Plant Garden turns Home Assistant into a garden planner and plant journal:
+
+- **Garden plan** – draw your garden, drag plants and irrigation zones into place, hover a plant to see its photos, water statistics, tasks and problems.
+- **Plants & photos** – document growth and problems with photos for every plant; height and age are tracked over time.
+- **Irrigation tracking** – link drawn zones to your existing `valve`/`switch` entities; every run is attributed to the plants it waters.
+- **Water balance** – rain and evapotranspiration (from your sensors, a weather API or computed with FAO-56) per plant, daily.
+- **AI assistant (bring your own key)** – plant identification, diagnosis of problem photos and care tips via OpenAI, Anthropic Claude, Google Gemini, Mistral, OpenRouter, Azure OpenAI, any OpenAI-compatible endpoint, Ollama, Pl@ntNet or Plant.id – with a page that shows tokens and costs.
+
+Plant Garden never switches your valves; it only reads their state and offers recommendations as entities for your own automations.
+
+## Requirements
+
+- Home Assistant **2026.9.0** or newer
+- [HACS](https://hacs.xyz)
+
+## Installation (HACS custom repository)
+
+1. HACS → ⋮ → **Custom repositories** → add `https://github.com/GITHUB_USER/ha-plant-maintainance`, category **Integration**.
+2. Install **Plant Garden**, restart Home Assistant.
+3. **Settings → Devices & services → Add integration → Plant Garden**, choose a name for your garden.
+4. Open the new sidebar entry.
+
+## Roadmap
+
+| Milestone | Content | State |
+|---|---|---|
+| M0 | Scaffolding, CI, dev environment, sidebar panel | ✅ |
+| M1 | Plants, photos, storage | ⏳ |
+| M2 | AI providers, identification, token & cost page | |
+| M3 | Graphical garden editor | |
+| M4 | Irrigation zones linked to HA entities | |
+| M5 | Weather, evapotranspiration, water balance | |
+| M6 | Assistant: tasks, problems, questions, tips | |
+| M7 | Polish & release 1.0 | |
+
+## Development
+
+Home Assistant does not run natively on Windows; use Linux, WSL2 or the devcontainer.
+
+```bash
+bash scripts/setup              # Python venv (outside the repo) + npm packages
+bash scripts/test               # backend tests with coverage
+bash scripts/test-min-version   # backend tests against the oldest supported HA
+bash scripts/lint               # ruff, mypy, eslint, prettier, tsc (--fix to apply fixes)
+bash scripts/develop            # local HA with the demo garden on http://localhost:8123
+bash scripts/smoke              # end-to-end check against a throw-away HA
+cd frontend && npm run dev      # rebuild the panel on every change
+```
+
+Alternatively `docker compose up` starts Home Assistant with the integration mounted.
+
+Architecture and design decisions: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/DECISIONS.md](docs/DECISIONS.md).
+
+## Deutsch
+
+Plant Garden ist ein Gartenplaner und Pflanzentagebuch für Home Assistant: Grundriss zeichnen, Pflanzen und Bewässerungszonen per Drag-and-drop platzieren, Fotos dokumentieren, Wasserbilanz aus Regen, Verdunstung und Bewässerung, dazu ein KI-Assistent mit eigenem API-Key und einer Übersicht über Tokens und Kosten. Installation über HACS als benutzerdefiniertes Repository (siehe oben), mindestens Home Assistant 2026.9.0.
+
+## License
+
+MIT

@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up your garden",
+        "description": "Plant Garden adds a garden planner to the sidebar. AI providers and weather sources can be added later.",
+        "data": {
+          "garden_name": "Garden name"
+        },
+        "data_description": {
+          "garden_name": "Shown in the sidebar and on the garden device."
+        }
+      }
+    },
+    "error": {
+      "name_required": "Please enter a name."
+    },
+    "abort": {
+      "single_instance_allowed": "Plant Garden is already set up."
+    }
+  }
+}

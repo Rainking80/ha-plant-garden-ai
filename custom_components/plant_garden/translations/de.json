@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garten einrichten",
+        "description": "Plant Garden fügt der Seitenleiste einen Gartenplaner hinzu. KI-Anbieter und Wetterquellen kannst du später ergänzen.",
+        "data": {
+          "garden_name": "Name des Gartens"
+        },
+        "data_description": {
+          "garden_name": "Wird in der Seitenleiste und am Garten-Gerät angezeigt."
+        }
+      }
+    },
+    "error": {
+      "name_required": "Bitte gib einen Namen ein."
+    },
+    "abort": {
+      "single_instance_allowed": "Plant Garden ist bereits eingerichtet."
+    }
+  }
+}

@@ -1,0 +1,19 @@
+# Alternative to scripts/develop for machines with Docker.
+#   docker compose up        -> http://localhost:8123
+# The integration is mounted read-only; restart the container after code changes.
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+    environment:
+      TZ: Europe/Berlin
+    volumes:
+      - ha-config:/config
+      - ./dev/configuration.yaml:/config/configuration.yaml:ro
+      - ./dev/demo_garden.yaml:/config/demo_garden.yaml:ro
+      - ./custom_components/plant_garden:/config/custom_components/plant_garden:ro
+
+volumes:
+  ha-config:

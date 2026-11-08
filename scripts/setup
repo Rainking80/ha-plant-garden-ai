@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Install Python and frontend dev dependencies (Linux, WSL2 or devcontainer).
+set -euo pipefail
+source "$(dirname "$0")/env.sh"
+cd "$REPO_ROOT"
+
+uv sync --frozen 2>/dev/null || uv sync
+(cd frontend && npm ci 2>/dev/null || npm install)
+echo "Setup fertig. Python-venv: $UV_PROJECT_ENVIRONMENT"

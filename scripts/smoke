@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Start a throw-away Home Assistant, run scripts/smoke.py against it, stop it.
+set -euo pipefail
+source "$(dirname "$0")/env.sh"
+cd "$REPO_ROOT"
+
+export HA_DEV_CONFIG
+HA_DEV_CONFIG="$(mktemp -d -t plant-garden-smoke-XXXX)"
+LOG="$HA_DEV_CONFIG/smoke-ha.log"
+
+bash scripts/develop >"$LOG" 2>&1 &
+HA_PID=$!
+cleanup() {
+  kill "$HA_PID" 2>/dev/null || true
+  wait "$HA_PID" 2>/dev/null || true
+}
+trap cleanup EXIT
+
+if ! uv run --frozen python scripts/smoke.py "http://localhost:8123"; then
+  echo "---- letzte Zeilen aus dem HA-Log ($LOG) ----"
+  tail -n 60 "$LOG"
+  exit 1
+fi
+echo "Plant-Garden-Meldungen im HA-Log:"
+grep -i "plant_garden" "$LOG" | grep -v "DEBUG" | tail -n 20 || echo "  (keine Warnungen oder Fehler)"

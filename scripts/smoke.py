@@ -1,0 +1,120 @@
+"""End-to-end smoke test against a running, *fresh* Home Assistant instance.
+
+Onboards HA through its HTTP API, adds Plant Garden through the real config flow
+and checks that the panel is registered, the bundle is served and the panel's
+WebSocket command answers. Started by scripts/smoke; can also be run on its own:
+
+    python scripts/smoke.py http://localhost:8123
+"""
+
+from __future__ import annotations
+
+import asyncio
+import sys
+
+import aiohttp
+
+CLIENT_ID = "http://localhost/"  # any URL works for the onboarding client
+GARDEN_NAME = "Demo-Garten"
+START_TIMEOUT = 600  # first start installs integration requirements
+
+
+async def wait_for_ha(session: aiohttp.ClientSession, base: str) -> None:
+    while True:
+        try:
+            async with session.get(f"{base}/api/onboarding") as resp:
+                if resp.status == 200:
+                    return
+        except aiohttp.ClientError:
+            pass
+        await asyncio.sleep(2)
+
+
+async def onboard(session: aiohttp.ClientSession, base: str) -> str:
+    async with session.post(
+        f"{base}/api/onboarding/users",
+        json={
+            "client_id": CLIENT_ID,
+            "name": "Smoke Test",
+            "username": "smoke",
+            "password": "smoke-test-password",
+            "language": "de",
+        },
+    ) as resp:
+        resp.raise_for_status()
+        auth_code = (await resp.json())["auth_code"]
+    async with session.post(
+        f"{base}/auth/token",
+        data={"grant_type": "authorization_code", "code": auth_code, "client_id": CLIENT_ID},
+    ) as resp:
+        resp.raise_for_status()
+        token: str = (await resp.json())["access_token"]
+    return token
+
+
+async def add_garden(session: aiohttp.ClientSession, base: str, headers: dict[str, str]) -> None:
+    async with session.post(
+        f"{base}/api/config/config_entries/flow",
+        json={"handler": "plant_garden", "show_advanced_options": False},
+        headers=headers,
+    ) as resp:
+        resp.raise_for_status()
+        flow = await resp.json()
+    assert flow["type"] == "form", flow
+    async with session.post(
+        f"{base}/api/config/config_entries/flow/{flow['flow_id']}",
+        json={"garden_name": GARDEN_NAME},
+        headers=headers,
+    ) as resp:
+        resp.raise_for_status()
+        result = await resp.json()
+    assert result["type"] == "create_entry", result
+    print(f"  config entry created: {result['title']}")
+
+
+async def check_websocket(session: aiohttp.ClientSession, base: str, token: str) -> str:
+    ws_url = base.replace("http", "ws", 1) + "/api/websocket"
+    async with session.ws_connect(ws_url) as ws:
+        assert (await ws.receive_json())["type"] == "auth_required"
+        await ws.send_json({"type": "auth", "access_token": token})
+        assert (await ws.receive_json())["type"] == "auth_ok"
+
+        await ws.send_json({"id": 1, "type": "get_panels"})
+        panels = (await ws.receive_json())["result"]
+        panel = panels.get("plant-garden")
+        assert panel, f"panel missing, got {sorted(panels)}"
+        assert panel["title"] == GARDEN_NAME, panel
+        module_url: str = panel["config"]["_panel_custom"]["module_url"]
+        print(f"  panel registered: /{panel['url_path']} -> {module_url}")
+
+        await ws.send_json({"id": 2, "type": "plant_garden/info"})
+        info = await ws.receive_json()
+        assert info["success"], info
+        print(f"  plant_garden/info: {info['result']}")
+        return module_url
+
+
+async def check_bundle(session: aiohttp.ClientSession, base: str, module_url: str) -> None:
+    async with session.get(f"{base}{module_url}") as resp:
+        assert resp.status == 200, resp.status
+        body = await resp.text()
+        assert "plant-garden-panel" in body
+        print(f"  bundle served: {len(body)} bytes, {resp.headers.get('Content-Type')}")
+
+
+async def main(base: str) -> None:
+    async with aiohttp.ClientSession() as session:
+        print(f"waiting for {base} ...")
+        async with asyncio.timeout(START_TIMEOUT):
+            await wait_for_ha(session, base)
+        token = await onboard(session, base)
+        print("  onboarding done")
+        headers = {"Authorization": f"Bearer {token}"}
+        await add_garden(session, base, headers)
+        module_url = await check_websocket(session, base, token)
+        await check_bundle(session, base, module_url)
+    print("SMOKE TEST OK")
+
+
+if __name__ == "__main__":
+    asyncio.run(main(sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8123"))

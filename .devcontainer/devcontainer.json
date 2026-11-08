@@ -1,0 +1,26 @@
+{
+  "name": "Plant Garden",
+  "image": "mcr.microsoft.com/devcontainers/python:3.14",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "24" }
+  },
+  "postCreateCommand": "pip install --user uv && bash scripts/setup",
+  "forwardPorts": [8123],
+  "portsAttributes": { "8123": { "label": "Home Assistant" } },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "ms-python.mypy-type-checker",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "runem.lit-plugin"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/home/vscode/.venvs/ha-plant-garden/bin/python",
+        "python.testing.pytestEnabled": true
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Run the Python test suite. Extra arguments are passed to pytest.
+set -euo pipefail
+source "$(dirname "$0")/env.sh"
+cd "$REPO_ROOT"
+uv run --frozen pytest --cov --cov-report=term-missing "$@"

@@ -1,0 +1,31 @@
+# Simulated irrigation hardware for the demo garden.
+# Toggle these entities in the HA UI to test irrigation tracking without real valves.
+input_boolean:
+  demo_zone_lawn:
+    name: Demo Regner Rasen
+    icon: mdi:sprinkler
+  demo_zone_bed_south:
+    name: Demo Sprühdüsen Beet Süd
+    icon: mdi:sprinkler-variant
+  demo_zone_hedge:
+    name: Demo Tropfschlauch Hecke
+    icon: mdi:water-pump
+  demo_zone_raised_bed_state:
+    name: Demo Hochbeet (interner Zustand)
+    icon: mdi:toggle-switch-variant
+
+# A switch entity, because many irrigation integrations expose switches.
+template:
+  - switch:
+      - name: Demo Ventil Hochbeet
+        unique_id: plant_garden_demo_valve_raised_bed
+        icon: mdi:valve
+        state: "{{ is_state('input_boolean.demo_zone_raised_bed_state', 'on') }}"
+        turn_on:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.demo_zone_raised_bed_state
+        turn_off:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.demo_zone_raised_bed_state

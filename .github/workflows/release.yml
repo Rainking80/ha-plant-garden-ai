@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    uses: ./.github/workflows/python.yml
+
+  frontend:
+    uses: ./.github/workflows/frontend.yml
+
+  release:
+    name: GitHub release
+    needs: [python, frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+      - name: Versions match the tag
+        run: uv run --no-project python scripts/check_versions.py --tag "$GITHUB_REF_NAME"
+      - name: Release notes from CHANGELOG.md
+        run: uv run --no-project python scripts/check_versions.py --changelog "${GITHUB_REF_NAME#v}" > notes.md
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md --verify-tag

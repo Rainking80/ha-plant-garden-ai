@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Start a local Home Assistant with the integration and the demo garden.
+# Works on Linux, in WSL2 and in the devcontainer. Open http://localhost:8123.
+#
+# The HA config directory lives outside the repo (default ~/.ha-plant-garden-dev)
+# so that HA's database and .storage never end up in git. The integration and the
+# YAML files are symlinked, so code changes only need an HA restart.
+set -euo pipefail
+source "$(dirname "$0")/env.sh"
+cd "$REPO_ROOT"
+
+CONFIG_DIR="${HA_DEV_CONFIG:-$HOME/.ha-plant-garden-dev}"
+mkdir -p "$CONFIG_DIR/custom_components"
+ln -sfn "$REPO_ROOT/custom_components/plant_garden" "$CONFIG_DIR/custom_components/plant_garden"
+ln -sfn "$REPO_ROOT/dev/configuration.yaml" "$CONFIG_DIR/configuration.yaml"
+ln -sfn "$REPO_ROOT/dev/demo_garden.yaml" "$CONFIG_DIR/demo_garden.yaml"
+
+if [[ ! -f custom_components/plant_garden/frontend/plant-garden-panel.js ]]; then
+  echo "Frontend-Bundle fehlt, baue es ..."
+  (cd frontend && npm run build)
+fi
+
+echo "Home Assistant startet mit Konfiguration in $CONFIG_DIR"
+exec uv run --frozen hass --config "$CONFIG_DIR" "$@"

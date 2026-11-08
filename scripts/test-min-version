@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Run the test suite against the oldest supported Home Assistant (see hacs.json).
+# Uses a separate virtualenv so the main dev environment stays untouched.
+set -euo pipefail
+source "$(dirname "$0")/env.sh"
+cd "$REPO_ROOT"
+
+# pytest-homeassistant-custom-component release that pins homeassistant==2026.9.0
+PHCC_VERSION="0.13.363"
+VENV="${MIN_VERSION_VENV:-$HOME/.venvs/ha-plant-garden-min}"
+
+uv venv --quiet --allow-existing --python 3.14 "$VENV"
+uv pip install --quiet --python "$VENV/bin/python" "pytest-homeassistant-custom-component==$PHCC_VERSION"
+
+# The frontend integration is a dependency of ours; install the frontend
+# package version that this HA release expects.
+FRONTEND_REQ="$("$VENV/bin/python" - <<'PY'
+import json, pathlib
+import homeassistant.components.frontend as frontend
+manifest = json.loads((pathlib.Path(frontend.__file__).parent / "manifest.json").read_text())
+print(manifest["requirements"][0])
+PY
+)"
+uv pip install --quiet --python "$VENV/bin/python" "$FRONTEND_REQ"
+
+echo "Teste gegen $("$VENV/bin/python" -c 'from homeassistant.const import __version__; print(__version__)')"
+"$VENV/bin/python" -m pytest -p no:cacheprovider "$@"
