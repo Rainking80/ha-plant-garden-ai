@@ -31,13 +31,19 @@
           "ai_budget_stop": "KI-Aufrufe stoppen, wenn das Budget verbraucht ist",
           "usd_eur": "Fester Kurs US-Dollar zu Euro (0 = in Dollar anzeigen)",
           "ai_debug": "Prompts und Antworten im KI-Protokoll speichern",
-          "ai_retention_days": "Einzelne KI-Aufrufe aufbewahren für"
+          "ai_retention_days": "Einzelne KI-Aufrufe aufbewahren für",
+          "weekly_check": "Wöchentlicher Garten-Check durch die KI",
+          "context_tokens_diagnose": "Kontextgröße für Diagnosen",
+          "context_tokens_tips": "Kontextgröße für Tipps",
+          "context_tokens_chat": "Kontextgröße für den Chat"
         },
         "data_description": {
           "max_runtime_hours": "Läuft eine Bewässerungszone länger, erscheint ein Hinweis unter Reparaturen (z. B. ein hängendes Ventil).",
           "ai_budget": "In Euro, wenn ein Kurs gesetzt ist, sonst in US-Dollar. Bei 80 % erscheint ein Hinweis.",
           "ai_debug": "Nur zur Fehlersuche; Prompts können Angaben zu Pflanzen enthalten.",
-          "ai_retention_days": "Ältere Aufrufe bleiben als Tagessummen erhalten."
+          "ai_retention_days": "Ältere Aufrufe bleiben als Tagessummen erhalten.",
+          "weekly_check": "Jeden Montag um 8 Uhr schaut sich die KI den Garten an und gibt Tipps. Kostet Geld; das Budget gilt.",
+          "context_tokens_diagnose": "Ungefähr so viele Tokens Gartendaten darf die KI bekommen (Wetter, Wasserbilanz, Aufgaben, Probleme). Mehr Kontext kostet mehr."
         }
       }
     }
@@ -82,6 +88,19 @@
       },
       "ai_requests_today": {
         "name": "KI-Anfragen heute"
+      },
+      "open_tasks": {
+        "name": "Offene Aufgaben"
+      },
+      "health": {
+        "name": "Gesundheit",
+        "state": {
+          "healthy": "Gesund",
+          "watch": "Beobachten",
+          "problem": "Problem",
+          "dead": "Eingegangen",
+          "removed": "Entfernt"
+        }
       }
     },
     "binary_sensor": {
@@ -90,6 +109,14 @@
       },
       "irrigation_recommended": {
         "name": "Bewässerung empfohlen"
+      },
+      "problem": {
+        "name": "Problem"
+      }
+    },
+    "todo": {
+      "tasks": {
+        "name": "Gartenaufgaben"
       }
     }
   },
@@ -125,6 +152,12 @@
     },
     "ai_failed": {
       "message": "Der KI-Aufruf ist fehlgeschlagen: {error}"
+    },
+    "photo_source": {
+      "message": "Gib entweder einen Dateipfad oder eine Kamera an, nicht beides."
+    },
+    "path_not_allowed": {
+      "message": "{path} liegt nicht in einem Ordner, den Home Assistant lesen darf (allowlist_external_dirs)."
     }
   },
   "services": {
@@ -165,6 +198,80 @@
         "photos": {
           "name": "Fotos",
           "description": "Wie viele der neuesten Fotos (1 bis 3)."
+        }
+      }
+    },
+    "ask_assistant": {
+      "name": "Gartenassistent fragen",
+      "description": "Stellt der KI eine Frage zum Garten oder zu einer Pflanze. Die Antwort wird zurückgegeben und im Chatverlauf gespeichert. Kostet Geld; das Budget gilt.",
+      "fields": {
+        "question": {
+          "name": "Frage",
+          "description": "Was du wissen möchtest."
+        },
+        "device_id": {
+          "name": "Pflanze",
+          "description": "Frage zu dieser Pflanze (sonst zum ganzen Garten)."
+        }
+      }
+    },
+    "create_task": {
+      "name": "Aufgabe anlegen",
+      "description": "Legt eine Gartenaufgabe an; sie erscheint auch in der To-do-Liste Gartenaufgaben.",
+      "fields": {
+        "title": {
+          "name": "Titel",
+          "description": "Was zu tun ist."
+        },
+        "kind": {
+          "name": "Art",
+          "description": "Art der Arbeit."
+        },
+        "device_id": {
+          "name": "Pflanze",
+          "description": "Die Pflanze, um die es geht."
+        },
+        "due": {
+          "name": "Fällig",
+          "description": "Tag, an dem sie fällig ist."
+        },
+        "repeat_every": {
+          "name": "Wiederholen alle",
+          "description": "Nach so vielen Tagen oder Wochen wiederholen (ab Erledigung gezählt)."
+        },
+        "repeat_unit": {
+          "name": "Einheit",
+          "description": "Tage oder Wochen."
+        },
+        "notes": {
+          "name": "Notizen",
+          "description": "Details."
+        }
+      }
+    },
+    "add_photo": {
+      "name": "Foto hinzufügen",
+      "description": "Fügt einer Pflanze ein Foto aus einer Datei oder einem Kamera-Schnappschuss hinzu. Mit dem Tag problem wird ein Problem geöffnet.",
+      "fields": {
+        "device_id": {
+          "name": "Pflanze",
+          "description": "Die Pflanze auf dem Foto."
+        },
+        "file_path": {
+          "name": "Datei",
+          "description": "Pfad einer JPEG-, PNG-, WebP- oder HEIC-Datei in einem Ordner, den Home Assistant lesen darf."
+        },
+        "camera_entity_id": {
+          "name": "Kamera",
+          "description": "Stattdessen einen Schnappschuss dieser Kamera nehmen."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "z. B. problem, blüte."
+        },
+        "note": {
+          "name": "Notiz",
+          "description": "Eine kurze Notiz."
         }
       }
     }
@@ -291,6 +398,24 @@
         "ollama": "Ollama (lokal)",
         "lmstudio": "LM Studio (lokal)",
         "custom": "Anderer Server"
+      }
+    },
+    "task_kind": {
+      "options": {
+        "water": "Gießen",
+        "fertilize": "Düngen",
+        "prune": "Schneiden",
+        "repot": "Umtopfen",
+        "pest_check": "Schädlingskontrolle",
+        "harvest": "Ernten",
+        "photo": "Foto machen",
+        "other": "Sonstiges"
+      }
+    },
+    "repeat_unit": {
+      "options": {
+        "days": "Tage",
+        "weeks": "Wochen"
       }
     }
   }

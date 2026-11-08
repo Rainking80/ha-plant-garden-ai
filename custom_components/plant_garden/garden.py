@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from functools import partial
@@ -109,6 +109,13 @@ class GardenManager:
         self._plants: dict[str, Plant] = {}
         self._layout = Layout()
         self._listeners: list[Callable[[GardenChange], None]] = []
+        # awaited after a photo was added or changed (the assistant opens problems)
+        self.photo_hooks: list[Callable[[Photo], Awaitable[None]]] = []
+
+    @property
+    def db(self) -> GardenDatabase:
+        """The SQLite database, for modules that own tables of their own (care.py)."""
+        return self._db
 
     # ------------------------------------------------------------ lifecycle
     async def async_setup(self) -> None:
@@ -402,6 +409,11 @@ class GardenManager:
         """An AI call was logged or an identification of a plant changed."""
         self._notify("ai", plant_id)
 
+    @callback
+    def notify_care(self, plant_id: str | None = None) -> None:
+        """Tasks, problems, questions or the chat changed."""
+        self._notify("care", plant_id)
+
     # ------------------------------------------------------------ AI usage log
     async def async_insert_usage(self, row: dict[str, Any]) -> None:
         await self.hass.async_add_executor_job(self._db.insert_usage, row)
@@ -604,7 +616,15 @@ class GardenManager:
             await self.hass.async_add_executor_job(self._files.delete, plant_id, photo.id)
             raise
         self._notify("plant", plant_id)
+        await self._run_photo_hooks(photo)
         return photo
+
+    async def _run_photo_hooks(self, photo: Photo) -> None:
+        for hook in list(self.photo_hooks):
+            try:
+                await hook(photo)
+            except Exception:
+                _LOGGER.exception("Photo hook failed for %s", photo.id)
 
     async def async_get_photo(self, photo_id: str) -> Photo:
         photo = await self.hass.async_add_executor_job(self._db.get_photo, photo_id)
@@ -626,6 +646,7 @@ class GardenManager:
             photo.note = changes["note"].strip()
         await self.hass.async_add_executor_job(self._db.update_photo, photo)
         self._notify("plant", photo.plant_id)
+        await self._run_photo_hooks(photo)
         return photo
 
     async def async_delete_photo(self, photo_id: str) -> None:

@@ -22,6 +22,14 @@ import type {
   PlantFields,
   Point,
   Shape,
+  CareSummary,
+  ChatMessage,
+  Problem,
+  ProblemDetail,
+  Question,
+  Task,
+  TaskFields,
+  TipsRecord,
 } from "./types";
 
 export const WS_PREFIX = "plant_garden";
@@ -446,4 +454,202 @@ export function testProvider(
 
 export function techInfo(hass: HomeAssistant): Promise<TechInfo> {
   return hass.callWS<TechInfo>({ type: `${WS_PREFIX}/tech/info` });
+}
+
+// ------------------------------------------------------------ assistant: tasks
+export function careSummary(hass: HomeAssistant): Promise<CareSummary> {
+  return hass.callWS<CareSummary>({ type: `${WS_PREFIX}/care/summary` });
+}
+
+export async function listTasks(hass: HomeAssistant, plantId?: string): Promise<Task[]> {
+  const result = await hass.callWS<{ tasks: Task[] }>({
+    type: `${WS_PREFIX}/tasks/list`,
+    ...(plantId ? { plant_id: plantId } : {}),
+  });
+  return result.tasks;
+}
+
+export function createTask(
+  hass: HomeAssistant,
+  fields: TaskFields & { title: string },
+): Promise<Task> {
+  return hass.callWS<Task>({ type: `${WS_PREFIX}/tasks/create`, ...fields });
+}
+
+export function updateTask(hass: HomeAssistant, taskId: string, fields: TaskFields): Promise<Task> {
+  return hass.callWS<Task>({ type: `${WS_PREFIX}/tasks/update`, task_id: taskId, ...fields });
+}
+
+export function completeTask(hass: HomeAssistant, taskId: string): Promise<{ next: Task | null }> {
+  return hass.callWS({ type: `${WS_PREFIX}/tasks/complete`, task_id: taskId });
+}
+
+export function reopenTask(hass: HomeAssistant, taskId: string): Promise<Task> {
+  return hass.callWS<Task>({ type: `${WS_PREFIX}/tasks/reopen`, task_id: taskId });
+}
+
+export async function deleteTask(hass: HomeAssistant, taskId: string): Promise<void> {
+  await hass.callWS<null>({ type: `${WS_PREFIX}/tasks/delete`, task_id: taskId });
+}
+
+// ------------------------------------------------------------ assistant: problems
+export async function listProblems(
+  hass: HomeAssistant,
+  filter: { plantId?: string; activeOnly?: boolean } = {},
+): Promise<Problem[]> {
+  const result = await hass.callWS<{ problems: Problem[] }>({
+    type: `${WS_PREFIX}/problems/list`,
+    ...(filter.plantId ? { plant_id: filter.plantId } : {}),
+    active_only: filter.activeOnly ?? false,
+  });
+  return result.problems;
+}
+
+export function getProblem(hass: HomeAssistant, problemId: string): Promise<ProblemDetail> {
+  return hass.callWS<ProblemDetail>({ type: `${WS_PREFIX}/problems/get`, problem_id: problemId });
+}
+
+export function createProblem(
+  hass: HomeAssistant,
+  fields: { plant_id: string; title: string; note?: string; photo_ids?: string[] },
+): Promise<ProblemDetail> {
+  return hass.callWS<ProblemDetail>({ type: `${WS_PREFIX}/problems/create`, ...fields });
+}
+
+export function updateProblem(
+  hass: HomeAssistant,
+  problemId: string,
+  fields: { title?: string; status?: string },
+): Promise<ProblemDetail> {
+  return hass.callWS<ProblemDetail>({
+    type: `${WS_PREFIX}/problems/update`,
+    problem_id: problemId,
+    ...fields,
+  });
+}
+
+export function logProblem(
+  hass: HomeAssistant,
+  problemId: string,
+  kind: "note" | "action",
+  text: string,
+): Promise<ProblemDetail> {
+  return hass.callWS<ProblemDetail>({
+    type: `${WS_PREFIX}/problems/log`,
+    problem_id: problemId,
+    kind,
+    text,
+  });
+}
+
+export async function deleteProblem(hass: HomeAssistant, problemId: string): Promise<void> {
+  await hass.callWS<null>({ type: `${WS_PREFIX}/problems/delete`, problem_id: problemId });
+}
+
+export function diagnoseProblem(hass: HomeAssistant, problemId: string): Promise<ProblemDetail> {
+  return hass.callWS<ProblemDetail>({
+    type: `${WS_PREFIX}/problems/diagnose`,
+    problem_id: problemId,
+  });
+}
+
+// ------------------------------------------------------------ assistant: questions, tips, chat
+export async function listQuestions(hass: HomeAssistant, plantId?: string): Promise<Question[]> {
+  const result = await hass.callWS<{ questions: Question[] }>({
+    type: `${WS_PREFIX}/questions/list`,
+    ...(plantId ? { plant_id: plantId } : {}),
+  });
+  return result.questions;
+}
+
+export function answerQuestion(
+  hass: HomeAssistant,
+  questionId: string,
+  answer: { answer?: string; dismiss?: boolean },
+): Promise<Question> {
+  return hass.callWS<Question>({
+    type: `${WS_PREFIX}/questions/answer`,
+    question_id: questionId,
+    ...answer,
+  });
+}
+
+const plantArg = (plantId: string | null | undefined) => (plantId ? { plant_id: plantId } : {});
+
+export function getTips(hass: HomeAssistant, plantId?: string | null): Promise<TipsRecord | null> {
+  return hass.callWS<TipsRecord | null>({
+    type: `${WS_PREFIX}/assistant/tips`,
+    ...plantArg(plantId),
+  });
+}
+
+export function createTips(hass: HomeAssistant, plantId?: string | null): Promise<TipsRecord> {
+  return hass.callWS<TipsRecord>({
+    type: `${WS_PREFIX}/assistant/tips/create`,
+    ...plantArg(plantId),
+  });
+}
+
+export function decideTip(
+  hass: HomeAssistant,
+  plantId: string | null | undefined,
+  tipId: string,
+  accept: boolean,
+): Promise<TipsRecord> {
+  return hass.callWS<TipsRecord>({
+    type: `${WS_PREFIX}/assistant/tips/decide`,
+    ...plantArg(plantId),
+    tip_id: tipId,
+    accept,
+  });
+}
+
+export async function chatHistory(
+  hass: HomeAssistant,
+  plantId?: string | null,
+): Promise<ChatMessage[]> {
+  const result = await hass.callWS<{ messages: ChatMessage[] }>({
+    type: `${WS_PREFIX}/assistant/chat/history`,
+    ...plantArg(plantId),
+  });
+  return result.messages;
+}
+
+export async function clearChat(hass: HomeAssistant, plantId?: string | null): Promise<void> {
+  await hass.callWS<null>({ type: `${WS_PREFIX}/assistant/chat/clear`, ...plantArg(plantId) });
+}
+
+export type ChatEvent =
+  { delta: string } | { done: true; message: ChatMessage } | { error: string; code: string };
+
+/**
+ * Ask the assistant; `onEvent` gets the answer piece by piece (`delta`), then
+ * `done` or `error`. Resolves when the answer is complete.
+ */
+export async function askAssistant(
+  hass: HomeAssistant,
+  plantId: string | null | undefined,
+  text: string,
+  onDelta: (text: string) => void,
+): Promise<ChatMessage> {
+  let unsubscribe: (() => Promise<void>) | undefined;
+  try {
+    return await new Promise<ChatMessage>((resolve, reject) => {
+      hass.connection
+        .subscribeMessage<ChatEvent>(
+          (event) => {
+            if ("delta" in event) onDelta(event.delta);
+            else if ("done" in event) resolve(event.message);
+            else reject(Object.assign(new Error(event.error), { code: event.code }));
+          },
+          { type: `${WS_PREFIX}/assistant/chat`, ...plantArg(plantId), text },
+        )
+        .then((unsub) => {
+          unsubscribe = unsub;
+        }, reject);
+    });
+  } finally {
+    // the backend ends the subscription itself; this only cleans up the client side
+    void unsubscribe?.().catch(() => undefined);
+  }
 }

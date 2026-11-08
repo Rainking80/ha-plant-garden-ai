@@ -44,3 +44,86 @@ identify_plant:
           min: 1
           max: 3
           mode: box
+
+ask_assistant:
+  fields:
+    question:
+      required: true
+      selector:
+        text:
+          multiline: true
+    device_id:
+      selector:
+        device:
+          filter:
+            - integration: plant_garden
+
+create_task:
+  fields:
+    title:
+      required: true
+      selector:
+        text:
+    kind:
+      default: other
+      selector:
+        select:
+          translation_key: task_kind
+          options:
+            - water
+            - fertilize
+            - prune
+            - repot
+            - pest_check
+            - harvest
+            - photo
+            - other
+    device_id:
+      selector:
+        device:
+          filter:
+            - integration: plant_garden
+    due:
+      selector:
+        date:
+    repeat_every:
+      selector:
+        number:
+          min: 1
+          max: 365
+          mode: box
+    repeat_unit:
+      default: days
+      selector:
+        select:
+          translation_key: repeat_unit
+          options:
+            - days
+            - weeks
+    notes:
+      selector:
+        text:
+          multiline: true
+
+add_photo:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          filter:
+            - integration: plant_garden
+    file_path:
+      selector:
+        text:
+    camera_entity_id:
+      selector:
+        entity:
+          domain: camera
+    tags:
+      selector:
+        text:
+          multiple: true
+    note:
+      selector:
+        text:

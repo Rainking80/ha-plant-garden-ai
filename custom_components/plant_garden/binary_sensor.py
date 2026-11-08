@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from homeassistant.components.binary_sensor import BinarySensorEntity, BinarySensorEntityDescription
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+    BinarySensorEntityDescription,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -22,6 +26,13 @@ NEEDS_WATER = GardenBinarySensorDescription(
     translation_key="needs_water",
     item=PLANT,
     value=lambda stats: stats.get("needs_water"),
+)
+PROBLEM = GardenBinarySensorDescription(
+    key="problem",
+    translation_key="problem",
+    item=PLANT,
+    device_class=BinarySensorDeviceClass.PROBLEM,
+    value=lambda stats: stats.get("problem") is not None,
 )
 IRRIGATION_RECOMMENDED = GardenBinarySensorDescription(
     key="irrigation_recommended",
@@ -49,7 +60,10 @@ async def async_setup_entry(
         hass,
         entry,
         async_add_entities,
-        lambda plant_id, info: [GardenBinarySensor(entry, plant_id, info, NEEDS_WATER)],
+        lambda plant_id, info: [
+            GardenBinarySensor(entry, plant_id, info, description)
+            for description in (NEEDS_WATER, PROBLEM)
+        ],
         lambda zone_id, info: [GardenBinarySensor(entry, zone_id, info, IRRIGATION_RECOMMENDED)],
         manage_devices=False,
     )

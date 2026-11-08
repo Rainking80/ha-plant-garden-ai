@@ -31,13 +31,19 @@
           "ai_budget_stop": "Stop AI calls when the budget is used up",
           "usd_eur": "Fixed rate US dollar to euro (0 = show dollars)",
           "ai_debug": "Store prompts and answers in the AI log",
-          "ai_retention_days": "Keep single AI calls for"
+          "ai_retention_days": "Keep single AI calls for",
+          "weekly_check": "Weekly garden check by the AI",
+          "context_tokens_diagnose": "Context size for diagnoses",
+          "context_tokens_tips": "Context size for tips",
+          "context_tokens_chat": "Context size for the chat"
         },
         "data_description": {
           "max_runtime_hours": "If an irrigation zone runs longer, a notice appears under Repairs (e.g. a stuck valve).",
           "ai_budget": "In euros when a rate is set, else in US dollars. A notice appears at 80 %.",
           "ai_debug": "For troubleshooting only; prompts can contain plant details.",
-          "ai_retention_days": "Older calls are kept as daily sums."
+          "ai_retention_days": "Older calls are kept as daily sums.",
+          "weekly_check": "Every Monday at 8:00 the AI looks at the garden and gives tips. Costs money; the budget applies.",
+          "context_tokens_diagnose": "Roughly how many tokens of garden data the AI may receive (weather, water balance, tasks, problems). More context costs more."
         }
       }
     }
@@ -82,6 +88,19 @@
       },
       "ai_requests_today": {
         "name": "AI requests today"
+      },
+      "open_tasks": {
+        "name": "Open tasks"
+      },
+      "health": {
+        "name": "Health",
+        "state": {
+          "healthy": "Healthy",
+          "watch": "Watch",
+          "problem": "Problem",
+          "dead": "Dead",
+          "removed": "Removed"
+        }
       }
     },
     "binary_sensor": {
@@ -90,6 +109,14 @@
       },
       "irrigation_recommended": {
         "name": "Irrigation recommended"
+      },
+      "problem": {
+        "name": "Problem"
+      }
+    },
+    "todo": {
+      "tasks": {
+        "name": "Garden tasks"
       }
     }
   },
@@ -125,6 +152,12 @@
     },
     "ai_failed": {
       "message": "The AI call failed: {error}"
+    },
+    "photo_source": {
+      "message": "Give either a file path or a camera, not both."
+    },
+    "path_not_allowed": {
+      "message": "{path} is not in a folder Home Assistant may read (allowlist_external_dirs)."
     }
   },
   "services": {
@@ -165,6 +198,80 @@
         "photos": {
           "name": "Photos",
           "description": "How many of the newest photos (1 to 3)."
+        }
+      }
+    },
+    "ask_assistant": {
+      "name": "Ask the garden assistant",
+      "description": "Asks the AI a question about the garden or one plant. The answer is returned and kept in the chat history. Costs money; the budget applies.",
+      "fields": {
+        "question": {
+          "name": "Question",
+          "description": "What you want to know."
+        },
+        "device_id": {
+          "name": "Plant",
+          "description": "Ask about this plant (else about the whole garden)."
+        }
+      }
+    },
+    "create_task": {
+      "name": "Create task",
+      "description": "Adds a garden task; it also appears in the to-do list Garden tasks.",
+      "fields": {
+        "title": {
+          "name": "Title",
+          "description": "What has to be done."
+        },
+        "kind": {
+          "name": "Kind",
+          "description": "Kind of work."
+        },
+        "device_id": {
+          "name": "Plant",
+          "description": "The plant it is for."
+        },
+        "due": {
+          "name": "Due",
+          "description": "Day it is due."
+        },
+        "repeat_every": {
+          "name": "Repeat every",
+          "description": "Repeat after this many days or weeks (counted from when it was done)."
+        },
+        "repeat_unit": {
+          "name": "Unit",
+          "description": "Days or weeks."
+        },
+        "notes": {
+          "name": "Notes",
+          "description": "Details."
+        }
+      }
+    },
+    "add_photo": {
+      "name": "Add photo",
+      "description": "Adds a photo to a plant from a file or a camera snapshot. Tag it with problem to open a problem.",
+      "fields": {
+        "device_id": {
+          "name": "Plant",
+          "description": "The plant the photo shows."
+        },
+        "file_path": {
+          "name": "File",
+          "description": "Path of a JPEG, PNG, WebP or HEIC file in a folder Home Assistant may read."
+        },
+        "camera_entity_id": {
+          "name": "Camera",
+          "description": "Take a snapshot from this camera instead."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "e.g. problem, flower."
+        },
+        "note": {
+          "name": "Note",
+          "description": "A short note."
         }
       }
     }
@@ -291,6 +398,24 @@
         "ollama": "Ollama (local)",
         "lmstudio": "LM Studio (local)",
         "custom": "Other server"
+      }
+    },
+    "task_kind": {
+      "options": {
+        "water": "Water",
+        "fertilize": "Fertilise",
+        "prune": "Prune",
+        "repot": "Repot",
+        "pest_check": "Check for pests",
+        "harvest": "Harvest",
+        "photo": "Take a photo",
+        "other": "Other"
+      }
+    },
+    "repeat_unit": {
+      "options": {
+        "days": "Days",
+        "weeks": "Weeks"
       }
     }
   }

@@ -10,13 +10,14 @@ from `candidatesTokenCount` and billed as output.
 from __future__ import annotations
 
 import base64
+from collections.abc import Callable
 import time
 from typing import Any
 
 import aiohttp
 
 from ..base import AIError, AIRequest, AIResponse, ModelInfo, ProviderKind, Usage, parse_json
-from ..http import async_request
+from ..http import async_request, async_stream
 
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 DEFAULT_MODEL = "gemini-3.8-flash"
@@ -122,4 +123,41 @@ class GeminiProvider:
             model=payload.get("modelVersion") or self.model,
             latency_ms=int((time.monotonic() - start) * 1000),
             request_id=payload.get("responseId"),
+        )
+
+    async def async_stream(self, req: AIRequest, on_delta: Callable[[str], None]) -> AIResponse:
+        """`streamGenerateContent?alt=sse`: every event is a partial response."""
+        start = time.monotonic()
+        images = sum(len(m.images) for m in req.messages)
+        parts: list[str] = []
+        usage_raw: dict[str, Any] = {}
+        model = self.model
+        request_id = None
+        reason = None
+        async for chunk in async_stream(
+            self._session,
+            f"{BASE_URL}/models/{self.model}:streamGenerateContent",
+            headers=self._headers(),
+            params={"alt": "sse"},
+            json=self.body(req),
+        ):
+            usage_raw = chunk.get("usageMetadata") or usage_raw
+            model = chunk.get("modelVersion") or model
+            request_id = chunk.get("responseId") or request_id
+            for candidate in chunk.get("candidates") or []:
+                for part in (candidate.get("content") or {}).get("parts") or []:
+                    if part.get("text") and not part.get("thought"):
+                        parts.append(part["text"])
+                        on_delta(part["text"])
+                reason = candidate.get("finishReason") or reason
+        usage = map_usage(usage_raw, images)
+        if reason in ("SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST"):
+            raise AIError("The model declined this request", usage=usage)
+        return AIResponse(
+            text="".join(parts),
+            data=None,
+            usage=usage,
+            model=model,
+            latency_ms=int((time.monotonic() - start) * 1000),
+            request_id=request_id,
         )

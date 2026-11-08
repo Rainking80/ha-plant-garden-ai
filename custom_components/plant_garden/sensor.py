@@ -26,6 +26,7 @@ from .entity import (
     GardenEntityDescription,
     async_track_items,
 )
+from .models import PlantStatus
 from .runtime import PlantGardenConfigEntry
 
 
@@ -72,6 +73,21 @@ PLANT_SENSORS: tuple[GardenSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfLength.MILLIMETERS,
         suggested_display_precision=1,
         value=lambda stats: stats.get("depletion"),
+    ),
+    GardenSensorDescription(
+        key="open_tasks",
+        translation_key="open_tasks",
+        item=PLANT,
+        value=lambda stats: stats.get("open_tasks", 0),
+    ),
+    GardenSensorDescription(
+        key="health",
+        translation_key="health",
+        item=PLANT,
+        device_class=SensorDeviceClass.ENUM,
+        options=[status.value for status in PlantStatus],
+        entity_registry_enabled_default=False,
+        value=lambda stats: stats.get("health"),
     ),
 )
 

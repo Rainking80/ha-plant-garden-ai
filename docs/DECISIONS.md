@@ -338,3 +338,69 @@ minutes), because automations know devices, not internal plant ids.
   key may be used inside a third-party app is not stated in the terms (not
   verified with Pl@ntNet); the README tells users to use their own key under their
   own account.
+
+## D-029 Assistant data: tasks, problems, questions, chat (2026-11-09)
+
+- **Storage**: tasks, problems with their log, questions of the assistant and the
+  chat history are SQLite tables (schema 5), owned by `care.py`; tips are small
+  and live in the Store `plant_garden.assistant`. Deleting a plant deletes all of
+  them.
+- **Tasks**: kinds water, fertilise, prune, repot, pest check, harvest, photo,
+  other. A repeating task is completed as it is and gets a *new* task for the
+  next date, counted from the day it was done (care work follows what really
+  happened, not a calendar). `months` limit a task to a season; a date outside
+  moves to the 1st of the next allowed month. Done tasks stay visible for 30
+  days.
+- **To-do list**: one `todo` entity "Garden tasks" mirrors the tasks both ways.
+  Items are "Plant: title"; an item added in Home Assistant whose prefix names a
+  plant is linked to it. Ticking an item off completes the task (with repetition),
+  deleting it deletes the task.
+- **Due events**: `plant_garden_task_due` fires once per task and due date, at
+  start and every day at 07:00 local time. `plant_garden_problem_detected` fires
+  when a problem is opened.
+- **Problems**: opened by "Report a problem" or by a photo tagged `problem` (it
+  joins the newest active problem of the plant instead, if there is one). Status
+  open, treating, watching, resolved; every change, note, action and diagnosis is
+  a log line. Completing a task linked to a problem logs it as an action.
+- **Questions** in both directions: the user's questions about a plant are the
+  plant's chat (its "question history"); the assistant's questions to the user
+  (from tips) are stored separately, never asked twice while open, answered or
+  skipped in the panel.
+- **Plan**: a plant gets a violet dotted ring when a pruning task is due within 7
+  days and a red dot while a problem is active; the info card lists open tasks,
+  the problem and open questions.
+- **Entities**: per plant "open tasks" and the binary sensor "problem"; "health"
+  (the plant status) exists but is disabled by default. Height and the latest
+  photo as entities follow later.
+
+## D-030 Assistant AI: context, streaming, diagnosis, tips (2026-11-09)
+
+- **Context builder** (`ai/context.py`): compact JSON - month and hemisphere, the
+  average temperatures and rain of the last 30 days from the stored weather (no
+  coordinates), the plant profile with the source of every value that is not the
+  user's own, measurements, the soil water balance of 14 days, irrigation, open
+  problems and tasks. Plants are referred to by short refs (`p1`, `p2`), mapped
+  back afterwards. The plant's notes are never sent (the AI dialog promises it);
+  a diagnosis does send the problem's title and log, which the user wrote for it.
+  The JSON is shortened in a fixed order (weather, irrigation, measurements, water
+  days, tasks, plants, problems, climate) until it fits the per-feature budget
+  (options, default 2500 / 4000 / 3000 estimated tokens for diagnosis, tips,
+  chat). The static instructions come first, so providers can cache them.
+- **Diagnosis**: up to two photos of the problem and one older photo of the plant
+  for comparison, strict JSON (symptoms; causes with type, confidence, evidence;
+  actions with urgency and warnings; what to watch; missing information;
+  follow-up days). A follow-up becomes a "take a photo" task. The plant's status
+  is not changed by the AI.
+- **Tips** for a plant or the garden, at most six, each optionally with a task the
+  user takes over with one click (source `ai`); up to three questions to improve
+  the data. The weekly check (opt-in, Mondays 08:00) is the same call as feature
+  `digest`.
+- **Chat** with streaming: a WebSocket subscription sends `delta` events while the
+  provider writes, then `done` with the stored message. Anthropic, OpenAI-compatible
+  and Gemini stream via server-sent events (retries only before the first byte);
+  Home Assistant's AI task and JSON answers arrive as one piece. The last ten
+  messages are sent along. Answers are rendered as a small Markdown subset built
+  from Lit templates - never as HTML.
+- All of it goes through `AIService.async_generate`: budget check, usage log,
+  costs, one JSON repair retry. Nothing runs without a user action except the
+  opt-in weekly check.

@@ -85,5 +85,9 @@ async def test_options_flow_sets_the_run_time_warning(
         "ai_debug": False,
         "ai_retention_days": 90,
         "usd_eur": 0,
+        "weekly_check": False,
+        "context_tokens_diagnose": 2500,
+        "context_tokens_tips": 4000,
+        "context_tokens_chat": 3000,
     }
     assert loaded_entry.runtime_data.irrigation._max_runtime_hours() == 3

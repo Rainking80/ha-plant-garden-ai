@@ -1,7 +1,10 @@
 import {
+  mdiAlertCircleOutline,
   mdiAxisArrow,
+  mdiCheckboxMarkedCircleOutline,
   mdiCircleOutline,
   mdiClose,
+  mdiCommentQuestionOutline,
   mdiCursorDefaultOutline,
   mdiDeleteOutline,
   mdiEyeOutline,
@@ -53,6 +56,7 @@ import {
   type Marker,
   type Plant,
   type PlantBalance,
+  type PlantCare,
   type Point,
   type Shape,
   type ShapeKind,
@@ -131,6 +135,7 @@ const VIEWPORT_KEY = "plant-garden.viewport.v1";
 const ZONES_KEY = "plant-garden.zones.v1";
 const NO_PLANTS: ReadonlySet<string> = new Set();
 const NO_WATER: Record<string, PlantBalance> = {};
+const NO_CARE: Record<string, PlantCare> = {};
 const LAYER_KEY = "plant-garden.layer.v1";
 const LAYERS: readonly Layer[] = ["plan", "deficit", "coverage"];
 
@@ -945,6 +950,7 @@ export class PgGardenView extends PgElement {
             .highlight=${this._highlight()}
             .showZones=${this._showZones}
             .water=${this.store?.water?.plants ?? NO_WATER}
+            .care=${this.store?.care?.plants ?? NO_CARE}
             .layer=${this._layer}
             @select=${this._onSelect}
             @hover=${this._onHover}
@@ -1324,7 +1330,7 @@ export class PgGardenView extends PgElement {
         ${plant.scientific_name ? html`<p class="latin">${plant.scientific_name}</p>` : nothing}
         <p class="status status-${plant.status}">${t(`status.${plant.status}`)}</p>
         <p class="muted facts">${facts.join(" · ")}</p>
-        ${this._renderWaterFacts(plant.id)}
+        ${this._renderWaterFacts(plant.id)} ${this._renderCareFacts(plant.id)}
         ${
           pinned
             ? html`<button
@@ -1367,6 +1373,39 @@ export class PgGardenView extends PgElement {
               ${icon(mdiWaterOutline)}
               ${t("water.last", { time: formatDateTime(water.last_watering, language) })}
               ${water.today_l > 0 ? ` · ${t("water.today", { liters: formatLiters(water.today_l, language) })}` : ""}
+            </p>`
+          : nothing
+      }
+    `;
+  }
+
+  /** Open problem, tasks and questions of the assistant (spec 4.7). */
+  private _renderCareFacts(plantId: string) {
+    const care = this.store.care?.plants?.[plantId];
+    if (!care) return nothing;
+    const { t } = this;
+    return html`
+      ${
+        care.problem
+          ? html`<p class="small care-problem">
+              ${icon(mdiAlertCircleOutline)}
+              ${t("plan.problem", { status: t(`problem_status.${care.problem}`) })}
+            </p>`
+          : nothing
+      }
+      ${
+        care.open_tasks
+          ? html`<p class="small care-tasks ${care.overdue ? "overdue" : ""}">
+              ${icon(mdiCheckboxMarkedCircleOutline)}
+              ${t("plan.tasks", { n: care.open_tasks })}${care.overdue ? ` · ${t("plan.overdue", { n: care.overdue })}` : ""}
+              ${care.prune_due ? ` · ${t("plan.prune_due")}` : ""}
+            </p>`
+          : nothing
+      }
+      ${
+        care.questions
+          ? html`<p class="small care-questions">
+              ${icon(mdiCommentQuestionOutline)} ${t("plan.questions", { n: care.questions })}
             </p>`
           : nothing
       }
@@ -2317,6 +2356,17 @@ export class PgGardenView extends PgElement {
       .zone-advice.recommended {
         color: var(--pg-thirsty, #b86a10);
         font-weight: 500;
+      }
+      .care-problem,
+      .care-tasks.overdue {
+        color: var(--error-color, #db4437);
+      }
+      .care-problem .icon,
+      .care-tasks .icon,
+      .care-questions .icon {
+        width: 14px;
+        height: 14px;
+        vertical-align: -2px;
       }
       .frost-note {
         color: var(--pg-frost-text, #2a7ab8);

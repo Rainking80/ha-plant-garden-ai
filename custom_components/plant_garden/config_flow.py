@@ -27,10 +27,13 @@ from .const import (
     CONF_AI_IDENTIFY,
     CONF_AI_RETENTION_DAYS,
     CONF_AI_TEXT,
+    CONF_CONTEXT_TOKENS,
     CONF_GARDEN_NAME,
     CONF_MAX_RUNTIME_HOURS,
     CONF_USD_EUR,
+    CONF_WEEKLY_CHECK,
     DEFAULT_AI_RETENTION_DAYS,
+    DEFAULT_CONTEXT_TOKENS,
     DEFAULT_MAX_RUNTIME_HOURS,
     DOMAIN,
     SUBENTRY_AI,
@@ -100,7 +103,12 @@ class PlantGardenOptionsFlow(OptionsFlow):
                     user_input.get(CONF_AI_RETENTION_DAYS) or DEFAULT_AI_RETENTION_DAYS
                 ),
                 CONF_USD_EUR: float(user_input.get(CONF_USD_EUR) or 0),
+                CONF_WEEKLY_CHECK: bool(user_input.get(CONF_WEEKLY_CHECK)),
             }
+            for feature, default in DEFAULT_CONTEXT_TOKENS.items():
+                data[CONF_CONTEXT_TOKENS + feature] = int(
+                    user_input.get(CONF_CONTEXT_TOKENS + feature) or default
+                )
             for key in (CONF_AI_IDENTIFY, CONF_AI_TEXT):
                 if user_input.get(key):
                     data[key] = user_input[key]
@@ -147,8 +155,18 @@ class PlantGardenOptionsFlow(OptionsFlow):
                     CONF_AI_RETENTION_DAYS,
                     default=options.get(CONF_AI_RETENTION_DAYS, DEFAULT_AI_RETENTION_DAYS),
                 ): number(7, 730, 1, "d"),
+                probatio.Required(
+                    CONF_WEEKLY_CHECK, default=options.get(CONF_WEEKLY_CHECK, False)
+                ): bool,
             }
         )
+        for feature, default in DEFAULT_CONTEXT_TOKENS.items():
+            fields[
+                probatio.Required(
+                    CONF_CONTEXT_TOKENS + feature,
+                    default=options.get(CONF_CONTEXT_TOKENS + feature, default),
+                )
+            ] = number(500, 20000, 100)
         return self.async_show_form(
             step_id="init",
             data_schema=probatio.Schema(fields),

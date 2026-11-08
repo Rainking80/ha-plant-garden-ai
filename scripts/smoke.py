@@ -416,6 +416,18 @@ FAKE_ANSWER = {
 }
 
 
+FAKE_DIAGNOSIS = {
+    "summary": "Wahrscheinlich Trockenstress.",
+    "health": "watch",
+    "symptoms": ["Blätter hängen"],
+    "causes": [{"name": "Trockenheit", "type": "water", "confidence": 0.7, "evidence": "Defizit"}],
+    "actions": [{"text": "Morgens gießen", "urgency": "now", "warning": None}],
+    "monitoring": [],
+    "missing_info": [],
+    "follow_up_days": 7,
+}
+
+
 async def fake_ai_server(requests: list[dict]) -> web.AppRunner:
     """An OpenAI-compatible endpoint on localhost: no key, no cost, fixed answer."""
 
@@ -432,6 +444,20 @@ async def fake_ai_server(requests: list[dict]) -> web.AppRunner:
             return web.json_response({"error": "bad key"}, status=401)
         body = await request.json()
         requests.append(body)
+        if body.get("stream"):  # the chat: answer in pieces as server-sent events
+            response = web.StreamResponse(headers={"Content-Type": "text/event-stream"})
+            await response.prepare(request)
+            for chunk in (
+                {"choices": [{"delta": {"content": "Gieß "}}]},
+                {"choices": [{"delta": {"content": "morgen früh."}, "finish_reason": "stop"}]},
+                {"choices": [], "usage": {"prompt_tokens": 400, "completion_tokens": 20}},
+            ):
+                await response.write(f"data: {json.dumps(chunk)}\n\n".encode())
+            await response.write(b"data: [DONE]\n\n")
+            await response.write_eof()
+            return response
+        schema = (body.get("response_format") or {}).get("json_schema", {}).get("name", "")
+        answer = FAKE_DIAGNOSIS if schema == "plant_garden_diagnose" else FAKE_ANSWER
         return web.json_response(
             {
                 "id": "chatcmpl-smoke",
@@ -439,7 +465,7 @@ async def fake_ai_server(requests: list[dict]) -> web.AppRunner:
                 "choices": [
                     {
                         "finish_reason": "stop",
-                        "message": {"role": "assistant", "content": json.dumps(FAKE_ANSWER)},
+                        "message": {"role": "assistant", "content": json.dumps(answer)},
                     }
                 ],
                 "usage": {
@@ -593,8 +619,79 @@ async def check_ai(
         await add_fake_provider(session, base, headers, entry_id)
         await check_identification(call, requests, plant_id, photo_id)
         await check_usage(session, base, headers, call)
+        await check_assistant(session, base, headers, call, plant_id)
     finally:
         await runner.cleanup()
+
+
+TODO_NAMES = ("Garden tasks", "Gartenaufgaben")
+
+
+async def check_assistant(
+    session: aiohttp.ClientSession,
+    base: str,
+    headers: dict[str, str],
+    call: Callable[..., Awaitable[dict]],
+    plant_id: str,
+) -> None:
+    """M7: problem from a tagged photo, diagnosis, tasks in the HA to-do list, streamed chat."""
+    form = aiohttp.FormData()
+    form.add_field("plant_id", plant_id)
+    form.add_field("tags", "problem")
+    form.add_field("note", "Blätter hängen")
+    form.add_field("file", _jpeg(800, 600), filename="welke.jpg", content_type="image/jpeg")
+    async with session.post(f"{base}/api/plant_garden/photos", data=form, headers=headers) as resp:
+        assert resp.status == 200, await resp.text()
+    [problem] = (await call(type="plant_garden/problems/list", plant_id=plant_id))["problems"]
+    assert problem["title"] == "Blätter hängen", problem
+    result = await call(type="plant_garden/problems/diagnose", problem_id=problem["id"])
+    diagnosis = result["problem"]["diagnosis"]
+    assert diagnosis["causes"][0]["name"] == "Trockenheit", diagnosis
+    [follow_up] = (await call(type="plant_garden/tasks/list", plant_id=plant_id))["tasks"]
+    assert follow_up["kind"] == "photo", follow_up
+    print(f"  assistant: problem from a tagged photo, diagnosed ({diagnosis['summary']})")
+
+    # the follow-up task is in Home Assistant's to-do list and can be ticked off there
+    async with session.get(f"{base}/api/states", headers=headers) as resp:
+        states = await resp.json()
+    [todo] = [
+        s
+        for s in states
+        if s["entity_id"].startswith("todo.")
+        and s["attributes"].get("friendly_name", "").endswith(TODO_NAMES)
+    ]
+    assert todo["state"] == "1", todo
+    async with session.post(
+        f"{base}/api/services/todo/update_item",
+        json={"entity_id": todo["entity_id"], "item": follow_up["id"], "status": "completed"},
+        headers=headers,
+    ) as resp:
+        assert resp.status == 200, await resp.text()
+    tasks = (await call(type="plant_garden/tasks/list", plant_id=plant_id))["tasks"]
+    assert [t["status"] for t in tasks] == ["done"], tasks
+    print(f"  assistant: task ticked off in {todo['entity_id']}")
+
+    # chat: a subscription that streams the answer
+    ws_url = base.replace("http", "ws", 1) + "/api/websocket"
+    token = headers["Authorization"].removeprefix("Bearer ")
+    async with session.ws_connect(ws_url) as ws:
+        await ws.receive_json()
+        await ws.send_json({"type": "auth", "access_token": token})
+        await ws.receive_json()
+        await ws.send_json(
+            {"id": 1, "type": "plant_garden/assistant/chat", "plant_id": plant_id, "text": "Wann?"}
+        )
+        assert (await ws.receive_json())["success"]
+        deltas = []
+        while True:
+            event = (await ws.receive_json())["event"]
+            if "delta" in event:
+                deltas.append(event["delta"])
+                continue
+            assert event.get("done"), event
+            break
+    assert deltas == ["Gieß ", "morgen früh."], deltas
+    print(f"  assistant: chat streamed in {len(deltas)} pieces: {''.join(deltas)}")
 
 
 async def main(base: str) -> None:

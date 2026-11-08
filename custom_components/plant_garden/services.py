@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from homeassistant.core import (
     HomeAssistant,
     ServiceCall,
@@ -93,6 +95,7 @@ def async_register_services(hass: HomeAssistant) -> None:
         supports_response=SupportsResponse.NONE,
     )
     async_register_weather_service(hass)
+    async_register_assistant_services(hass)
 
 
 SERVICE_REFRESH_WEATHER = "refresh_weather"
@@ -149,6 +152,159 @@ def async_register_weather_service(hass: HomeAssistant) -> None:
                 probatio.Optional("photos", default=3): probatio.All(
                     probatio.Coerce(int), probatio.Range(min=1, max=3)
                 ),
+            }
+        ),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
+
+SERVICE_ASK_ASSISTANT = "ask_assistant"
+SERVICE_CREATE_TASK = "create_task"
+SERVICE_ADD_PHOTO = "add_photo"
+
+
+def _plant_id(hass: HomeAssistant, device_id: str | None) -> str | None:
+    if not device_id:
+        return None
+    plants, _ = _targets(hass, [device_id])
+    if not plants:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="not_plant_or_zone",
+            translation_placeholders={"device_id": device_id},
+        )
+    return plants[0]
+
+
+@callback
+def async_register_assistant_services(hass: HomeAssistant) -> None:
+    async def ask_assistant(call: ServiceCall) -> ServiceResponse:
+        """A question about the garden or one plant; the answer as text (and in the chat)."""
+        entry = get_loaded_entry(hass)
+        if entry is None:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_loaded")
+        plant_id = _plant_id(hass, call.data.get("device_id"))
+        try:
+            answer = await entry.runtime_data.assistant.async_chat(plant_id, call.data["question"])
+        except AIError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="ai_failed",
+                translation_placeholders={"error": str(err)},
+            ) from err
+        return {"answer": answer.text}
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_ASK_ASSISTANT,
+        ask_assistant,
+        schema=probatio.Schema(
+            {
+                probatio.Required("question"): probatio.All(str, probatio.Length(min=1, max=4000)),
+                probatio.Optional("device_id"): str,
+            }
+        ),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
+    async def create_task(call: ServiceCall) -> ServiceResponse:
+        entry = get_loaded_entry(hass)
+        if entry is None:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_loaded")
+        fields: dict[str, object] = {
+            "title": call.data["title"],
+            "kind": call.data["kind"],
+            "plant_id": _plant_id(hass, call.data.get("device_id")),
+            "notes": call.data["notes"],
+            "due": call.data.get("due"),
+        }
+        if call.data.get("repeat_every"):
+            fields["repeat"] = {
+                "every": call.data["repeat_every"],
+                "unit": call.data["repeat_unit"],
+            }
+        task = await entry.runtime_data.care.async_create_task(fields)
+        return {"task_id": task.id}
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_CREATE_TASK,
+        create_task,
+        schema=probatio.Schema(
+            {
+                probatio.Required("title"): probatio.All(str, probatio.Length(min=1, max=200)),
+                probatio.Optional("kind", default="other"): probatio.In(
+                    [
+                        "water",
+                        "fertilize",
+                        "prune",
+                        "repot",
+                        "pest_check",
+                        "harvest",
+                        "photo",
+                        "other",
+                    ]
+                ),
+                probatio.Optional("device_id"): str,
+                probatio.Optional("due"): cv.date,
+                probatio.Optional("repeat_every"): probatio.All(
+                    probatio.Coerce(int), probatio.Range(min=1, max=365)
+                ),
+                probatio.Optional("repeat_unit", default="days"): probatio.In(["days", "weeks"]),
+                probatio.Optional("notes", default=""): probatio.All(
+                    str, probatio.Length(max=2000)
+                ),
+            }
+        ),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
+    async def add_photo(call: ServiceCall) -> ServiceResponse:
+        """A photo from a file in an allowed folder or a camera snapshot."""
+        entry = get_loaded_entry(hass)
+        if entry is None:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_loaded")
+        plant_id = _plant_id(hass, call.data["device_id"])
+        assert plant_id is not None  # device_id is required
+        path = call.data.get("file_path")
+        camera = call.data.get("camera_entity_id")
+        if bool(path) == bool(camera):
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="photo_source")
+        if path:
+            if not hass.config.is_allowed_path(path):
+                raise ServiceValidationError(
+                    translation_domain=DOMAIN,
+                    translation_key="path_not_allowed",
+                    translation_placeholders={"path": path},
+                )
+            try:
+                data = await hass.async_add_executor_job(Path(path).read_bytes)
+            except OSError as err:
+                raise HomeAssistantError(str(err)) from err
+        else:
+            # imported here: the camera integration needs extra packages (PyTurboJPEG)
+            from homeassistant.components.camera import async_get_image  # noqa: PLC0415
+
+            data = (await async_get_image(hass, str(camera))).content
+        try:
+            photo = await entry.runtime_data.manager.async_add_photo(
+                plant_id, data, tags=call.data["tags"], note=call.data["note"]
+            )
+        except ValueError as err:
+            raise ServiceValidationError(str(err)) from err
+        return {"photo_id": photo.id}
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_ADD_PHOTO,
+        add_photo,
+        schema=probatio.Schema(
+            {
+                probatio.Required("device_id"): str,
+                probatio.Optional("file_path"): str,
+                probatio.Optional("camera_entity_id"): cv.entity_domain("camera"),
+                probatio.Optional("tags", default=[]): probatio.All(cv.ensure_list, [str]),
+                probatio.Optional("note", default=""): probatio.All(str, probatio.Length(max=500)),
             }
         ),
         supports_response=SupportsResponse.OPTIONAL,

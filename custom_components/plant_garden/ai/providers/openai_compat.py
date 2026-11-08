@@ -10,13 +10,14 @@ includes reasoning. OpenRouter reports the cost of each call in `usage.cost`.
 from __future__ import annotations
 
 import base64
+from collections.abc import Callable
 import time
 from typing import Any
 
 import aiohttp
 
 from ..base import AIError, AIRequest, AIResponse, ModelInfo, ProviderKind, Usage, parse_json
-from ..http import async_request
+from ..http import async_request, async_stream
 
 PRESETS: dict[str, str] = {
     "openai": "https://api.openai.com/v1",
@@ -153,4 +154,44 @@ class OpenAICompatibleProvider:
             latency_ms=int((time.monotonic() - start) * 1000),
             provider_cost=float(cost) if isinstance(cost, int | float) else None,
             request_id=payload.get("id") or headers.get("x-request-id"),
+        )
+
+    async def async_stream(self, req: AIRequest, on_delta: Callable[[str], None]) -> AIResponse:
+        """Chunks with `choices[0].delta`; the usage arrives in a last chunk without choices."""
+        start = time.monotonic()
+        images = sum(len(m.images) for m in req.messages)
+        body = {**self.body(req), "stream": True, "stream_options": {"include_usage": True}}
+        parts: list[str] = []
+        raw_usage: dict[str, Any] = {}
+        model = self.model
+        request_id = None
+        finish = None
+        refusal = False
+        async for chunk in async_stream(
+            self._session, f"{self._base}/chat/completions", headers=self._headers(), json=body
+        ):
+            model = chunk.get("model") or model
+            request_id = chunk.get("id") or request_id
+            if chunk.get("usage"):
+                raw_usage = chunk["usage"]
+            for choice in chunk.get("choices") or []:
+                delta = choice.get("delta") or {}
+                if delta.get("refusal"):
+                    refusal = True
+                if delta.get("content"):
+                    parts.append(delta["content"])
+                    on_delta(delta["content"])
+                finish = choice.get("finish_reason") or finish
+        usage = map_usage(raw_usage, images)
+        if refusal:
+            raise AIError("The model declined this request", usage=usage)
+        cost = raw_usage.get("cost")
+        return AIResponse(
+            text="".join(parts),
+            data=None,
+            usage=usage,
+            model=model,
+            latency_ms=int((time.monotonic() - start) * 1000),
+            provider_cost=float(cost) if isinstance(cost, int | float) else None,
+            request_id=request_id,
         )

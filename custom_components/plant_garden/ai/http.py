@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
+import json as json_module
 import logging
 import random
 from typing import Any
@@ -87,3 +89,74 @@ async def async_request(
         _LOGGER.debug("AI request failed, retrying in %.1f s", wait)
         await asyncio.sleep(wait)
     raise AIError("no answer")  # pragma: no cover - the loop always returns or raises
+
+
+def _sse_payload(lines: list[str]) -> dict[str, Any] | None:
+    text = "\n".join(lines).strip()
+    if not text or text == "[DONE]":
+        return None
+    try:
+        payload = json_module.loads(text)
+    except ValueError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+async def async_stream(
+    session: aiohttp.ClientSession,
+    url: str,
+    *,
+    headers: dict[str, str] | None = None,
+    json: Any = None,
+    params: dict[str, str] | None = None,
+    timeout_s: float = 300,
+    retries: int = RETRIES,
+) -> AsyncIterator[dict[str, Any]]:
+    """POST and yield the JSON of every server-sent event (`data:` lines).
+
+    Errors are handled like `async_request`; retries only happen before the
+    first event arrived, never in the middle of an answer.
+    """
+    started = False
+    for attempt in range(retries + 1):
+        try:
+            async with session.post(
+                url,
+                headers=headers,
+                json=json,
+                params=params,
+                timeout=aiohttp.ClientTimeout(total=timeout_s, sock_read=90),
+            ) as resp:
+                if resp.status < 400:
+                    lines: list[str] = []
+                    async for raw in resp.content:
+                        line = raw.decode("utf-8", "replace").rstrip("\r\n")
+                        if line.startswith("data:"):
+                            lines.append(line[5:].lstrip())
+                        elif not line and lines:
+                            payload = _sse_payload(lines)
+                            lines = []
+                            if payload is not None:
+                                started = True
+                                yield payload
+                    payload = _sse_payload(lines)
+                    if payload is not None:
+                        yield payload
+                    return
+                try:
+                    error_payload = await resp.json(content_type=None)
+                except aiohttp.ContentTypeError, ValueError:
+                    error_payload = None
+                text = _message(error_payload, resp.status)
+                if resp.status in (401, 403):
+                    raise AuthError(text, status=resp.status)
+                retryable = resp.status == 429 or resp.status >= 500
+                if not retryable or attempt == retries:
+                    raise AIError(text, status=resp.status, retryable=retryable)
+                wait = _wait(attempt, resp.headers.get("Retry-After"))
+        except (aiohttp.ClientError, TimeoutError) as err:
+            if started or attempt == retries:
+                raise AIError(f"not reachable: {type(err).__name__}", retryable=True) from None
+            wait = _wait(attempt, None)
+        _LOGGER.debug("AI stream failed, retrying in %.1f s", wait)
+        await asyncio.sleep(wait)

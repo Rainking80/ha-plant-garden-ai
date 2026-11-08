@@ -7,7 +7,7 @@ failed calls. Nothing calls an AI without a user action.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import date, datetime, timedelta
 import logging
 import time
@@ -383,19 +383,39 @@ class AIService:
         self._manager.notify_ai()
 
     async def async_generate(
-        self, feature: Feature, request: AIRequest, subentry: ConfigSubentry | None = None
+        self,
+        feature: Feature,
+        request: AIRequest,
+        subentry: ConfigSubentry | None = None,
+        *,
+        on_delta: Callable[[str], None] | None = None,
     ) -> AIResponse:
-        """One AI call with budget check, logging and one JSON repair retry."""
+        """One AI call with budget check, logging and one JSON repair retry.
+
+        With `on_delta`, text answers are streamed where the provider can; other
+        providers deliver the whole answer as one delta.
+        """
         subentry = subentry or self.subentry_for(feature)
         if subentry is None:
             raise AIError("No AI provider is set up")
         provider = self.build(subentry)
         await self._async_check_budget(self.estimate(subentry, request))
         prompt_text = request.system + "\n\n" + "\n\n".join(m.text for m in request.messages)
+        stream = (
+            on_delta is not None
+            and request.json_schema is None
+            and hasattr(provider, "async_stream")
+        )
         for attempt in range(2):
             start = time.monotonic()
             try:
-                response: AIResponse = await provider.async_generate(request)
+                response: AIResponse = await (
+                    provider.async_stream(request, on_delta)
+                    if stream
+                    else provider.async_generate(request)
+                )
+                if on_delta is not None and not stream:
+                    on_delta(response.text)
             except AIError as err:
                 await self._async_log(
                     feature=feature,
@@ -443,7 +463,7 @@ class AIService:
         raise AIError("The AI did not answer with valid JSON")
 
     # ------------------------------------------------------------ identification
-    async def _async_images(
+    async def async_images(
         self, photos: list[tuple[str, str]], plant_id: str, variant: PhotoVariant
     ) -> list[Image]:
         images = []
@@ -482,7 +502,7 @@ class AIService:
         if net is not None:
             await self._async_check_budget(None)
             start = time.monotonic()
-            images = await self._async_images(photos, plant_id, PhotoVariant.ORIGINAL)
+            images = await self.async_images(photos, plant_id, PhotoVariant.ORIGINAL)
             try:
                 found = await PlantNetProvider(self._session, net.data["api_key"]).async_identify(
                     images, language
@@ -531,7 +551,7 @@ class AIService:
                             season=season_text(latitude, dt_util.now().date(), language),
                             candidates=candidates,
                         ),
-                        images=await self._async_images(photos, plant_id, PhotoVariant.MEDIUM),
+                        images=await self.async_images(photos, plant_id, PhotoVariant.MEDIUM),
                     )
                 ],
                 json_schema=IDENTIFY_SCHEMA,

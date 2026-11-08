@@ -11,8 +11,10 @@ from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 
+from .ai.assistant import Assistant
 from .ai.pricing import load_defaults as load_pricing
 from .ai.service import AIService
+from .care import CareManager
 from .const import CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS, DOMAIN
 from .database import DatabaseError
 from .entity import async_garden_device
@@ -26,10 +28,11 @@ from .water import WaterCoordinator
 from .water_balance import load_defaults
 from .websocket_ai import async_register_ai_commands
 from .websocket_api import async_register_websocket_commands
+from .websocket_care import async_register_care_commands
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.TODO]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -39,6 +42,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         hass.http.register_view(view)
     async_register_websocket_commands(hass)
     async_register_ai_commands(hass)
+    async_register_care_commands(hass)
     async_register_services(hass)
     return True
 
@@ -63,12 +67,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) 
     await water.async_start()
     ai = AIService(hass, entry, manager, await hass.async_add_executor_job(load_pricing))
     await ai.async_start()
+    care = CareManager(hass, manager)
+    await care.async_setup()
+    assistant = Assistant(hass, entry, manager=manager, care=care, ai=ai, water=water)
+    await assistant.async_setup()
     entry.runtime_data = PlantGardenData(
         version=str(integration.version),
         manager=manager,
         irrigation=irrigation,
         water=water,
         ai=ai,
+        care=care,
+        assistant=assistant,
     )
     async_garden_device(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -89,6 +99,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry)
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         async_unregister_panel(hass)
+        entry.runtime_data.assistant.async_stop()
+        entry.runtime_data.care.async_stop()
         entry.runtime_data.water.async_stop()
         entry.runtime_data.ai.async_stop()
         await entry.runtime_data.irrigation.async_stop()

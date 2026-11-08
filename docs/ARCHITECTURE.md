@@ -1,8 +1,8 @@
 # Architecture
 
-Status: **M6** (AI layer: providers, identification, usage and costs; M2 to M6
-await a hands-on check by the user in a real browser, M6 also a live test with
-real API keys).
+Status: **M7** (assistant: tasks, problems with diagnosis, questions, tips,
+chat; M2 to M7 await a hands-on check by the user in a real browser, M6 and M7
+also a live test with real API keys).
 This document describes what exists today and is updated with every milestone.
 The target picture is in [AGENT_SYSTEM_PROMPT.md](AGENT_SYSTEM_PROMPT.md).
 
@@ -38,22 +38,28 @@ Browser (HA frontend)                              Home Assistant core
 | `panel.py` | Serves `frontend/` under `/plant_garden_static`, registers the panel with a content-hash cache buster. |
 | `geometry.py` | Point-in-shape, areas, footprints of plants (linked areas or crown circle) and zone coverage on a 16 × 16 sample grid (same as the panel's `util/coverage.ts`). |
 | `irrigation.py` | `IrrigationTracker`: follows the entities linked to zones (`async_track_state_change_event`), persists open runs (Store `plant_garden.irrigation`), fills gaps from the recorder history on start, ignores runs under 5 s, marks runs ended by `unavailable` as uncertain, raises a repair issue for runs longer than the option `max_runtime_hours`, fires `plant_garden_irrigation_finished`. `distribute` turns a run into litres per plant (D-024). Keeps the water summary for the panel and the sensors. |
-| `sensor.py` | Sensors per plant (water received in L `total_increasing`, water today, last watering, soil water deficit), per zone (run time and litres today, recommended run time) and for the garden (ET₀ today, rain today, rain tomorrow, AI cost this month, AI tokens this month, AI requests today). |
-| `services.py` | Actions `plant_garden.log_watering` (plant devices: litres each; zone devices: minutes), `plant_garden.refresh_weather` and `plant_garden.identify_plant` (newest photos of a plant device, optional response). |
+| `sensor.py` | Sensors per plant (water received in L `total_increasing`, water today, last watering, soil water deficit), per zone (run time and litres today, recommended run time) and for the garden (ET₀ today, rain today, rain tomorrow, AI cost this month, AI tokens this month, AI requests today); per plant also open tasks and health (disabled by default). |
+| `services.py` | Actions `plant_garden.log_watering` (plant devices: litres each; zone devices: minutes), `plant_garden.refresh_weather`, `plant_garden.identify_plant` (newest photos of a plant device, optional response), `plant_garden.ask_assistant` (answer as response), `plant_garden.create_task` and `plant_garden.add_photo` (file in an allowed folder or camera snapshot). |
 | `et0.py` | FAO-56 Penman-Monteith (daily, with FAO fallbacks for missing humidity, wind, radiation) and Hargreaves-Samani; tested against the FAO-56 worked examples. |
 | `water_balance.py`, `water_defaults.json` | Soil water bucket per plant (TAW, RAW, K, effective rain, shelter by roofs), defaults with sources (D-026). |
 | `weather/` | Sources: `open_meteo.py`, `bright_sky.py` (hourly to daily), `home_assistant.py` (statistics + `weather.get_forecasts`); `base.py` `DailyWeather` with per-value merging. |
 | `water.py` | `WaterCoordinator` (DataUpdateCoordinator, hourly): fetches all weather subentries (own sensors first), merges, fills ET₀, stores the days, recomputes every plant's bucket (also 3 s after plant, layout or irrigation changes), frost warnings and zone advice; notifies `water`. |
-| `entity.py`, `binary_sensor.py` | Device handling shared by the platforms; binary sensors "needs water" (plant) and "irrigation recommended" (zone). |
+| `entity.py`, `binary_sensor.py` | Device handling shared by the platforms; binary sensors "needs water" and "problem" (plant) and "irrigation recommended" (zone). |
 | `ai/base.py` | Provider contract: `AIRequest` (system, messages with images, JSON schema, max output tokens, feature, plant), `AIResponse`, normalised `Usage` (input without cache, cache read, cache write, output, reasoning, images), `AIError`/`AuthError`/`BudgetExceededError`. |
 | `ai/http.py` | Plain aiohttp with HA's session: timeout, 2 retries on 429/5xx honouring `Retry-After` (max 30 s), 401/403 → `AuthError`. |
-| `ai/providers/` | `anthropic.py` (Messages API, structured output, prompt caching), `openai_compat.py` (OpenAI, OpenRouter, Ollama, LM Studio, any compatible URL; presets), `gemini.py` (generateContent, response schema), `ha_ai_task.py` (`ai_task.generate_data` with photos as media-source attachments; HA reports no tokens), `plantnet.py` (species candidates, no retries because failed calls cost credits). Each maps its usage fields to `Usage` (D-027). |
+| `ai/providers/` | `anthropic.py` (Messages API, structured output, prompt caching), `openai_compat.py` (OpenAI, OpenRouter, Ollama, LM Studio, any compatible URL; presets), `gemini.py` (generateContent, response schema), `ha_ai_task.py` (`ai_task.generate_data` with photos as media-source attachments; HA reports no tokens), `plantnet.py` (species candidates, no retries because failed calls cost credits). Each maps its usage fields to `Usage` (D-027); the three HTTP language models also stream (`async_stream`, server-sent events via `http.async_stream`). |
 | `ai/pricing.py`, `ai/pricing_defaults.json` | Prices per provider kind and model (USD per million tokens, as of 2026-11-08, with sources), prefix match for dated model ids, user overrides, cost of a call, rough estimate before a call. |
 | `ai/schemas.py`, `ai/prompts/` | Strict JSON schema of an identification and its cleaning; versioned prompts (`identify-1`) in German and English. |
 | `ai/service.py` | `AIService`: builds providers from subentries, budget check before every call, usage log, one JSON repair retry, Pl@ntNet first then the language model with the candidates, suggestions per field (never over user values), accept/reject, usage summary, daily purge of old log rows, status per provider (Store `plant_garden.ai`). |
 | `ai/flow.py` | Subentry flow `ai`: Home Assistant AI task entity, OpenAI-compatible (preset, URL), Anthropic, Gemini or Pl@ntNet; the key is tested before saving, then the model is picked from the provider's list. |
 | `media_source.py` | Media source `plant_garden`: plant photos (medium WebP) for `ai_task` attachments and HA's media browser. |
 | `websocket_ai.py` | The `ai/*` and `tech/info` commands below. |
+| `care.py` | `CareManager` and `CareTables` (SQLite schema 5): tasks (kinds, due date, repetition counted from completion, season months), problems with a log, questions of the assistant, chat history. Fires `plant_garden_task_due` (daily at 07:00 and at start, once per due date) and `plant_garden_problem_detected`; a photo tagged `problem` opens a problem or joins the active one (photo hook of the manager). Keeps per-plant counts for the plan and the sensors. No AI in here (D-029). |
+| `todo.py` | To-do entity "Garden tasks": the tasks both ways ("Plant: title" links to a plant; ticking off completes and repeats). |
+| `ai/context.py` | Compact, deterministically shortened JSON context per feature budget (D-030). |
+| `ai/assistant.py` | `Assistant`: diagnosis of a problem (photos + context, follow-up photo task), tips with tasks to take over and questions, chat with streaming, opt-in weekly check (Mondays 08:00); tips in Store `plant_garden.assistant`. |
+| `ai/prompts/assistant.py` | Versioned prompts (`diagnose-1`, `tips-1`, `chat-1`, `digest-1`) in German and English with the shared rules of spec 6.4. |
+| `websocket_care.py` | The `care/*`, `tasks/*`, `problems/*`, `questions/*` and `assistant/*` commands below; the chat is a subscription. |
 | `runtime.py` | `PlantGardenData` (manager, irrigation tracker, water coordinator, AI service) in `entry.runtime_data`; `get_manager`, `get_irrigation`, `get_water`, `get_ai`. |
 | `brand/` | `icon.png`, `icon@2x.png` (generated by `scripts/generate_brand.py`). |
 
@@ -72,6 +78,8 @@ Validation uses `probatio` (HA's replacement for voluptuous since 2026.9).
 | AI providers (with their keys) | config subentries of type `ai` (keys never leave the backend; the panel and diagnostics see them masked) |
 | AI usage log and daily totals | `<config>/plant_garden/plant_garden.db` tables `ai_usage`, `ai_usage_daily` (schema 4); rows older than the retention are folded into the daily totals |
 | Own prices, last identification per plant, provider status | `.storage/plant_garden.ai` |
+| Tasks, problems and their log, questions, chat | `<config>/plant_garden/plant_garden.db` tables `tasks`, `problems`, `problem_log`, `questions`, `chat` (schema 5) |
+| Latest tips per plant and for the garden | `.storage/plant_garden.assistant` |
 | Image files | `<config>/plant_garden/photos/<plant_id>/<photo_id>{.jpg,.medium.webp,.thumb.webp}` |
 
 Nothing is keyed by config entry id: removing and re-adding the integration keeps the garden.
@@ -111,6 +119,14 @@ Nothing is keyed by config entry id: removing and re-adding the integration keep
 | `ai/usage/summary`, `ai/usage/log` (admin) | totals today, month, overall; breakdowns by provider, model, feature, plant; cost per day and model; single calls with filters and paging |
 | `ai/pricing/get`, `ai/pricing/set` (admin) | price table with sources; own price per model (`null` removes it) |
 | `tech/info` (admin) | version, storage, entities, weather source status, providers (masked keys) |
+| `care/summary` | per plant: open and overdue tasks, pruning due, active problem, open questions; garden totals |
+| `tasks/list`, `tasks/create`, `tasks/update`, `tasks/complete`, `tasks/reopen`, `tasks/delete` | tasks of a plant or the garden (open and done in the last 30 days); `complete` answers with the next occurrence of a repeating task |
+| `problems/list`, `problems/get`, `problems/create`, `problems/update`, `problems/log`, `problems/add_photo`, `problems/delete` | problems with their log |
+| `problems/diagnose` | AI diagnosis (errors `ai_error`, `budget_exceeded`) |
+| `questions/list`, `questions/answer` | questions of the assistant; answer or `dismiss` |
+| `assistant/tips`, `assistant/tips/create`, `assistant/tips/decide` | last tips, new tips (AI), take a proposed task over or dismiss it |
+| `assistant/chat` | subscription: `{delta}` events, then `{done, message}` or `{error, code}` |
+| `assistant/chat/history`, `assistant/chat/clear` | conversation of a plant or the garden (last 200 messages kept) |
 
 Plan coordinates are metres east (x) and south (y) of the origin (D-017, D-022),
 at most 10 km (`const.PLAN_EXTENT_M`); `geo.py` mirrors the panel's projection
@@ -146,6 +162,7 @@ geometry is one of `rect` (centre, width, height, rotation in degrees clockwise)
 - `state/garden-store.ts`: plants, layout and the water summary + backend subscription; debounced refresh on change events (`irrigation` events reload only the water summary); "stale" after 1 h. The panel refreshes stale data when the tab becomes visible and every 15 min, so signed URLs (24 h) never expire in an open panel.
 - Components (`src/components/`): `PgElement` base (hass + cached `t`), plant card, plant form dialog (create/edit; sends only changed fields so provenance of untouched fields is kept), photo viewer (tags, note, cover, delete, keyboard navigation), growth chart (SVG, ResizeObserver), confirm dialog. Native `<dialog>` everywhere.
 - Views (`src/views/`): plant list (search, status filter, empty state, FAB), plant detail (profile with provenance marks, notes, growth chart + measurements, water (`components/water-panel.ts`: today, total, 14-day bars, latest events with delete, "log watering"), AI identification (`components/ai-panel.ts`: pick 1–3 photos and what they show, cost estimate, result with confidence, Pl@ntNet attribution, suggestions to take over or dismiss one by one, questions), photo timeline by month, drag-and-drop upload).
+- Assistant (M7): `views/tasks-view.ts` (`/tasks`: all tasks grouped by overdue / today / this week / later / undated / done, open problems of all plants; the tab shows the number of overdue tasks), `views/assistant-view.ts` (`/assistant`: garden questions, tips, chat). On the plant page `components/problems-panel.ts` (report with photos, status, diagnosis with causes, actions and warnings, log), `components/task-list.ts` (also the task dialog with repetition and season months) and `components/assistant-panel.ts` (questions, tips with tasks to take over, chat that shows the answer while it is written). `util/markdown.ts` renders AI text as a Markdown subset from Lit templates, never as HTML. The plan shows a violet dotted ring for pruning due and a red dot for an active problem; the info card lists tasks, problem and questions (`store.care`, reloaded on `care` events).
 - Tech page (`views/tech-view.ts`, `/tech`, tab only for admins): AI cost, requests and tokens today / this month / overall, budget bar, stacked cost per day and model, breakdowns, request log with filters, paging and CSV export, providers with "test connection", price editor, storage, entities and weather sources.
 - Theme: tokens on the panel root only (`styles/tokens.ts`, HA theme variables + nature palette, `dark` attribute); nested elements inherit them. Shared controls in `styles/shared.ts`.
 - No HA-internal `ha-*` elements; icons from `@mdi/js`.

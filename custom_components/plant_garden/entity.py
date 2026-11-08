@@ -174,7 +174,7 @@ class GardenEntity(Entity):
     async def async_added_to_hass(self) -> None:
         @callback
         def changed(change: GardenChange) -> None:
-            if change.kind in ("irrigation", "ai"):
+            if change.kind in ("irrigation", "ai", "care", "plant"):
                 self.async_write_ha_state()
 
         self.async_on_remove(self._data.manager.async_subscribe(changed))
@@ -189,6 +189,10 @@ class GardenEntity(Entity):
         summary = self._data.irrigation.summary()
         if item == PLANT:
             stats = dict(summary["plants"].get(self._item_id, {}))
+            stats.update(self._data.care.stats.get(self._item_id, {}))
+            plant = next((p for p in self._data.manager.plants if p.id == self._item_id), None)
+            if plant is not None:
+                stats["health"] = plant.status.value
             state = water.plants.get(self._item_id) if water else None
             if state is not None:
                 stats.update(

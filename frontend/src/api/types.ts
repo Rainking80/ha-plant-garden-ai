@@ -241,7 +241,7 @@ export interface Layout {
 }
 
 export interface GardenChangeEvent {
-  kind: "plant" | "plant_removed" | "layout" | "irrigation" | "water" | "ai";
+  kind: "plant" | "plant_removed" | "layout" | "irrigation" | "water" | "ai" | "care";
   plant_id: string | null;
   shape_id: string | null;
 }
@@ -526,4 +526,140 @@ export interface TechInfo {
     last_error: string | null;
   };
   providers: ProviderInfo[];
+}
+
+// ------------------------------------------------------------ assistant (tasks, problems, chat)
+export const TASK_KINDS = [
+  "water",
+  "fertilize",
+  "prune",
+  "repot",
+  "pest_check",
+  "harvest",
+  "photo",
+  "other",
+] as const;
+export type TaskKind = (typeof TASK_KINDS)[number];
+
+export interface Repeat {
+  every: number;
+  unit: "days" | "weeks";
+}
+
+export interface Task {
+  id: string;
+  kind: TaskKind;
+  title: string;
+  notes: string;
+  plant_id: string | null;
+  problem_id: string | null;
+  due: string | null;
+  repeat: Repeat | null;
+  months: number[];
+  status: "open" | "done";
+  source: "user" | "ai";
+  created_at: string;
+  done_at: string | null;
+}
+
+export interface TaskFields {
+  kind?: TaskKind;
+  title?: string;
+  notes?: string;
+  plant_id?: string | null;
+  problem_id?: string | null;
+  due?: string | null;
+  repeat?: Repeat | null;
+  months?: number[];
+}
+
+export const PROBLEM_STATUSES = ["open", "treating", "watching", "resolved"] as const;
+export type ProblemStatus = (typeof PROBLEM_STATUSES)[number];
+
+export interface Diagnosis {
+  summary: string;
+  health: "healthy" | "watch" | "problem";
+  symptoms: string[];
+  causes: { name: string; type: string; confidence: number; evidence: string }[];
+  actions: { text: string; urgency: "now" | "soon" | "later"; warning: string | null }[];
+  monitoring: string[];
+  missing_info: string[];
+  follow_up_days: number | null;
+  model?: string;
+  created?: string;
+  photo_ids?: string[];
+}
+
+export interface Problem {
+  id: string;
+  plant_id: string;
+  title: string;
+  status: ProblemStatus;
+  observed_on: string;
+  created_at: string;
+  resolved_at: string | null;
+  photo_ids: string[];
+  diagnosis: Diagnosis | null;
+}
+
+export interface LogEntry {
+  id: string;
+  ts: string;
+  kind: "note" | "action" | "status" | "diagnosis" | "photo";
+  text: string;
+}
+
+export interface ProblemDetail {
+  problem: Problem;
+  log: LogEntry[];
+}
+
+export interface Question {
+  id: string;
+  plant_id: string | null;
+  field: string | null;
+  question: string;
+  answer: string | null;
+  status: "open" | "answered" | "dismissed";
+  created_at: string;
+  answered_at: string | null;
+}
+
+export interface ChatMessage {
+  id: string;
+  plant_id: string | null;
+  role: "user" | "assistant";
+  text: string;
+  ts: string;
+  model: string | null;
+}
+
+export interface Tip {
+  id: string;
+  title: string;
+  text: string;
+  plant_id: string | null;
+  task: { kind: TaskKind; title: string; due_in_days: number | null; repeat: Repeat | null } | null;
+  state: "new" | "accepted" | "dismissed" | null;
+  task_id?: string;
+}
+
+export interface TipsRecord {
+  created: string;
+  model: string;
+  weekly: boolean;
+  tips: Tip[];
+}
+
+export interface PlantCare {
+  open_tasks: number;
+  overdue: number;
+  prune_due: boolean;
+  problem: ProblemStatus | null;
+  questions: number;
+}
+
+export interface CareSummary {
+  plants: Record<string, PlantCare>;
+  garden: { open_tasks?: number; overdue?: number; problems?: number; questions?: number };
 }

@@ -1,4 +1,5 @@
 import {
+  careSummary,
   errorMessage,
   getLayout,
   irrigationSummary,
@@ -8,6 +9,7 @@ import {
 } from "../api/client";
 import type {
   Background,
+  CareSummary,
   GardenChangeEvent,
   IrrigationSummary,
   Layout,
@@ -40,6 +42,8 @@ export class GardenStore extends EventTarget {
   irrigation: IrrigationSummary = { plants: {}, zones: {} };
   /** Weather, soil water per plant and zone advice (refreshed on water events). */
   water: WaterSummary | null = null;
+  /** Open tasks, problems and questions per plant (refreshed on care events). */
+  care: CareSummary = { plants: {}, garden: {} };
   loaded = false;
   error: string | undefined;
   lastRefresh = 0;
@@ -48,6 +52,7 @@ export class GardenStore extends EventTarget {
   private _refreshTimer?: ReturnType<typeof setTimeout>;
   private _irrigationTimer?: ReturnType<typeof setTimeout>;
   private _waterTimer?: ReturnType<typeof setTimeout>;
+  private _careTimer?: ReturnType<typeof setTimeout>;
   private _pending?: Promise<void>;
 
   constructor(private readonly _hass: () => HomeAssistant) {
@@ -161,16 +166,18 @@ export class GardenStore extends EventTarget {
   // ------------------------------------------------------------ internals
   private async _load(): Promise<void> {
     try {
-      const [plants, layout, irrigation, water] = await Promise.all([
+      const [plants, layout, irrigation, water, care] = await Promise.all([
         listPlants(this._hass()),
         getLayout(this._hass()),
         irrigationSummary(this._hass()),
         waterSummary(this._hass()),
+        careSummary(this._hass()),
       ]);
       this.plants = plants;
       this.layout = layout;
       this.irrigation = irrigation;
       this.water = water;
+      this.care = care;
       this.error = undefined;
       this.loaded = true;
       this.lastRefresh = Date.now();
@@ -187,6 +194,12 @@ export class GardenStore extends EventTarget {
       clearTimeout(this._irrigationTimer);
       this._irrigationTimer = setTimeout(() => void this._loadIrrigation(), REFRESH_DEBOUNCE_MS);
       return;
+    }
+    if (event.kind === "care" || event.kind === "ai") {
+      // tasks, problems, questions, tips, chat - or an AI call (plant fields may change)
+      clearTimeout(this._careTimer);
+      this._careTimer = setTimeout(() => void this._loadCare(), REFRESH_DEBOUNCE_MS);
+      if (event.kind === "care") return;
     }
     if (event.kind === "water") {
       clearTimeout(this._waterTimer);
@@ -209,6 +222,15 @@ export class GardenStore extends EventTarget {
   private async _loadWater(): Promise<void> {
     try {
       this.water = await waterSummary(this._hass());
+    } catch {
+      return; // the next full refresh brings it
+    }
+    this._emit("change");
+  }
+
+  private async _loadCare(): Promise<void> {
+    try {
+      this.care = await careSummary(this._hass());
     } catch {
       return; // the next full refresh brings it
     }

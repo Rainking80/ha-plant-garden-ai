@@ -10,6 +10,7 @@ cache_creation_input_tokens, cache_read_input_tokens, output_tokens.
 from __future__ import annotations
 
 import base64
+from collections.abc import Callable
 import time
 from typing import Any
 
@@ -24,7 +25,7 @@ from ..base import (
     Usage,
     parse_json,
 )
-from ..http import async_request
+from ..http import async_request, async_stream
 
 BASE_URL = "https://api.anthropic.com/v1"
 API_VERSION = "2026-10-21"
@@ -131,4 +132,48 @@ class AnthropicProvider:
             model=payload.get("model") or self.model,
             latency_ms=int((time.monotonic() - start) * 1000),
             request_id=headers.get("request-id"),
+        )
+
+    async def async_stream(self, req: AIRequest, on_delta: Callable[[str], None]) -> AIResponse:
+        """Text as it is written (server-sent events); usage from message_start/_delta."""
+        start = time.monotonic()
+        images = sum(len(m.images) for m in req.messages)
+        usage_raw: dict[str, Any] = {}
+        parts: list[str] = []
+        model = self.model
+        request_id = None
+        stop = None
+        async for event in async_stream(
+            self._session,
+            f"{BASE_URL}/messages",
+            headers=self._headers(),
+            json={**self.body(req), "stream": True},
+        ):
+            kind = event.get("type")
+            if kind == "message_start":
+                message = event.get("message") or {}
+                usage_raw.update(message.get("usage") or {})
+                model = message.get("model") or model
+                request_id = message.get("id")
+            elif kind == "content_block_delta":
+                delta = event.get("delta") or {}
+                if delta.get("type") == "text_delta" and delta.get("text"):
+                    parts.append(delta["text"])
+                    on_delta(delta["text"])
+            elif kind == "message_delta":
+                usage_raw.update({k: v for k, v in (event.get("usage") or {}).items() if v})
+                stop = (event.get("delta") or {}).get("stop_reason")
+            elif kind == "error":
+                message = str((event.get("error") or {}).get("message") or "stream error")
+                raise AIError(message[:300], usage=map_usage(usage_raw, images))
+        usage = map_usage(usage_raw, images)
+        if stop == "refusal":
+            raise AIError("The model declined this request", usage=usage)
+        return AIResponse(
+            text="".join(parts),
+            data=None,
+            usage=usage,
+            model=model,
+            latency_ms=int((time.monotonic() - start) * 1000),
+            request_id=request_id,
         )

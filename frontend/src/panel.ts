@@ -11,7 +11,9 @@ import type { HomeAssistant, PanelInfo, PlantGardenPanelConfig, Route } from "./
 import { navigate } from "./util/navigate";
 import "./views/garden-view";
 import "./views/plant-detail";
+import "./views/assistant-view";
 import "./views/plants-view";
+import "./views/tasks-view";
 import "./views/tech-view";
 import "./views/water-view";
 
@@ -19,6 +21,8 @@ export type View =
   | { name: "plan"; focusPlantId: string | null }
   | { name: "plants" }
   | { name: "water" }
+  | { name: "tasks" }
+  | { name: "assistant" }
   | { name: "tech" }
   | { name: "plant"; plantId: string };
 
@@ -32,6 +36,8 @@ export function parseRoute(path: string | undefined): View {
   if (/^\/plants\/?$/.test(value)) return { name: "plants" };
   if (/^\/water\/?$/.test(value)) return { name: "water" };
   if (/^\/tech\/?$/.test(value)) return { name: "tech" };
+  if (/^\/tasks\/?$/.test(value)) return { name: "tasks" };
+  if (/^\/assistant\/?$/.test(value)) return { name: "assistant" };
   const focus = /^\/plan\/([0-9A-Za-z]+)\/?$/.exec(value);
   return { name: "plan", focusPlantId: focus?.[1] ?? null };
 }
@@ -58,7 +64,7 @@ export class PlantGardenPanel extends LitElement {
   private _localize: Localize = createLocalize("en");
   private _language = "";
   /** Where "back" from a plant goes: the tab that was used last. */
-  private _lastList: "plan" | "plants" | "water" | "tech" = "plan";
+  private _lastList: Exclude<View["name"], "plant"> = "plan";
   private _freshnessTimer?: ReturnType<typeof setInterval>;
 
   private readonly _onStoreChange = () => this.requestUpdate();
@@ -182,6 +188,18 @@ export class PlantGardenPanel extends LitElement {
                   >${t("nav.plants")}</a
                 >
                 <a
+                  href="${this._prefix}/tasks"
+                  aria-current=${view.name === "tasks" ? "page" : "false"}
+                  @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/tasks`)}
+                  >${t("nav.tasks")}${this._badge()}</a
+                >
+                <a
+                  href="${this._prefix}/assistant"
+                  aria-current=${view.name === "assistant" ? "page" : "false"}
+                  @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/assistant`)}
+                  >${t("nav.assistant")}</a
+                >
+                <a
                   href="${this._prefix}/water"
                   aria-current=${view.name === "water" ? "page" : "false"}
                   @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/water`)}
@@ -204,6 +222,14 @@ export class PlantGardenPanel extends LitElement {
         ${this._renderBody(t, view, gardenName)}
       </main>
     `;
+  }
+
+  /** Overdue tasks as a small count on the tab. */
+  private _badge() {
+    const overdue = this._store.care.garden.overdue ?? 0;
+    return overdue
+      ? html`<span class="badge" title=${this._localize("tasks.group_overdue")}>${overdue}</span>`
+      : nothing;
   }
 
   private _go(event: MouseEvent, path: string): void {
@@ -251,6 +277,18 @@ export class PlantGardenPanel extends LitElement {
           .store=${this._store}
           .prefix=${this._prefix}
         ></pg-water-view>`;
+      case "tasks":
+        return html`<pg-tasks-view
+          .hass=${this.hass}
+          .store=${this._store}
+          .prefix=${this._prefix}
+        ></pg-tasks-view>`;
+      case "assistant":
+        return html`<pg-assistant-view
+          .hass=${this.hass}
+          .store=${this._store}
+          .prefix=${this._prefix}
+        ></pg-assistant-view>`;
       case "tech":
         if (!this._info.is_admin) return nothing;
         return html`<pg-tech-view .hass=${this.hass} .store=${this._store}></pg-tech-view>`;
@@ -304,6 +342,12 @@ export class PlantGardenPanel extends LitElement {
         display: flex;
         align-self: stretch;
         margin-left: auto;
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .tabs a {
+        flex: none;
       }
       .tabs a {
         display: flex;
@@ -315,6 +359,19 @@ export class PlantGardenPanel extends LitElement {
         border-bottom: 3px solid transparent;
         font-weight: 500;
         font-size: 14px;
+      }
+      .badge {
+        margin-left: 6px;
+        min-width: 18px;
+        height: 18px;
+        border-radius: 9px;
+        padding: 0 5px;
+        box-sizing: border-box;
+        background: var(--error-color, #db4437);
+        color: #fff;
+        font-size: 11px;
+        line-height: 18px;
+        text-align: center;
       }
       .tabs a[aria-current="page"] {
         opacity: 1;

@@ -31,6 +31,8 @@ BACKGROUND_FILE_URL: Final = "/api/plant_garden/backgrounds/{image_id}"
 CONF_MAX_RUNTIME_HOURS: Final = "max_runtime_hours"
 DEFAULT_MAX_RUNTIME_HOURS: Final = 6
 EVENT_IRRIGATION_FINISHED: Final = "plant_garden_irrigation_finished"
+EVENT_PROBLEM_DETECTED: Final = "plant_garden_problem_detected"
+EVENT_TASK_DUE: Final = "plant_garden_task_due"
 ZONE_ENTITY_DOMAINS: Final = ("valve", "switch", "input_boolean", "binary_sensor")
 
 # AI (options of the entry; providers are config subentries of type "ai")
@@ -43,5 +45,10 @@ CONF_AI_DEBUG: Final = "ai_debug"  # store prompts and answers in the log
 CONF_AI_RETENTION_DAYS: Final = "ai_retention_days"
 CONF_USD_EUR: Final = "usd_eur"  # fixed rate; 0 = show US dollars
 DEFAULT_AI_RETENTION_DAYS: Final = 90
+CONF_WEEKLY_CHECK: Final = "weekly_check"  # opt-in garden check by the AI every Monday
+# context size (estimated tokens) the assistant may send, per feature: option
+# "context_tokens_<feature>"
+CONF_CONTEXT_TOKENS: Final = "context_tokens_"
+DEFAULT_CONTEXT_TOKENS: Final = {"diagnose": 2500, "tips": 4000, "chat": 3000}
 
 PRICE_FIELDS: Final = ("input", "cached_input", "cache_write", "output", "per_image", "per_request")

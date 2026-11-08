@@ -35,6 +35,9 @@ import type { PgPhotoViewer } from "../components/photo-viewer";
 import "../components/photo-viewer";
 import "../components/water-panel";
 import "../components/ai-panel";
+import "../components/assistant-panel";
+import "../components/problems-panel";
+import "../components/task-list";
 import type { PgPlantForm } from "../components/plant-form";
 import "../components/plant-form";
 import type { TranslationKey } from "../i18n";
@@ -515,6 +518,33 @@ export class PgPlantDetail extends PgElement {
           .store=${this.store}
           .plantId=${plant.id}
         ></pg-water-panel>
+      </section>
+
+      <section class="card block">
+        <pg-problems-panel
+          .hass=${this.hass}
+          .store=${this.store}
+          .plantId=${plant.id}
+          .photos=${photos}
+        ></pg-problems-panel>
+      </section>
+
+      <section class="card block">
+        <pg-task-list
+          .hass=${this.hass}
+          .store=${this.store}
+          .plantId=${plant.id}
+          .prefix=${this.prefix}
+        ></pg-task-list>
+      </section>
+
+      <section class="card block">
+        <pg-assistant-panel
+          .hass=${this.hass}
+          .store=${this.store}
+          .plantId=${plant.id}
+          .prefix=${this.prefix}
+        ></pg-assistant-panel>
       </section>
 
       <section class="card block">

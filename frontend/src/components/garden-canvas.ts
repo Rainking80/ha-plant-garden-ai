@@ -8,6 +8,7 @@ import type {
   Marker,
   Plant,
   PlantBalance,
+  PlantCare,
   Point,
   PolygonGeometry,
   Shape,
@@ -222,6 +223,7 @@ export class PgGardenCanvas extends PgElement {
     highlight: { attribute: false },
     /** soil water per plant (status rings, deficit heatmap) */
     water: { attribute: false },
+    care: { attribute: false },
     /** "plan", or a heatmap: "deficit" (soil water) or "coverage" (mm/h of the zones) */
     layer: {},
     /** draw irrigation zones */
@@ -251,6 +253,8 @@ export class PgGardenCanvas extends PgElement {
   declare highlight: ReadonlySet<string>;
   declare showZones: boolean;
   declare water: Record<string, PlantBalance>;
+  /** Open tasks and problems per plant: "pruning due" ring, problem dot. */
+  declare care: Record<string, PlantCare>;
   declare layer: Layer;
   /** ticks while a zone timer runs, so its remaining time stays current */
   declare _clock: number;
@@ -289,6 +293,7 @@ export class PgGardenCanvas extends PgElement {
     this.snapStep = 0.5;
     this.armed = null;
     this.highlight = new Set();
+    this.care = {};
     this.showZones = true;
     this.water = {};
     this.layer = "plan";
@@ -1184,9 +1189,12 @@ export class PgGardenCanvas extends PgElement {
     const balance = this.water[plant.id];
     const thirsty = balance?.needs_water ?? false;
     const frost = balance?.frost !== null && balance?.frost !== undefined;
+    const care = this.care[plant.id];
     return svg`<g class="plant status-${plant.status} ${selected ? "selected" : ""} ${
       covered ? "covered" : ""
-    } ${thirsty ? "thirsty" : ""} ${frost ? "frost" : ""}"
+    } ${thirsty ? "thirsty" : ""} ${frost ? "frost" : ""} ${care?.prune_due ? "prune" : ""} ${
+      care?.problem ? "has-problem" : ""
+    }"
         data-plant-id=${plant.id} transform="translate(${position.x} ${position.y})">
       ${
         this.layer === "deficit" && balance
@@ -1204,6 +1212,12 @@ export class PgGardenCanvas extends PgElement {
       }
       <circle class="ring" r=${r}></circle>
       ${frost ? svg`<circle class="frost-ring" r=${r * 1.18}></circle>` : nothing}
+      ${care?.prune_due ? svg`<circle class="prune-ring" r=${r * (frost ? 1.32 : 1.18)}></circle>` : nothing}
+      ${
+        care?.problem
+          ? svg`<circle class="problem-dot" cx=${r * 0.72} cy=${-r * 0.72} r=${Math.max(r * 0.2, 5 * mpp)}></circle>`
+          : nothing
+      }
       <text class="plant-label" y=${r}>${plant.name}</text>
     </g>`;
   }
@@ -1679,6 +1693,23 @@ export class PgGardenCanvas extends PgElement {
       stroke: var(--pg-thirsty, #e08a1e);
       stroke-width: 3.5;
       stroke-dasharray: 5 3;
+    }
+    /* assistant: pruning due (violet dotted ring), open problem (red dot) */
+    .plant .prune-ring {
+      fill: none;
+      stroke: var(--pg-prune, #8e5bd0);
+      stroke-width: 2;
+      stroke-dasharray: 1 3;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .plant .problem-dot {
+      fill: var(--error-color, #db4437);
+      stroke: #fff;
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
     }
     .plant .frost-ring {
       fill: none;

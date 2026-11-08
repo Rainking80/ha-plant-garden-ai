@@ -7,7 +7,7 @@ so the connection can be shared between executor threads.
 from __future__ import annotations
 
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
 from datetime import date, datetime
 import json
 import logging
@@ -133,6 +133,72 @@ MIGRATIONS: tuple[str, ...] = (
         PRIMARY KEY (day, feature, provider, model)
     );
     """,
+    # 5: assistant - tasks, problems with their log, questions to the user, chat
+    """
+    CREATE TABLE tasks (
+        id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL,
+        title TEXT NOT NULL,
+        notes TEXT NOT NULL DEFAULT '',
+        plant_id TEXT,
+        problem_id TEXT,
+        due TEXT,
+        repeat_every INTEGER,
+        repeat_unit TEXT,
+        months TEXT NOT NULL DEFAULT '[]',
+        status TEXT NOT NULL DEFAULT 'open',
+        source TEXT NOT NULL DEFAULT 'user',
+        created_at TEXT NOT NULL,
+        done_at TEXT,
+        due_notified TEXT
+    );
+    CREATE INDEX tasks_by_status ON tasks (status, due);
+    CREATE INDEX tasks_by_plant ON tasks (plant_id);
+
+    CREATE TABLE problems (
+        id TEXT PRIMARY KEY,
+        plant_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'open',
+        observed_on TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        resolved_at TEXT,
+        photo_ids TEXT NOT NULL DEFAULT '[]',
+        diagnosis TEXT
+    );
+    CREATE INDEX problems_by_plant ON problems (plant_id, status);
+
+    CREATE TABLE problem_log (
+        id TEXT PRIMARY KEY,
+        problem_id TEXT NOT NULL,
+        ts TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        text TEXT NOT NULL DEFAULT ''
+    );
+    CREATE INDEX problem_log_by_problem ON problem_log (problem_id, ts);
+
+    CREATE TABLE questions (
+        id TEXT PRIMARY KEY,
+        plant_id TEXT,
+        field TEXT,
+        question TEXT NOT NULL,
+        answer TEXT,
+        status TEXT NOT NULL DEFAULT 'open',
+        created_at TEXT NOT NULL,
+        answered_at TEXT
+    );
+    CREATE INDEX questions_by_status ON questions (status, plant_id);
+
+    CREATE TABLE chat (
+        id TEXT PRIMARY KEY,
+        plant_id TEXT,
+        role TEXT NOT NULL,
+        text TEXT NOT NULL,
+        ts TEXT NOT NULL,
+        model TEXT
+    );
+    CREATE INDEX chat_by_plant ON chat (plant_id, ts);
+    """,
 )
 SCHEMA_VERSION = len(MIGRATIONS)
 
@@ -248,6 +314,10 @@ class GardenDatabase:
                 raise DatabaseError("Database is closed")
             with self._conn:  # commits on success, rolls back on error
                 yield self._conn
+
+    def cursor(self) -> AbstractContextManager[sqlite3.Connection]:
+        """A locked connection in a transaction, for the tables other modules own."""
+        return self._cursor()
 
     @property
     def schema_version(self) -> int:

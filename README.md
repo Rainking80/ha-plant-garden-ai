@@ -1,6 +1,6 @@
 # Plant Garden for Home Assistant
 
-> **Status: early development (0.1.0).** Plants, photos, growth measurements, the garden plan editor, aerial imagery, irrigation tracking, the water balance and AI identification with a cost page are built and in review; the assistant (tasks, diagnosis, tips) follows (see [roadmap](#roadmap)).
+> **Status: early development (0.1.0).** Plants, photos, growth measurements, the garden plan editor, aerial imagery, irrigation tracking, the water balance, AI identification with a cost page and the assistant (tasks, problems with diagnosis, tips, chat) are built and in review; polish and the first release follow (see [roadmap](#roadmap)).
 
 Plant Garden turns Home Assistant into a garden planner and plant journal:
 
@@ -48,6 +48,14 @@ removed), the plant's name, category, location type and the names you entered,
 the month and the hemisphere – never your location. Keys stay in Home Assistant
 and are shown masked only.
 
+The **assistant** (tips, problem diagnosis, chat, optional weekly check) also
+sends a compact summary of the garden: plant details with where each value came
+from, measurements, soil water and weather of the last two weeks, irrigation,
+open tasks and problems – and, for a diagnosis, the problem's title and log. Your
+plant notes are not sent. How much may be sent per feature is set in the options.
+Tasks work without any AI and also appear in Home Assistant's to-do list
+"Garden tasks".
+
 The **Tech** tab (administrators) shows requests, tokens and costs per day,
 model, feature and plant, a request log with CSV export, and the price table
 (as of 2026-11-08, editable per model). A monthly budget in the integration
@@ -64,7 +72,7 @@ options warns at 80 % and can stop further calls.
 | M4 | Irrigation zones linked to HA entities (display and tracking) | 🧪 built, in review |
 | M5 | Weather, evapotranspiration, water balance | 🧪 built, in review |
 | M6 | AI: HA AI Task, OpenAI-compatible, Claude, Gemini, Pl@ntNet; token & cost page | 🧪 built, in review |
-| M7 | Assistant: tasks, problems, questions, tips | |
+| M7 | Assistant: tasks, problems, questions, tips | 🧪 built, in review |
 | M8 | Polish & release | |
 
 ## Development

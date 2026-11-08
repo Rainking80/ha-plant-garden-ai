@@ -8,6 +8,32 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M7 garden assistant:
+  - Tasks (water, fertilise, prune, repot, check for pests, harvest, take a photo,
+    other) with due date, repetition every N days or weeks (from the day it was
+    done) and optional season months; for one plant or the whole garden. New tab
+    "Tasks" with overdue / today / this week / later, a count of overdue tasks on
+    the tab, and all open problems.
+  - The to-do list "Garden tasks" in Home Assistant shows the same tasks; ticking
+    one off there completes it, items added there become tasks ("Rose: cut back"
+    is linked to the rose). Events `plant_garden_task_due` and
+    `plant_garden_problem_detected`, actions `plant_garden.create_task` and
+    `plant_garden.add_photo` (file or camera snapshot).
+  - Problems: "Report a problem" or tag a photo with `problem`; status, a log of
+    what was done, and an AI diagnosis with symptoms, possible causes (type,
+    confidence, evidence), what to do and how urgent, warnings, what to watch and
+    what is missing. A follow-up photo becomes a task.
+  - Tips for a plant or the garden that consider season, weather, soil water,
+    tasks and problems; proposed jobs become tasks with one click. The assistant
+    asks questions to improve the data (answer or skip them). Optional weekly
+    garden check (off by default).
+  - Chat with the assistant about the garden or one plant; the answer appears
+    while it is written (Claude, OpenAI-compatible, Gemini). Also as action
+    `plant_garden.ask_assistant`. Answers are shown as safe Markdown.
+  - Plan: violet ring when pruning is due, red dot for an open problem, tasks,
+    problem and questions on the info card. Sensors "open tasks" and "problem"
+    per plant ("health" disabled by default).
+  - Options: weekly check, how much garden data the AI may receive per feature.
 - M6 AI layer:
   - AI providers in the integration settings ("Add AI provider"): Home
     Assistant's own AI task entities (no key), OpenAI-compatible APIs (OpenAI,
