@@ -64,6 +64,12 @@ All notable changes to this project are documented here. The format follows
 - CI: hassfest, HACS validation, Python lint/types/tests (pinned and minimum HA
   version), frontend lint/tests/build with bundle check, tag-based releases.
 
+### Fixed
+
+- The dashed property boundary could hardly be selected (only its thin dashes
+  reacted), so it could not be moved or deleted. It now has a wide invisible grip
+  along its line; its inside stays free for panning.
+
 ### Security
 
 - Expired photo links answer 403 instead of 401, so an open panel cannot trigger

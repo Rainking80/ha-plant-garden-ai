@@ -192,6 +192,62 @@ describe("pg-garden-view", () => {
     await vi.waitFor(() => expect(store.getShape(BED.id)).toBeDefined());
   });
 
+  it("grabs the dashed property boundary by its line, not by its inside", async () => {
+    const boundary: Shape = {
+      ...BED,
+      id: "01JSHAPE0000000000000000BB",
+      kind: "boundary",
+      label: null,
+      z: -10,
+      geometry: {
+        type: "polygon",
+        points: [
+          [-10, -8],
+          [10, -8],
+          [10, 8],
+          [-10, 8],
+        ],
+      },
+    };
+    const backend = fakeBackend({ shapes: [boundary] });
+    const { view, store } = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    const canvas = canvasOf(view);
+    const svg = deepGet<SVGSVGElement>(canvas, "svg");
+
+    // dragging inside the boundary pans the map and leaves the boundary alone
+    pointer("pointerdown", svg, 400, 300);
+    pointer("pointermove", svg, 440, 300);
+    pointer("pointerup", svg, 440, 300);
+    expect(canvas.viewport.cx).toBeCloseTo(-2);
+    expect(calls(backend, "plant_garden/layout/shapes/save")).toHaveLength(0);
+    canvas.viewport = { cx: 0, cy: 0, width: 40 };
+
+    // the line has a wide invisible grip: (-10, -8) is at screen (200, 140)
+    const grip = deepGet<SVGElement>(canvas, `[data-shape-id="${boundary.id}"] .outline-hit`);
+    pointer("pointerdown", grip, 200, 140);
+    pointer("pointerup", grip, 200, 140);
+    await vi.waitFor(() => expect(deepText(view)).toContain("Fläche löschen"));
+
+    pointer("pointerdown", grip, 200, 140);
+    pointer("pointermove", grip, 240, 140);
+    pointer("pointerup", grip, 240, 140);
+    await vi.waitFor(() =>
+      expect(store.getShape(boundary.id)?.geometry).toMatchObject({
+        points: [
+          [-8, -8],
+          [12, -8],
+          [12, 8],
+          [-8, 8],
+        ],
+      }),
+    );
+
+    await clickButton(view, "Fläche löschen");
+    await vi.waitFor(() => expect(store.getShape(boundary.id)).toBeUndefined());
+    expect(calls(backend, "plant_garden/layout/shapes/delete")).toHaveLength(1);
+  });
+
   it("draws a rectangle by dragging with the rectangle tool", async () => {
     const backend = fakeBackend();
     const { view, store } = await mount(backend);

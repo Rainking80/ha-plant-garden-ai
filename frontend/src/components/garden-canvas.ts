@@ -1072,6 +1072,11 @@ export class PgGardenCanvas extends PgElement {
         data-shape-id=${shape.id}>
       ${this._renderGeometry(g, "body")}
       ${
+        // The boundary is only a thin dashed line (its inside must stay free for
+        // panning and for what lies on it), so it gets a wide invisible grip.
+        shape.kind === "boundary" ? this._renderGeometry(g, "outline-hit") : nothing
+      }
+      ${
         shape.label
           ? svg`<text class="shape-label" x=${label.x} y=${label.y}>${shape.label}</text>`
           : nothing
@@ -1442,6 +1447,17 @@ export class PgGardenCanvas extends PgElement {
       stroke: color-mix(in srgb, var(--pg-text) 55%, transparent);
       stroke-width: 2;
       stroke-dasharray: 8 5;
+      pointer-events: none;
+    }
+    .outline-hit {
+      fill: none;
+      stroke: transparent;
+      /* about 22 screen pixels wide, in plan metres like the labels */
+      stroke-width: calc(var(--mpp) * 22px);
+      pointer-events: stroke;
+    }
+    .mode-edit .shape.kind-boundary:not(.locked):hover .body {
+      stroke: var(--pg-accent);
     }
     .shape.selected .body {
       stroke: var(--pg-accent);

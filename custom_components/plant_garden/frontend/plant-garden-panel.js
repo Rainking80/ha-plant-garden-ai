@@ -3796,6 +3796,7 @@ N("pg-garden-canvas", class extends j {
 		return C`<g class="shape kind-${e.kind} ${n ? "selected" : ""} ${e.locked ? "locked" : ""}"
         data-shape-id=${e.id}>
       ${this._renderGeometry(t, "body")}
+      ${e.kind === "boundary" ? this._renderGeometry(t, "outline-hit") : T}
       ${e.label ? C`<text class="shape-label" x=${r.x} y=${r.y}>${e.label}</text>` : T}
     </g>`;
 	}
@@ -4116,6 +4117,17 @@ N("pg-garden-canvas", class extends j {
       stroke: color-mix(in srgb, var(--pg-text) 55%, transparent);
       stroke-width: 2;
       stroke-dasharray: 8 5;
+      pointer-events: none;
+    }
+    .outline-hit {
+      fill: none;
+      stroke: transparent;
+      /* about 22 screen pixels wide, in plan metres like the labels */
+      stroke-width: calc(var(--mpp) * 22px);
+      pointer-events: stroke;
+    }
+    .mode-edit .shape.kind-boundary:not(.locked):hover .body {
+      stroke: var(--pg-accent);
     }
     .shape.selected .body {
       stroke: var(--pg-accent);
