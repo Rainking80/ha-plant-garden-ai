@@ -19,7 +19,7 @@ Plant Garden never switches your valves; it only reads their state and offers re
 
 ## Installation (HACS custom repository)
 
-1. HACS → ⋮ → **Custom repositories** → add `https://github.com/GITHUB_USER/ha-plant-maintainance`, category **Integration**.
+1. HACS → ⋮ → **Custom repositories** → add `https://github.com/Rainking80/ha-plant-maintainance`, category **Integration**.
 2. Install **Plant Garden**, restart Home Assistant.
 3. **Settings → Devices & services → Add integration → Plant Garden**, choose a name for your garden.
 4. Open the new sidebar entry.

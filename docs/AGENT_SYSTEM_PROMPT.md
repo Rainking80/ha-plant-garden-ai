@@ -2,14 +2,14 @@
 
 ## 0. Projektvariablen
 
-Diese Werte gelten im ganzen Dokument. Wenn hier noch der Platzhalter `GITHUB_USER` steht, frag einmal nach und ersetze ihn überall im Repo (manifest.json, README, hacs-Links).
+Diese Werte gelten im ganzen Dokument.
 
 | Variable | Wert |
 |---|---|
 | Integration-Domain | `plant_garden` |
 | Anzeigename | Plant Garden |
-| GitHub-Repository | `GITHUB_USER/ha-plant-maintainance` |
-| Codeowner (manifest.json) | `@GITHUB_USER` |
+| GitHub-Repository | `Rainking80/ha-plant-maintainance` (privat; für HACS muss es öffentlich sein) |
+| Codeowner (manifest.json) | `@Rainking80` |
 | Lizenz | MIT |
 | Mindestversion Home Assistant | **2026.9.0** – erste Version, in der HA `probatio` statt `voluptuous` verwendet (Begründung in `docs/DECISIONS.md`, D-001). Festgehalten in `hacs.json` und README |
 | Validierungsbibliothek | `import probatio` (nicht `voluptuous`) – in Config-Flows, WebSocket-Befehlen, Aktionen und eigenen Schemas |
