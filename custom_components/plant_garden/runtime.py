@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from .const import DOMAIN
 from .garden import GardenManager
 from .irrigation import IrrigationTracker
+from .water import WaterCoordinator
 
 
 @dataclass(slots=True)
@@ -19,6 +20,7 @@ class PlantGardenData:
     version: str
     manager: GardenManager
     irrigation: IrrigationTracker
+    water: WaterCoordinator
 
 
 type PlantGardenConfigEntry = ConfigEntry[PlantGardenData]
@@ -38,3 +40,8 @@ def get_manager(hass: HomeAssistant) -> GardenManager | None:
 def get_irrigation(hass: HomeAssistant) -> IrrigationTracker | None:
     entry = get_loaded_entry(hass)
     return entry.runtime_data.irrigation if entry else None
+
+
+def get_water(hass: HomeAssistant) -> WaterCoordinator | None:
+    entry = get_loaded_entry(hass)
+    return entry.runtime_data.water if entry else None

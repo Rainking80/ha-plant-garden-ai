@@ -26,3 +26,5 @@ log_watering:
     note:
       selector:
         text:
+
+refresh_weather:

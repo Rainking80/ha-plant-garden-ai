@@ -330,6 +330,42 @@ async def check_irrigation(
         f"{share['liters']} L for the plant, {received[0]['entity_id']} = {received[0]['state']}"
     )
     await call(type="plant_garden/layout/shapes/delete", shape_id=zone["id"])
+    await check_weather(session, base, headers, call, plant_id)
+
+
+async def check_weather(
+    session: aiohttp.ClientSession,
+    base: str,
+    headers: dict[str, str],
+    call: Callable[..., Awaitable[dict]],
+    plant_id: str,
+) -> None:
+    """Add Open-Meteo as weather source (real request, Berlin centre) and read the balance."""
+    summary = await call(type="plant_garden/water/summary")
+    assert summary["configured"] is False, summary
+    entry_id = (await call(type="plant_garden/info"))["entry_id"]
+    flow_url = f"{base}/api/config/config_entries/subentries/flow"
+    async with session.post(
+        flow_url, json={"handler": [entry_id, "weather"]}, headers=headers
+    ) as resp:
+        flow = await resp.json()
+    for step in ({"source": "open_meteo"}, {}):
+        async with session.post(
+            f"{flow_url}/{flow['flow_id']}", json=step, headers=headers
+        ) as resp:
+            flow = await resp.json()
+    assert flow["type"] == "create_entry", flow
+    summary = await call(type="plant_garden/water/refresh")
+    assert summary["sources"][0]["ok"], summary
+    past = [day for day in summary["weather"] if not day["forecast"]]
+    assert len(past) >= 10, summary["weather"]
+    assert any(day["forecast"] for day in summary["weather"]), summary["weather"]
+    balance = summary["plants"][plant_id]
+    assert balance["taw"] > 0, balance
+    print(
+        f"  weather: Open-Meteo added, {len(summary['weather'])} days; "
+        f"plant deficit {balance['depletion']} of {balance['taw']} mm"
+    )
 
 
 async def main(base: str) -> None:

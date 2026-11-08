@@ -249,3 +249,35 @@ on (water balance in M5, tasks and problems in M7).
 
 The action `plant_garden.log_watering` targets devices (plants: litres each, zones:
 minutes), because automations know devices, not internal plant ids.
+
+## D-026 Weather sources, priorities and the water balance (2026-11-08)
+
+- **Sources**: Open-Meteo (worldwide, no key), Bright Sky (DWD observations and
+  MOSMIX forecasts, Germany, no key) and the user's own Home Assistant sensors
+  (long-term statistics, forecast via `weather.get_forecasts`). Each is a config
+  subentry of type `weather`. OpenWeatherMap, Visual Crossing and Tomorrow.io need
+  keys and are not built yet; the provider layer takes them without changes
+  elsewhere.
+- **No automatic calls**: nothing is fetched until the user adds a source; the
+  panel explains how. Adding a service shows which rounded location (about 1 km)
+  it receives and tests the connection.
+- **Priority per value**: own sensors first, then services in the order they were
+  added; a later source only fills values the earlier ones lack. ET₀ comes from a
+  source when it has one, otherwise Penman-Monteith (with whatever humidity, wind
+  and radiation exist; FAO-56 fallbacks for missing ones) or Hargreaves-Samani.
+- **Storage**: merged past days are stored in SQLite (`weather_daily`, one JSON row
+  per day) and refetched for the last 30 days every hour, so gaps after downtime
+  close by themselves. The balance itself is recomputed from stored weather and
+  irrigation (deterministic, cheap) instead of being stored.
+- **Bucket**: starts at field capacity on the first stored day (at most a year
+  back). K: WUCOLS landscape coefficients, lawn 0.8, vegetables FAO-56 stages from
+  the planting date. TAW from FAO-56 soil water by texture and root depth per
+  category; pots use potting mix and 25 cm. Rain: first 2 mm intercepted, 80 % of
+  the rest effective; plants under houses, greenhouses and roofs (or with location
+  greenhouse/covered) get none. Defaults and sources in `water_defaults.json`;
+  values marked as assumptions are ours.
+- **Advice**: a plant needs water when Dr > RAW. A zone is recommended when a
+  plant it reaches needs water and the expected effective rain of the next two days
+  (weighted by probability) does not cover it; the run time refills the thirstiest
+  plant (area zones: depth rate x share; drippers: litres), capped at 4 h.
+- **Frost**: the coldest forecast night below a plant's minimum temperature.

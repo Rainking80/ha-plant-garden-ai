@@ -13,17 +13,20 @@ from homeassistant.loader import async_get_integration
 
 from .const import CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS, DOMAIN
 from .database import DatabaseError
+from .entity import async_garden_device
 from .garden import GardenManager
 from .http import BackgroundFileView, BackgroundUploadView, PhotoFileView, PhotoUploadView
 from .irrigation import IrrigationTracker
 from .panel import async_register_panel, async_register_static_path, async_unregister_panel
 from .runtime import PlantGardenConfigEntry, PlantGardenData
 from .services import async_register_services
+from .water import WaterCoordinator
+from .water_balance import load_defaults
 from .websocket_api import async_register_websocket_commands
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -52,11 +55,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) 
         lambda: float(entry.options.get(CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS)),
     )
     await irrigation.async_start()
+    water = WaterCoordinator(hass, entry, manager, await hass.async_add_executor_job(load_defaults))
+    await water.async_start()
     entry.runtime_data = PlantGardenData(
-        version=str(integration.version), manager=manager, irrigation=irrigation
+        version=str(integration.version), manager=manager, irrigation=irrigation, water=water
     )
+    async_garden_device(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await async_register_panel(hass, entry)
+
+    async def refetch(hass: HomeAssistant, entry: PlantGardenConfigEntry) -> None:
+        """Weather sources (subentries) or options changed."""
+        await entry.runtime_data.water.async_request_refresh()
+
+    entry.async_on_unload(entry.add_update_listener(refetch))
+    # fetch now, not only an hour later (does not delay the start)
+    entry.async_create_background_task(hass, water.async_refresh(), "plant_garden weather")
     return True
 
 
@@ -65,6 +79,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry)
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         async_unregister_panel(hass)
+        entry.runtime_data.water.async_stop()
         await entry.runtime_data.irrigation.async_stop()
         await entry.runtime_data.manager.async_shutdown()
     return unloaded

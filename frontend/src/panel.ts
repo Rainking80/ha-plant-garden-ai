@@ -12,10 +12,12 @@ import { navigate } from "./util/navigate";
 import "./views/garden-view";
 import "./views/plant-detail";
 import "./views/plants-view";
+import "./views/water-view";
 
 export type View =
   | { name: "plan"; focusPlantId: string | null }
   | { name: "plants" }
+  | { name: "water" }
   | { name: "plant"; plantId: string };
 
 const FRESHNESS_CHECK_MS = 15 * 60 * 1000;
@@ -26,6 +28,7 @@ export function parseRoute(path: string | undefined): View {
   const plant = /^\/plants\/([0-9A-Za-z]+)\/?$/.exec(value);
   if (plant?.[1]) return { name: "plant", plantId: plant[1] };
   if (/^\/plants\/?$/.test(value)) return { name: "plants" };
+  if (/^\/water\/?$/.test(value)) return { name: "water" };
   const focus = /^\/plan\/([0-9A-Za-z]+)\/?$/.exec(value);
   return { name: "plan", focusPlantId: focus?.[1] ?? null };
 }
@@ -51,8 +54,8 @@ export class PlantGardenPanel extends LitElement {
   private _started = false;
   private _localize: Localize = createLocalize("en");
   private _language = "";
-  /** Where "back" from a plant goes: the plan or the list, whichever was used last. */
-  private _lastList: "plan" | "plants" = "plan";
+  /** Where "back" from a plant goes: the tab that was used last. */
+  private _lastList: "plan" | "plants" | "water" = "plan";
   private _freshnessTimer?: ReturnType<typeof setInterval>;
 
   private readonly _onStoreChange = () => this.requestUpdate();
@@ -139,7 +142,9 @@ export class PlantGardenPanel extends LitElement {
             ? html`<button
                 class="icon-button"
                 @click=${() =>
-                  navigate(this._lastList === "plants" ? `${this._prefix}/plants` : this._prefix)}
+                  navigate(
+                    this._lastList === "plan" ? this._prefix : `${this._prefix}/${this._lastList}`,
+                  )}
                 aria-label=${t("panel.back")}
                 title=${t("panel.back")}
               >
@@ -172,6 +177,12 @@ export class PlantGardenPanel extends LitElement {
                   aria-current=${view.name === "plants" ? "page" : "false"}
                   @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/plants`)}
                   >${t("nav.plants")}</a
+                >
+                <a
+                  href="${this._prefix}/water"
+                  aria-current=${view.name === "water" ? "page" : "false"}
+                  @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/water`)}
+                  >${t("nav.water")}</a
                 >
               </nav>`
         }
@@ -221,6 +232,12 @@ export class PlantGardenPanel extends LitElement {
           .gardenName=${gardenName}
           .prefix=${this._prefix}
         ></pg-plants-view>`;
+      case "water":
+        return html`<pg-water-view
+          .hass=${this.hass}
+          .store=${this._store}
+          .prefix=${this._prefix}
+        ></pg-water-view>`;
       default:
         return html`<pg-garden-view
           .hass=${this.hass}

@@ -25,8 +25,9 @@ from .models import (
     SoilType,
     WaterNeed,
 )
-from .runtime import get_irrigation, get_loaded_entry, get_manager
+from .runtime import get_irrigation, get_loaded_entry, get_manager, get_water
 from .serialize import event_dict, layout_dict, measurement_dict, photo_dict, plant_dict
+from .water import water_summary, weather_sources
 
 type GardenHandler = Callable[
     [HomeAssistant, websocket_api.ActiveConnection, dict[str, Any], GardenManager],
@@ -202,6 +203,8 @@ def async_register_websocket_commands(hass: HomeAssistant) -> None:
         ws_irrigation_log,
         ws_irrigation_log_zone,
         ws_irrigation_delete,
+        ws_water_summary,
+        ws_water_refresh,
     ):
         websocket_api.async_register_command(hass, command)
 
@@ -761,3 +764,35 @@ async def ws_irrigation_delete(
 ) -> None:
     """Remove a wrong event (e.g. a test run); the plants lose its water."""
     await _tracker(hass).async_delete_event(msg["event_id"])
+
+
+# ---------------------------------------------------------------- weather and water balance
+@garden_command({probatio.Required("type"): f"{DOMAIN}/water/summary"})
+async def ws_water_summary(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Weather of the last 14 days and the forecast, soil water per plant, zone advice."""
+    entry = get_loaded_entry(hass)
+    coordinator = get_water(hass)
+    if entry is None or coordinator is None:  # pragma: no cover - checked by the decorator
+        raise NotFoundError("water")
+    return water_summary(coordinator.data, bool(weather_sources(entry)))
+
+
+@garden_command({probatio.Required("type"): f"{DOMAIN}/water/refresh"})
+async def ws_water_refresh(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Fetch the weather now (otherwise hourly) and return the new summary."""
+    entry = get_loaded_entry(hass)
+    coordinator = get_water(hass)
+    if entry is None or coordinator is None:  # pragma: no cover - checked by the decorator
+        raise NotFoundError("water")
+    await coordinator.async_refresh()
+    return water_summary(coordinator.data, bool(weather_sources(entry)))

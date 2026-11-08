@@ -179,6 +179,7 @@ export const en = {
 
   "nav.plan": "Garden plan",
   "nav.plants": "Plants",
+  "nav.water": "Water & weather",
 
   "plan.mode": "Mode",
   "plan.mode_view": "View",
@@ -371,6 +372,50 @@ export const en = {
   "water.delete_title": "Delete watering",
   "water.delete_manual": "The plant loses this water in its statistics.",
   "water.delete_zone": "This removes the whole zone run, also for the other plants it reached.",
+
+  "balance.title": "Soil water",
+  "balance.explain":
+    "How much of the water the roots can reach is used up. The mark shows where the plant starts to need water.",
+  "balance.fine": "Soil water fine: {used} of {total} mm used",
+  "balance.thirsty": "Needs water: {used} of {total} mm used",
+  "balance.needs": "needs water",
+  "balance.frost": "Frost ahead: down to {temp} °C",
+  "balance.meter": "Soil water of {name}",
+  "balance.soil": "{soil}, roots about {depth} cm, needs water beyond {raw} mm",
+  "balance.sheltered": "no rain reaches it",
+
+  "advice.title": "Irrigation advice",
+  "advice.dry": "should run about {minutes} min",
+  "advice.rain_expected": "rain expected – can be skipped",
+  "advice.ok": "no need",
+  "advice.no_plants": "reaches no plant",
+  "advice.no_rate": "should run – enter its rate for a run time",
+  "advice.never_switches":
+    'Plant Garden only advises; your automations decide (sensors "Irrigation recommended" and "Recommended run time").',
+
+  "layer.title": "Show",
+  "layer.plan": "Plan",
+  "layer.deficit": "Soil water deficit",
+  "layer.coverage": "Irrigation coverage",
+
+  "weather.title": "Weather",
+  "weather.today": "Today {rain} mm rain, {et0} mm evaporation",
+  "weather.tomorrow": "tomorrow {rain} mm rain",
+  "weather.chart": "Rain and evaporation per day, last two weeks and forecast",
+  "weather.legend_rain": "Rain",
+  "weather.legend_et0": "Evaporation ET₀",
+  "weather.legend_forecast": "Forecast",
+  "weather.scale": "scale up to {top} mm",
+  "weather.sources": "Weather sources",
+  "weather.refresh": "Refresh",
+  "weather.source_days": "{days} days",
+  "weather.source_failed": "failed",
+  "weather.updated": "Updated {time}",
+  "weather.no_data": "No weather data yet.",
+  "weather.setup_title": "Add a weather source",
+  "weather.setup_body":
+    "Rain and evaporation drive the water balance of your plants. Add Open-Meteo, the German Weather Service (Bright Sky) or your own sensors in the integration settings.",
+  "weather.setup_action": "Open the integration",
 } as const;
 
 export type TranslationKey = keyof typeof en;

@@ -183,6 +183,7 @@ export const de: Translations = {
 
   "nav.plan": "Gartenplan",
   "nav.plants": "Pflanzen",
+  "nav.water": "Wasser & Wetter",
 
   "plan.mode": "Modus",
   "plan.mode_view": "Ansicht",
@@ -381,4 +382,48 @@ export const de: Translations = {
   "water.delete_title": "Bewässerung löschen",
   "water.delete_manual": "Die Pflanze verliert dieses Wasser in ihrer Statistik.",
   "water.delete_zone": "Das löscht den ganzen Lauf der Zone, auch für die anderen Pflanzen darin.",
+
+  "balance.title": "Bodenwasser",
+  "balance.explain":
+    "Wie viel des Wassers, das die Wurzeln erreichen, verbraucht ist. Die Marke zeigt, ab wann die Pflanze Wasser braucht.",
+  "balance.fine": "Bodenwasser in Ordnung: {used} von {total} mm verbraucht",
+  "balance.thirsty": "Gießbedarf: {used} von {total} mm verbraucht",
+  "balance.needs": "Gießbedarf",
+  "balance.frost": "Frost erwartet: bis {temp} °C",
+  "balance.meter": "Bodenwasser von {name}",
+  "balance.soil": "{soil}, Wurzeln etwa {depth} cm, Gießbedarf ab {raw} mm",
+  "balance.sheltered": "bekommt keinen Regen",
+
+  "advice.title": "Bewässerungsempfehlung",
+  "advice.dry": "sollte etwa {minutes} min laufen",
+  "advice.rain_expected": "Regen erwartet – kann entfallen",
+  "advice.ok": "kein Bedarf",
+  "advice.no_plants": "erreicht keine Pflanze",
+  "advice.no_rate": "sollte laufen – trag die Rate ein, dann gibt es eine Laufzeit",
+  "advice.never_switches":
+    "Plant Garden empfiehlt nur; deine Automationen entscheiden (Sensoren „Bewässerung empfohlen“ und „Empfohlene Laufzeit“).",
+
+  "layer.title": "Anzeigen",
+  "layer.plan": "Plan",
+  "layer.deficit": "Wasserdefizit",
+  "layer.coverage": "Bewässerungsabdeckung",
+
+  "weather.title": "Wetter",
+  "weather.today": "Heute {rain} mm Regen, {et0} mm Verdunstung",
+  "weather.tomorrow": "morgen {rain} mm Regen",
+  "weather.chart": "Regen und Verdunstung pro Tag, letzte zwei Wochen und Vorhersage",
+  "weather.legend_rain": "Regen",
+  "weather.legend_et0": "Verdunstung ET₀",
+  "weather.legend_forecast": "Vorhersage",
+  "weather.scale": "Skala bis {top} mm",
+  "weather.sources": "Wetterquellen",
+  "weather.refresh": "Aktualisieren",
+  "weather.source_days": "{days} Tage",
+  "weather.source_failed": "fehlgeschlagen",
+  "weather.updated": "Aktualisiert {time}",
+  "weather.no_data": "Noch keine Wetterdaten.",
+  "weather.setup_title": "Wetterquelle hinzufügen",
+  "weather.setup_body":
+    "Regen und Verdunstung bestimmen die Wasserbilanz deiner Pflanzen. Füge in den Einstellungen der Integration Open-Meteo, den Deutschen Wetterdienst (Bright Sky) oder eigene Sensoren hinzu.",
+  "weather.setup_action": "Integration öffnen",
 };

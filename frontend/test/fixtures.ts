@@ -10,6 +10,7 @@ import type {
   PlantDetail,
   Point,
   Shape,
+  WaterSummary,
 } from "../src/api/types";
 import type { HomeAssistant } from "../src/types/hass";
 import { reproject, type GeoOrigin } from "../src/util/wms";
@@ -82,7 +83,7 @@ export interface FakeBackend {
   callWS: ReturnType<typeof vi.fn>;
   /** Push a change event as the backend subscription would. */
   emit: (event: {
-    kind: "plant" | "plant_removed" | "layout" | "irrigation";
+    kind: "plant" | "plant_removed" | "layout" | "irrigation" | "water";
     plant_id?: string | null;
     shape_id?: string | null;
   }) => void;
@@ -95,6 +96,7 @@ export interface FakeBackend {
   details: Record<string, PlantDetail>;
   irrigation: IrrigationSummary;
   events: IrrigationEvent[];
+  water: WaterSummary;
 }
 
 /** What the backend does to stored coordinates when the origin moves (keeping places). */
@@ -131,6 +133,7 @@ export function fakeBackend(
     details?: Record<string, PlantDetail>;
     irrigation?: IrrigationSummary;
     events?: IrrigationEvent[];
+    water?: WaterSummary;
     language?: string;
   } = {},
 ): FakeBackend {
@@ -144,6 +147,7 @@ export function fakeBackend(
     todo: options.todo ?? {},
     irrigation: options.irrigation ?? { plants: {}, zones: {} },
     events: options.events ?? [],
+    water: options.water ?? { configured: false, updated: null, sources: [], weather: [] },
   } as FakeBackend;
   const layout = () => ({
     origin: backend.origin,
@@ -228,6 +232,9 @@ export function fakeBackend(
       case "plant_garden/layout/shapes/delete":
         backend.shapes = backend.shapes.filter((s) => s.id !== msg.shape_id);
         return null;
+      case "plant_garden/water/summary":
+      case "plant_garden/water/refresh":
+        return backend.water;
       case "plant_garden/irrigation/summary":
         return backend.irrigation;
       case "plant_garden/irrigation/events":

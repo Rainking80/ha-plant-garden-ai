@@ -3,7 +3,15 @@ import type { HassEntity } from "home-assistant-js-websocket";
 import { css, html, nothing, svg, type PropertyValues } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 
-import type { Geometry, Marker, Plant, Point, PolygonGeometry, Shape } from "../api/types";
+import type {
+  Geometry,
+  Marker,
+  Plant,
+  PlantBalance,
+  Point,
+  PolygonGeometry,
+  Shape,
+} from "../api/types";
 import type { HomeAssistant } from "../types/hass";
 import { markerIcon, markerValue } from "../util/markers";
 import {
@@ -34,7 +42,8 @@ import {
   type Bounds,
   type Corner,
 } from "../util/geometry";
-import { isRunning } from "../util/coverage";
+import { isRunning, precipitationRate } from "../util/coverage";
+import { deficitColor } from "../util/water";
 import { formatNumber } from "../util/format";
 import {
   DEFAULT_VIEWPORT,
@@ -53,6 +62,7 @@ import {
 import { PgElement, define } from "./base";
 
 export type Mode = "view" | "edit";
+export type Layer = "plan" | "deficit" | "coverage";
 export type Tool = "select" | "rect" | "circle" | "polygon" | "calibrate" | "background";
 export type Selection = { type: "plant" | "shape" | "marker"; id: string } | null;
 /** Something waiting to be placed with the next tap on the plan. */
@@ -210,6 +220,10 @@ export class PgGardenCanvas extends PgElement {
     armed: { attribute: false },
     /** plants the selected zone reaches, drawn with a water ring */
     highlight: { attribute: false },
+    /** soil water per plant (status rings, deficit heatmap) */
+    water: { attribute: false },
+    /** "plan", or a heatmap: "deficit" (soil water) or "coverage" (mm/h of the zones) */
+    layer: {},
     /** draw irrigation zones */
     showZones: { type: Boolean },
     _clock: { state: true },
@@ -236,6 +250,8 @@ export class PgGardenCanvas extends PgElement {
   declare armed: Armed | null;
   declare highlight: ReadonlySet<string>;
   declare showZones: boolean;
+  declare water: Record<string, PlantBalance>;
+  declare layer: Layer;
   /** ticks while a zone timer runs, so its remaining time stays current */
   declare _clock: number;
   declare _override: Override | null;
@@ -274,6 +290,8 @@ export class PgGardenCanvas extends PgElement {
     this.armed = null;
     this.highlight = new Set();
     this.showZones = true;
+    this.water = {};
+    this.layer = "plan";
     this._clock = Date.now();
     this._override = null;
     this._draft = null;
@@ -1130,7 +1148,13 @@ export class PgGardenCanvas extends PgElement {
     const running = isRunning(entity ? this.states[entity]?.state : undefined);
     const end = this._timerEnd(shape);
     const minutes = end === null ? null : Math.max(0, Math.ceil((end - this._clock) / 60000));
-    const text = [shape.label, minutes === null ? "" : this.t("zone.remaining", { minutes })]
+    const pr = shape.irrigation ? precipitationRate(shape.irrigation, g) : null;
+    const heat = this.layer === "coverage" && pr !== null;
+    const text = [
+      shape.label,
+      minutes === null ? "" : this.t("zone.remaining", { minutes }),
+      heat ? `${formatNumber(pr, this.language, 0)} mm/h` : "",
+    ]
       .filter(Boolean)
       .join(" · ");
     const label = labelPoint(g);
@@ -1138,6 +1162,12 @@ export class PgGardenCanvas extends PgElement {
       shape.locked ? "locked" : ""
     }" data-shape-id=${shape.id}>
       ${this._renderGeometry(g, "body")}
+      ${
+        // coverage heatmap: more water per hour = stronger blue; overlaps add up
+        heat
+          ? svg`<g class="coverage" style="opacity: ${Math.min(pr / 30, 1) * 0.7}">${this._renderGeometry(g, "")}</g>`
+          : nothing
+      }
       ${text ? svg`<text class="shape-label zone-label" x=${label.x} y=${label.y}>${text}</text>` : nothing}
     </g>`;
   }
@@ -1151,10 +1181,18 @@ export class PgGardenCanvas extends PgElement {
     const r = Math.max(diameter / 2, MIN_PLANT_PX * mpp);
     const selected = this.selection?.type === "plant" && this.selection.id === plant.id;
     const covered = this.highlight.has(plant.id);
+    const balance = this.water[plant.id];
+    const thirsty = balance?.needs_water ?? false;
+    const frost = balance?.frost !== null && balance?.frost !== undefined;
     return svg`<g class="plant status-${plant.status} ${selected ? "selected" : ""} ${
       covered ? "covered" : ""
-    }"
+    } ${thirsty ? "thirsty" : ""} ${frost ? "frost" : ""}"
         data-plant-id=${plant.id} transform="translate(${position.x} ${position.y})">
+      ${
+        this.layer === "deficit" && balance
+          ? svg`<circle class="deficit" r=${r * 1.35} style="fill: ${deficitColor(balance)}"></circle>`
+          : nothing
+      }
       <circle class="shadow" r=${r} cy=${r * 0.08}></circle>
       <circle class="crown" r=${r}></circle>
       ${
@@ -1165,6 +1203,7 @@ export class PgGardenCanvas extends PgElement {
             transform="translate(${-r * 0.6} ${-r * 0.6}) scale(${(r * 1.2) / 24})"></path>`
       }
       <circle class="ring" r=${r}></circle>
+      ${frost ? svg`<circle class="frost-ring" r=${r * 1.18}></circle>` : nothing}
       <text class="plant-label" y=${r}>${plant.name}</text>
     </g>`;
   }
@@ -1634,6 +1673,28 @@ export class PgGardenCanvas extends PgElement {
       stroke: var(--pg-water);
       stroke-width: 4;
       stroke-dasharray: none;
+    }
+    /* soil water: needs water (amber, dashed) and frost ahead (icy outer ring) */
+    .plant.thirsty .ring {
+      stroke: var(--pg-thirsty, #e08a1e);
+      stroke-width: 3.5;
+      stroke-dasharray: 5 3;
+    }
+    .plant .frost-ring {
+      fill: none;
+      stroke: var(--pg-frost, #6cb8f0);
+      stroke-width: 2;
+      stroke-dasharray: 2 3;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .plant .deficit {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    .zone .coverage {
+      fill: var(--pg-water);
+      pointer-events: none;
     }
     .plant-label {
       display: none;

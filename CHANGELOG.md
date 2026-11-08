@@ -8,6 +8,25 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M5 weather and water balance:
+  - Weather sources in the integration settings: Open-Meteo (worldwide), Bright
+    Sky / German Weather Service (Germany) and your own sensors (rain, ET₀,
+    temperature, humidity, wind, radiation, a weather entity for the forecast).
+    Own sensors win, services fill the gaps; nothing is fetched until you add a
+    source. Fetched hourly, the last 30 days again each time (gaps close by
+    themselves), action `plant_garden.refresh_weather`.
+  - ET₀ after FAO-56 Penman-Monteith or Hargreaves-Samani where a source has none
+    (tested against the FAO-56 examples).
+  - Soil water bucket per plant from soil, root depth, water need (WUCOLS), lawn
+    and vegetable coefficients, effective rain (none under roofs), irrigation and
+    watering; documented defaults with sources.
+  - Plan: "needs water" and frost rings, soil water deficit and irrigation
+    coverage heatmaps; info cards with soil water, frost and zone advice.
+  - New tab "Water & weather": rain/ET₀ chart with forecast, soil water of every
+    plant, zone advice, source status.
+  - Sensors: soil water deficit and "needs water" per plant, recommended run time
+    and "irrigation recommended" per zone (rain expected in the next two days
+    counts), ET₀ today, rain today and tomorrow for the garden.
 - M4 irrigation zones (display and tracking only, the integration never switches):
   - Draw zones as rectangles, circles or polygons and link a valve, switch, input
     boolean or binary sensor; optionally a timer (remaining time on the plan) and a

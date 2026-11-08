@@ -6,6 +6,7 @@ import type { GardenChangeEvent, IrrigationEvent, WaterDay } from "../api/types"
 import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
 import { formatDateTime, formatLiters, formatNumber } from "../util/format";
+import { deficitColor, deficitFraction } from "../util/water";
 import { PgElement, define, icon } from "./base";
 import "./confirm-dialog";
 import type { PgConfirmDialog } from "./confirm-dialog";
@@ -130,6 +131,50 @@ export class PgWaterPanel extends PgElement {
     return flags.join(" · ");
   }
 
+  private _renderBalance() {
+    const balance = this.store?.water?.plants?.[this.plantId];
+    if (!balance) return nothing;
+    const { t, language } = this;
+    const threshold = balance.taw > 0 ? balance.raw / balance.taw : 0.5;
+    return html`<div class="balance">
+      <p class=${balance.needs_water ? "thirsty" : ""}>
+        ${t(balance.needs_water ? "balance.thirsty" : "balance.fine", {
+          used: formatNumber(balance.depletion, language, 0),
+          total: formatNumber(balance.taw, language, 0),
+        })}
+      </p>
+      <div
+        class="meter"
+        role="meter"
+        aria-valuemin="0"
+        aria-valuemax=${balance.taw}
+        aria-valuenow=${balance.depletion}
+        aria-label=${t("balance.title")}
+      >
+        <span
+          class="used"
+          style="width: ${deficitFraction(balance) * 100}%; background: ${deficitColor(balance)}"
+        ></span>
+        <span class="threshold" style="left: ${threshold * 100}%"></span>
+      </div>
+      <p class="muted small">
+        ${t("balance.soil", {
+          soil: t(`soil.${balance.soil}` as "soil.loam"),
+          depth: formatNumber(balance.root_depth_m * 100, language, 0),
+          raw: formatNumber(balance.raw, language, 0),
+        })}
+        ${balance.sheltered ? ` · ${t("balance.sheltered")}` : ""}
+      </p>
+      ${
+        balance.frost !== null
+          ? html`<p class="frost">
+              ${t("balance.frost", { temp: formatNumber(balance.frost, language, 0) })}
+            </p>`
+          : nothing
+      }
+    </div>`;
+  }
+
   protected override render() {
     const { t, language } = this;
     const stats = this.store?.irrigation.plants[this.plantId];
@@ -152,6 +197,7 @@ export class PgWaterPanel extends PgElement {
             </p>`
           : html`<p class="muted">${t("water.none")}</p>`
       }
+      ${this._renderBalance()}
       ${
         bars.some((bar) => bar.h > 0)
           ? html`<svg
@@ -228,6 +274,39 @@ export class PgWaterPanel extends PgElement {
       }
       .bars rect {
         fill: var(--pg-water);
+      }
+      .balance {
+        margin: 8px 0;
+      }
+      .balance p {
+        margin: 4px 0;
+      }
+      .balance .thirsty {
+        color: var(--pg-thirsty, #b86a10);
+        font-weight: 500;
+      }
+      .balance .frost {
+        color: var(--pg-frost-text, #2a7ab8);
+      }
+      .meter {
+        position: relative;
+        height: 10px;
+        border-radius: 5px;
+        background: color-mix(in srgb, var(--pg-text) 10%, transparent);
+        overflow: hidden;
+      }
+      .meter .used {
+        position: absolute;
+        inset: 0 auto 0 0;
+        border-radius: 5px;
+      }
+      .meter .threshold {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--pg-text);
+        opacity: 0.5;
       }
       .events {
         list-style: none;

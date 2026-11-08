@@ -44,11 +44,12 @@ describe("GardenStore", () => {
     const store = new GardenStore(() => backend.hass);
     expect(store.stale).toBe(true);
     await Promise.all([store.refresh(), store.refresh()]);
-    // one refresh = plants + layout + water summary
+    // one refresh = plants + layout + irrigation and water summaries
     expect(backend.callWS.mock.calls.map(([msg]) => (msg as { type: string }).type)).toEqual([
       "plant_garden/plants/list",
       "plant_garden/layout/get",
       "plant_garden/irrigation/summary",
+      "plant_garden/water/summary",
     ]);
     expect(store.layout?.origin).toEqual({ latitude: 52.4, longitude: 13.06 });
     expect(store.stale).toBe(false);

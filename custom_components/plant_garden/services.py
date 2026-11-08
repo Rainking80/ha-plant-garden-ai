@@ -85,3 +85,18 @@ def async_register_services(hass: HomeAssistant) -> None:
         schema=LOG_WATERING_SCHEMA,
         supports_response=SupportsResponse.NONE,
     )
+    async_register_weather_service(hass)
+
+
+SERVICE_REFRESH_WEATHER = "refresh_weather"
+
+
+@callback
+def async_register_weather_service(hass: HomeAssistant) -> None:
+    async def refresh_weather(call: ServiceCall) -> None:
+        entry = get_loaded_entry(hass)
+        if entry is None:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_loaded")
+        await entry.runtime_data.water.async_refresh()
+
+    hass.services.async_register(DOMAIN, SERVICE_REFRESH_WEATHER, refresh_weather)

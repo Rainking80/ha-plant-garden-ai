@@ -241,7 +241,7 @@ export interface Layout {
 }
 
 export interface GardenChangeEvent {
-  kind: "plant" | "plant_removed" | "layout" | "irrigation";
+  kind: "plant" | "plant_removed" | "layout" | "irrigation" | "water";
   plant_id: string | null;
   shape_id: string | null;
 }
@@ -321,4 +321,68 @@ export interface IrrigationEvent {
   reconstructed: boolean;
   note: string;
   plants: { plant_id: string; liters: number; mm: number }[];
+}
+
+// ------------------------------------------------------------ weather and water balance
+export interface WeatherDay {
+  day: string;
+  t_min: number | null;
+  t_max: number | null;
+  precip_mm: number | null;
+  et0_mm: number | null;
+  rain_probability: number | null;
+  /** future day */
+  forecast: boolean;
+  /** where ET₀ came from: a source key, "penman_monteith" or "hargreaves" */
+  et0_method: string | null;
+  source: string;
+}
+
+export interface WeatherSourceStatus {
+  source: "open_meteo" | "bright_sky" | "home_assistant";
+  title: string;
+  ok: boolean;
+  error: string | null;
+  days: number;
+}
+
+export interface BalanceDay {
+  day: string;
+  et0: number | null;
+  kc: number;
+  etc: number;
+  rain: number;
+  irrigation: number;
+  depletion: number;
+}
+
+export interface PlantBalance {
+  /** soil water deficit Dr in mm */
+  depletion: number;
+  /** total and readily available water of the root zone, mm */
+  taw: number;
+  raw: number;
+  soil: string;
+  root_depth_m: number;
+  sheltered: boolean;
+  needs_water: boolean;
+  /** coldest forecast night below the plant's limit, °C */
+  frost: number | null;
+  days: BalanceDay[];
+}
+
+export interface ZoneAdvice {
+  recommended: boolean;
+  minutes: number | null;
+  reason: "dry" | "rain_expected" | "ok" | "no_plants" | "no_rate";
+}
+
+export interface WaterSummary {
+  /** at least one weather source is set up */
+  configured: boolean;
+  updated: string | null;
+  sources: WeatherSourceStatus[];
+  weather: WeatherDay[];
+  plants?: Record<string, PlantBalance>;
+  zones?: Record<string, ZoneAdvice>;
 }

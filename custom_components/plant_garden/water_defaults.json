@@ -1,0 +1,51 @@
+{
+  "_sources": {
+    "soil": "FAO-56 (Allen et al. 1998), table 19: middle of the ranges of soil water at field capacity and wilting point. Clay loam lies between silt loam and clay. Potting mix is not in FAO-56: typical peat-based substrate (assumption, D-026).",
+    "landscape_coefficient": "WUCOLS IV (University of California): very low < 0.1, low 0.1-0.3, moderate 0.4-0.6, high 0.7-0.9; the middle of each class.",
+    "lawn": "UC ANR (cool-season turfgrass in a temperate climate) about 0.8.",
+    "vegetable": "FAO-56 table 12, typical small vegetables: Kc ini 0.6, mid 1.05, end 0.85; stage lengths simplified to 30 and 90 days after planting.",
+    "root_depth_m": "Effective root zone for watering, simplified from FAO-56 table 22 for garden plants (assumption, D-026).",
+    "depletion_fraction": "FAO-56 table 22: p about 0.5 for most crops, 0.4 for shallow-rooted vegetables.",
+    "rain": "Interception and runoff: the first 2 mm of a day wet leaves and surfaces, 80 % of the rest reaches the roots (assumption, D-026)."
+  },
+  "soil": {
+    "sand": { "fc": 0.12, "wp": 0.045 },
+    "loamy_sand": { "fc": 0.15, "wp": 0.065 },
+    "sandy_loam": { "fc": 0.23, "wp": 0.11 },
+    "loam": { "fc": 0.25, "wp": 0.12 },
+    "silt_loam": { "fc": 0.29, "wp": 0.15 },
+    "clay_loam": { "fc": 0.32, "wp": 0.19 },
+    "clay": { "fc": 0.36, "wp": 0.22 },
+    "potting_mix": { "fc": 0.45, "wp": 0.1 }
+  },
+  "default_soil": "loam",
+  "landscape_coefficient": {
+    "very_low": 0.1,
+    "low": 0.2,
+    "moderate": 0.5,
+    "high": 0.8
+  },
+  "default_water_need": "moderate",
+  "lawn": 0.8,
+  "vegetable": { "initial": 0.6, "mid": 1.05, "late": 0.85, "initial_days": 30, "mid_days": 90 },
+  "root_depth_m": {
+    "tree": 1.0,
+    "shrub": 0.6,
+    "hedge": 0.6,
+    "fruit": 0.8,
+    "climber": 0.5,
+    "perennial": 0.4,
+    "grass": 0.4,
+    "lawn": 0.2,
+    "potted": 0.25,
+    "vegetable": 0.4,
+    "herb": 0.3,
+    "annual": 0.3,
+    "succulent": 0.3,
+    "bulb": 0.3,
+    "other": 0.4
+  },
+  "pot_root_depth_m": 0.25,
+  "depletion_fraction": { "default": 0.5, "vegetable": 0.4 },
+  "rain": { "interception_mm": 2, "efficiency": 0.8 }
+}

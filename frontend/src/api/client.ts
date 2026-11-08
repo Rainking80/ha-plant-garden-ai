@@ -4,6 +4,7 @@ import type {
   GardenChangeEvent,
   IrrigationEvent,
   IrrigationSummary,
+  WaterSummary,
   Layout,
   Marker,
   Measurement,
@@ -340,4 +341,14 @@ export function logZoneRun(
 
 export async function deleteIrrigationEvent(hass: HomeAssistant, eventId: string): Promise<void> {
   await hass.callWS<null>({ type: `${WS_PREFIX}/irrigation/delete`, event_id: eventId });
+}
+
+// ------------------------------------------------------------ weather and water balance
+export function waterSummary(hass: HomeAssistant): Promise<WaterSummary> {
+  return hass.callWS<WaterSummary>({ type: `${WS_PREFIX}/water/summary` });
+}
+
+/** Fetch the weather now (the backend does it hourly). */
+export function refreshWater(hass: HomeAssistant): Promise<WaterSummary> {
+  return hass.callWS<WaterSummary>({ type: `${WS_PREFIX}/water/refresh` });
 }

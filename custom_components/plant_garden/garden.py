@@ -41,6 +41,7 @@ from .models import (
 )
 from .photos import BackgroundFiles, PhotoFiles, PhotoVariant, process_background, process_image
 from .storage import GardenData, GardenStore, empty_garden_data
+from .weather.base import DailyWeather
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,7 +62,8 @@ class GardenChange:
 
     kind: "plant" (created/updated, incl. photos, measurements, position),
     "plant_removed", "layout" (a shape was saved or deleted) or "irrigation"
-    (a zone started or stopped, water was logged or deleted).
+    (a zone started or stopped, water was logged or deleted) or "water" (weather
+    or water balance recalculated).
     """
 
     kind: str
@@ -348,10 +350,30 @@ class GardenManager:
 
         return await self.hass.async_add_executor_job(query)
 
+    async def async_plant_water_by_day(
+        self, since: date
+    ) -> dict[str, dict[str, tuple[float, float]]]:
+        """plant_id -> ISO day -> (litres, mm) of irrigation from `since` on."""
+        return await self.hass.async_add_executor_job(self._db.plant_water_by_day, since)
+
+    async def async_store_weather(self, days: list[DailyWeather], fetched_at: datetime) -> None:
+        await self.hass.async_add_executor_job(
+            self._db.upsert_weather, [day.as_dict() for day in days], fetched_at.isoformat()
+        )
+
+    async def async_stored_weather(self, since: date) -> list[DailyWeather]:
+        rows = await self.hass.async_add_executor_job(self._db.weather_since, since)
+        return [DailyWeather.from_dict(row) for row in rows]
+
     @callback
     def notify_irrigation(self) -> None:
         """Irrigation data changed (a run started or ended, an event was logged)."""
         self._notify("irrigation")
+
+    @callback
+    def notify_water(self) -> None:
+        """The weather or a water balance was recalculated."""
+        self._notify("water")
 
     # ------------------------------------------------------------ origin
     async def async_set_origin(

@@ -48,6 +48,29 @@
       },
       "zone_water_today": {
         "name": "Water today"
+      },
+      "deficit": {
+        "name": "Soil water deficit"
+      },
+      "recommended_runtime": {
+        "name": "Recommended run time"
+      },
+      "et0_today": {
+        "name": "Evaporation ET₀ today"
+      },
+      "rain_today": {
+        "name": "Rain today"
+      },
+      "rain_forecast": {
+        "name": "Rain tomorrow"
+      }
+    },
+    "binary_sensor": {
+      "needs_water": {
+        "name": "Needs water"
+      },
+      "irrigation_recommended": {
+        "name": "Irrigation recommended"
       }
     }
   },
@@ -92,6 +115,63 @@
           "name": "Note",
           "description": "Optional."
         }
+      }
+    },
+    "refresh_weather": {
+      "name": "Refresh weather",
+      "description": "Fetches the weather now (otherwise hourly) and recalculates the water balance."
+    }
+  },
+  "config_subentries": {
+    "weather": {
+      "entry_type": "Weather source",
+      "initiate_flow": {
+        "user": "Add weather source",
+        "reconfigure": "Change sensors"
+      },
+      "step": {
+        "user": {
+          "title": "Weather source",
+          "description": "Rain and evaporation drive the water balance of your plants. Your own sensors win over weather services; services fill the gaps and bring the forecast.",
+          "data": {
+            "source": "Source"
+          }
+        },
+        "service": {
+          "title": "{service}",
+          "description": "{service} receives the rounded location of the garden ({latitude}, {longitude}, about 1 km) every hour, nothing else. Submit to test the connection."
+        },
+        "sensors": {
+          "title": "Your own sensors",
+          "description": "Past days come from the long-term statistics, so the sensors need a state class. Rain and ET₀ may be counters or daily values. Choose at least one.",
+          "data": {
+            "rain_entity": "Rain (mm)",
+            "et0_entity": "Evaporation ET₀ (mm)",
+            "temperature_entity": "Temperature",
+            "humidity_entity": "Humidity",
+            "wind_entity": "Wind speed (at about 2 m)",
+            "radiation_entity": "Solar radiation (W/m²)",
+            "weather_entity": "Weather entity for the forecast"
+          }
+        }
+      },
+      "error": {
+        "cannot_connect": "The service did not answer with weather data for this place.",
+        "no_sensor": "Please choose at least one sensor or a weather entity."
+      },
+      "abort": {
+        "already_configured": "This weather service is already added.",
+        "nothing_to_configure": "Weather services have no settings.",
+        "reconfigure_successful": "Sensors updated."
+      }
+    }
+  },
+  "selector": {
+    "weather_source": {
+      "options": {
+        "open_meteo": "Open-Meteo (worldwide, no key)",
+        "bright_sky": "Bright Sky – German Weather Service DWD (Germany, no key)",
+        "home_assistant": "My own sensors in Home Assistant"
       }
     }
   }

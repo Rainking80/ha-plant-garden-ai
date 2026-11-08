@@ -79,6 +79,13 @@ MIGRATIONS: tuple[str, ...] = (
     );
     CREATE INDEX plant_water_by_plant ON plant_water (plant_id, day);
     """,
+    """
+    CREATE TABLE weather_daily (
+        day TEXT PRIMARY KEY,
+        data TEXT NOT NULL,
+        fetched_at TEXT NOT NULL
+    );
+    """,
 )
 SCHEMA_VERSION = len(MIGRATIONS)
 
@@ -458,6 +465,26 @@ class GardenDatabase:
                 " WHERE zone_id IS NOT NULL GROUP BY zone_id"
             ).fetchall()
         return {row["zone_id"]: row["last"] for row in rows}
+
+    # ------------------------------------------------------------ weather
+    def upsert_weather(self, days: list[dict[str, Any]], fetched_at: str) -> None:
+        """Store merged daily weather (one JSON row per day; newer data replaces)."""
+        with self._cursor() as conn:
+            conn.executemany(
+                "INSERT INTO weather_daily (day, data, fetched_at) VALUES (?, ?, ?)"
+                " ON CONFLICT (day) DO UPDATE SET data = excluded.data,"
+                " fetched_at = excluded.fetched_at",
+                [(day["day"], json.dumps(day), fetched_at) for day in days],
+            )
+
+    def weather_since(self, since: date) -> list[dict[str, Any]]:
+        """Stored daily weather from `since` on, oldest first."""
+        with self._cursor() as conn:
+            rows = conn.execute(
+                "SELECT data FROM weather_daily WHERE day >= ? ORDER BY day",
+                (since.isoformat(),),
+            ).fetchall()
+        return [json.loads(row["data"]) for row in rows]
 
     # ------------------------------------------------------------ plants
     def delete_plant_records(self, plant_id: str) -> None:

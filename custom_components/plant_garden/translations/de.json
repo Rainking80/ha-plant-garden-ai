@@ -48,6 +48,29 @@
       },
       "zone_water_today": {
         "name": "Wasser heute"
+      },
+      "deficit": {
+        "name": "Bodenwasserdefizit"
+      },
+      "recommended_runtime": {
+        "name": "Empfohlene Laufzeit"
+      },
+      "et0_today": {
+        "name": "Verdunstung ET₀ heute"
+      },
+      "rain_today": {
+        "name": "Regen heute"
+      },
+      "rain_forecast": {
+        "name": "Regen morgen"
+      }
+    },
+    "binary_sensor": {
+      "needs_water": {
+        "name": "Gießbedarf"
+      },
+      "irrigation_recommended": {
+        "name": "Bewässerung empfohlen"
       }
     }
   },
@@ -92,6 +115,63 @@
           "name": "Notiz",
           "description": "Optional."
         }
+      }
+    },
+    "refresh_weather": {
+      "name": "Wetter aktualisieren",
+      "description": "Holt das Wetter sofort (sonst stündlich) und berechnet die Wasserbilanz neu."
+    }
+  },
+  "config_subentries": {
+    "weather": {
+      "entry_type": "Wetterquelle",
+      "initiate_flow": {
+        "user": "Wetterquelle hinzufügen",
+        "reconfigure": "Sensoren ändern"
+      },
+      "step": {
+        "user": {
+          "title": "Wetterquelle",
+          "description": "Regen und Verdunstung bestimmen die Wasserbilanz deiner Pflanzen. Eigene Sensoren haben Vorrang vor Wetterdiensten; Dienste füllen Lücken und liefern die Vorhersage.",
+          "data": {
+            "source": "Quelle"
+          }
+        },
+        "service": {
+          "title": "{service}",
+          "description": "{service} erhält stündlich den gerundeten Standort des Gartens ({latitude}, {longitude}, etwa 1 km), sonst nichts. Absenden testet die Verbindung."
+        },
+        "sensors": {
+          "title": "Eigene Sensoren",
+          "description": "Vergangene Tage kommen aus der Langzeitstatistik, die Sensoren brauchen deshalb eine Zustandsklasse. Regen und ET₀ dürfen Zähler oder Tageswerte sein. Wähle mindestens einen.",
+          "data": {
+            "rain_entity": "Regen (mm)",
+            "et0_entity": "Verdunstung ET₀ (mm)",
+            "temperature_entity": "Temperatur",
+            "humidity_entity": "Luftfeuchte",
+            "wind_entity": "Windgeschwindigkeit (in etwa 2 m Höhe)",
+            "radiation_entity": "Sonneneinstrahlung (W/m²)",
+            "weather_entity": "Wetter-Entität für die Vorhersage"
+          }
+        }
+      },
+      "error": {
+        "cannot_connect": "Der Dienst hat für diesen Ort keine Wetterdaten geliefert.",
+        "no_sensor": "Bitte wähle mindestens einen Sensor oder eine Wetter-Entität."
+      },
+      "abort": {
+        "already_configured": "Dieser Wetterdienst ist schon hinzugefügt.",
+        "nothing_to_configure": "Wetterdienste haben keine Einstellungen.",
+        "reconfigure_successful": "Sensoren aktualisiert."
+      }
+    }
+  },
+  "selector": {
+    "weather_source": {
+      "options": {
+        "open_meteo": "Open-Meteo (weltweit, ohne Key)",
+        "bright_sky": "Bright Sky – Deutscher Wetterdienst (Deutschland, ohne Key)",
+        "home_assistant": "Meine eigenen Sensoren in Home Assistant"
       }
     }
   }

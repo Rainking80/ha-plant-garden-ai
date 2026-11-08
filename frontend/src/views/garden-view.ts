@@ -7,6 +7,7 @@ import {
   mdiEyeOutline,
   mdiFitToScreenOutline,
   mdiLayersOutline,
+  mdiLayersTripleOutline,
   mdiMagnify,
   mdiMapMarkerPlusOutline,
   mdiMapMarkerRadiusOutline,
@@ -51,6 +52,7 @@ import {
   type Geometry,
   type Marker,
   type Plant,
+  type PlantBalance,
   type Point,
   type Shape,
   type ShapeKind,
@@ -66,6 +68,7 @@ import type {
   CalibrateDetail,
   CrownDetail,
   HoverDetail,
+  Layer,
   Mode,
   MoveBackgroundDetail,
   MoveMarkerDetail,
@@ -127,6 +130,9 @@ import { matchesQuery } from "./plants-view";
 const VIEWPORT_KEY = "plant-garden.viewport.v1";
 const ZONES_KEY = "plant-garden.zones.v1";
 const NO_PLANTS: ReadonlySet<string> = new Set();
+const NO_WATER: Record<string, PlantBalance> = {};
+const LAYER_KEY = "plant-garden.layer.v1";
+const LAYERS: readonly Layer[] = ["plan", "deficit", "coverage"];
 
 function defaultIrrigation(): Irrigation {
   return {
@@ -275,6 +281,7 @@ export class PgGardenView extends PgElement {
     _farM: { state: true },
     _showZones: { state: true },
     _zonePick: { state: true },
+    _layer: { state: true },
   };
 
   declare store: GardenStore;
@@ -297,6 +304,7 @@ export class PgGardenView extends PgElement {
   declare _showZones: boolean;
   /** which entity of the selected zone the picker fills in */
   declare _zonePick: ZonePick | null;
+  declare _layer: Layer;
 
   private readonly _history = new History();
   private _fitted = false;
@@ -335,6 +343,7 @@ export class PgGardenView extends PgElement {
     this._farM = 0;
     this._showZones = readStorage(ZONES_KEY, (v): v is boolean => typeof v === "boolean") ?? true;
     this._zonePick = null;
+    this._layer = readStorage(LAYER_KEY, (v): v is Layer => LAYERS.includes(v as Layer)) ?? "plan";
   }
 
   override connectedCallback(): void {
@@ -935,6 +944,8 @@ export class PgGardenView extends PgElement {
             .armed=${this._armed}
             .highlight=${this._highlight()}
             .showZones=${this._showZones}
+            .water=${this.store?.water?.plants ?? NO_WATER}
+            .layer=${this._layer}
             @select=${this._onSelect}
             @hover=${this._onHover}
             @move-plant=${this._onMovePlant}
@@ -1120,6 +1131,7 @@ export class PgGardenView extends PgElement {
           : nothing
       }
       <div class="group fit" role="group">
+        ${this._renderLayerSelect()}
         ${
           this._shapes.some((shape) => shape.kind === "zone")
             ? html`<button
@@ -1143,6 +1155,35 @@ export class PgGardenView extends PgElement {
         </button>
       </div>
     </div>`;
+  }
+
+  /** Plan, deficit heatmap or zone coverage; only what there is data for. */
+  private _renderLayerSelect() {
+    const { t } = this;
+    const available = LAYERS.filter(
+      (layer) =>
+        layer === "plan" ||
+        (layer === "deficit" && Object.keys(this.store?.water?.plants ?? {}).length > 0) ||
+        (layer === "coverage" && this._shapes.some((shape) => shape.kind === "zone")),
+    );
+    if (available.length < 2) return nothing;
+    return html`<label class="layer-select" title=${t("layer.title")}>
+      <span class="sr-only">${t("layer.title")}</span>
+      ${icon(mdiLayersTripleOutline)}
+      <select
+        @change=${(e: Event) => {
+          this._layer = (e.target as HTMLSelectElement).value as Layer;
+          writeStorage(LAYER_KEY, this._layer);
+        }}
+      >
+        ${available.map(
+          (layer) =>
+            html`<option value=${layer} ?selected=${layer === this._layer}>
+              ${t(`layer.${layer}`)}
+            </option>`,
+        )}
+      </select>
+    </label>`;
   }
 
   private _toggleZones(): void {
@@ -1300,12 +1341,48 @@ export class PgGardenView extends PgElement {
 
   private _renderWaterFacts(plantId: string) {
     const water = this.store.irrigation.plants[plantId];
-    if (!water?.last_watering) return nothing;
+    const balance = this.store.water?.plants?.[plantId];
     const { t, language } = this;
-    return html`<p class="muted small water-facts">
-      ${icon(mdiWaterOutline)}
-      ${t("water.last", { time: formatDateTime(water.last_watering, language) })}
-      ${water.today_l > 0 ? ` · ${t("water.today", { liters: formatLiters(water.today_l, language) })}` : ""}
+    return html`
+      ${
+        balance
+          ? html`<p class="small soil-state ${balance.needs_water ? "thirsty" : ""}">
+              ${t(balance.needs_water ? "balance.thirsty" : "balance.fine", {
+                used: formatNumber(balance.depletion, language, 0),
+                total: formatNumber(balance.taw, language, 0),
+              })}
+            </p>`
+          : nothing
+      }
+      ${
+        balance?.frost !== null && balance?.frost !== undefined
+          ? html`<p class="small frost-note">
+              ${t("balance.frost", { temp: formatNumber(balance.frost, language, 0) })}
+            </p>`
+          : nothing
+      }
+      ${
+        water?.last_watering
+          ? html`<p class="muted small water-facts">
+              ${icon(mdiWaterOutline)}
+              ${t("water.last", { time: formatDateTime(water.last_watering, language) })}
+              ${water.today_l > 0 ? ` · ${t("water.today", { liters: formatLiters(water.today_l, language) })}` : ""}
+            </p>`
+          : nothing
+      }
+    `;
+  }
+
+  private _renderZoneAdvice(zoneId: string) {
+    const advice = this.store.water?.zones?.[zoneId];
+    if (!advice || advice.reason === "no_plants") return nothing;
+    const { t, language } = this;
+    const text =
+      advice.reason === "dry"
+        ? t("advice.dry", { minutes: formatNumber(advice.minutes ?? 0, language, 0) })
+        : t(`advice.${advice.reason}`);
+    return html`<p class="small zone-advice ${advice.recommended ? "recommended" : ""}">
+      ${text}
     </p>`;
   }
 
@@ -1807,6 +1884,7 @@ export class PgGardenView extends PgElement {
         <p class="muted small">
           ${covered.length ? t("zone.covers", { plants: covered.join(", ") }) : t("zone.covers_none")}
         </p>
+        ${this._renderZoneAdvice(shape.id)}
         ${
           zone.entity_id
             ? html`<button
@@ -2234,6 +2312,31 @@ export class PgGardenView extends PgElement {
         width: 16px;
         height: 16px;
         color: var(--pg-water);
+      }
+      .soil-state.thirsty,
+      .zone-advice.recommended {
+        color: var(--pg-thirsty, #b86a10);
+        font-weight: 500;
+      }
+      .frost-note {
+        color: var(--pg-frost-text, #2a7ab8);
+      }
+      .layer-select {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0 4px;
+        font-size: 13px;
+      }
+      .layer-select .icon {
+        width: 18px;
+        height: 18px;
+        color: var(--pg-text-muted);
+      }
+      .layer-select select {
+        min-height: 34px;
+        padding: 4px 6px;
+        width: auto;
       }
       .check {
         display: flex;

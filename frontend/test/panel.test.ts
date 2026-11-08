@@ -59,7 +59,11 @@ describe("plant-garden-panel", () => {
     const el = await mount(fakeBackend());
     await vi.waitFor(() => expect(deepQuery(el, "pg-garden-canvas")).not.toBeNull());
     const tabs = [...(el.shadowRoot?.querySelectorAll(".tabs a") ?? [])];
-    expect(tabs.map((tab) => tab.textContent?.trim())).toEqual(["Gartenplan", "Pflanzen"]);
+    expect(tabs.map((tab) => tab.textContent?.trim())).toEqual([
+      "Gartenplan",
+      "Pflanzen",
+      "Wasser & Wetter",
+    ]);
     expect(tabs[0]?.getAttribute("aria-current")).toBe("page");
   });
 
