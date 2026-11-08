@@ -91,6 +91,23 @@ def _to_rgb(img: Image.Image) -> Image.Image:
 
 def process_image(data: bytes) -> ProcessedImage:
     """Validate, orient, strip metadata and create all size variants."""
+    rgb, taken_at = _load(data)
+    variants: dict[PhotoVariant, bytes] = {}
+    width = height = 0
+    for variant, (edge, fmt, _suffix, options) in _VARIANT_SPECS.items():
+        copy = rgb.copy()
+        copy.thumbnail((edge, edge), Image.Resampling.LANCZOS)
+        buffer = io.BytesIO()
+        # No exif= argument: Pillow writes no metadata, so GPS and camera data are gone.
+        copy.save(buffer, format=fmt, **options)
+        variants[variant] = buffer.getvalue()
+        if variant is PhotoVariant.ORIGINAL:
+            width, height = copy.size
+    return ProcessedImage(variants=variants, width=width, height=height, taken_at=taken_at)
+
+
+def _load(data: bytes) -> tuple[Image.Image, datetime | None]:
+    """Decode and validate an upload; return it upright in RGB plus its EXIF capture time."""
     try:
         img = Image.open(io.BytesIO(data))
     except (UnidentifiedImageError, OSError) as err:
@@ -107,25 +124,62 @@ def process_image(data: bytes) -> ProcessedImage:
         oriented = ImageOps.exif_transpose(img)
     except (OSError, SyntaxError, Image.DecompressionBombError) as err:
         raise InvalidImageError("invalid_image") from err
-    rgb = _to_rgb(oriented)
+    return _to_rgb(oriented), taken_at
 
-    variants: dict[PhotoVariant, bytes] = {}
-    width = height = 0
-    for variant, (edge, fmt, _suffix, options) in _VARIANT_SPECS.items():
-        copy = rgb.copy()
-        copy.thumbnail((edge, edge), Image.Resampling.LANCZOS)
-        buffer = io.BytesIO()
-        # No exif= argument: Pillow writes no metadata, so GPS and camera data are gone.
-        copy.save(buffer, format=fmt, **options)
-        variants[variant] = buffer.getvalue()
-        if variant is PhotoVariant.ORIGINAL:
-            width, height = copy.size
-    return ProcessedImage(variants=variants, width=width, height=height, taken_at=taken_at)
+
+BACKGROUND_MAX_EDGE = 4096  # site plans and aerial screenshots need more detail than photos
+
+
+def process_background(data: bytes) -> tuple[bytes, int, int]:
+    """A plan background: upright, without metadata, at most 4096 px. Returns JPEG, w, h."""
+    rgb, _ = _load(data)
+    rgb.thumbnail((BACKGROUND_MAX_EDGE, BACKGROUND_MAX_EDGE), Image.Resampling.LANCZOS)
+    buffer = io.BytesIO()
+    rgb.save(buffer, format="JPEG", quality=85, optimize=True)
+    return buffer.getvalue(), rgb.width, rgb.height
 
 
 def valid_id(value: str) -> bool:
     """Return True for IDs we generate ourselves (ULIDs)."""
     return bool(_ID_RE.fullmatch(value))
+
+
+def _write_atomic(target: Path, content: bytes) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=target.parent, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(content)
+        Path(tmp).replace(target)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+class BackgroundFiles:
+    """Layout: <root>/<image_id>.jpg"""
+
+    def __init__(self, root: Path) -> None:
+        self.root = root
+
+    def path(self, image_id: str) -> Path:
+        if not valid_id(image_id):
+            raise ValueError("invalid id")
+        return self.root / f"{image_id}.jpg"
+
+    def write(self, image_id: str, content: bytes) -> None:
+        _write_atomic(self.path(image_id), content)
+
+    def delete(self, image_id: str) -> None:
+        self.path(image_id).unlink(missing_ok=True)
+
+    def delete_unused(self, keep: set[str]) -> None:
+        """Remove uploads that never became (or no longer are) the background."""
+        if not self.root.exists():
+            return
+        for file in self.root.glob("*.jpg"):
+            if file.stem not in keep:
+                file.unlink(missing_ok=True)
 
 
 class PhotoFiles:
@@ -142,16 +196,7 @@ class PhotoFiles:
     def write(self, plant_id: str, photo_id: str, image: ProcessedImage) -> int:
         """Write all variants atomically; return the size of the original."""
         for variant, content in image.variants.items():
-            target = self.path(plant_id, photo_id, variant)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            fd, tmp = tempfile.mkstemp(dir=target.parent, suffix=".tmp")
-            try:
-                with os.fdopen(fd, "wb") as handle:
-                    handle.write(content)
-                Path(tmp).replace(target)
-            except BaseException:
-                Path(tmp).unlink(missing_ok=True)
-                raise
+            _write_atomic(self.path(plant_id, photo_id, variant), content)
         return len(image.variants[PhotoVariant.ORIGINAL])
 
     def delete(self, plant_id: str, photo_id: str) -> None:

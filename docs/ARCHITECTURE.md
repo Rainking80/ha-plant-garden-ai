@@ -1,6 +1,7 @@
 # Architecture
 
-Status: **M2** (garden plan editor; awaiting a hands-on check in a real browser).
+Status: **M3** (plan backgrounds, sensor markers, to-do import; M2 and M3 await a
+hands-on check in a real browser).
 This document describes what exists today and is updated with every milestone.
 The target picture is in [AGENT_SYSTEM_PROMPT.md](AGENT_SYSTEM_PROMPT.md).
 
@@ -29,8 +30,8 @@ Browser (HA frontend)                              Home Assistant core
 | `garden.py` | `GardenManager`: the only way to read or change data. Validates/normalises fields, records provenance, coordinates Store + SQLite + files, sets the plan origin from `zone.home` once, notifies subscribers (`GardenChange` with `kind` plant / plant_removed / layout). |
 | `storage.py` | `GardenStore` (HA `Store`, key `plant_garden.garden`, version 1.2 with step-wise migrations; 1.2 added the layout). Holds plants and layout. Writes are delayed by 2 s to batch edits. |
 | `database.py` | `GardenDatabase`: SQLite in WAL mode, schema migrations via `PRAGMA user_version`. Tables `photos`, `measurements`. Blocking; always called through the executor; a lock serialises access. |
-| `photos.py` | `process_image` (Pillow, executor): validates format/pixel count, reads EXIF capture time, applies EXIF orientation, strips all metadata, renders `original` (≤2560 px JPEG), `medium` (1024 px WebP), `thumb` (360 px WebP). `PhotoFiles` writes atomically; IDs must be ULIDs (no path tricks). |
-| `http.py` | `POST /api/plant_garden/photos` (multipart: plant_id, file, taken_at, tags, note; 20 MB limit). `GET /api/plant_garden/photos/{id}/{variant}` with its own auth check (see D-011). |
+| `photos.py` | `process_image` (Pillow, executor): validates format/pixel count, reads EXIF capture time, applies EXIF orientation, strips all metadata, renders `original` (≤2560 px JPEG), `medium` (1024 px WebP), `thumb` (360 px WebP). `process_background` (≤4096 px JPEG). `PhotoFiles` / `BackgroundFiles` write atomically; IDs must be ULIDs (no path tricks). |
+| `http.py` | `POST /api/plant_garden/photos` (multipart: plant_id, file, taken_at, tags, note; 20 MB limit), `GET /api/plant_garden/photos/{id}/{variant}`, `POST /api/plant_garden/backgrounds`, `GET /api/plant_garden/backgrounds/{id}`; file views check auth themselves (see D-011). |
 | `serialize.py` | JSON shapes for the panel; signs photo URLs (`async_sign_path`, 24 h). |
 | `websocket_api.py` | Commands below; `garden_command` decorator maps `NotFoundError` → `not_found`, `ValueError` → `invalid_format`, missing entry → `not_loaded`. |
 | `panel.py` | Serves `frontend/` under `/plant_garden_static`, registers the panel with a content-hash cache buster. |
@@ -43,7 +44,8 @@ Validation uses `probatio` (HA's replacement for voluptuous since 2026.9).
 
 | What | Where |
 |---|---|
-| Plants, plan origin and shapes | `.storage/plant_garden.garden` |
+| Plants, plan origin, shapes, background settings, markers | `.storage/plant_garden.garden` (version 1.3) |
+| Uploaded plan backgrounds | `<config>/plant_garden/backgrounds/<id>.jpg` (unused ones removed at start, D-019) |
 | Photos and measurements (metadata) | `<config>/plant_garden/plant_garden.db` |
 | Image files | `<config>/plant_garden/photos/<plant_id>/<photo_id>{.jpg,.medium.webp,.thumb.webp}` |
 
@@ -66,6 +68,8 @@ Nothing is keyed by config entry id: removing and re-adding the integration keep
 | `layout/get` | origin (lat/lon) and shapes in drawing order (z) |
 | `layout/shapes/save` | create or replace a shape; the client may choose the id (ULID) so that undoing a delete restores the same element |
 | `layout/shapes/delete` | |
+| `layout/set_background` | `{type: none}`, `{type: wms, preset \| url+layers+attribution, opacity}` (https only) or `{type: image, image_id, width_px, height_px, x, y, width_m, rotation, opacity}`; returns the layout, image backgrounds with a signed `url` |
+| `layout/markers/save`, `layout/markers/delete` | entity markers `{id?, entity_id, x, y, label}` |
 
 Plan coordinates are metres east (x) and south (y) of the origin (D-017). Shape
 geometry is one of `rect` (centre, width, height, rotation in degrees clockwise),
@@ -80,7 +84,7 @@ geometry is one of `rect` (centre, width, height, rotation in degrees clockwise)
 
 ## Frontend (`frontend/`)
 
-- TypeScript (strict) + Lit 3, built by Vite 8 in library mode into **one ES module** in `custom_components/plant_garden/frontend/` (≈54 KB gzip).
+- TypeScript (strict) + Lit 3, built by Vite 8 in library mode into **one ES module** in `custom_components/plant_garden/frontend/` (≈71 KB gzip).
 - Routing: HA passes `route.path`; `""` → garden plan, `/plan/<id>` → plan centred on a plant, `/plants` → plant list, `/plants/<id>` → detail. Tabs switch between plan and list; "back" from a plant returns to whichever was used last. Navigation uses `history.pushState` + `location-changed`, so the browser back button and deep links work.
 - Garden plan (`views/garden-view.ts` + `components/garden-canvas.ts`):
   - The canvas is one SVG whose user units are metres. **Pan and zoom never re-render Lit**: they set the `viewBox`, a `--mpp` (metres per pixel) CSS variable used for constant-size strokes, labels and handles, and redraw the grid path directly. Zoom-dependent minimum sizes re-render once zooming pauses.
@@ -89,6 +93,11 @@ geometry is one of `rect` (centre, width, height, rotation in degrees clockwise)
   - Every change is a `Command` in `util/history.ts` (undo/redo, Ctrl+Z/Y) that updates the store optimistically, calls the backend and rolls back with a message on failure.
   - The viewport and grid choice are stored per device in `localStorage` (`plant-garden.viewport.v1`, `plant-garden.snap.v1`); the first visit fits the whole garden.
   - Pure helpers with tests: `util/geometry.ts` (rotated rectangles, hit tests, areas, resizing, crown size defaults), `util/viewport.ts` (screen ↔ plan, zoom, fit, grid step, scale bar), `util/ulid.ts`.
+  - Backgrounds (`util/wms.ts`, `components/background-dialog.ts`): verified WMS presets per state (D-018), suggestion by location, own WMS, or an uploaded picture with opacity, rotation, "move background" tool and two-point calibration (scales about the first point, `calibrateBackground`). WMS images are requested for the visible area plus 30 % margin after panning/zooming pauses, swapped in when loaded; the attribution is always shown. Drawn areas become semi-transparent over a backdrop.
+  - Sensor markers (`util/markers.ts`, `components/entity-picker.ts`): any entity, icon by device class/domain, value with unit or translated state; info card with a 24 h sparkline (`history/history_during_period`) and HA's own more-info dialog (`hass-more-info` event).
+  - The canvas ignores `hass` updates except language changes (D-021).
+- To-do import (`components/todo-import.ts`): reads `todo/item/list`, preselects new names, guesses category and location, creates plants one by one.
+- GPS suggestion (`util/exif.ts`, `util/upload.ts`): EXIF GPS → plan metres (`geoToPlan`), only within 1 km of home; offered in the create dialog and after uploads on the plant page (D-020).
 - `state/garden-store.ts`: plant list + backend subscription; debounced refresh on change events; "stale" after 1 h. The panel refreshes stale data when the tab becomes visible and every 15 min, so signed URLs (24 h) never expire in an open panel.
 - Components (`src/components/`): `PgElement` base (hass + cached `t`), plant card, plant form dialog (create/edit; sends only changed fields so provenance of untouched fields is kept), photo viewer (tags, note, cover, delete, keyboard navigation), growth chart (SVG, ResizeObserver), confirm dialog. Native `<dialog>` everywhere.
 - Views (`src/views/`): plant list (search, status filter, empty state, FAB), plant detail (profile with provenance marks, notes, growth chart + measurements, photo timeline by month, drag-and-drop upload).
@@ -101,7 +110,8 @@ geometry is one of `rect` (centre, width, height, rotation in degrees clockwise)
 
 - Python venv in `~/.venvs/ha-plant-garden` (outside the repo). All scripts source `scripts/env.sh`.
 - `scripts/develop`: HA with config dir `~/.ha-plant-garden-dev`, integration and `dev/*.yaml` symlinked; demo irrigation entities in `dev/demo_garden.yaml`.
-- `scripts/smoke`: throw-away HA; checks onboarding → config flow → panel → WebSocket → bundle → plant + photo upload + signed URLs (403 for unsigned) → measurement → plan (origin, shape, placement) → delete.
+- `scripts/smoke`: throw-away HA; checks onboarding → config flow → panel → WebSocket → bundle → plant + photo upload + signed URLs (403 for unsigned) → measurement → plan (origin, shape, placement) → WMS background, uploaded background with signed URL, marker → delete.
+- `scripts/demo.py`: prepares the dev instance (login `dev` with a random password on first run, long-lived token in the HA config dir), an invented demo garden, sensor markers and the aerial background.
 - `scripts/test-min-version`: tests against HA 2026.9.0 in a separate venv.
 
 ## CI (`.github/workflows/`)

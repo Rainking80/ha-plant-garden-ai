@@ -1,4 +1,4 @@
-import { readExifDate } from "./exif";
+import { readExif, type GpsPosition } from "./exif";
 
 /** Longest edge sent to the server; the server stores at most 2560 px anyway. */
 export const MAX_EDGE = 2560;
@@ -7,8 +7,10 @@ const PASS_THROUGH_BYTES = 4 * 1024 * 1024;
 export interface PreparedImage {
   blob: Blob;
   filename: string;
-  /** Capture time (see readExifDate) or the file's modification time. */
+  /** Capture time (see readExif) or the file's modification time. */
   takenAt: string | null;
+  /** Only for suggesting a spot on the plan. Never stored: the server strips all metadata. */
+  gps: GpsPosition | null;
 }
 
 export function scaledSize(width: number, height: number, maxEdge = MAX_EDGE) {
@@ -46,7 +48,9 @@ async function encodeJpeg(bitmap: ImageBitmap, width: number, height: number): P
  * sent untouched; the server strips their metadata.
  */
 export async function prepareImage(file: File): Promise<PreparedImage> {
-  const exifDate = file.type === "image/jpeg" ? readExifDate(await file.arrayBuffer()) : null;
+  const exif = file.type === "image/jpeg" ? readExif(await file.arrayBuffer()) : null;
+  const exifDate = exif?.takenAt ?? null;
+  const gps = exif?.gps ?? null;
   const takenAt =
     exifDate ?? (file.lastModified ? new Date(file.lastModified).toISOString() : null);
 
@@ -55,7 +59,7 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
     bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
   } catch {
     // The browser cannot decode it; let the server decide and report.
-    return { blob: file, filename: file.name, takenAt };
+    return { blob: file, filename: file.name, takenAt, gps };
   }
   try {
     const target = scaledSize(bitmap.width, bitmap.height);
@@ -63,9 +67,9 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
       file.type === "image/jpeg" &&
       file.size <= PASS_THROUGH_BYTES &&
       target.width === bitmap.width;
-    if (untouched) return { blob: file, filename: file.name, takenAt };
+    if (untouched) return { blob: file, filename: file.name, takenAt, gps };
     const blob = await encodeJpeg(bitmap, target.width, target.height);
-    return { blob, filename: jpegName(file.name), takenAt };
+    return { blob, filename: jpegName(file.name), takenAt, gps };
   } finally {
     bitmap.close();
   }

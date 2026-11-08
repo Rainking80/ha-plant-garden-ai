@@ -1,6 +1,86 @@
 import { describe, expect, it } from "vitest";
 
-import { readExifDate } from "../src/util/exif";
+import { readExif, readExifDate } from "../src/util/exif";
+
+/** A JPEG whose EXIF only holds a GPS IFD with latitude/longitude as (d, m, s) rationals. */
+function jpegWithGps(
+  lat: [number, number, number],
+  latRef: "N" | "S",
+  lon: [number, number, number],
+  lonRef: "E" | "W",
+  little = true,
+): ArrayBuffer {
+  // layout: header(8) | IFD0: 1 entry (18) | GPS IFD: 4 entries (54) | 2 x 3 rationals (48)
+  const ifd0 = 8;
+  const gpsIfd = ifd0 + 2 + 12 + 4;
+  const data = gpsIfd + 2 + 4 * 12 + 4;
+  const tiff = new DataView(new ArrayBuffer(data + 48));
+  tiff.setUint16(0, little ? 0x4949 : 0x4d4d);
+  tiff.setUint16(2, 0x002a, little);
+  tiff.setUint32(4, ifd0, little);
+  // IFD0: GPS pointer
+  tiff.setUint16(ifd0, 1, little);
+  tiff.setUint16(ifd0 + 2, 0x8825, little);
+  tiff.setUint16(ifd0 + 4, 4, little);
+  tiff.setUint32(ifd0 + 6, 1, little);
+  tiff.setUint32(ifd0 + 10, gpsIfd, little);
+  // GPS IFD
+  tiff.setUint16(gpsIfd, 4, little);
+  const entry = (i: number, tag: number, type: number, count: number) => {
+    const at = gpsIfd + 2 + i * 12;
+    tiff.setUint16(at, tag, little);
+    tiff.setUint16(at + 2, type, little);
+    tiff.setUint32(at + 4, count, little);
+    return at + 8;
+  };
+  tiff.setUint8(entry(0, 1, 2, 2), latRef.charCodeAt(0));
+  tiff.setUint32(entry(1, 2, 5, 3), data, little);
+  tiff.setUint8(entry(2, 3, 2, 2), lonRef.charCodeAt(0));
+  tiff.setUint32(entry(3, 4, 5, 3), data + 24, little);
+  [...lat, ...lon].forEach((value, i) => {
+    // seconds with two decimals: numerator / 100
+    const denominator = i % 3 === 2 ? 100 : 1;
+    tiff.setUint32(data + i * 8, Math.round(value * denominator), little);
+    tiff.setUint32(data + i * 8 + 4, denominator, little);
+  });
+  const app1Length = 2 + 6 + tiff.byteLength;
+  return new Uint8Array([
+    0xff,
+    0xd8,
+    0xff,
+    0xe1,
+    app1Length >> 8,
+    app1Length & 0xff,
+    0x45,
+    0x78,
+    0x69,
+    0x66,
+    0x00,
+    0x00,
+    ...new Uint8Array(tiff.buffer),
+    0xff,
+    0xd9,
+  ]).buffer;
+}
+
+describe("readExif GPS", () => {
+  it("reads north/east positions", () => {
+    const { gps, takenAt } = readExif(jpegWithGps([52, 31, 12.5], "N", [13, 42, 3], "E"));
+    expect(takenAt).toBeNull();
+    expect(gps?.latitude).toBeCloseTo(52 + 31 / 60 + 12.5 / 3600, 6);
+    expect(gps?.longitude).toBeCloseTo(13 + 42 / 60 + 3 / 3600, 6);
+  });
+
+  it("applies south/west references (big endian)", () => {
+    const { gps } = readExif(jpegWithGps([33, 51, 0], "S", [151, 12, 0], "W", false));
+    expect(gps?.latitude).toBeCloseTo(-33.85, 4);
+    expect(gps?.longitude).toBeCloseTo(-151.2, 4);
+  });
+
+  it("ignores 0/0 placeholders", () => {
+    expect(readExif(jpegWithGps([0, 0, 0], "N", [0, 0, 0], "E")).gps).toBeNull();
+  });
+});
 
 interface ExifSpec {
   little?: boolean;

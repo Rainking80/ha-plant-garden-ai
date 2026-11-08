@@ -1,5 +1,5 @@
 import { errorMessage, getLayout, listPlants, subscribeGarden } from "../api/client";
-import type { GardenChangeEvent, Layout, Plant, Shape } from "../api/types";
+import type { Background, GardenChangeEvent, Layout, Marker, Plant, Shape } from "../api/types";
 import type { HomeAssistant } from "../types/hass";
 
 /** How long signed photo URLs are trusted before a refresh (backend: 24 h). */
@@ -94,6 +94,32 @@ export class GardenStore extends EventTarget {
   removeShape(id: string): void {
     if (!this.layout) return;
     this.layout = { ...this.layout, shapes: this.layout.shapes.filter((s) => s.id !== id) };
+    this._emit("change");
+  }
+
+  getMarker(id: string): Marker | undefined {
+    return this.layout?.markers.find((marker) => marker.id === id);
+  }
+
+  putMarker(marker: Marker): void {
+    if (!this.layout) return;
+    const others = this.layout.markers.filter((item) => item.id !== marker.id);
+    const index = this.layout.markers.findIndex((item) => item.id === marker.id);
+    const markers = [...others];
+    markers.splice(index === -1 ? others.length : index, 0, marker);
+    this.layout = { ...this.layout, markers };
+    this._emit("change");
+  }
+
+  removeMarker(id: string): void {
+    if (!this.layout) return;
+    this.layout = { ...this.layout, markers: this.layout.markers.filter((m) => m.id !== id) };
+    this._emit("change");
+  }
+
+  setBackground(background: Background | null): void {
+    if (!this.layout) return;
+    this.layout = { ...this.layout, background };
     this._emit("change");
   }
 

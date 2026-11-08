@@ -9,8 +9,8 @@ from homeassistant.components.http.auth import async_sign_path
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
-from .const import PHOTO_FILE_URL
-from .models import Measurement, Photo, Plant
+from .const import BACKGROUND_FILE_URL, PHOTO_FILE_URL
+from .models import Layout, Measurement, Photo, Plant
 from .photos import PhotoVariant
 
 # Long enough for a panel that stays open all day; the panel reloads data when
@@ -32,6 +32,30 @@ def photo_urls(hass: HomeAssistant, photo_id: str, refresh_token_id: str | None)
             refresh_token_id=refresh_token_id,
         )
         for variant in PhotoVariant
+    }
+
+
+def background_url(hass: HomeAssistant, image_id: str, refresh_token_id: str | None) -> str:
+    return async_sign_path(
+        hass,
+        BACKGROUND_FILE_URL.format(image_id=image_id),
+        SIGNED_URL_LIFETIME,
+        refresh_token_id=refresh_token_id,
+    )
+
+
+def layout_dict(
+    hass: HomeAssistant, layout: Layout, shapes: list[Any], refresh_token_id: str | None
+) -> dict[str, Any]:
+    """The plan for the panel; an image background gets a signed URL."""
+    background = dict(layout.background) if layout.background else None
+    if background and background.get("type") == "image":
+        background["url"] = background_url(hass, background["image_id"], refresh_token_id)
+    return {
+        "origin": layout.origin.as_dict() if layout.origin else None,
+        "shapes": [shape.as_dict() for shape in shapes],
+        "background": background,
+        "markers": [marker.as_dict() for marker in layout.markers.values()],
     }
 
 

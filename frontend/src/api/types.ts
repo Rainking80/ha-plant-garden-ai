@@ -192,9 +192,46 @@ export interface Shape {
   z: number;
 }
 
+export interface WmsBackground {
+  type: "wms";
+  preset?: string | null;
+  url?: string | null;
+  layers?: string | null;
+  attribution?: string | null;
+  opacity: number;
+}
+
+export interface ImageBackground {
+  type: "image";
+  image_id: string;
+  width_px: number;
+  height_px: number;
+  /** top-left corner in plan metres (before rotation, which turns around the centre) */
+  x: number;
+  y: number;
+  width_m: number;
+  rotation: number;
+  opacity: number;
+  /** signed URL, added by the backend */
+  url?: string;
+}
+
+export type Background = WmsBackground | ImageBackground;
+
+/** A Home Assistant entity shown on the plan. */
+export interface Marker {
+  id: string;
+  entity_id: string;
+  x: number;
+  y: number;
+  label: string | null;
+}
+
 export interface Layout {
   origin: { latitude: number; longitude: number } | null;
   shapes: Shape[];
+  background: Background | null;
+  markers: Marker[];
 }
 
 export interface GardenChangeEvent {

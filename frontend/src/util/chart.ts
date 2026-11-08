@@ -63,6 +63,24 @@ export function buildChart(measurements: Measurement[], width: number, height: n
   };
 }
 
+/** SVG path of a small line chart for [time, value] pairs, scaled into width x height. */
+export function sparklinePath(points: [number, number][], width: number, height: number): string {
+  if (points.length < 2) return "";
+  const times = points.map(([t]) => t);
+  const values = points.map(([, v]) => v);
+  const t0 = Math.min(...times);
+  const t1 = Math.max(...times);
+  const v0 = Math.min(...values);
+  const v1 = Math.max(...values);
+  const x = (t: number) => (t1 === t0 ? width / 2 : ((t - t0) / (t1 - t0)) * width);
+  // flat series sit in the middle; otherwise keep 2 px off the edges
+  const y = (v: number) =>
+    v1 === v0 ? height / 2 : height - 2 - ((v - v0) / (v1 - v0)) * (height - 4);
+  return points
+    .map(([t, v], i) => `${i ? "L" : "M"}${x(t).toFixed(1)},${y(v).toFixed(1)}`)
+    .join(" ");
+}
+
 export function pathOf(points: ChartPoint[]): string {
   return points.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
 }

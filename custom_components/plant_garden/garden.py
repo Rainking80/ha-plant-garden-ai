@@ -22,6 +22,7 @@ from .models import (
     FieldSource,
     GeoPoint,
     Layout,
+    Marker,
     Measurement,
     Photo,
     Plant,
@@ -31,7 +32,7 @@ from .models import (
     SoilType,
     Source,
 )
-from .photos import PhotoFiles, PhotoVariant, process_image
+from .photos import BackgroundFiles, PhotoFiles, PhotoVariant, process_background, process_image
 from .storage import GardenData, GardenStore, empty_garden_data
 
 _LOGGER = logging.getLogger(__name__)
@@ -80,6 +81,7 @@ class GardenManager:
         self._store = GardenStore(hass)
         self._db = GardenDatabase(data_dir / "plant_garden.db")
         self._files = PhotoFiles(data_dir / "photos")
+        self._backgrounds = BackgroundFiles(data_dir / "backgrounds")
         self._plants: dict[str, Plant] = {}
         self._layout = Layout()
         self._listeners: list[Callable[[GardenChange], None]] = []
@@ -96,7 +98,16 @@ class GardenManager:
             )
             self._schedule_save()
         await self.hass.async_add_executor_job(self._db.open)
+        await self.hass.async_add_executor_job(
+            self._backgrounds.delete_unused, self._background_image_ids()
+        )
         _LOGGER.debug("Loaded %s plants from %s", len(self._plants), self.data_dir)
+
+    def _background_image_ids(self) -> set[str]:
+        background = self._layout.background
+        if background and background.get("type") == "image":
+            return {background["image_id"]}
+        return set()
 
     async def async_shutdown(self) -> None:
         await self._store.async_save(self._data_to_save())
@@ -251,6 +262,61 @@ class GardenManager:
             raise NotFoundError(shape_id)
         self._schedule_save()
         self._notify("layout", shape_id=shape_id)
+
+    # ------------------------------------------------------------ background
+    async def async_upload_background(self, data: bytes) -> dict[str, Any]:
+        """Store an image for use as background; it becomes active via async_set_background."""
+        content, width, height = await self.hass.async_add_executor_job(process_background, data)
+        image_id = ulid_now()
+        await self.hass.async_add_executor_job(self._backgrounds.write, image_id, content)
+        return {"image_id": image_id, "width_px": width, "height_px": height}
+
+    async def async_background_path(self, image_id: str) -> Path:
+        """Path of an uploaded background image (active or just uploaded)."""
+        path = self._backgrounds.path(image_id)
+        if not await self.hass.async_add_executor_job(path.exists):
+            raise NotFoundError(image_id)
+        return path
+
+    async def async_set_background(self, background: dict[str, Any] | None) -> None:
+        """Replace the background.
+
+        A previous image file is kept until the next start (see async_setup), so
+        that undo in the panel can switch back to it.
+        """
+        if background is not None:
+            kind = background.get("type")
+            if kind == "none":
+                background = None
+            elif kind == "wms" and not (
+                background.get("preset") or (background.get("url") and background.get("layers"))
+            ):
+                raise ValueError("a WMS background needs a preset or url and layers")
+            elif kind == "image":
+                await self.async_background_path(background["image_id"])
+        self._layout.background = background
+        self._schedule_save()
+        self._notify("layout")
+
+    # ------------------------------------------------------------ markers
+    async def async_save_marker(self, data: dict[str, Any]) -> Marker:
+        marker = Marker(
+            id=data.get("id") or ulid_now(),
+            entity_id=data["entity_id"],
+            x=float(data["x"]),
+            y=float(data["y"]),
+            label=_clean_text(data.get("label")),
+        )
+        self._layout.markers[marker.id] = marker
+        self._schedule_save()
+        self._notify("layout")
+        return marker
+
+    async def async_delete_marker(self, marker_id: str) -> None:
+        if self._layout.markers.pop(marker_id, None) is None:
+            raise NotFoundError(marker_id)
+        self._schedule_save()
+        self._notify("layout")
 
     # ------------------------------------------------------------ summaries
     async def async_plant_summaries(self) -> list[tuple[Plant, dict[str, Any]]]:

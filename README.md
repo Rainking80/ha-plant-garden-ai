@@ -14,6 +14,8 @@ Plant Garden never switches your valves; it only reads their state and offers re
 
 Photos are stored in `<config>/plant_garden/` (three sizes per photo, metadata such as GPS removed) and are therefore part of your Home Assistant backups.
 
+Aerial imagery comes directly from the state survey offices (Berlin/Brandenburg, Bavaria, Baden-Württemberg, Bremen, Hesse, Mecklenburg-Western Pomerania, Lower Saxony, North Rhine-Westphalia, Rhineland-Palatinate, Saarland, Schleswig-Holstein, Thuringia) under their open licences; the attribution is shown on the plan. Your browser loads the images from these services, which therefore see the map area you view.
+
 ## Requirements
 
 - Home Assistant **2026.9.0** or newer
@@ -33,7 +35,7 @@ Photos are stored in `<config>/plant_garden/` (three sizes per photo, metadata s
 | M0 | Scaffolding, CI, dev environment, sidebar panel | ✅ |
 | M1 | Plants, photos, growth measurements | ✅ |
 | M2 | Garden plan editor: layout, plants by drag and drop, view/edit mode | 🧪 built, in review |
-| M3 | Aerial imagery (WMS), own background image, sensor markers | |
+| M3 | Aerial imagery (WMS), own background image, sensor markers | 🧪 built, in review |
 | M4 | Irrigation zones linked to HA entities (display and tracking) | |
 | M5 | Weather, evapotranspiration, water balance | |
 | M6 | AI: HA AI Task, OpenAI-compatible, Claude, Gemini, Pl@ntNet; token & cost page | |

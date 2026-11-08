@@ -1,54 +1,84 @@
 import {
+  mdiAxisArrow,
   mdiCircleOutline,
   mdiClose,
   mdiCursorDefaultOutline,
   mdiDeleteOutline,
   mdiEyeOutline,
   mdiFitToScreenOutline,
+  mdiLayersOutline,
   mdiMagnify,
+  mdiMapMarkerPlusOutline,
   mdiMapMarkerRemoveOutline,
   mdiOpenInNew,
   mdiPencilOutline,
   mdiPlus,
   mdiRectangleOutline,
   mdiRedo,
+  mdiRulerSquareCompass,
   mdiSprout,
   mdiUndo,
   mdiVectorPolygon,
 } from "@mdi/js";
-import { css, html, nothing, type PropertyValues } from "lit";
+import type { HassEntity } from "home-assistant-js-websocket";
+import { css, html, nothing, svg, type PropertyValues } from "lit";
 
-import { deleteShape, errorMessage, movePlants, saveShape, updatePlant } from "../api/client";
+import {
+  deleteMarker,
+  deleteShape,
+  errorMessage,
+  movePlants,
+  numericHistory,
+  saveMarker,
+  saveShape,
+  setBackground,
+  updatePlant,
+} from "../api/client";
 import {
   SHAPE_KINDS,
   SOIL_TYPES,
+  type Background,
   type Geometry,
+  type Marker,
   type Plant,
   type Point,
   type Shape,
   type ShapeKind,
 } from "../api/types";
+import "../components/background-dialog";
+import type { PgBackgroundDialog } from "../components/background-dialog";
 import { PgElement, define, icon } from "../components/base";
+import "../components/entity-picker";
+import type { PgEntityPicker } from "../components/entity-picker";
+import "../components/garden-canvas";
 import type {
+  Armed,
+  CalibrateDetail,
   CrownDetail,
   HoverDetail,
   Mode,
+  MoveBackgroundDetail,
+  MoveMarkerDetail,
   MovePlantDetail,
   PgGardenCanvas,
+  PlaceDetail,
   Selection,
   ShapeChangeDetail,
   Tool,
 } from "../components/garden-canvas";
-import "../components/garden-canvas";
+import "../components/number-dialog";
+import type { PgNumberDialog } from "../components/number-dialog";
 import { plantPath } from "../components/plant-card";
-import type { PgPlantForm, PlantSavedDetail } from "../components/plant-form";
 import "../components/plant-form";
+import type { PgPlantForm, PlantSavedDetail } from "../components/plant-form";
 import type { TranslationKey } from "../i18n";
 import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
-import { formatAge, formatLength, formatNumber } from "../util/format";
-import { area, crownDiameter, snapPoint } from "../util/geometry";
+import { sparklinePath } from "../util/chart";
+import { formatAge, formatDate, formatLength, formatNumber } from "../util/format";
+import { area, crownDiameter, distance, snapPoint } from "../util/geometry";
 import { History, type Command } from "../util/history";
+import { markerName, markerValue } from "../util/markers";
 import { navigate } from "../util/navigate";
 import { ulid } from "../util/ulid";
 import { isViewport, type Viewport } from "../util/viewport";
@@ -95,6 +125,25 @@ function writeStorage(key: string, value: unknown): void {
 const isSnap = (value: unknown): value is number =>
   typeof value === "number" && SNAP_STEPS.includes(value);
 
+/**
+ * Scale an image background about plan point `a` so that the distance a-b
+ * becomes `metres` (the user tapped two points with a known distance).
+ */
+export function calibrateBackground(
+  bg: Extract<Background, { type: "image" }>,
+  a: Point,
+  b: Point,
+  metres: number,
+): Extract<Background, { type: "image" }> {
+  const factor = metres / distance(a, b);
+  return {
+    ...bg,
+    x: a.x + (bg.x - a.x) * factor,
+    y: a.y + (bg.y - a.y) * factor,
+    width_m: bg.width_m * factor,
+  };
+}
+
 interface TrayDrag {
   plantId: string;
   pointerId: number;
@@ -105,10 +154,15 @@ interface TrayDrag {
   dragging: boolean;
 }
 
+interface MarkerHistory {
+  entityId: string;
+  points: [number, number][];
+}
+
 /**
- * The garden plan: canvas, mode and tool bar, plant tray, info card and
- * properties. Every change is an undoable command that updates the store
- * optimistically and then the backend.
+ * The garden plan: canvas, mode and tool bar, plant tray, info cards and
+ * properties, background and sensor markers. Every change is an undoable
+ * command that updates the store optimistically and then the backend.
  */
 export class PgGardenView extends PgElement {
   static override properties = {
@@ -126,6 +180,7 @@ export class PgGardenView extends PgElement {
     _error: { state: true },
     _drag: { state: true },
     _historyTick: { state: true },
+    _markerHistory: { state: true },
   };
 
   declare store: GardenStore;
@@ -137,16 +192,18 @@ export class PgGardenView extends PgElement {
   declare _snap: number;
   declare _selection: Selection;
   declare _hover: HoverDetail | null;
-  declare _armed: string | null;
+  declare _armed: Armed | null;
   declare _query: string;
   declare _error: string;
   declare _drag: TrayDrag | null;
   declare _historyTick: number;
+  declare _markerHistory: MarkerHistory | null;
 
   private readonly _history = new History();
   private _fitted = false;
   private _focused: string | null = null;
   private _errorTimer?: ReturnType<typeof setTimeout>;
+  private _states: Record<string, HassEntity | undefined> = {};
 
   private readonly _onStoreChange = () => {
     this.requestUpdate();
@@ -169,6 +226,7 @@ export class PgGardenView extends PgElement {
     this._error = "";
     this._drag = null;
     this._historyTick = 0;
+    this._markerHistory = null;
   }
 
   override connectedCallback(): void {
@@ -198,6 +256,7 @@ export class PgGardenView extends PgElement {
 
   protected override updated(changed: PropertyValues): void {
     if (changed.has("focusPlantId")) this._focusPlant();
+    if (changed.has("_selection")) void this._loadMarkerHistory();
   }
 
   private get _canvas(): PgGardenCanvas | null {
@@ -210,6 +269,30 @@ export class PgGardenView extends PgElement {
 
   private get _shapes(): Shape[] {
     return this.store?.layout?.shapes ?? [];
+  }
+
+  private get _markers(): Marker[] {
+    return this.store?.layout?.markers ?? [];
+  }
+
+  private get _background(): Background | null {
+    return this.store?.layout?.background ?? null;
+  }
+
+  /**
+   * States of the marker entities. A new object only when one of them changed,
+   * so the canvas does not re-render for every state change in the house.
+   */
+  private _markerStates(): Record<string, HassEntity | undefined> {
+    const next: Record<string, HassEntity | undefined> = {};
+    let changed = Object.keys(this._states).length !== this._markers.length;
+    for (const marker of this._markers) {
+      const state = this.hass?.states[marker.entity_id];
+      next[marker.entity_id] = state;
+      if (this._states[marker.entity_id] !== state) changed = true;
+    }
+    if (changed) this._states = next;
+    return this._states;
   }
 
   /** On first visit: show the whole garden. */
@@ -228,6 +311,24 @@ export class PgGardenView extends PgElement {
     this._fitted = true;
     this._canvas.centerOn(plant.position, Math.max(8, crownDiameter(plant) * 6));
     this._selection = { type: "plant", id };
+  }
+
+  private async _loadMarkerHistory(): Promise<void> {
+    const selection = this._selection;
+    if (selection?.type !== "marker" || this._mode !== "view") {
+      this._markerHistory = null;
+      return;
+    }
+    const marker = this.store.getMarker(selection.id);
+    if (!marker) return;
+    try {
+      const points = await numericHistory(this.hass, marker.entity_id);
+      if (this._selection?.id === selection.id) {
+        this._markerHistory = { entityId: marker.entity_id, points };
+      }
+    } catch {
+      this._markerHistory = { entityId: marker.entity_id, points: [] };
+    }
   }
 
   // ------------------------------------------------------------ commands
@@ -289,6 +390,41 @@ export class PgGardenView extends PgElement {
     }
   }
 
+  private async _putMarker(marker: Marker): Promise<void> {
+    const before = this.store.getMarker(marker.id);
+    this.store.putMarker(marker);
+    try {
+      await saveMarker(this.hass, marker);
+    } catch (err) {
+      if (before) this.store.putMarker(before);
+      else this.store.removeMarker(marker.id);
+      throw err;
+    }
+  }
+
+  private async _removeMarker(marker: Marker): Promise<void> {
+    this.store.removeMarker(marker.id);
+    try {
+      await deleteMarker(this.hass, marker.id);
+    } catch (err) {
+      this.store.putMarker(marker);
+      throw err;
+    }
+  }
+
+  private async _applyBackground(background: Background | null): Promise<void> {
+    const before = this._background;
+    this.store.setBackground(background);
+    try {
+      // the answer carries a fresh signed URL for image backgrounds
+      const layout = await setBackground(this.hass, background);
+      this.store.setBackground(layout.background);
+    } catch (err) {
+      this.store.setBackground(before);
+      throw err;
+    }
+  }
+
   private _movePlant(plantId: string, from: Point | null, to: Point | null): Promise<void> {
     return this._execute({
       label: "move-plant",
@@ -302,6 +438,23 @@ export class PgGardenView extends PgElement {
       label: "change-shape",
       run: () => this._putShape(to),
       undo: () => this._putShape(from),
+    });
+  }
+
+  private _replaceMarker(from: Marker, to: Marker): Promise<void> {
+    return this._execute({
+      label: "change-marker",
+      run: () => this._putMarker(to),
+      undo: () => this._putMarker(from),
+    });
+  }
+
+  private _changeBackground(to: Background | null): Promise<void> {
+    const from = this._background;
+    return this._execute({
+      label: "background",
+      run: () => this._applyBackground(to),
+      undo: () => this._applyBackground(from),
     });
   }
 
@@ -358,12 +511,59 @@ export class PgGardenView extends PgElement {
     );
   }
 
-  private _onPlace(event: CustomEvent<{ plantId: string; at: Point }>): void {
-    const plant = this.store.getPlant(event.detail.plantId);
+  private _onMoveMarker(event: CustomEvent<MoveMarkerDetail>): void {
+    const marker = this.store.getMarker(event.detail.markerId);
+    if (!marker) return;
+    const { from, to } = event.detail;
+    void this._replaceMarker({ ...marker, ...from }, { ...marker, ...to });
+  }
+
+  private _onMoveBackground(event: CustomEvent<MoveBackgroundDetail>): void {
+    const bg = this._background;
+    if (bg?.type !== "image") return;
+    void this._changeBackground({ ...bg, x: event.detail.to.x, y: event.detail.to.y });
+  }
+
+  private async _onCalibrate(event: CustomEvent<CalibrateDetail>): Promise<void> {
+    const bg = this._background;
+    if (bg?.type !== "image") return;
+    const { a, b } = event.detail;
+    const dialog = this.renderRoot.querySelector<PgNumberDialog>("pg-number-dialog");
+    const metres = await dialog?.ask(
+      this.t("plan.calibrate_title"),
+      this.t("plan.calibrate_label"),
+      this.t("plan.calibrate_measured", {
+        length: formatNumber(distance(a, b), this.language, 2),
+      }),
+    );
+    if (!metres) return;
+    this._tool = "select";
+    void this._changeBackground(calibrateBackground(bg, a, b, metres));
+  }
+
+  private _onPlace(event: CustomEvent<PlaceDetail>): void {
+    const { armed, at } = event.detail;
     this._armed = null;
+    if (armed.kind === "marker") {
+      const marker: Marker = {
+        id: ulid(),
+        entity_id: armed.entityId,
+        x: at.x,
+        y: at.y,
+        label: null,
+      };
+      this._selection = { type: "marker", id: marker.id };
+      void this._execute({
+        label: "create-marker",
+        run: () => this._putMarker(marker),
+        undo: () => this._removeMarker(marker),
+      });
+      return;
+    }
+    const plant = this.store.getPlant(armed.plantId);
     if (!plant) return;
     this._selection = { type: "plant", id: plant.id };
-    void this._movePlant(plant.id, plant.position, event.detail.at);
+    void this._movePlant(plant.id, plant.position, at);
   }
 
   private _onDeleteSelection(): void {
@@ -377,6 +577,14 @@ export class PgGardenView extends PgElement {
         label: "delete-shape",
         run: () => this._removeShape(shape),
         undo: () => this._putShape(shape),
+      });
+    } else if (selection.type === "marker") {
+      const marker = this.store.getMarker(selection.id);
+      if (!marker) return;
+      void this._execute({
+        label: "delete-marker",
+        run: () => this._removeMarker(marker),
+        undo: () => this._putMarker(marker),
       });
     } else {
       const plant = this.store.getPlant(selection.id);
@@ -413,6 +621,12 @@ export class PgGardenView extends PgElement {
     this._tool = "select";
     this._armed = null;
     this._hover = null;
+    this._selection = null;
+  }
+
+  private _setTool(tool: Tool): void {
+    this._tool = tool;
+    this._armed = null;
   }
 
   private _setSnap(event: Event): void {
@@ -420,9 +634,30 @@ export class PgGardenView extends PgElement {
     writeStorage(SNAP_KEY, this._snap);
   }
 
+  private _openBackground(): void {
+    const dialog = this.renderRoot.querySelector<PgBackgroundDialog>("pg-background-dialog");
+    dialog?.open(this._canvas?.viewport ?? { cx: 0, cy: 0, width: 40 });
+  }
+
+  private _onBackgroundChange(event: CustomEvent<{ background: Background | null }>): void {
+    void this._changeBackground(event.detail.background);
+  }
+
+  private _openEntityPicker(): void {
+    this.renderRoot.querySelector<PgEntityPicker>("pg-entity-picker")?.open();
+  }
+
+  private _onEntityPicked(event: CustomEvent<{ entityId: string }>): void {
+    this._tool = "select";
+    this._selection = null;
+    this._armed = { kind: "marker", entityId: event.detail.entityId };
+  }
+
   // ------------------------------------------------------------ tray
   private _arm(plantId: string): void {
-    this._armed = this._armed === plantId ? null : plantId;
+    const armed = this._armed;
+    this._armed =
+      armed?.kind === "plant" && armed.plantId === plantId ? null : { kind: "plant", plantId };
     this._selection = null;
   }
 
@@ -470,7 +705,11 @@ export class PgGardenView extends PgElement {
       event.clientY <= rect.bottom
     ) {
       const at = snapPoint(canvas.planPoint(event.clientX, event.clientY), this._snap);
-      this._onPlace(new CustomEvent("place", { detail: { plantId: drag.plantId, at } }));
+      this._onPlace(
+        new CustomEvent("place", {
+          detail: { armed: { kind: "plant", plantId: drag.plantId }, at },
+        }),
+      );
     }
   };
 
@@ -485,7 +724,8 @@ export class PgGardenView extends PgElement {
 
   private _onPlantSaved(event: CustomEvent<PlantSavedDetail>): void {
     void this.store.refresh();
-    if (event.detail.created) this._armed = event.detail.plant.id;
+    const plant = event.detail.plant;
+    if (event.detail.created && !plant.position) this._armed = { kind: "plant", plantId: plant.id };
   }
 
   // ------------------------------------------------------------ rendering
@@ -498,23 +738,30 @@ export class PgGardenView extends PgElement {
             .hass=${this.hass}
             .plants=${this._plants}
             .shapes=${this._shapes}
+            .markers=${this._markers}
+            .states=${this._markerStates()}
+            .background=${this._background}
+            .origin=${this.store?.layout?.origin ?? null}
             .mode=${this._mode}
             .tool=${this._tool}
             .selection=${this._selection}
             .snapStep=${this._snap}
-            .armedPlantId=${this._armed}
+            .armed=${this._armed}
             @select=${this._onSelect}
             @hover=${this._onHover}
             @move-plant=${this._onMovePlant}
             @resize-crown=${this._onResizeCrown}
             @create-shape=${this._onCreateShape}
             @change-shape=${this._onChangeShape}
+            @move-marker=${this._onMoveMarker}
+            @move-background=${this._onMoveBackground}
+            @calibrate=${this._onCalibrate}
             @place=${this._onPlace}
             @delete-selection=${this._onDeleteSelection}
             @cancel=${this._onCancel}
             @viewport-change=${this._onViewport}
             @view-moved=${() => {
-              // keep the pinned info card next to its plant while panning
+              // keep a pinned info card next to its element while panning
               if (this._selection) this.requestUpdate();
             }}
           ></pg-garden-canvas>
@@ -525,19 +772,42 @@ export class PgGardenView extends PgElement {
         ${editing ? this._renderSide() : nothing}
       </div>
       ${this._renderGhost()}
-      <pg-plant-form .hass=${this.hass} @plant-saved=${this._onPlantSaved}></pg-plant-form>
+      <pg-plant-form
+        .hass=${this.hass}
+        .origin=${this.store?.layout?.origin ?? null}
+        @plant-saved=${this._onPlantSaved}
+      ></pg-plant-form>
+      <pg-background-dialog
+        .hass=${this.hass}
+        .background=${this._background}
+        .origin=${this.store?.layout?.origin ?? null}
+        @background-change=${this._onBackgroundChange}
+      ></pg-background-dialog>
+      <pg-entity-picker
+        .hass=${this.hass}
+        .heading=${this.t("plan.add_marker")}
+        @entity-picked=${this._onEntityPicked}
+      ></pg-entity-picker>
+      <pg-number-dialog .hass=${this.hass}></pg-number-dialog>
     `;
+  }
+
+  private _toolButton(tool: Tool, path: string, label: TranslationKey) {
+    return html`<button
+      class="tool"
+      aria-pressed=${this._tool === tool}
+      @click=${() => this._setTool(tool)}
+      aria-label=${this.t(label)}
+      title=${this.t(label)}
+    >
+      ${icon(path)}
+    </button>`;
   }
 
   private _renderToolbar() {
     const { t } = this;
     const editing = this._mode === "edit";
-    const tools: [Tool, string, TranslationKey][] = [
-      ["select", mdiCursorDefaultOutline, "plan.tool_select"],
-      ["rect", mdiRectangleOutline, "plan.tool_rect"],
-      ["circle", mdiCircleOutline, "plan.tool_circle"],
-      ["polygon", mdiVectorPolygon, "plan.tool_polygon"],
-    ];
+    const imageBackground = this._background?.type === "image";
     return html`<div class="toolbar">
       <div class="group segmented" role="group" aria-label=${t("plan.mode")}>
         <button
@@ -560,28 +830,16 @@ export class PgGardenView extends PgElement {
       ${
         editing
           ? html`<div class="group" role="group">
-                ${tools.map(
-                  ([tool, path, label]) =>
-                    html`<button
-                      class="tool"
-                      aria-pressed=${this._tool === tool}
-                      @click=${() => {
-                        this._tool = tool;
-                        this._armed = null;
-                      }}
-                      aria-label=${t(label)}
-                      title=${t(label)}
-                    >
-                      ${icon(path)}
-                    </button>`,
-                )}
+                ${this._toolButton("select", mdiCursorDefaultOutline, "plan.tool_select")}
+                ${this._toolButton("rect", mdiRectangleOutline, "plan.tool_rect")}
+                ${this._toolButton("circle", mdiCircleOutline, "plan.tool_circle")}
+                ${this._toolButton("polygon", mdiVectorPolygon, "plan.tool_polygon")}
               </div>
               ${
-                this._tool !== "select"
+                ["rect", "circle", "polygon"].includes(this._tool)
                   ? html`<label class="group compact">
                       <span class="sr-only">${t("plan.new_kind")}</span>
                       <select
-                        .value=${this._newKind}
                         @change=${(e: Event) =>
                           (this._newKind = (e.target as HTMLSelectElement).value as ShapeKind)}
                       >
@@ -595,6 +853,30 @@ export class PgGardenView extends PgElement {
                     </label>`
                   : nothing
               }
+              <div class="group" role="group">
+                <button
+                  class="tool"
+                  @click=${this._openBackground}
+                  aria-label=${t("plan.background")}
+                  title=${t("plan.background")}
+                >
+                  ${icon(mdiLayersOutline)}
+                </button>
+                ${
+                  imageBackground
+                    ? html`${this._toolButton("calibrate", mdiRulerSquareCompass, "plan.tool_calibrate")}
+                      ${this._toolButton("background", mdiAxisArrow, "plan.tool_background")}`
+                    : nothing
+                }
+                <button
+                  class="tool"
+                  @click=${this._openEntityPicker}
+                  aria-label=${t("plan.add_marker")}
+                  title=${t("plan.add_marker")}
+                >
+                  ${icon(mdiMapMarkerPlusOutline)}
+                </button>
+              </div>
               <label class="group compact">
                 <span class="label-text">${t("plan.snap")}</span>
                 <select @change=${this._setSnap}>
@@ -641,16 +923,26 @@ export class PgGardenView extends PgElement {
 
   private _renderHint() {
     const { t } = this;
+    const armed = this._armed;
     let text = "";
-    if (this._armed) {
-      text = t("plan.place_hint", { name: this.store.getPlant(this._armed)?.name ?? "" });
+    if (armed?.kind === "plant") {
+      text = t("plan.place_hint", { name: this.store.getPlant(armed.plantId)?.name ?? "" });
+    } else if (armed?.kind === "marker") {
+      text = t("plan.marker_place_hint", {
+        name: markerName(this.hass?.states[armed.entityId], armed.entityId),
+      });
     } else if (this._mode === "edit" && this._tool === "polygon") {
       text = t("plan.polygon_hint");
-    } else if (this._mode === "edit" && this._tool !== "select") {
+    } else if (this._mode === "edit" && (this._tool === "rect" || this._tool === "circle")) {
       text = t("plan.draw_hint");
+    } else if (this._mode === "edit" && this._tool === "calibrate") {
+      text = t("plan.calibrate_hint");
+    } else if (this._mode === "edit" && this._tool === "background") {
+      text = t("plan.background_hint");
     } else if (
       this._mode === "view" &&
       !this._shapes.length &&
+      !this._markers.length &&
       !this._plants.some((p) => p.position)
     ) {
       text = t("plan.empty_hint");
@@ -659,7 +951,7 @@ export class PgGardenView extends PgElement {
     return html`<div class="hint" role="status">
       <span>${text}</span>
       ${
-        this._armed
+        armed
           ? html`<button class="button text" @click=${() => (this._armed = null)}>
               ${t("plan.cancel")}
             </button>`
@@ -668,19 +960,24 @@ export class PgGardenView extends PgElement {
     </div>`;
   }
 
-  private _infoPlant(): { plant: Plant; x: number; y: number; pinned: boolean } | null {
+  /** Screen position of a plan point relative to the stage. */
+  private _stagePoint(p: Point): { x: number; y: number } | null {
     const stage = this.renderRoot.querySelector<HTMLElement>(".stage")?.getBoundingClientRect();
-    if (!stage) return null;
+    if (!stage || !this._canvas) return null;
+    const s = this._canvas.screenPoint(p);
+    return { x: s.x - stage.left, y: s.y - stage.top };
+  }
+
+  private _infoPlant(): { plant: Plant; x: number; y: number; pinned: boolean } | null {
     if (this._selection?.type === "plant") {
       const plant = this.store.getPlant(this._selection.id);
-      if (plant?.position && this._canvas) {
-        const p = this._canvas.screenPoint(plant.position);
-        return { plant, x: p.x - stage.left, y: p.y - stage.top, pinned: true };
-      }
+      const at = plant?.position ? this._stagePoint(plant.position) : null;
+      if (plant && at) return { plant, ...at, pinned: true };
     }
     if (this._hover?.plantId) {
       const plant = this.store.getPlant(this._hover.plantId);
-      if (plant) {
+      const stage = this.renderRoot.querySelector<HTMLElement>(".stage")?.getBoundingClientRect();
+      if (plant && stage) {
         return {
           plant,
           x: this._hover.x - stage.left,
@@ -693,9 +990,15 @@ export class PgGardenView extends PgElement {
   }
 
   private _renderInfoCard() {
-    const shape =
-      this._selection?.type === "shape" ? this.store.getShape(this._selection.id) : null;
-    if (shape) return this._renderShapeCard(shape);
+    const selection = this._selection;
+    if (selection?.type === "shape") {
+      const shape = this.store.getShape(selection.id);
+      if (shape) return this._renderShapeCard(shape);
+    }
+    if (selection?.type === "marker") {
+      const marker = this.store.getMarker(selection.id);
+      if (marker) return this._renderMarkerCard(marker);
+    }
     const info = this._infoPlant();
     if (!info) return nothing;
     const { plant, x, y, pinned } = info;
@@ -751,7 +1054,7 @@ export class PgGardenView extends PgElement {
   private _renderShapeCard(shape: Shape) {
     const { t, language } = this;
     const plant = shape.plant_id ? this.store.getPlant(shape.plant_id) : undefined;
-    return html`<article class="card info pinned shape-card" style="--x: 50%; --y: 0px">
+    return html`<article class="card info pinned side-card">
       <div class="info-body">
         <div class="info-title">
           <h3>${shape.label ?? t(`kind.${shape.kind}`)}</h3>
@@ -780,6 +1083,59 @@ export class PgGardenView extends PgElement {
     </article>`;
   }
 
+  private _renderMarkerCard(marker: Marker) {
+    const { t, language } = this;
+    const state = this.hass?.states[marker.entity_id];
+    const history = this._markerHistory?.entityId === marker.entity_id ? this._markerHistory : null;
+    const path = history ? sparklinePath(history.points, 240, 44) : "";
+    return html`<article class="card info pinned side-card">
+      <div class="info-body">
+        <div class="info-title">
+          <h3>${marker.label ?? markerName(state, marker.entity_id)}</h3>
+          <button
+            class="icon-button small"
+            @click=${() => (this._selection = null)}
+            aria-label=${t("common.close")}
+          >
+            ${icon(mdiClose)}
+          </button>
+        </div>
+        <p class="marker-value">${markerValue(state, language, t)}</p>
+        ${
+          state?.last_changed
+            ? html`<p class="muted small">
+                ${t("plan.marker_changed", { time: formatDate(state.last_changed, language) })}
+                ${new Date(state.last_changed).toLocaleTimeString(language, {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>`
+            : nothing
+        }
+        ${
+          path
+            ? html`<svg
+                  class="sparkline"
+                  viewBox="0 0 240 44"
+                  preserveAspectRatio="none"
+                  role="img"
+                  aria-label=${t("plan.marker_history")}
+                >
+                  ${svg`<path d=${path}></path>`}
+                </svg>
+                <p class="muted small">${t("plan.marker_history")}</p>`
+            : nothing
+        }
+        <button
+          class="button secondary"
+          @click=${() => this.fire("hass-more-info", { entityId: marker.entity_id })}
+        >
+          ${icon(mdiOpenInNew)} ${t("plan.details")}
+        </button>
+      </div>
+    </article>`;
+  }
+
   private _renderSide() {
     return html`<aside class="side">${this._renderProperties()} ${this._renderTray()}</aside>`;
   }
@@ -791,8 +1147,22 @@ export class PgGardenView extends PgElement {
       const plant = this.store.getPlant(selection.id);
       return plant ? this._renderPlantProperties(plant) : nothing;
     }
+    if (selection.type === "marker") {
+      const marker = this.store.getMarker(selection.id);
+      return marker ? this._renderMarkerProperties(marker) : nothing;
+    }
     const shape = this.store.getShape(selection.id);
     return shape ? this._renderShapeProperties(shape) : nothing;
+  }
+
+  private _closeButton() {
+    return html`<button
+      class="icon-button small"
+      @click=${() => (this._selection = null)}
+      aria-label=${this.t("common.close")}
+    >
+      ${icon(mdiClose)}
+    </button>`;
   }
 
   private _renderPlantProperties(plant: Plant) {
@@ -800,13 +1170,7 @@ export class PgGardenView extends PgElement {
     return html`<section class="props">
       <div class="props-title">
         <h3>${plant.name}</h3>
-        <button
-          class="icon-button small"
-          @click=${() => (this._selection = null)}
-          aria-label=${t("common.close")}
-        >
-          ${icon(mdiClose)}
-        </button>
+        ${this._closeButton()}
       </div>
       <label class="field">
         <span>${t("plan.crown")}</span>
@@ -861,13 +1225,7 @@ export class PgGardenView extends PgElement {
     return html`<section class="props">
       <div class="props-title">
         <h3>${shape.label ?? t(`kind.${shape.kind}`)}</h3>
-        <button
-          class="icon-button small"
-          @click=${() => (this._selection = null)}
-          aria-label=${t("common.close")}
-        >
-          ${icon(mdiClose)}
-        </button>
+        ${this._closeButton()}
       </div>
       <label class="field">
         <span>${t("plan.kind")}</span>
@@ -946,15 +1304,47 @@ export class PgGardenView extends PgElement {
     </section>`;
   }
 
+  private _renderMarkerProperties(marker: Marker) {
+    const { t, language } = this;
+    const state = this.hass?.states[marker.entity_id];
+    return html`<section class="props">
+      <div class="props-title">
+        <h3>${marker.label ?? markerName(state, marker.entity_id)}</h3>
+        ${this._closeButton()}
+      </div>
+      <p class="muted">${marker.entity_id} · ${markerValue(state, language, t)}</p>
+      <label class="field">
+        <span>${t("plan.marker_label")}</span>
+        <input
+          maxlength="60"
+          .value=${marker.label ?? ""}
+          placeholder=${markerName(state, marker.entity_id)}
+          @change=${(e: Event) =>
+            void this._replaceMarker(marker, {
+              ...marker,
+              label: (e.target as HTMLInputElement).value.trim() || null,
+            })}
+        />
+      </label>
+      <div class="props-actions">
+        <button class="button text danger" @click=${this._onDeleteSelection}>
+          ${icon(mdiDeleteOutline)} ${t("plan.delete_marker")}
+        </button>
+      </div>
+    </section>`;
+  }
+
   private _renderTray() {
     const { t } = this;
     const plants = this._plants.filter((plant) => matchesQuery(plant, this._query));
     const unplaced = plants.filter((plant) => !plant.position);
     const placed = plants.filter((plant) => plant.position);
-    const item = (plant: Plant) =>
-      html`<li>
+    const armed = this._armed;
+    const item = (plant: Plant) => {
+      const isArmed = armed?.kind === "plant" && armed.plantId === plant.id;
+      return html`<li>
         <button
-          class="tray-item ${this._armed === plant.id ? "armed" : ""}"
+          class="tray-item ${isArmed ? "armed" : ""}"
           @pointerdown=${(e: PointerEvent) => this._onTrayPointerDown(e, plant.id)}
           @keydown=${(e: KeyboardEvent) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -962,7 +1352,7 @@ export class PgGardenView extends PgElement {
               this._arm(plant.id);
             }
           }}
-          aria-pressed=${this._armed === plant.id}
+          aria-pressed=${isArmed}
         >
           ${
             plant.cover
@@ -972,6 +1362,7 @@ export class PgGardenView extends PgElement {
           <span class="tray-name">${plant.name}</span>
         </button>
       </li>`;
+    };
     return html`<section class="tray">
       <div class="props-title">
         <h3>${t("plan.tray")}</h3>
@@ -1129,7 +1520,7 @@ export class PgGardenView extends PgElement {
       .toast {
         position: absolute;
         left: 50%;
-        bottom: 16px;
+        bottom: 28px;
         transform: translateX(-50%);
         display: flex;
         align-items: center;
@@ -1142,11 +1533,11 @@ export class PgGardenView extends PgElement {
         font-size: 14px;
       }
       .toast {
-        bottom: 64px;
+        bottom: 76px;
         border-radius: 12px;
       }
 
-      /* ---------------------------------------------- info card */
+      /* ---------------------------------------------- info cards */
       .info {
         position: absolute;
         left: clamp(8px, calc(var(--x) + 18px), calc(100% - 288px));
@@ -1159,7 +1550,7 @@ export class PgGardenView extends PgElement {
       .info.hover {
         pointer-events: none;
       }
-      .shape-card {
+      .side-card {
         left: auto;
         right: 12px;
         top: 64px;
@@ -1216,6 +1607,21 @@ export class PgGardenView extends PgElement {
       }
       .facts {
         font-size: 13px;
+      }
+      .marker-value {
+        font-size: 28px;
+        font-weight: 500;
+      }
+      .sparkline {
+        width: 100%;
+        height: 44px;
+        margin-top: 6px;
+      }
+      .sparkline path {
+        fill: none;
+        stroke: var(--pg-water);
+        stroke-width: 2;
+        vector-effect: non-scaling-stroke;
       }
       .info .button {
         margin-top: 6px;
@@ -1374,7 +1780,7 @@ export class PgGardenView extends PgElement {
           left: 8px;
           right: 8px;
           top: auto;
-          bottom: 8px;
+          bottom: 28px;
           width: auto;
           display: grid;
           grid-template-columns: 110px 1fr;
@@ -1382,11 +1788,11 @@ export class PgGardenView extends PgElement {
         .info-photo {
           aspect-ratio: auto;
         }
-        .shape-card {
+        .side-card {
           grid-template-columns: 1fr;
         }
         .hint {
-          bottom: 72px;
+          bottom: 84px;
         }
       }
       @media (prefers-reduced-motion: reduce) {

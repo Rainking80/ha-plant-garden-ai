@@ -14,7 +14,7 @@ from homeassistant.loader import async_get_integration
 from .const import DOMAIN
 from .database import DatabaseError
 from .garden import GardenManager
-from .http import PhotoFileView, PhotoUploadView
+from .http import BackgroundFileView, BackgroundUploadView, PhotoFileView, PhotoUploadView
 from .panel import async_register_panel, async_register_static_path, async_unregister_panel
 from .runtime import PlantGardenConfigEntry, PlantGardenData
 from .websocket_api import async_register_websocket_commands
@@ -27,8 +27,8 @@ PLATFORMS: list[Platform] = []
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up things that exist once per Home Assistant run."""
     await async_register_static_path(hass)
-    hass.http.register_view(PhotoUploadView())
-    hass.http.register_view(PhotoFileView())
+    for view in (PhotoUploadView(), PhotoFileView(), BackgroundUploadView(), BackgroundFileView()):
+        hass.http.register_view(view)
     async_register_websocket_commands(hass)
     return True
 

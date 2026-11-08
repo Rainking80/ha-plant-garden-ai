@@ -29,3 +29,17 @@ template:
           - action: input_boolean.turn_off
             target:
               entity_id: input_boolean.demo_zone_raised_bed_state
+  # Sensors to place as markers on the plan
+  - sensor:
+      - name: Demo Bodenfeuchte Beet
+        unique_id: plant_garden_demo_soil_moisture
+        unit_of_measurement: "%"
+        device_class: moisture
+        state_class: measurement
+        state: "{{ (30 + (now().minute % 10)) }}"
+      - name: Demo Zisterne
+        unique_id: plant_garden_demo_cistern
+        unit_of_measurement: "%"
+        icon: mdi:storage-tank-outline
+        state_class: measurement
+        state: "72"

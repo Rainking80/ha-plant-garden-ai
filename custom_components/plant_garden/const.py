@@ -20,3 +20,5 @@ STATIC_URL_PATH: Final = "/plant_garden_static"
 # HTTP API
 PHOTO_UPLOAD_URL: Final = "/api/plant_garden/photos"
 PHOTO_FILE_URL: Final = "/api/plant_garden/photos/{photo_id}/{variant}"
+BACKGROUND_UPLOAD_URL: Final = "/api/plant_garden/backgrounds"
+BACKGROUND_FILE_URL: Final = "/api/plant_garden/backgrounds/{image_id}"

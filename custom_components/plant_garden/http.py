@@ -1,7 +1,7 @@
-"""HTTP views for photo upload and download.
+"""HTTP views for photos and plan backgrounds.
 
 Uploads are multipart POSTs from the panel (authenticated with the user's token).
-Downloads are requested by <img> tags with signed URLs (see serialize.photo_urls).
+Downloads are requested by <img>/<image> tags with signed URLs (see serialize).
 """
 
 from __future__ import annotations
@@ -14,11 +14,11 @@ from homeassistant.components.http import KEY_AUTHENTICATED, KEY_HASS, HomeAssis
 from homeassistant.components.http.const import KEY_HASS_REFRESH_TOKEN_ID
 from homeassistant.util import dt as dt_util
 
-from .const import PHOTO_FILE_URL, PHOTO_UPLOAD_URL
+from .const import BACKGROUND_FILE_URL, BACKGROUND_UPLOAD_URL, PHOTO_FILE_URL, PHOTO_UPLOAD_URL
 from .garden import NotFoundError
 from .photos import MAX_UPLOAD_BYTES, InvalidImageError, PhotoVariant, valid_id
 from .runtime import get_manager
-from .serialize import photo_dict
+from .serialize import background_url, photo_dict
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -107,10 +107,7 @@ class PhotoFileView(HomeAssistantView):
     requires_auth = False
 
     async def get(self, request: web.Request, photo_id: str, variant: str) -> web.StreamResponse:
-        if not request.get(KEY_AUTHENTICATED, False):
-            if hdrs.AUTHORIZATION in request.headers:
-                raise web.HTTPUnauthorized
-            raise web.HTTPForbidden
+        _require_auth(request)
         hass = request.app[KEY_HASS]
         manager = get_manager(hass)
         if manager is None:
@@ -123,3 +120,67 @@ class PhotoFileView(HomeAssistantView):
             raise web.HTTPNotFound from None
         path = manager.photo_path(photo, PhotoVariant(variant))
         return web.FileResponse(path, headers={"Cache-Control": _CACHE_FOREVER})
+
+
+class BackgroundUploadView(HomeAssistantView):
+    """POST multipart with one `file`: a plan background (site plan, sketch, screenshot)."""
+
+    url = BACKGROUND_UPLOAD_URL
+    name = "api:plant_garden:backgrounds:upload"
+    requires_auth = True
+
+    async def post(self, request: web.Request) -> web.Response:
+        hass = request.app[KEY_HASS]
+        manager = get_manager(hass)
+        if manager is None:
+            return self.json_message("Plant Garden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
+        image: bytes | None = None
+        try:
+            reader = await request.multipart()
+            while (part := await reader.next()) is not None:
+                if isinstance(part, BodyPartReader) and part.name == "file":
+                    image = await _read_part(part, MAX_UPLOAD_BYTES)
+        except UploadTooLargeError:
+            return self.json_message("File too large", HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
+        except ValueError, AssertionError:
+            return self.json_message("Malformed upload", HTTPStatus.BAD_REQUEST)
+        if image is None:
+            return self.json_message("file is required", HTTPStatus.BAD_REQUEST)
+        try:
+            result = await manager.async_upload_background(image)
+        except InvalidImageError as err:
+            return self.json_message(err.reason, HTTPStatus.BAD_REQUEST, message_code=err.reason)
+        result["url"] = background_url(
+            hass, result["image_id"], request.get(KEY_HASS_REFRESH_TOKEN_ID)
+        )
+        return self.json(result)
+
+
+class BackgroundFileView(HomeAssistantView):
+    """GET the active background image (same auth handling as PhotoFileView)."""
+
+    url = BACKGROUND_FILE_URL
+    name = "api:plant_garden:backgrounds:file"
+    requires_auth = False
+
+    async def get(self, request: web.Request, image_id: str) -> web.StreamResponse:
+        _require_auth(request)
+        manager = get_manager(request.app[KEY_HASS])
+        if manager is None:
+            return self.json_message("Plant Garden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
+        if not valid_id(image_id):
+            raise web.HTTPNotFound
+        try:
+            # also serves a fresh upload that is not active yet (needed for calibration)
+            path = await manager.async_background_path(image_id)
+        except NotFoundError:
+            raise web.HTTPNotFound from None
+        return web.FileResponse(path, headers={"Cache-Control": _CACHE_FOREVER})
+
+
+def _require_auth(request: web.Request) -> None:
+    """401 only for a bad bearer token; expired signed URLs get 403 (see PhotoFileView)."""
+    if not request.get(KEY_AUTHENTICATED, False):
+        if hdrs.AUTHORIZATION in request.headers:
+            raise web.HTTPUnauthorized
+        raise web.HTTPForbidden

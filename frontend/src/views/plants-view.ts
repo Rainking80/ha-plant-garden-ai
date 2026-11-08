@@ -1,4 +1,4 @@
-import { mdiMagnify, mdiPlus } from "@mdi/js";
+import { mdiMagnify, mdiPlaylistPlus, mdiPlus } from "@mdi/js";
 import { css, html, nothing } from "lit";
 
 import type { Plant, PlantStatus } from "../api/types";
@@ -9,6 +9,8 @@ import { plantPath } from "../components/plant-card";
 import "../components/plant-card";
 import type { PgPlantForm, PlantSavedDetail } from "../components/plant-form";
 import "../components/plant-form";
+import type { PgTodoImport } from "../components/todo-import";
+import "../components/todo-import";
 import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
 import { navigate } from "../util/navigate";
@@ -61,6 +63,10 @@ export class PgPlantsView extends PgElement {
 
   private _openForm(): void {
     this.renderRoot.querySelector<PgPlantForm>("pg-plant-form")?.open();
+  }
+
+  private _openImport(): void {
+    this.renderRoot.querySelector<PgTodoImport>("pg-todo-import")?.open();
   }
 
   private _onSaved(event: CustomEvent<PlantSavedDetail>): void {
@@ -116,6 +122,9 @@ export class PgPlantsView extends PgElement {
                       </div>`
                     : nothing
                 }
+                <button class="button text import" @click=${this._openImport}>
+                  ${icon(mdiPlaylistPlus)} ${t("import.open")}
+                </button>
               </div>
               ${
                 visible.length
@@ -138,9 +147,14 @@ export class PgPlantsView extends PgElement {
                 <div class="welcome-text">
                   <h2>${t("plants.empty_title", { garden: this.gardenName })}</h2>
                   <p class="muted">${t("plants.empty_body")}</p>
-                  <button class="button" @click=${this._openForm}>
-                    ${icon(mdiPlus)} ${t("plants.add")}
-                  </button>
+                  <div class="welcome-actions">
+                    <button class="button" @click=${this._openForm}>
+                      ${icon(mdiPlus)} ${t("plants.add")}
+                    </button>
+                    <button class="button secondary" @click=${this._openImport}>
+                      ${icon(mdiPlaylistPlus)} ${t("import.open")}
+                    </button>
+                  </div>
                 </div>
               </section>
             `
@@ -152,7 +166,16 @@ export class PgPlantsView extends PgElement {
             </button>`
           : nothing
       }
-      <pg-plant-form .hass=${this.hass} @plant-saved=${this._onSaved}></pg-plant-form>
+      <pg-plant-form
+        .hass=${this.hass}
+        .origin=${this.store.layout?.origin ?? null}
+        @plant-saved=${this._onSaved}
+      ></pg-plant-form>
+      <pg-todo-import
+        .hass=${this.hass}
+        .existingNames=${plants.map((plant) => plant.name)}
+        @imported=${() => void this.store.refresh()}
+      ></pg-todo-import>
     `;
   }
 
@@ -223,6 +246,14 @@ export class PgPlantsView extends PgElement {
         margin: 0 0 8px;
         max-width: 60ch;
         line-height: 1.5;
+      }
+      .welcome-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .import {
+        margin-left: auto;
       }
       .fab {
         position: fixed;

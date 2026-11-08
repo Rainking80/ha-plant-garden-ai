@@ -237,3 +237,111 @@ describe("pg-garden-view", () => {
     expect(store.getPlant("A")?.position).toEqual({ x: 0, y: 0 });
   });
 });
+
+describe("pg-garden-view M3: markers, background, calibration", () => {
+  const ZISTERNE = {
+    entity_id: "sensor.zisterne",
+    state: "73",
+    attributes: { unit_of_measurement: "%", friendly_name: "Zisterne" },
+    last_changed: "2026-11-08T10:00:00Z",
+  };
+  const IMAGE_BG = {
+    type: "image" as const,
+    image_id: "01JIMAGE0000000000000000AA",
+    width_px: 800,
+    height_px: 400,
+    x: -10,
+    y: -5,
+    width_m: 20,
+    rotation: 0,
+    opacity: 0.8,
+    url: "/bg.jpg?authSig=x",
+  };
+
+  it("shows markers with their live value", async () => {
+    const backend = fakeBackend({
+      markers: [{ id: "M1", entity_id: "sensor.zisterne", x: 2, y: 2, label: null }],
+      states: { "sensor.zisterne": ZISTERNE },
+    });
+    const { view } = await mount(backend);
+    const marker = deepGet<SVGElement>(canvasOf(view), '[data-marker-id="M1"]');
+    expect(marker.textContent).toContain("73 %");
+  });
+
+  it("places a new sensor marker after picking an entity", async () => {
+    const backend = fakeBackend({ states: { "sensor.zisterne": ZISTERNE } });
+    const { view, store } = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    deepGet(view, "pg-entity-picker").dispatchEvent(
+      new CustomEvent("entity-picked", { detail: { entityId: "sensor.zisterne" } }),
+    );
+    await view.updateComplete;
+    expect(deepText(view)).toContain("Tippe auf die Stelle für Zisterne");
+
+    const svg = deepGet<SVGSVGElement>(canvasOf(view), "svg");
+    pointer("pointerdown", svg, 440, 300);
+    pointer("pointerup", svg, 440, 300);
+    await vi.waitFor(() => expect(store.layout?.markers).toHaveLength(1));
+    const saved = calls(backend, "plant_garden/layout/markers/save")[0]?.marker as Record<
+      string,
+      unknown
+    >;
+    expect(saved).toMatchObject({ entity_id: "sensor.zisterne", x: 2, y: 0 });
+  });
+
+  it("opens Home Assistant's more-info dialog from a marker card", async () => {
+    const backend = fakeBackend({
+      markers: [{ id: "M1", entity_id: "sensor.zisterne", x: 0, y: 0, label: "Regenwasser" }],
+      states: { "sensor.zisterne": ZISTERNE },
+    });
+    const { view } = await mount(backend);
+    canvasOf(view).dispatchEvent(
+      new CustomEvent("select", { detail: { selection: { type: "marker", id: "M1" } } }),
+    );
+    await vi.waitFor(() => expect(deepText(view)).toContain("Letzte 24 Stunden"));
+    expect(deepText(view)).toContain("Regenwasser");
+    const moreInfo = vi.fn();
+    view.addEventListener("hass-more-info", moreInfo);
+    await clickButton(view, "Details");
+    expect(moreInfo.mock.calls[0]?.[0].detail).toEqual({ entityId: "sensor.zisterne" });
+  });
+
+  it("sets an image background, can undo it and calibrates the scale", async () => {
+    const backend = fakeBackend();
+    const { view, store } = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    deepGet(view, "pg-background-dialog").dispatchEvent(
+      new CustomEvent("background-change", { detail: { background: IMAGE_BG } }),
+    );
+    await vi.waitFor(() =>
+      expect(deepQuery(canvasOf(view), "image.backdrop")?.getAttribute("href")).toBe(
+        "/bg.jpg?authSig=x",
+      ),
+    );
+    // the signed URL is never sent to the backend
+    const sent = calls(backend, "plant_garden/layout/set_background")[0]?.background as Record<
+      string,
+      unknown
+    >;
+    expect(sent.url).toBeUndefined();
+
+    // calibrate: two taps 2 m apart (40 px), which are really 4 m apart
+    await clickButton(view, "Maßstab kalibrieren");
+    const svg = deepGet<SVGSVGElement>(canvasOf(view), "svg");
+    pointer("pointerdown", svg, 400, 300);
+    pointer("pointerup", svg, 400, 300);
+    pointer("pointerdown", svg, 440, 300);
+    pointer("pointerup", svg, 440, 300);
+    const input = await vi.waitFor(() => deepGet<HTMLInputElement>(view, "pg-number-dialog input"));
+    input.value = "4";
+    input.dispatchEvent(new Event("input"));
+    deepGet<HTMLFormElement>(view, "pg-number-dialog form").requestSubmit();
+    await vi.waitFor(() => expect(store.layout?.background).toMatchObject({ width_m: 40 }));
+    expect(store.layout?.background).toMatchObject({ x: -20, y: -10 });
+
+    await clickButton(view, "Rückgängig");
+    await vi.waitFor(() => expect(store.layout?.background).toMatchObject({ width_m: 20 }));
+    await clickButton(view, "Rückgängig");
+    await vi.waitFor(() => expect(store.layout?.background).toBeNull());
+  });
+});

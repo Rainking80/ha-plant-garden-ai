@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 
-import type { Photo, Plant, PlantDetail, Point, Shape } from "../src/api/types";
+import type { Background, Marker, Photo, Plant, PlantDetail, Point, Shape } from "../src/api/types";
 import type { HomeAssistant } from "../src/types/hass";
 
 export function makePlant(overrides: Partial<Plant> = {}): Plant {
@@ -77,6 +77,9 @@ export interface FakeBackend {
   }) => void;
   plants: Plant[];
   shapes: Shape[];
+  markers: Marker[];
+  background: Background | null;
+  todo: Record<string, { uid: string; summary: string; status: string }[]>;
   details: Record<string, PlantDetail>;
 }
 
@@ -85,6 +88,10 @@ export function fakeBackend(
   options: {
     plants?: Plant[];
     shapes?: Shape[];
+    markers?: Marker[];
+    background?: Background | null;
+    todo?: FakeBackend["todo"];
+    states?: Record<string, unknown>;
     details?: Record<string, PlantDetail>;
     language?: string;
   } = {},
@@ -93,7 +100,16 @@ export function fakeBackend(
     plants: options.plants ?? [],
     shapes: options.shapes ?? [],
     details: options.details ?? {},
+    markers: options.markers ?? [],
+    background: options.background ?? null,
+    todo: options.todo ?? {},
   } as FakeBackend;
+  const layout = () => ({
+    origin: { latitude: 52.4, longitude: 13.06 },
+    shapes: backend.shapes,
+    background: backend.background,
+    markers: backend.markers,
+  });
   let listener: ((event: unknown) => void) | undefined;
   backend.callWS = vi.fn(async (msg: Record<string, unknown> & { type: string }) => {
     switch (msg.type) {
@@ -101,13 +117,47 @@ export function fakeBackend(
         return { entry_id: "e", garden_name: "Schrebergarten", version: "0.1.0", is_admin: true };
       case "plant_garden/plants/list":
         return { plants: backend.plants };
+      case "plant_garden/plants/create": {
+        const { type: _type, ...fields } = msg;
+        const plant = makePlant({
+          id: `NEW${backend.plants.length}`,
+          ...(fields as Partial<Plant>),
+        });
+        backend.plants = [...backend.plants, plant];
+        return plant;
+      }
       case "plant_garden/plants/get": {
         const detail = backend.details[String(msg.plant_id ?? "")];
         if (!detail) throw { code: "not_found", message: "Not found" };
         return detail;
       }
       case "plant_garden/layout/get":
-        return { origin: { latitude: 52.4, longitude: 13.06 }, shapes: backend.shapes };
+        return layout();
+      case "plant_garden/layout/set_background": {
+        const bg = msg.background as Background | { type: "none" };
+        backend.background = bg.type === "none" ? null : (bg as Background);
+        if (backend.background?.type === "image") {
+          backend.background = { ...backend.background, url: "/bg.jpg?authSig=x" };
+        }
+        return layout();
+      }
+      case "plant_garden/layout/markers/save": {
+        const marker = msg.marker as Marker;
+        backend.markers = [...backend.markers.filter((m) => m.id !== marker.id), marker];
+        return marker;
+      }
+      case "plant_garden/layout/markers/delete":
+        backend.markers = backend.markers.filter((m) => m.id !== msg.marker_id);
+        return null;
+      case "todo/item/list":
+        return { items: backend.todo[String(msg.entity_id)] ?? [] };
+      case "history/history_during_period":
+        return {
+          [String((msg.entity_ids as string[])[0])]: [
+            { s: "70", lu: 1 },
+            { s: "65", lu: 2 },
+          ],
+        };
       case "plant_garden/plants/move": {
         const moves = msg.moves as { plant_id: string; position: Point | null }[];
         backend.plants = backend.plants.map((plant) => {
@@ -141,7 +191,7 @@ export function fakeBackend(
     language,
     locale: { language },
     themes: { darkMode: false },
-    states: {},
+    states: options.states ?? {},
     connection: {
       subscribeMessage: vi.fn(async (callback: (event: unknown) => void) => {
         listener = callback;

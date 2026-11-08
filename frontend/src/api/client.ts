@@ -1,7 +1,9 @@
 import type { HomeAssistant } from "../types/hass";
 import type {
+  Background,
   GardenChangeEvent,
   Layout,
+  Marker,
   Measurement,
   Photo,
   Plant,
@@ -13,6 +15,7 @@ import type {
 
 export const WS_PREFIX = "plant_garden";
 export const PHOTO_UPLOAD_URL = "/api/plant_garden/photos";
+export const BACKGROUND_UPLOAD_URL = "/api/plant_garden/backgrounds";
 
 export interface GardenInfo {
   entry_id: string;
@@ -93,6 +96,94 @@ export function saveShape(hass: HomeAssistant, shape: Shape): Promise<Shape> {
 
 export async function deleteShape(hass: HomeAssistant, shapeId: string): Promise<void> {
   await hass.callWS<null>({ type: `${WS_PREFIX}/layout/shapes/delete`, shape_id: shapeId });
+}
+
+/** Set the plan background; `null` removes it. Returns the updated layout. */
+export function setBackground(hass: HomeAssistant, background: Background | null): Promise<Layout> {
+  let payload: object = { type: "none" };
+  if (background?.type === "image") {
+    // the signed URL is added by the backend on every read, it is not stored
+    const { url: _signedUrl, ...stored } = background;
+    payload = stored;
+  } else if (background) {
+    payload = background;
+  }
+  return hass.callWS<Layout>({ type: `${WS_PREFIX}/layout/set_background`, background: payload });
+}
+
+export interface UploadedBackground {
+  image_id: string;
+  width_px: number;
+  height_px: number;
+  url: string;
+}
+
+export async function uploadBackground(
+  hass: HomeAssistant,
+  file: Blob,
+): Promise<UploadedBackground> {
+  const form = new FormData();
+  form.append("file", file, "background.jpg");
+  const response = await hass.fetchWithAuth(BACKGROUND_UPLOAD_URL, { method: "POST", body: form });
+  if (!response.ok) {
+    let code: string | null = null;
+    let message = response.statusText;
+    try {
+      const body = (await response.json()) as { message?: string; code?: string };
+      code = body.code ?? null;
+      message = body.message ?? message;
+    } catch {
+      // body was not JSON
+    }
+    throw new UploadError(message, code, response.status);
+  }
+  return (await response.json()) as UploadedBackground;
+}
+
+export function saveMarker(hass: HomeAssistant, marker: Marker): Promise<Marker> {
+  return hass.callWS<Marker>({ type: `${WS_PREFIX}/layout/markers/save`, marker });
+}
+
+export async function deleteMarker(hass: HomeAssistant, markerId: string): Promise<void> {
+  await hass.callWS<null>({ type: `${WS_PREFIX}/layout/markers/delete`, marker_id: markerId });
+}
+
+// ------------------------------------------------------------ Home Assistant core
+export interface TodoItem {
+  uid: string;
+  summary: string;
+  status: "needs_action" | "completed";
+  description?: string | null;
+}
+
+export async function listTodoItems(hass: HomeAssistant, entityId: string): Promise<TodoItem[]> {
+  const result = await hass.callWS<{ items: TodoItem[] }>({
+    type: "todo/item/list",
+    entity_id: entityId,
+  });
+  return result.items;
+}
+
+/** Numeric history of one entity as [epoch ms, value] pairs (non-numeric states skipped). */
+export async function numericHistory(
+  hass: HomeAssistant,
+  entityId: string,
+  hours = 24,
+): Promise<[number, number][]> {
+  const start = new Date(Date.now() - hours * 3600 * 1000).toISOString();
+  const result = await hass.callWS<Record<string, { s: string; lu: number }[]>>({
+    type: "history/history_during_period",
+    start_time: start,
+    entity_ids: [entityId],
+    minimal_response: true,
+    no_attributes: true,
+  });
+  return (result[entityId] ?? []).flatMap((item) => {
+    const value = Number(item.s);
+    return item.s.trim() !== "" && Number.isFinite(value)
+      ? [[item.lu * 1000, value] as [number, number]]
+      : [];
+  });
 }
 
 export function subscribeGarden(

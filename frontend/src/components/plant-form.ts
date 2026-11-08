@@ -10,6 +10,7 @@ import {
   SOIL_TYPES,
   WATER_NEEDS,
   type Plant,
+  type Point,
 } from "../api/types";
 import type { TranslationKey } from "../i18n";
 import { shared } from "../styles/shared";
@@ -23,7 +24,8 @@ import {
   plantFields,
   type PlantFormState,
 } from "../util/plant-form";
-import { uploadFiles } from "../util/upload";
+import { positionFromFiles, uploadFiles } from "../util/upload";
+import type { GeoOrigin } from "../util/wms";
 import { PgElement, define, icon } from "./base";
 
 export interface PlantSavedDetail {
@@ -46,8 +48,15 @@ export class PgPlantForm extends PgElement {
     _busy: { state: true },
     _progress: { state: true },
     _errors: { state: true },
+    _gpsPosition: { state: true },
+    _useGps: { state: true },
+    origin: { attribute: false },
   };
 
+  /** Plan origin, to turn photo GPS into a position suggestion. */
+  declare origin: GeoOrigin | null;
+  declare _gpsPosition: Point | null;
+  declare _useGps: boolean;
   declare _plant: Plant | undefined;
   declare _state: PlantFormState;
   declare _files: File[];
@@ -74,6 +83,13 @@ export class PgPlantForm extends PgElement {
     this._progress = "";
     this._errors = [];
     this._created = undefined;
+    this._gpsPosition = null;
+    this._useGps = true;
+  }
+
+  private async _onFiles(event: Event): Promise<void> {
+    this._files = [...((event.target as HTMLInputElement).files ?? [])];
+    this._gpsPosition = await positionFromFiles(this._files, this.origin);
   }
 
   open(plant?: Plant): void {
@@ -136,6 +152,7 @@ export class PgPlantForm extends PgElement {
     const plant = await createPlant(this.hass, {
       ...changedFields(fields, null),
       name: fields.name,
+      ...(this._gpsPosition && this._useGps ? { position: this._gpsPosition } : {}),
     });
     const height = parseNumber(this._height);
     const width = parseNumber(this._width);
@@ -388,17 +405,21 @@ export class PgPlantForm extends PgElement {
                 : nothing
             }
           </span>
-          <input
-            class="sr-only"
-            type="file"
-            accept="image/*"
-            multiple
-            @change=${(event: Event) => {
-              this._files = [...((event.target as HTMLInputElement).files ?? [])];
-            }}
-          />
+          <input class="sr-only" type="file" accept="image/*" multiple @change=${this._onFiles} />
           <small>${t("form.photos_hint")}</small>
         </label>
+        ${
+          this._gpsPosition
+            ? html`<label class="check wide">
+                <input
+                  type="checkbox"
+                  .checked=${this._useGps}
+                  @change=${(e: Event) => (this._useGps = (e.target as HTMLInputElement).checked)}
+                />
+                <span>${t("form.use_gps")}</span>
+              </label>`
+            : nothing
+        }
         <label class="field">
           <span>${t("form.height_cm")}</span>
           <input
@@ -451,6 +472,17 @@ export class PgPlantForm extends PgElement {
       }
       .wide {
         grid-column: 1 / -1;
+      }
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+      .check input {
+        width: 18px;
+        min-height: 18px;
+        height: 18px;
       }
       .age {
         display: grid;

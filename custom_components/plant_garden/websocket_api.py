@@ -25,7 +25,7 @@ from .models import (
     WaterNeed,
 )
 from .runtime import get_loaded_entry, get_manager
-from .serialize import measurement_dict, photo_dict, plant_dict
+from .serialize import layout_dict, measurement_dict, photo_dict, plant_dict
 
 type GardenHandler = Callable[
     [HomeAssistant, websocket_api.ActiveConnection, dict[str, Any], GardenManager],
@@ -90,6 +90,42 @@ SHAPE = {
     probatio.Optional("z"): probatio.All(int, probatio.Range(min=-1000, max=1000)),
 }
 
+OPACITY = _number(0.05, 1)
+
+BACKGROUND = probatio.Any(
+    {probatio.Required("type"): "none"},
+    {
+        probatio.Required("type"): "wms",
+        probatio.Optional("preset"): probatio.Any(None, probatio.All(str, probatio.Length(max=20))),
+        # https only: plain http images would be blocked as mixed content anyway
+        probatio.Optional("url"): probatio.Any(
+            None, probatio.All(str, probatio.Length(max=500), probatio.Match(r"^https://\S+$"))
+        ),
+        probatio.Optional("layers"): _text(200),
+        probatio.Optional("attribution"): _text(300),
+        probatio.Optional("opacity", default=1): OPACITY,
+    },
+    {
+        probatio.Required("type"): "image",
+        probatio.Required("image_id"): ID,
+        probatio.Required("width_px"): probatio.All(int, probatio.Range(min=1, max=20000)),
+        probatio.Required("height_px"): probatio.All(int, probatio.Range(min=1, max=20000)),
+        probatio.Required("x"): COORD,
+        probatio.Required("y"): COORD,
+        probatio.Required("width_m"): _number(0.5, 5000),
+        probatio.Optional("rotation", default=0): _number(-360, 360),
+        probatio.Optional("opacity", default=0.8): OPACITY,
+    },
+)
+
+MARKER = {
+    probatio.Optional("id"): ID,
+    probatio.Required("entity_id"): cv.entity_id,
+    probatio.Required("x"): COORD,
+    probatio.Required("y"): COORD,
+    probatio.Optional("label"): _text(60),
+}
+
 PLANT_FIELDS: dict[Any, Any] = {
     probatio.Optional("scientific_name"): _text(200),
     probatio.Optional("variety"): _text(200),
@@ -135,6 +171,9 @@ def async_register_websocket_commands(hass: HomeAssistant) -> None:
         ws_layout_get,
         ws_shapes_save,
         ws_shapes_delete,
+        ws_set_background,
+        ws_markers_save,
+        ws_markers_delete,
         ws_photos_update,
         ws_photos_delete,
         ws_measurements_add,
@@ -392,12 +431,8 @@ async def ws_layout_get(
     msg: dict[str, Any],
     manager: GardenManager,
 ) -> dict[str, Any]:
-    """Origin and shapes in drawing order. Plant positions come with the plants."""
-    origin = manager.layout.origin
-    return {
-        "origin": origin.as_dict() if origin else None,
-        "shapes": [shape.as_dict() for shape in manager.shapes()],
-    }
+    """Origin, shapes in drawing order, background, markers. Plants carry their own position."""
+    return layout_dict(hass, manager.layout, manager.shapes(), connection.refresh_token_id)
 
 
 @garden_command(
@@ -427,6 +462,54 @@ async def ws_shapes_delete(
     manager: GardenManager,
 ) -> None:
     await manager.async_delete_shape(msg["shape_id"])
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/layout/set_background",
+        probatio.Required("background"): BACKGROUND,
+    }
+)
+async def ws_set_background(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Aerial imagery (WMS), an uploaded image or none. Returns the layout."""
+    await manager.async_set_background(msg["background"])
+    return layout_dict(hass, manager.layout, manager.shapes(), connection.refresh_token_id)
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/layout/markers/save",
+        probatio.Required("marker"): MARKER,
+    }
+)
+async def ws_markers_save(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    marker = await manager.async_save_marker(msg["marker"])
+    return marker.as_dict()
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/layout/markers/delete",
+        probatio.Required("marker_id"): str,
+    }
+)
+async def ws_markers_delete(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> None:
+    await manager.async_delete_marker(msg["marker_id"])
 
 
 # ---------------------------------------------------------------- photos

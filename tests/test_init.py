@@ -98,6 +98,35 @@ async def test_store_from_before_plants_is_migrated(
     assert manager.layout.shapes == {}
 
 
+async def test_store_from_m2_gains_background_and_markers(
+    hass: HomeAssistant, hass_storage: dict, mock_config_entry: MockConfigEntry
+) -> None:
+    """A 1.2 store (layout without background/markers, as written by M2)."""
+    shape = {
+        "id": "01JSHAPE0000000000000000AA",
+        "kind": "bed",
+        "geometry": {"type": "circle", "cx": 0, "cy": 0, "r": 1},
+    }
+    hass_storage[STORAGE_KEY] = {
+        "version": 1,
+        "minor_version": 2,
+        "key": STORAGE_KEY,
+        "data": {
+            "plants": [],
+            "layout": {"origin": {"latitude": 1, "longitude": 2}, "shapes": [shape]},
+        },
+    }
+    await _setup(hass, mock_config_entry)
+    manager = get_manager(hass)
+    assert manager is not None
+    assert list(manager.layout.shapes) == [shape["id"]]
+    assert manager.layout.background is None
+    assert manager.layout.markers == {}
+    stored = hass_storage[STORAGE_KEY]
+    assert stored["minor_version"] == STORAGE_MINOR_VERSION
+    assert stored["data"]["layout"]["markers"] == []
+
+
 async def _setup(hass: HomeAssistant, entry: MockConfigEntry) -> None:
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)

@@ -16,6 +16,7 @@ import {
   deletePlant,
   errorMessage,
   getPlant,
+  movePlants,
 } from "../api/client";
 import type {
   FieldSource,
@@ -24,6 +25,7 @@ import type {
   Plant,
   PlantDetail,
   PlantFields,
+  Point,
 } from "../api/types";
 import { PgElement, define, icon } from "../components/base";
 import type { PgConfirmDialog } from "../components/confirm-dialog";
@@ -48,7 +50,7 @@ import {
 import { navigate } from "../util/navigate";
 import { parseNumber } from "../util/plant-form";
 import { tagLabel } from "../util/tags";
-import { uploadFiles } from "../util/upload";
+import { suggestedPosition, uploadFiles } from "../util/upload";
 
 interface Fact {
   label: TranslationKey;
@@ -83,6 +85,7 @@ export class PgPlantDetail extends PgElement {
     _mHeight: { state: true },
     _mWidth: { state: true },
     _mError: { state: true },
+    _gpsSuggestion: { state: true },
   };
 
   declare store: GardenStore;
@@ -98,6 +101,7 @@ export class PgPlantDetail extends PgElement {
   declare _mHeight: string;
   declare _mWidth: string;
   declare _mError: string;
+  declare _gpsSuggestion: Point | null;
 
   private _loadedAt = 0;
   private _reloadTimer?: ReturnType<typeof setTimeout>;
@@ -129,6 +133,7 @@ export class PgPlantDetail extends PgElement {
     this._mHeight = "";
     this._mWidth = "";
     this._mError = "";
+    this._gpsSuggestion = null;
   }
 
   override connectedCallback(): void {
@@ -205,7 +210,25 @@ export class PgPlantDetail extends PgElement {
     });
     this._uploading = "";
     this._uploadErrors = result.errors;
+    // a photo with GPS can suggest the spot of a plant that is not on the plan yet
+    const plant = this._detail?.plant;
+    if (plant && !plant.position) {
+      this._gpsSuggestion = suggestedPosition(result.gps, this.store.layout?.origin);
+    }
     await this._load();
+  }
+
+  private async _acceptGps(): Promise<void> {
+    const position = this._gpsSuggestion;
+    this._gpsSuggestion = null;
+    if (!position) return;
+    try {
+      await movePlants(this.hass, [{ plant_id: this.plantId, position }]);
+      void this.store.refresh();
+      await this._load();
+    } catch (err) {
+      this._error = errorMessage(err);
+    }
   }
 
   private _onFileInput(event: Event): void {
@@ -501,6 +524,19 @@ export class PgPlantDetail extends PgElement {
           </button>
         </div>
         ${this._uploading ? html`<p class="muted" aria-live="polite">${this._uploading}</p>` : nothing}
+        ${
+          this._gpsSuggestion
+            ? html`<div class="gps" role="status">
+                <span>${t("detail.gps_found")}</span>
+                <button class="button secondary" @click=${this._acceptGps}>
+                  ${t("detail.gps_accept")}
+                </button>
+                <button class="button text" @click=${() => (this._gpsSuggestion = null)}>
+                  ${t("common.cancel")}
+                </button>
+              </div>`
+            : nothing
+        }
         ${
           this._uploadErrors.length
             ? html`<ul class="error-text" role="alert">
@@ -838,6 +874,19 @@ export class PgPlantDetail extends PgElement {
       .photos.dragging {
         outline: 2px dashed var(--pg-accent);
         outline-offset: -6px;
+      }
+      .gps {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0;
+        padding: 8px 12px;
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--pg-accent) 10%, transparent);
+      }
+      .gps span {
+        flex: 1 1 200px;
       }
       .drop-hint {
         position: absolute;

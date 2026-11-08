@@ -1,8 +1,18 @@
 import { mdiSprout } from "@mdi/js";
+import type { HassEntity } from "home-assistant-js-websocket";
 import { css, html, nothing, svg, type PropertyValues } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 
-import type { Geometry, Plant, Point, PolygonGeometry, Shape } from "../api/types";
+import type { Geometry, Marker, Plant, Point, PolygonGeometry, Shape } from "../api/types";
+import type { HomeAssistant } from "../types/hass";
+import { markerIcon, markerValue } from "../util/markers";
+import {
+  getMapRequest,
+  resolveWms,
+  type Background,
+  type GeoOrigin,
+  type ImageBackground,
+} from "../util/wms";
 import {
   area,
   crownDiameter,
@@ -42,8 +52,10 @@ import {
 import { PgElement, define } from "./base";
 
 export type Mode = "view" | "edit";
-export type Tool = "select" | "rect" | "circle" | "polygon";
-export type Selection = { type: "plant" | "shape"; id: string } | null;
+export type Tool = "select" | "rect" | "circle" | "polygon" | "calibrate" | "background";
+export type Selection = { type: "plant" | "shape" | "marker"; id: string } | null;
+/** Something waiting to be placed with the next tap on the plan. */
+export type Armed = { kind: "plant"; plantId: string } | { kind: "marker"; entityId: string };
 
 export type Handle =
   | { kind: "corner"; corner: Corner }
@@ -56,6 +68,7 @@ export type Handle =
 type Hit =
   | { type: "plant"; id: string }
   | { type: "shape"; id: string }
+  | { type: "marker"; id: string }
   | { type: "handle"; handle: Handle }
   | { type: "empty" };
 
@@ -64,6 +77,8 @@ type Gesture =
   | { kind: "pan"; lastX: number; lastY: number }
   | { kind: "move-plant"; plantId: string; from: Point; offset: Point }
   | { kind: "move-shape"; shapeId: string; from: Geometry; start: Point }
+  | { kind: "move-marker"; markerId: string; from: Point; offset: Point }
+  | { kind: "move-background"; from: Point; start: Point }
   | { kind: "shape-handle"; shapeId: string; handle: Handle; from: Geometry }
   | { kind: "crown"; plantId: string; from: number; centre: Point }
   | { kind: "draw"; tool: "rect" | "circle"; anchor: Point }
@@ -75,6 +90,17 @@ interface Override {
   crown?: number;
   shapeId?: string;
   geometry?: Geometry;
+  markerId?: string;
+  markerPosition?: Point;
+  backgroundPosition?: Point;
+}
+
+interface WmsImage {
+  href: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
 /** Event details fired by the canvas. */
@@ -98,6 +124,31 @@ export interface HoverDetail {
   x: number;
   y: number;
 }
+export interface PlaceDetail {
+  armed: Armed;
+  at: Point;
+}
+export interface MoveMarkerDetail {
+  markerId: string;
+  from: Point;
+  to: Point;
+}
+export interface MoveBackgroundDetail {
+  from: Point;
+  to: Point;
+}
+export interface CalibrateDetail {
+  a: Point;
+  b: Point;
+}
+
+/** Height of an image background in metres (keeps the picture's aspect ratio). */
+export function backgroundHeight(bg: ImageBackground): number {
+  return (bg.width_m * bg.height_px) / bg.width_px;
+}
+
+const WMS_MARGIN = 0.3; // request 30 % more than visible on each side, so panning shows no gaps
+const WMS_DELAY_MS = 250;
 
 const DRAG_THRESHOLD = { mouse: 4, pen: 6, touch: 10 } as Record<string, number>;
 const MIN_PLANT_PX = 9; // plants never shrink below this radius on screen
@@ -110,7 +161,7 @@ function parseHandle(value: string): Handle | null {
   const [kind, arg] = value.split(":");
   switch (kind) {
     case "corner":
-      return { kind, corner: arg as Corner };
+      return { kind: "corner", corner: arg as Corner };
     case "vertex":
     case "midpoint":
       return { kind, index: Number(arg) };
@@ -131,36 +182,59 @@ function parseHandle(value: string): Handle | null {
  * smooth. Everything else (data, selection, drags) renders through Lit.
  *
  * Fires: select, hover, move-plant, resize-crown, create-shape, change-shape,
- * place, delete-selection, viewport-change, cancel.
+ * move-marker, move-background, calibrate, place, delete-selection,
+ * viewport-change, view-moved, cancel.
  */
 export class PgGardenCanvas extends PgElement {
   static override properties = {
+    // HA hands over a new hass object on every state change in the house; the
+    // canvas only needs it for the language, so it ignores everything else.
+    hass: {
+      attribute: false,
+      hasChanged: (value?: HomeAssistant, old?: HomeAssistant) =>
+        value?.locale?.language !== old?.locale?.language,
+    },
     plants: { attribute: false },
     shapes: { attribute: false },
+    markers: { attribute: false },
+    /** entity_id -> state for the markers; a new object only when one of them changed */
+    states: { attribute: false },
+    background: { attribute: false },
+    origin: { attribute: false },
     mode: { reflect: true },
     tool: {},
     selection: { attribute: false },
     snapStep: { attribute: false },
-    armedPlantId: { attribute: false },
+    armed: { attribute: false },
     _override: { state: true },
     _draft: { state: true },
     _polygon: { state: true },
     _cursor: { state: true },
     _settledMpp: { state: true },
+    _wms: { state: true },
+    _wmsError: { state: true },
+    _calibration: { state: true },
   };
 
   declare plants: Plant[];
   declare shapes: Shape[];
+  declare markers: Marker[];
+  declare states: Record<string, HassEntity | undefined>;
+  declare background: Background | null;
+  declare origin: GeoOrigin | null;
   declare mode: Mode;
   declare tool: Tool;
   declare selection: Selection;
   declare snapStep: number;
-  declare armedPlantId: string | null;
+  declare armed: Armed | null;
   declare _override: Override | null;
   declare _draft: Geometry | null;
   declare _polygon: Point[] | null;
   declare _cursor: Point | null;
   declare _settledMpp: number;
+  declare _wms: WmsImage | null;
+  declare _wmsError: boolean;
+  declare _calibration: Point[];
 
   private _vp: Viewport = { ...DEFAULT_VIEWPORT };
   private _hasViewport = false;
@@ -169,22 +243,31 @@ export class PgGardenCanvas extends PgElement {
   private _hoverId: string | null = null;
   private _settleTimer?: ReturnType<typeof setTimeout>;
   private _viewportTimer?: ReturnType<typeof setTimeout>;
+  private _wmsTimer?: ReturnType<typeof setTimeout>;
+  private _wmsRequest = "";
   private _resizeObserver?: ResizeObserver;
 
   constructor() {
     super();
     this.plants = [];
     this.shapes = [];
+    this.markers = [];
+    this.states = {};
+    this.background = null;
+    this.origin = null;
     this.mode = "view";
     this.tool = "select";
     this.selection = null;
     this.snapStep = 0.5;
-    this.armedPlantId = null;
+    this.armed = null;
     this._override = null;
     this._draft = null;
     this._polygon = null;
     this._cursor = null;
     this._settledMpp = 0.05;
+    this._wms = null;
+    this._wmsError = false;
+    this._calibration = [];
   }
 
   // ------------------------------------------------------------ public API
@@ -225,6 +308,9 @@ export class PgGardenCanvas extends PgElement {
         maxX: plant.position.x + r,
         maxY: plant.position.y + r,
       });
+    }
+    for (const marker of this.markers) {
+      items.push({ minX: marker.x, minY: marker.y, maxX: marker.x, maxY: marker.y });
     }
     return unionBounds(items);
   }
@@ -277,6 +363,7 @@ export class PgGardenCanvas extends PgElement {
     this._resizeObserver?.disconnect();
     clearTimeout(this._settleTimer);
     clearTimeout(this._viewportTimer);
+    clearTimeout(this._wmsTimer);
   }
 
   protected override firstUpdated(): void {
@@ -286,7 +373,74 @@ export class PgGardenCanvas extends PgElement {
   protected override updated(changed: PropertyValues): void {
     if (changed.has("mode") || changed.has("tool")) {
       if (this.mode !== "edit" || this.tool !== "polygon") this.cancelDrawing();
+      if (this.tool !== "calibrate") this._calibration = [];
     }
+    if (changed.has("background") || changed.has("origin")) {
+      this._wmsRequest = "";
+      this._wmsError = false;
+      if (this.background?.type !== "wms") this._wms = null;
+      this._scheduleWms(0);
+    }
+  }
+
+  // ------------------------------------------------------------ aerial imagery
+  private _scheduleWms(delay = WMS_DELAY_MS): void {
+    clearTimeout(this._wmsTimer);
+    if (this.background?.type !== "wms") return;
+    this._wmsTimer = setTimeout(() => this._loadWms(), delay);
+  }
+
+  /** Request imagery for the visible area plus a margin; swap it in once loaded. */
+  private _loadWms(): void {
+    const bg = this.background;
+    if (bg?.type !== "wms" || !this.origin) return;
+    const wms = resolveWms(bg);
+    if (!wms) return;
+    const rect = this._rect();
+    const box = viewBox(this._vp, rect);
+    const bounds = {
+      minX: box.x - box.w * WMS_MARGIN,
+      minY: box.y - box.h * WMS_MARGIN,
+      maxX: box.x + box.w * (1 + WMS_MARGIN),
+      maxY: box.y + box.h * (1 + WMS_MARGIN),
+    };
+    // keep the current image while the view stays inside it at a similar scale
+    const current = this._wms;
+    if (
+      current &&
+      bounds.minX + box.w * WMS_MARGIN >= current.x &&
+      bounds.minY + box.h * WMS_MARGIN >= current.y &&
+      bounds.maxX - box.w * WMS_MARGIN <= current.x + current.w &&
+      bounds.maxY - box.h * WMS_MARGIN <= current.y + current.h &&
+      current.w < (bounds.maxX - bounds.minX) * 1.6
+    ) {
+      return;
+    }
+    const dpr = typeof devicePixelRatio === "number" ? devicePixelRatio : 1;
+    const request = getMapRequest(
+      wms,
+      this.origin,
+      bounds,
+      rect.width * dpr * (1 + 2 * WMS_MARGIN),
+    );
+    if (request.href === this._wmsRequest) return;
+    this._wmsRequest = request.href;
+    const image = new Image();
+    image.onload = () => {
+      if (this._wmsRequest !== request.href) return; // a newer request superseded this one
+      this._wmsError = false;
+      this._wms = {
+        href: request.href,
+        x: bounds.minX,
+        y: bounds.minY,
+        w: bounds.maxX - bounds.minX,
+        h: bounds.maxY - bounds.minY,
+      };
+    };
+    image.onerror = () => {
+      if (this._wmsRequest === request.href) this._wmsError = true;
+    };
+    image.src = request.href;
   }
 
   // ------------------------------------------------------------ viewport
@@ -319,6 +473,7 @@ export class PgGardenCanvas extends PgElement {
     svgEl.toggleAttribute("data-labels", mpp <= LABEL_MAX_MPP);
     this._drawGrid(box, mpp);
     this._drawScale(mpp);
+    this._scheduleWms();
     this.dispatchEvent(new Event("view-moved"));
     // sizes that depend on zoom (minimum plant size) re-render once zooming pauses
     clearTimeout(this._settleTimer);
@@ -383,11 +538,17 @@ export class PgGardenCanvas extends PgElement {
       const parsed = parseHandle(handle);
       if (parsed) return { type: "handle", handle: parsed };
     }
+    const markerId = target?.closest?.("[data-marker-id]")?.getAttribute("data-marker-id");
+    if (markerId) return { type: "marker", id: markerId };
     const plantId = target?.closest?.("[data-plant-id]")?.getAttribute("data-plant-id");
     if (plantId) return { type: "plant", id: plantId };
     const shapeId = target?.closest?.("[data-shape-id]")?.getAttribute("data-shape-id");
     if (shapeId) return { type: "shape", id: shapeId };
     return { type: "empty" };
+  }
+
+  private _marker(id: string): Marker | undefined {
+    return this.markers.find((marker) => marker.id === id);
   }
 
   private _point(event: PointerEvent | MouseEvent, snapIt = true): Point {
@@ -427,11 +588,19 @@ export class PgGardenCanvas extends PgElement {
     }
     if (this._pointers.size > 2) return;
 
-    const editing = this.mode === "edit";
-    if (editing && (this.tool === "rect" || this.tool === "circle") && !this.armedPlantId) {
+    const editing = this.mode === "edit" && !this.armed;
+    if (editing && (this.tool === "rect" || this.tool === "circle")) {
       const anchor = this._point(event);
       this._gesture = { kind: "draw", tool: this.tool, anchor };
       this._draft = this._draftGeometry(this.tool, anchor, anchor);
+      return;
+    }
+    if (editing && this.tool === "background" && this.background?.type === "image") {
+      this._gesture = {
+        kind: "move-background",
+        from: { x: this.background.x, y: this.background.y },
+        start: this._point(event, false),
+      };
       return;
     }
     this._gesture = {
@@ -517,6 +686,26 @@ export class PgGardenCanvas extends PgElement {
         this._draft = this._draftGeometry(gesture.tool, gesture.anchor, this._point(event));
         this._cursor = this._point(event);
         return;
+      case "move-marker": {
+        const p = this._point(event, false);
+        const target = { x: p.x - gesture.offset.x, y: p.y - gesture.offset.y };
+        this._override = {
+          markerId: gesture.markerId,
+          markerPosition: event.altKey ? target : snapPoint(target, this.snapStep),
+        };
+        return;
+      }
+      case "move-background": {
+        // free movement: aligning a picture needs more precision than the grid
+        const p = this._point(event, false);
+        this._override = {
+          backgroundPosition: {
+            x: gesture.from.x + p.x - gesture.start.x,
+            y: gesture.from.y + p.y - gesture.start.y,
+          },
+        };
+        return;
+      }
     }
   }
 
@@ -584,6 +773,24 @@ export class PgGardenCanvas extends PgElement {
         this._draft = null;
         this._cursor = null;
         if (draft && this._bigEnough(draft)) this.fire("create-shape", { geometry: draft });
+        return;
+      }
+      case "move-marker": {
+        const to = this._override?.markerPosition;
+        this._override = null;
+        if (to && (to.x !== gesture.from.x || to.y !== gesture.from.y)) {
+          this.fire<MoveMarkerDetail>("move-marker", {
+            markerId: gesture.markerId,
+            from: gesture.from,
+            to,
+          });
+        }
+        return;
+      }
+      case "move-background": {
+        const to = this._override?.backgroundPosition;
+        this._override = null;
+        if (to) this.fire<MoveBackgroundDetail>("move-background", { from: gesture.from, to });
         return;
       }
       default:
@@ -681,8 +888,22 @@ export class PgGardenCanvas extends PgElement {
 
   private _startDrag(pending: Extract<Gesture, { kind: "pending" }>, event: PointerEvent): void {
     const { hit } = pending;
-    const editing = this.mode === "edit" && !this.armedPlantId;
+    const editing = this.mode === "edit" && !this.armed;
     const start = screenToPlan(this._vp, this._rect(), pending.startX, pending.startY);
+
+    if (editing && hit.type === "marker" && this.tool === "select") {
+      const marker = this._marker(hit.id);
+      if (marker) {
+        this.fire("select", { selection: { type: "marker", id: marker.id } });
+        this._gesture = {
+          kind: "move-marker",
+          markerId: marker.id,
+          from: { x: marker.x, y: marker.y },
+          offset: { x: start.x - marker.x, y: start.y - marker.y },
+        };
+        return;
+      }
+    }
 
     if (editing && hit.type === "handle") {
       const selection = this.selection;
@@ -740,8 +961,19 @@ export class PgGardenCanvas extends PgElement {
   }
 
   private _tap(hit: Hit, event: PointerEvent): void {
-    if (this.armedPlantId) {
-      this.fire("place", { plantId: this.armedPlantId, at: this._point(event) });
+    if (this.armed) {
+      this.fire<PlaceDetail>("place", { armed: this.armed, at: this._point(event) });
+      return;
+    }
+    if (this.mode === "edit" && this.tool === "calibrate") {
+      const p = this._point(event, false);
+      const [first] = this._calibration;
+      if (first) {
+        this._calibration = [];
+        if (distance(first, p) > 0) this.fire<CalibrateDetail>("calibrate", { a: first, b: p });
+      } else {
+        this._calibration = [p];
+      }
       return;
     }
     if (this.mode === "edit" && this.tool === "polygon") {
@@ -761,7 +993,7 @@ export class PgGardenCanvas extends PgElement {
       this._polygon = [...points, p];
       return;
     }
-    if (hit.type === "plant" || hit.type === "shape") {
+    if (hit.type === "plant" || hit.type === "shape" || hit.type === "marker") {
       this.fire("select", { selection: { type: hit.type, id: hit.id } });
       if (hit.type === "plant" && event.pointerType !== "mouse") {
         // touch has no hover: a tap shows the info card
@@ -951,14 +1183,70 @@ export class PgGardenCanvas extends PgElement {
     return nothing;
   }
 
+  private _renderBackground() {
+    const bg = this.background;
+    if (bg?.type === "wms") {
+      const image = this._wms;
+      return image
+        ? svg`<image class="backdrop" href=${image.href} x=${image.x} y=${image.y}
+            width=${image.w} height=${image.h} preserveAspectRatio="none"
+            style="opacity: ${bg.opacity}"></image>`
+        : nothing;
+    }
+    if (bg?.type === "image" && bg.url) {
+      const position = this._override?.backgroundPosition ?? { x: bg.x, y: bg.y };
+      const height = backgroundHeight(bg);
+      const cx = position.x + bg.width_m / 2;
+      const cy = position.y + height / 2;
+      return svg`<image class="backdrop" href=${bg.url} x=${position.x} y=${position.y}
+          width=${bg.width_m} height=${height} preserveAspectRatio="none"
+          transform="rotate(${bg.rotation} ${cx} ${cy})" style="opacity: ${bg.opacity}"></image>`;
+    }
+    return nothing;
+  }
+
+  private _renderMarker(marker: Marker, mpp: number) {
+    const o = this._override;
+    const position =
+      o?.markerId === marker.id && o.markerPosition
+        ? o.markerPosition
+        : { x: marker.x, y: marker.y };
+    const state = this.states[marker.entity_id];
+    const value = markerValue(state, this.language, this.t);
+    const width = 36 + value.length * 7.2;
+    const selected = this.selection?.type === "marker" && this.selection.id === marker.id;
+    // drawn in screen pixels: scaled by metres per pixel (re-rendered when zooming pauses)
+    return svg`<g class="marker ${selected ? "selected" : ""} ${state ? "" : "missing"}"
+        data-marker-id=${marker.id} transform="translate(${position.x} ${position.y}) scale(${mpp})">
+      <rect class="pill" x="-14" y="-14" rx="14" width=${width} height="28"></rect>
+      <circle class="marker-dot" r="11"></circle>
+      <path class="marker-icon" d=${markerIcon(marker.entity_id, state)}
+        transform="translate(-8 -8) scale(0.6667)"></path>
+      <text class="marker-value" x="4" y="1">${value}</text>
+    </g>`;
+  }
+
+  private _renderCalibration(mpp: number) {
+    const [first] = this._calibration;
+    if (!first) return nothing;
+    const r = 7 * mpp;
+    return svg`<g class="calibration">
+      <circle cx=${first.x} cy=${first.y} r=${r}></circle>
+      <path d="M${first.x - 2 * r} ${first.y}h${4 * r}M${first.x} ${first.y - 2 * r}v${4 * r}"></path>
+    </g>`;
+  }
+
   protected override render() {
     const mpp = this._settledMpp;
     const placed = this.plants
       .filter((plant) => plant.position)
       .sort((a, b) => crownDiameter(b) - crownDiameter(a)); // small plants on top
+    const wms = this.background?.type === "wms" ? resolveWms(this.background) : null;
     return html`
       <svg
-        class="mode-${this.mode} tool-${this.tool} ${this.armedPlantId ? "armed" : ""}"
+        class="mode-${this.mode} tool-${this.tool} ${this.armed ? "armed" : ""} ${
+          this.background ? "with-backdrop" : ""
+        }"
         @pointerdown=${this._onPointerDown}
         @pointermove=${this._onPointerMove}
         @pointerup=${this._onPointerUp}
@@ -991,6 +1279,7 @@ export class PgGardenCanvas extends PgElement {
           </pattern>
         </defs>
         <rect class="ground" x="-100000" y="-100000" width="200000" height="200000"></rect>
+        ${this._renderBackground()}
         <path class="grid-minor"></path>
         <path class="grid-major"></path>
         <g class="shapes">
@@ -1007,8 +1296,15 @@ export class PgGardenCanvas extends PgElement {
             (plant) => this._renderPlant(plant, mpp),
           )}
         </g>
+        <g class="markers">
+          ${repeat(
+            this.markers,
+            (marker) => marker.id,
+            (marker) => this._renderMarker(marker, mpp),
+          )}
+        </g>
         <g class="selection">${this._renderSelection(mpp)}</g>
-        ${this._renderDraft()}
+        ${this._renderDraft()} ${this._renderCalibration(mpp)}
       </svg>
       <div class="overlay">
         <div class="north" aria-hidden="true">N</div>
@@ -1017,6 +1313,13 @@ export class PgGardenCanvas extends PgElement {
           <span class="scale-label"></span>
         </div>
       </div>
+      ${
+        wms
+          ? html`<div class="attribution ${this._wmsError ? "error" : ""}">
+              ${this._wmsError ? html`<b>${this.t("plan.wms_error")}</b> · ` : nothing}${wms.attribution}
+            </div>`
+          : nothing
+      }
     `;
   }
 
@@ -1253,6 +1556,85 @@ export class PgGardenCanvas extends PgElement {
       stroke-width: 2;
       stroke-dasharray: 6 4;
       vector-effect: non-scaling-stroke;
+    }
+
+    /* ---------------------------------------------- backdrop and markers */
+    .backdrop {
+      pointer-events: none;
+    }
+    svg.with-backdrop .grid-minor {
+      display: none;
+    }
+    svg.with-backdrop .grid-major {
+      stroke: rgba(255, 255, 255, 0.25);
+    }
+    /* let the aerial image or sketch show through the drawn areas */
+    svg.with-backdrop .shape .body {
+      fill-opacity: 0.45;
+    }
+    svg.with-backdrop .kind-house .body,
+    svg.with-backdrop .kind-greenhouse .body {
+      fill-opacity: 0.6;
+    }
+    svg.tool-background {
+      cursor: move;
+    }
+    .marker {
+      cursor: pointer;
+    }
+    .mode-edit .marker {
+      cursor: move;
+    }
+    .marker .pill {
+      fill: var(--pg-surface);
+      stroke: color-mix(in srgb, var(--pg-text) 15%, transparent);
+      stroke-width: 1;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+    }
+    .marker-dot {
+      fill: var(--pg-water);
+    }
+    .marker-icon {
+      fill: #fff;
+    }
+    .marker-value {
+      font-size: 13px;
+      font-weight: 600;
+      dominant-baseline: middle;
+      fill: var(--pg-text);
+    }
+    .marker.selected .pill {
+      stroke: var(--pg-accent);
+      stroke-width: 2.5;
+    }
+    .marker.missing .marker-dot {
+      fill: var(--disabled-text-color, #9e9e9e);
+    }
+    .calibration circle {
+      fill: color-mix(in srgb, var(--pg-accent) 35%, transparent);
+      stroke: var(--pg-accent);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+    }
+    .calibration path {
+      stroke: var(--pg-accent);
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+    }
+    .attribution {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      max-width: 70%;
+      padding: 2px 8px;
+      border-top-left-radius: 6px;
+      background: color-mix(in srgb, var(--pg-surface) 80%, transparent);
+      color: var(--pg-text);
+      font-size: 11px;
+      pointer-events: none;
+    }
+    .attribution.error b {
+      color: var(--error-color, #db4437);
     }
 
     /* ---------------------------------------------- overlay */

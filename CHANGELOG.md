@@ -8,6 +8,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M3 plan backgrounds and markers:
+  - Official aerial imagery (orthophotos) of 12 German states as plan background,
+    to scale, with the required source attribution; the matching state is
+    suggested; any other WMS service can be added.
+  - Own background picture (site plan, sketch): upload, opacity, rotation, move it
+    into place and calibrate the scale by tapping two points with a known distance.
+  - Sensor markers: place any Home Assistant entity on the plan with its live
+    value; tap for a 24 h chart and Home Assistant's details dialog.
+  - Import plants once from a Home Assistant to-do list (category guessed).
+  - Photos with GPS suggest where a plant grows (only when you accept; GPS is
+    never stored).
 - M2 garden plan (new start page of the panel, tabs "Garden plan" / "Plants"):
   - To-scale plan in metres around your Home Assistant home location, north up,
     with grid, scale bar and "show everything".

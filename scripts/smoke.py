@@ -10,6 +10,7 @@ WebSocket command answers. Started by scripts/smoke; can also be run on its own:
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 import io
 import sys
 
@@ -31,14 +32,22 @@ async def wait_for_ha(session: aiohttp.ClientSession, base: str) -> None:
         await asyncio.sleep(2)
 
 
-async def onboard(session: aiohttp.ClientSession, base: str) -> str:
+async def onboard(
+    session: aiohttp.ClientSession,
+    base: str,
+    *,
+    name: str = "Smoke Test",
+    username: str = "smoke",
+    password: str = "smoke-test-password",
+) -> str:
+    """Create the owner account of a fresh HA and return an access token."""
     async with session.post(
         f"{base}/api/onboarding/users",
         json={
             "client_id": CLIENT_ID,
-            "name": "Smoke Test",
-            "username": "smoke",
-            "password": "smoke-test-password",
+            "name": name,
+            "username": username,
+            "password": password,
             "language": "de",
         },
     ) as resp:
@@ -185,9 +194,55 @@ async def check_plants_and_photos(
         assert placed[plant["id"]] == {"x": 2.0, "y": 1.0}, placed
         print(f"  plan: origin {layout['origin']}, bed saved, plant placed")
 
+        await check_background_and_markers(session, base, headers, call)
+
         await call(type="plant_garden/layout/shapes/delete", shape_id=bed["id"])
         await call(type="plant_garden/plants/delete", plant_id=plant["id"])
         print("  bed and plant deleted")
+
+
+async def check_background_and_markers(
+    session: aiohttp.ClientSession,
+    base: str,
+    headers: dict[str, str],
+    call: Callable[..., Awaitable[dict]],
+) -> None:
+    """Aerial image preset, an uploaded background image and a sensor marker."""
+    result = await call(
+        type="plant_garden/layout/set_background",
+        background={"type": "wms", "preset": "bb", "opacity": 0.9},
+    )
+    assert result["background"]["preset"] == "bb", result
+    marker = await call(
+        type="plant_garden/layout/markers/save",
+        marker={"entity_id": "sun.sun", "x": 1, "y": 1},
+    )
+    form = aiohttp.FormData()
+    form.add_field("file", _jpeg(1200, 600), filename="plan.jpg", content_type="image/jpeg")
+    async with session.post(
+        f"{base}/api/plant_garden/backgrounds", data=form, headers=headers
+    ) as resp:
+        assert resp.status == 200, await resp.text()
+        upload = await resp.json()
+    async with (
+        aiohttp.ClientSession() as anonymous,
+        anonymous.get(f"{base}{upload['url']}") as resp,
+    ):
+        assert resp.status == 200, resp.status
+    image_background = {
+        "type": "image",
+        "image_id": upload["image_id"],
+        "width_px": upload["width_px"],
+        "height_px": upload["height_px"],
+        "x": -10,
+        "y": -5,
+        "width_m": 20,
+    }
+    result = await call(type="plant_garden/layout/set_background", background=image_background)
+    assert "authSig=" in result["background"]["url"], result
+    print(f"  background: WMS preset, then uploaded image {upload['width_px']}px; marker saved")
+    await call(type="plant_garden/layout/markers/delete", marker_id=marker["id"])
+    await call(type="plant_garden/layout/set_background", background={"type": "none"})
 
 
 async def main(base: str) -> None:

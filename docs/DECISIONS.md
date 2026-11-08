@@ -147,3 +147,31 @@ does not shift the garden. Units are metres, x east, y south (SVG direction), th
 plan is north-up. The viewport (centre and width in metres) is stored per device,
 not with the garden, so a wall tablet and a phone do not fight over it; it never
 changes object positions.
+
+## D-018 Aerial imagery: verified state services only (2026-11-08)
+
+Presets are added only after three checks: `GetCapabilities` lists the layer, a
+real `GetMap` in EPSG:3857 returns an image, and the attribution matches the licence
+text in the capabilities. 12 states passed (BB/BE, BY, BW, HB, HE, MV, NI, NW, RP,
+SL, SH, TH). Saxony (licence only behind a generic terms page), Saxony-Anhalt (no
+licence stated) and Hamburg (404) are not presets; any WMS can be added by hand.
+The browser loads images directly (no proxy, no CORS needed for `<image>`); the
+service therefore sees the viewed area, which the dialog states. Licences asking
+for the "year of retrieval" get the current year.
+
+## D-019 Replaced background images are deleted on the next start (2026-11-08)
+
+Deleting the old file immediately would break undo in the panel. Unused files in
+`<config>/plant_garden/backgrounds/` are removed when the integration starts.
+
+## D-020 Photo GPS only as a suggestion (2026-11-08)
+
+The browser reads GPS from JPEG EXIF to offer "place where the photo was taken"
+(within 1 km of home). The position is stored only if the user accepts; the GPS
+data itself is never stored (the server strips all metadata).
+
+## D-021 The canvas ignores unrelated Home Assistant updates (2026-11-08)
+
+HA passes a new `hass` object on every state change in the house. The canvas only
+re-renders when the language changes; marker values arrive as a separate `states`
+object that changes only when one of the marker entities changes.

@@ -9,8 +9,8 @@ from homeassistant.helpers.storage import Store
 
 STORAGE_KEY = "plant_garden.garden"
 STORAGE_VERSION = 1
-# 1.1 plants; 1.2 adds the layout (origin and shapes)
-STORAGE_MINOR_VERSION = 2
+# 1.1 plants; 1.2 adds the layout (origin and shapes); 1.3 background and markers
+STORAGE_MINOR_VERSION = 3
 
 
 class GardenData(TypedDict):
@@ -21,7 +21,10 @@ class GardenData(TypedDict):
 
 
 def empty_garden_data() -> GardenData:
-    return {"plants": [], "layout": {"origin": None, "shapes": []}}
+    return {
+        "plants": [],
+        "layout": {"origin": None, "shapes": [], "background": None, "markers": []},
+    }
 
 
 class GardenStore(Store[GardenData]):
@@ -44,4 +47,9 @@ class GardenStore(Store[GardenData]):
         data.setdefault("plants", [])
         if old_major_version == 1 and old_minor_version < 2:
             data.setdefault("layout", {"origin": None, "shapes": []})
+        if old_major_version == 1 and old_minor_version < 3:
+            layout = dict(data["layout"])
+            layout.setdefault("background", None)
+            layout.setdefault("markers", [])
+            data["layout"] = layout
         return data  # type: ignore[return-value]

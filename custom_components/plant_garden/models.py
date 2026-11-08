@@ -355,24 +355,67 @@ class GeoPoint:
 
 
 @dataclass(slots=True, kw_only=True)
+class Marker:
+    """A Home Assistant entity shown on the plan with its live value."""
+
+    id: str
+    entity_id: str
+    x: float
+    y: float
+    label: str | None = None
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "entity_id": self.entity_id,
+            "x": self.x,
+            "y": self.y,
+            "label": self.label,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(
+            id=data["id"],
+            entity_id=data["entity_id"],
+            x=float(data["x"]),
+            y=float(data["y"]),
+            label=data.get("label"),
+        )
+
+
+@dataclass(slots=True, kw_only=True)
 class Layout:
-    """The garden plan apart from the plants (which carry their own position)."""
+    """The garden plan apart from the plants (which carry their own position).
+
+    `background` is None or one of (validated by the WebSocket schema):
+      {"type": "wms", "preset": str | None, "url", "layers", "attribution", "opacity"}
+      {"type": "image", "image_id", "width_px", "height_px",
+       "x", "y" (top-left corner in plan metres), "width_m", "rotation", "opacity"}
+    """
 
     origin: GeoPoint | None = None
     shapes: dict[str, Shape] = field(default_factory=dict)
+    background: dict[str, Any] | None = None
+    markers: dict[str, Marker] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "origin": self.origin.as_dict() if self.origin else None,
             "shapes": [shape.as_dict() for shape in self.shapes.values()],
+            "background": self.background,
+            "markers": [marker.as_dict() for marker in self.markers.values()],
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         shapes = [Shape.from_dict(item) for item in data.get("shapes", [])]
+        markers = [Marker.from_dict(item) for item in data.get("markers", [])]
         return cls(
             origin=GeoPoint.from_dict(data["origin"]) if data.get("origin") else None,
             shapes={shape.id: shape for shape in shapes},
+            background=data.get("background"),
+            markers={marker.id: marker for marker in markers},
         )
 
 
