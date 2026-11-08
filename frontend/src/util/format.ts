@@ -34,6 +34,16 @@ export function formatNumber(value: number, language: string, digits = 1): strin
   return new Intl.NumberFormat(language, { maximumFractionDigits: digits }).format(value);
 }
 
+/** An amount of money: two decimals, three below 0.10 so cents of a cent show. */
+export function formatMoney(value: number, currency: string, language: string): string {
+  const digits = value !== 0 && Math.abs(value) < 0.1 ? 3 : 2;
+  const number = new Intl.NumberFormat(language, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
+  return `${number} ${currency}`;
+}
+
 /** Centimetres, switching to metres from 1 m. */
 export function formatLength(cm: number | null | undefined, language: string): string {
   if (cm === null || cm === undefined) return "";

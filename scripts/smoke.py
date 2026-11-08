@@ -12,9 +12,11 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 import io
+import json
 import sys
 
 import aiohttp
+from aiohttp import web
 
 CLIENT_ID = "http://localhost/"  # any URL works for the onboarding client
 GARDEN_NAME = "Demo-Garten"
@@ -209,6 +211,7 @@ async def check_plants_and_photos(
 
         await check_background_and_markers(session, base, headers, call)
         await check_irrigation(session, base, headers, call, plant["id"])
+        await check_ai(session, base, headers, call, plant_id=plant["id"], photo_id=photo["id"])
 
         await call(type="plant_garden/layout/shapes/delete", shape_id=bed["id"])
         await call(type="plant_garden/plants/delete", plant_id=plant["id"])
@@ -366,6 +369,232 @@ async def check_weather(
         f"  weather: Open-Meteo added, {len(summary['weather'])} days; "
         f"plant deficit {balance['depletion']} of {balance['taw']} mm"
     )
+
+
+FAKE_AI_PORT = 18765
+FAKE_KEY = "sk-smoke-0000-secret-1234"
+FAKE_ANSWER = {
+    "candidates": [
+        {
+            "scientific_name": "Solanum lycopersicum",
+            "common_name_de": "Tomate",
+            "common_name_en": "Tomato",
+            "variety": None,
+            "family": "Solanaceae",
+            "confidence": 0.93,
+            "reason": "Gefiederte Blätter, gelbe Sternblüten",
+        }
+    ],
+    "size": {
+        "height_cm": 40,
+        "height_min_cm": 30,
+        "height_max_cm": 50,
+        "width_cm": None,
+        "width_min_cm": None,
+        "width_max_cm": None,
+        "confidence": 0.4,
+        "basis": "Gießkanne im Bild",
+    },
+    "age": {
+        "age_months": None,
+        "min_months": None,
+        "max_months": None,
+        "stage": None,
+        "confidence": 0,
+    },
+    "health": {"status": "healthy", "summary": "Kräftig, keine Flecken."},
+    "care": {
+        "category": "vegetable",
+        "water_need": "high",
+        "light": "full_sun",
+        "min_temperature_c": 10,
+        "mature_crown_diameter_m": 0.6,
+        "pruning": "Geiztriebe ausbrechen",
+        "confidence": 0.7,
+    },
+    "questions": ["Welche Sorte hast du gepflanzt?"],
+}
+
+
+async def fake_ai_server(requests: list[dict]) -> web.AppRunner:
+    """An OpenAI-compatible endpoint on localhost: no key, no cost, fixed answer."""
+
+    def authorized(request: web.Request) -> bool:
+        return request.headers.get("Authorization") == f"Bearer {FAKE_KEY}"
+
+    async def models(request: web.Request) -> web.Response:
+        if not authorized(request):
+            return web.json_response({"error": "bad key"}, status=401)
+        return web.json_response({"data": [{"id": "fake-vision"}, {"id": "fake-text"}]})
+
+    async def completions(request: web.Request) -> web.Response:
+        if not authorized(request):
+            return web.json_response({"error": "bad key"}, status=401)
+        body = await request.json()
+        requests.append(body)
+        return web.json_response(
+            {
+                "id": "chatcmpl-smoke",
+                "model": body["model"],
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {"role": "assistant", "content": json.dumps(FAKE_ANSWER)},
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 1500,
+                    "prompt_tokens_details": {"cached_tokens": 500},
+                    "completion_tokens": 300,
+                },
+            }
+        )
+
+    app = web.Application()
+    app.router.add_get("/v1/models", models)
+    app.router.add_post("/v1/chat/completions", completions)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    await web.TCPSite(runner, "127.0.0.1", FAKE_AI_PORT).start()
+    return runner
+
+
+async def add_fake_provider(
+    session: aiohttp.ClientSession, base: str, headers: dict[str, str], entry_id: str
+) -> None:
+    """The real subentry flow: a wrong key is refused, the right one saved."""
+    flow_url = f"{base}/api/config/config_entries/subentries/flow"
+    async with session.post(flow_url, json={"handler": [entry_id, "ai"]}, headers=headers) as resp:
+        flow = await resp.json()
+    url = f"http://127.0.0.1:{FAKE_AI_PORT}/v1"
+    steps = (
+        {"kind": "openai_compatible"},
+        {"preset": "custom", "base_url": url, "api_key": "sk-wrong"},
+        {"preset": "custom", "base_url": url, "api_key": FAKE_KEY},
+        {"model": "fake-vision"},
+    )
+    for step in steps:
+        async with session.post(
+            f"{flow_url}/{flow['flow_id']}", json=step, headers=headers
+        ) as resp:
+            flow = await resp.json()
+        if step.get("api_key") == "sk-wrong":
+            assert flow["errors"] == {"base": "invalid_auth"}, flow
+    assert flow["type"] == "create_entry", flow
+    print(f"  ai: provider added through the flow (wrong key refused): {flow['title']}")
+
+
+async def check_identification(
+    call: Callable[..., Awaitable[dict]], requests: list[dict], plant_id: str, photo_id: str
+) -> None:
+    """Identify with the fake model and take one suggestion over."""
+    await call(
+        type="plant_garden/ai/pricing/set",
+        kind="openai_compatible",
+        model="fake-vision",
+        prices={"input": 1, "cached_input": 0.1, "output": 4},
+    )
+    estimate = await call(type="plant_garden/ai/estimate", photos=1)
+    assert estimate["cost"], estimate
+    assert estimate["cost"] > 0, estimate
+    record = await call(
+        type="plant_garden/ai/identify",
+        plant_id=plant_id,
+        photos=[{"photo_id": photo_id, "organ": "leaf"}],
+    )
+    [sent] = requests
+    images = [
+        part
+        for message in sent["messages"]
+        for part in (message["content"] if isinstance(message["content"], list) else [])
+        if part.get("type") == "image_url"
+    ]
+    assert images, sent
+    assert images[0]["image_url"]["url"].startswith("data:image/"), images
+    assert sent["response_format"]["type"] == "json_schema", sent
+    assert record["result"]["candidates"][0]["scientific_name"] == "Solanum lycopersicum"
+    assert record["plantnet"] is None, record
+    states = {s["key"]: s["state"] for s in record["suggestions"]}
+    assert states["scientific_name"] == "new", states
+    assert states["category"] == "same", states  # the user chose vegetable
+    await call(type="plant_garden/ai/decide", plant_id=plant_id, key="scientific_name", accept=True)
+    plant = (await call(type="plant_garden/plants/get", plant_id=plant_id))["plant"]
+    assert plant["scientific_name"] == "Solanum lycopersicum", plant
+    assert plant["sources"]["scientific_name"]["source"] == "ai", plant["sources"]
+    print(
+        f"  ai: identified as {plant['scientific_name']} "
+        f"({len(images)} photo as data URI), suggestion taken over with source ai"
+    )
+
+
+# entity ids follow HA's language (de: "KI-Anfragen heute"), so sensors are matched by name
+AI_SENSOR_NAMES = (
+    "AI requests today",
+    "AI tokens this month",
+    "KI-Anfragen heute",
+    "KI-Tokens im Monat",
+)
+
+
+async def check_usage(
+    session: aiohttp.ClientSession,
+    base: str,
+    headers: dict[str, str],
+    call: Callable[..., Awaitable[dict]],
+) -> None:
+    """Tokens and cost of the call, the log, the tech page and the sensors; the key stays hidden."""
+    today = (await call(type="plant_garden/ai/usage/summary"))["today"]
+    assert today["requests"] == 1, today
+    assert (today["input"], today["cached_input"], today["output"]) == (1000, 500, 300)
+    expected = (1000 * 1 + 500 * 0.1 + 300 * 4) / 1e6
+    assert abs(today["cost"] - expected) < 1e-9, (today["cost"], expected)
+    [row] = (await call(type="plant_garden/ai/usage/log"))["rows"]
+    assert row["status"] == "ok", row
+    assert row["prompt"] is None, row  # debug log is off
+    tech = await call(type="plant_garden/tech/info")
+    [provider] = tech["providers"]
+    assert FAKE_KEY not in json.dumps(tech), provider
+    assert provider["key"].endswith("1234"), provider
+    test = await call(type="plant_garden/ai/test", provider_id=provider["id"])
+    assert test["ok"], test
+    async with session.get(f"{base}/api/states", headers=headers) as resp:
+        all_states = await resp.json()
+    assert FAKE_KEY not in json.dumps(all_states)
+    sensors = {
+        s["entity_id"]: s["state"]
+        for s in all_states
+        if s["entity_id"].startswith("sensor.")
+        and s["attributes"].get("friendly_name", "").endswith(AI_SENSOR_NAMES)
+    }
+    assert sorted(sensors.values()) == ["1", "1800"], sensors
+    print(
+        f"  ai: usage {today['input']}+{today['cached_input']} cached in, "
+        f"{today['output']} out = {today['cost']:.6f} USD; key masked as {provider['key']}; "
+        f"sensors {sensors}"
+    )
+
+
+async def check_ai(
+    session: aiohttp.ClientSession,
+    base: str,
+    headers: dict[str, str],
+    call: Callable[..., Awaitable[dict]],
+    *,
+    plant_id: str,
+    photo_id: str,
+) -> None:
+    """Provider flow, identification, suggestions, usage log and tech page with a fake AI."""
+    status = await call(type="plant_garden/ai/status")
+    assert status["available"] is False, status
+    requests: list[dict] = []
+    runner = await fake_ai_server(requests)
+    try:
+        entry_id = (await call(type="plant_garden/info"))["entry_id"]
+        await add_fake_provider(session, base, headers, entry_id)
+        await check_identification(call, requests, plant_id, photo_id)
+        await check_usage(session, base, headers, call)
+    finally:
+        await runner.cleanup()
 
 
 async def main(base: str) -> None:

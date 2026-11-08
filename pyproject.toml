@@ -62,6 +62,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S", "SLF001", "PLR0915"]
 "scripts/**" = ["T201", "S"]
+# subpackages (ai/, weather/) import the integration's own modules from the parent
+"custom_components/plant_garden/*/**" = ["TID252"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["custom_components.plant_garden"]

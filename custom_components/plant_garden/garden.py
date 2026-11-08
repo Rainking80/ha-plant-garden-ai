@@ -248,6 +248,28 @@ class GardenManager:
                 raise ValueError(f"unknown field {key}")
             plant.sources[key] = FieldSource(source=source, updated_at=now)
 
+    async def async_apply_ai_fields(
+        self, plant_id: str, fields: dict[str, Any], *, confidence: float | None, model: str
+    ) -> list[str]:
+        """Take over accepted AI suggestions. Fields the user set are never replaced."""
+        plant = self.get_plant(plant_id)
+        now = dt_util.utcnow()
+        applied = []
+        for key, value in fields.items():
+            current = plant.sources.get(key)
+            if current is not None and current.source is Source.USER:
+                continue
+            self._apply_fields(plant, {key: value}, Source.AI, now)
+            plant.sources[key] = FieldSource(
+                source=Source.AI, updated_at=now, confidence=confidence, model=model
+            )
+            applied.append(key)
+        if applied:
+            plant.updated_at = now
+            self._schedule_save()
+            self._notify("plant", plant.id)
+        return applied
+
     async def async_move_plants(self, moves: Sequence[tuple[str, Point | None]]) -> list[Plant]:
         """Set several positions at once (one save, used for drag and drop and undo)."""
         plants = [self.get_plant(plant_id) for plant_id, _ in moves]  # validate all first
@@ -374,6 +396,44 @@ class GardenManager:
     def notify_water(self) -> None:
         """The weather or a water balance was recalculated."""
         self._notify("water")
+
+    @callback
+    def notify_ai(self, plant_id: str | None = None) -> None:
+        """An AI call was logged or an identification of a plant changed."""
+        self._notify("ai", plant_id)
+
+    # ------------------------------------------------------------ AI usage log
+    async def async_insert_usage(self, row: dict[str, Any]) -> None:
+        await self.hass.async_add_executor_job(self._db.insert_usage, row)
+
+    async def async_usage_totals(self, since: date | None) -> dict[str, Any]:
+        return await self.hass.async_add_executor_job(self._db.usage_totals, since)
+
+    async def async_usage_breakdown(self, since: date, column: str) -> list[dict[str, Any]]:
+        return await self.hass.async_add_executor_job(self._db.usage_breakdown, since, column)
+
+    async def async_usage_daily_cost(self, since: date) -> list[dict[str, Any]]:
+        return await self.hass.async_add_executor_job(self._db.usage_daily_cost, since)
+
+    async def async_usage_log(self, **filters: Any) -> list[dict[str, Any]]:
+        return await self.hass.async_add_executor_job(partial(self._db.usage_log, **filters))
+
+    async def async_purge_usage(self, before: date) -> int:
+        return await self.hass.async_add_executor_job(self._db.purge_usage, before)
+
+    async def async_storage_stats(self) -> dict[str, int]:
+        """Bytes used by the database and by the photo and background files."""
+
+        def measure() -> dict[str, int]:
+            stats = self._db.storage_stats()
+            for name, root in (
+                ("photos", self._files.root),
+                ("backgrounds", self._backgrounds.root),
+            ):
+                stats[name] = sum(p.stat().st_size for p in root.rglob("*") if p.is_file())
+            return stats
+
+        return await self.hass.async_add_executor_job(measure)
 
     # ------------------------------------------------------------ origin
     async def async_set_origin(

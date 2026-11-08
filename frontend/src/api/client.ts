@@ -5,6 +5,14 @@ import type {
   IrrigationEvent,
   IrrigationSummary,
   WaterSummary,
+  AIStatus,
+  Identification,
+  Organ,
+  PricingInfo,
+  Prices,
+  TechInfo,
+  UsageRow,
+  UsageSummary,
   Layout,
   Marker,
   Measurement,
@@ -351,4 +359,91 @@ export function waterSummary(hass: HomeAssistant): Promise<WaterSummary> {
 /** Fetch the weather now (the backend does it hourly). */
 export function refreshWater(hass: HomeAssistant): Promise<WaterSummary> {
   return hass.callWS<WaterSummary>({ type: `${WS_PREFIX}/water/refresh` });
+}
+
+// ------------------------------------------------------------ AI and tech page
+export function aiStatus(hass: HomeAssistant): Promise<AIStatus> {
+  return hass.callWS<AIStatus>({ type: `${WS_PREFIX}/ai/status` });
+}
+
+export function identifyPlant(
+  hass: HomeAssistant,
+  plantId: string,
+  photos: { photo_id: string; organ: Organ }[],
+): Promise<Identification> {
+  return hass.callWS<Identification>({
+    type: `${WS_PREFIX}/ai/identify`,
+    plant_id: plantId,
+    photos,
+  });
+}
+
+export function getIdentification(
+  hass: HomeAssistant,
+  plantId: string,
+): Promise<Identification | null> {
+  return hass.callWS<Identification | null>({
+    type: `${WS_PREFIX}/ai/identification`,
+    plant_id: plantId,
+  });
+}
+
+export function decideSuggestion(
+  hass: HomeAssistant,
+  plantId: string,
+  key: string,
+  accept: boolean,
+): Promise<Identification> {
+  return hass.callWS<Identification>({
+    type: `${WS_PREFIX}/ai/decide`,
+    plant_id: plantId,
+    key,
+    accept,
+  });
+}
+
+export function estimateIdentify(
+  hass: HomeAssistant,
+  photos: number,
+): Promise<{ cost: number | null; currency: string }> {
+  return hass.callWS({ type: `${WS_PREFIX}/ai/estimate`, photos });
+}
+
+export function usageSummary(hass: HomeAssistant): Promise<UsageSummary> {
+  return hass.callWS<UsageSummary>({ type: `${WS_PREFIX}/ai/usage/summary` });
+}
+
+export async function usageLog(
+  hass: HomeAssistant,
+  filter: { limit?: number; offset?: number; feature?: string; status?: string } = {},
+): Promise<UsageRow[]> {
+  const result = await hass.callWS<{ rows: UsageRow[] }>({
+    type: `${WS_PREFIX}/ai/usage/log`,
+    ...filter,
+  });
+  return result.rows;
+}
+
+export function getPricing(hass: HomeAssistant): Promise<PricingInfo> {
+  return hass.callWS<PricingInfo>({ type: `${WS_PREFIX}/ai/pricing/get` });
+}
+
+export function setPrice(
+  hass: HomeAssistant,
+  kind: string,
+  model: string,
+  prices: Prices | null,
+): Promise<PricingInfo> {
+  return hass.callWS<PricingInfo>({ type: `${WS_PREFIX}/ai/pricing/set`, kind, model, prices });
+}
+
+export function testProvider(
+  hass: HomeAssistant,
+  providerId: string,
+): Promise<{ ok: boolean; error: string | null }> {
+  return hass.callWS({ type: `${WS_PREFIX}/ai/test`, provider_id: providerId });
+}
+
+export function techInfo(hass: HomeAssistant): Promise<TechInfo> {
+  return hass.callWS<TechInfo>({ type: `${WS_PREFIX}/tech/info` });
 }

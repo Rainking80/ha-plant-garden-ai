@@ -24,10 +24,20 @@
       "init": {
         "title": "Settings",
         "data": {
-          "max_runtime_hours": "Warn after run time"
+          "max_runtime_hours": "Warn after run time",
+          "ai_identify": "AI for photos (identification)",
+          "ai_text": "AI for text (tips, chat)",
+          "ai_budget": "Monthly AI budget (0 = none)",
+          "ai_budget_stop": "Stop AI calls when the budget is used up",
+          "usd_eur": "Fixed rate US dollar to euro (0 = show dollars)",
+          "ai_debug": "Store prompts and answers in the AI log",
+          "ai_retention_days": "Keep single AI calls for"
         },
         "data_description": {
-          "max_runtime_hours": "If an irrigation zone runs longer, a notice appears under Repairs (e.g. a stuck valve)."
+          "max_runtime_hours": "If an irrigation zone runs longer, a notice appears under Repairs (e.g. a stuck valve).",
+          "ai_budget": "In euros when a rate is set, else in US dollars. A notice appears at 80 %.",
+          "ai_debug": "For troubleshooting only; prompts can contain plant details.",
+          "ai_retention_days": "Older calls are kept as daily sums."
         }
       }
     }
@@ -63,6 +73,15 @@
       },
       "rain_forecast": {
         "name": "Rain tomorrow"
+      },
+      "ai_cost_month": {
+        "name": "AI costs this month"
+      },
+      "ai_tokens_month": {
+        "name": "AI tokens this month"
+      },
+      "ai_requests_today": {
+        "name": "AI requests today"
       }
     },
     "binary_sensor": {
@@ -78,6 +97,14 @@
     "long_run": {
       "title": "Irrigation zone {zone} has been running for {hours} h",
       "description": "{entity} has been on for {hours} hours. Check whether the valve is stuck. Plant Garden never switches anything itself. This notice disappears once the zone is off again."
+    },
+    "budget_warning": {
+      "title": "80 % of the monthly AI budget used",
+      "description": "Plant Garden has spent {spent} of {budget} {currency} on AI this month."
+    },
+    "budget_exceeded": {
+      "title": "Monthly AI budget used up",
+      "description": "Plant Garden has spent {spent} of {budget} {currency} on AI this month. With the stop option on, no more AI calls are made until next month."
     }
   },
   "exceptions": {
@@ -92,6 +119,12 @@
     },
     "minutes_needed": {
       "message": "Please give the minutes for irrigation zones."
+    },
+    "no_photos": {
+      "message": "This plant has no photos yet."
+    },
+    "ai_failed": {
+      "message": "The AI call failed: {error}"
     }
   },
   "services": {
@@ -120,6 +153,20 @@
     "refresh_weather": {
       "name": "Refresh weather",
       "description": "Fetches the weather now (otherwise hourly) and recalculates the water balance."
+    },
+    "identify_plant": {
+      "name": "Identify plant",
+      "description": "Identifies a plant from its newest photos with the configured AI (costs tokens). The suggestions appear on the plant page.",
+      "fields": {
+        "device_id": {
+          "name": "Plant",
+          "description": "A plant of Plant Garden."
+        },
+        "photos": {
+          "name": "Photos",
+          "description": "How many of the newest photos (1 to 3)."
+        }
+      }
     }
   },
   "config_subentries": {
@@ -164,6 +211,60 @@
         "nothing_to_configure": "Weather services have no settings.",
         "reconfigure_successful": "Sensors updated."
       }
+    },
+    "ai": {
+      "entry_type": "AI provider",
+      "initiate_flow": {
+        "user": "Add AI provider",
+        "reconfigure": "New key or model"
+      },
+      "step": {
+        "user": {
+          "title": "AI provider",
+          "description": "AI identifies plants from photos and suggests care. It is only called when you start it. What is sent: the photos you choose, the plant's details (name, category, your notes are not included) and the season with the hemisphere. Never your exact location, names of people or Home Assistant entity ids. Every call is logged with tokens and costs on the tech page.",
+          "data": {
+            "kind": "Provider"
+          }
+        },
+        "ai_task": {
+          "title": "Home Assistant AI Task",
+          "description": "Uses an AI already set up in Home Assistant (no key of its own). It reports no tokens, so costs show as unknown.",
+          "data": {
+            "entity_id": "AI Task entity"
+          }
+        },
+        "openai": {
+          "title": "OpenAI-compatible service",
+          "description": "OpenAI, OpenRouter (reports the cost of every call), Ollama or LM Studio on your network, or any other OpenAI-compatible server.",
+          "data": {
+            "preset": "Service",
+            "base_url": "Base URL (only for other servers)",
+            "api_key": "API key (not needed for local servers)"
+          }
+        },
+        "key": {
+          "title": "{provider}",
+          "description": "The key is stored in Home Assistant and never shown again. It is checked with a call that costs nothing.",
+          "data": {
+            "api_key": "API key"
+          }
+        },
+        "model": {
+          "title": "Model",
+          "description": "Choose a model that understands photos. You can assign providers to features in the integration options.",
+          "data": {
+            "model": "Model"
+          }
+        }
+      },
+      "error": {
+        "invalid_auth": "The key was rejected.",
+        "cannot_connect": "The service could not be reached or answered with an error.",
+        "invalid_url": "Please enter an http:// or https:// address."
+      },
+      "abort": {
+        "reconfigure_successful": "Provider updated."
+      }
     }
   },
   "selector": {
@@ -172,6 +273,24 @@
         "open_meteo": "Open-Meteo (worldwide, no key)",
         "bright_sky": "Bright Sky – German Weather Service DWD (Germany, no key)",
         "home_assistant": "My own sensors in Home Assistant"
+      }
+    },
+    "ai_kind": {
+      "options": {
+        "ha_ai_task": "Home Assistant AI Task (uses an AI integration you already have)",
+        "openai_compatible": "OpenAI-compatible (OpenAI, OpenRouter, Ollama, LM Studio …)",
+        "anthropic": "Anthropic Claude",
+        "gemini": "Google Gemini",
+        "plantnet": "Pl@ntNet (species identification only, 500 free per day)"
+      }
+    },
+    "ai_preset": {
+      "options": {
+        "openai": "OpenAI",
+        "openrouter": "OpenRouter",
+        "ollama": "Ollama (local)",
+        "lmstudio": "LM Studio (local)",
+        "custom": "Other server"
       }
     }
   }

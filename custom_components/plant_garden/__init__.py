@@ -11,6 +11,8 @@ from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 
+from .ai.pricing import load_defaults as load_pricing
+from .ai.service import AIService
 from .const import CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS, DOMAIN
 from .database import DatabaseError
 from .entity import async_garden_device
@@ -22,6 +24,7 @@ from .runtime import PlantGardenConfigEntry, PlantGardenData
 from .services import async_register_services
 from .water import WaterCoordinator
 from .water_balance import load_defaults
+from .websocket_ai import async_register_ai_commands
 from .websocket_api import async_register_websocket_commands
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -35,6 +38,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     for view in (PhotoUploadView(), PhotoFileView(), BackgroundUploadView(), BackgroundFileView()):
         hass.http.register_view(view)
     async_register_websocket_commands(hass)
+    async_register_ai_commands(hass)
     async_register_services(hass)
     return True
 
@@ -57,8 +61,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) 
     await irrigation.async_start()
     water = WaterCoordinator(hass, entry, manager, await hass.async_add_executor_job(load_defaults))
     await water.async_start()
+    ai = AIService(hass, entry, manager, await hass.async_add_executor_job(load_pricing))
+    await ai.async_start()
     entry.runtime_data = PlantGardenData(
-        version=str(integration.version), manager=manager, irrigation=irrigation, water=water
+        version=str(integration.version),
+        manager=manager,
+        irrigation=irrigation,
+        water=water,
+        ai=ai,
     )
     async_garden_device(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -80,6 +90,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry)
     if unloaded:
         async_unregister_panel(hass)
         entry.runtime_data.water.async_stop()
+        entry.runtime_data.ai.async_stop()
         await entry.runtime_data.irrigation.async_stop()
         await entry.runtime_data.manager.async_shutdown()
     return unloaded

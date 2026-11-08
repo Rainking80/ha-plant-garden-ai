@@ -241,7 +241,7 @@ export interface Layout {
 }
 
 export interface GardenChangeEvent {
-  kind: "plant" | "plant_removed" | "layout" | "irrigation" | "water";
+  kind: "plant" | "plant_removed" | "layout" | "irrigation" | "water" | "ai";
   plant_id: string | null;
   shape_id: string | null;
 }
@@ -385,4 +385,145 @@ export interface WaterSummary {
   weather: WeatherDay[];
   plants?: Record<string, PlantBalance>;
   zones?: Record<string, ZoneAdvice>;
+}
+
+// ------------------------------------------------------------ AI
+export const ORGANS = ["leaf", "flower", "fruit", "bark", "auto"] as const;
+export type Organ = (typeof ORGANS)[number];
+
+export interface AIStatus {
+  /** some provider can identify (a language model or Pl@ntNet) */
+  available: boolean;
+  /** title of the language model used for photos */
+  identify: string | null;
+  plantnet: boolean;
+  currency: string;
+}
+
+export interface Suggestion {
+  key: string;
+  value: unknown;
+  confidence: number;
+  current: unknown;
+  /** new: can be taken over; differs: the user set another value (kept) */
+  state: "new" | "differs" | "same" | "accepted" | "rejected";
+}
+
+export interface SpeciesCandidate {
+  scientific_name: string;
+  common_name_de: string | null;
+  common_name_en: string | null;
+  variety: string | null;
+  family: string | null;
+  confidence: number;
+  reason: string;
+}
+
+export interface Identification {
+  created: string;
+  photos: string[];
+  model: string | null;
+  provider: string | null;
+  plantnet: {
+    candidates: { scientific_name: string; family: string | null; score: number }[];
+    remaining: number | null;
+  } | null;
+  result: {
+    candidates: SpeciesCandidate[];
+    health: { status: string; summary: string };
+    size: { basis: string | null; confidence: number };
+    care: { pruning: string | null };
+    questions: string[];
+  } | null;
+  accepted: string[];
+  rejected: string[];
+  suggestions: Suggestion[];
+}
+
+export interface UsageTotals {
+  requests: number;
+  errors: number;
+  input: number;
+  cached_input: number;
+  cache_write: number;
+  output: number;
+  reasoning: number;
+  images: number;
+  /** USD; null when no call had a known price */
+  cost: number | null;
+  unknown_cost: number;
+  latency_ms: number;
+}
+
+export interface ProviderInfo {
+  id: string;
+  title: string;
+  kind: string;
+  model: string | null;
+  base_url: string | null;
+  /** masked, e.g. sk-…abcd */
+  key: string | null;
+  status: { ok: boolean; error: string | null; checked: string; remaining?: number | null } | null;
+}
+
+export interface UsageSummary {
+  currency: string;
+  /** USD -> display currency */
+  rate: number;
+  budget: number;
+  budget_stop: boolean;
+  today: UsageTotals;
+  month: UsageTotals;
+  total: UsageTotals;
+  by: Record<"provider" | "model" | "feature" | "plant_id", (UsageTotals & { key: string })[]>;
+  daily: { day: string; model: string; cost: number | null; requests: number }[];
+  providers: ProviderInfo[];
+}
+
+export interface UsageRow {
+  id: string;
+  ts: string;
+  feature: string;
+  provider: string;
+  provider_title: string;
+  model: string;
+  plant_id: string | null;
+  status: string;
+  error: string | null;
+  input: number;
+  cached_input: number;
+  cache_write: number;
+  output: number;
+  reasoning: number;
+  images: number;
+  cost: number | null;
+  cost_source: string;
+  latency_ms: number;
+  prompt: string | null;
+  response: string | null;
+}
+
+export type Prices = Partial<
+  Record<"input" | "cached_input" | "cache_write" | "output" | "per_image" | "per_request", number>
+>;
+
+export interface PricingInfo {
+  as_of: string;
+  sources: Record<string, string>;
+  currency: string;
+  prices: Record<string, Record<string, Prices>>;
+  overrides: Record<string, Record<string, Prices>>;
+}
+
+export interface TechInfo {
+  version: string;
+  storage: Record<string, number>;
+  entities: number;
+  plants: number;
+  weather: {
+    updated: string | null;
+    sources: { title: string; ok: boolean; error: string | null; days: number }[];
+    last_error: string | null;
+  };
+  providers: ProviderInfo[];
 }

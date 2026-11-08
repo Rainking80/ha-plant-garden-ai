@@ -24,10 +24,20 @@
       "init": {
         "title": "Einstellungen",
         "data": {
-          "max_runtime_hours": "Warnung nach Laufzeit"
+          "max_runtime_hours": "Warnung nach Laufzeit",
+          "ai_identify": "KI für Fotos (Bestimmung)",
+          "ai_text": "KI für Text (Tipps, Chat)",
+          "ai_budget": "KI-Budget pro Monat (0 = keins)",
+          "ai_budget_stop": "KI-Aufrufe stoppen, wenn das Budget verbraucht ist",
+          "usd_eur": "Fester Kurs US-Dollar zu Euro (0 = in Dollar anzeigen)",
+          "ai_debug": "Prompts und Antworten im KI-Protokoll speichern",
+          "ai_retention_days": "Einzelne KI-Aufrufe aufbewahren für"
         },
         "data_description": {
-          "max_runtime_hours": "Läuft eine Bewässerungszone länger, erscheint ein Hinweis unter Reparaturen (z. B. ein hängendes Ventil)."
+          "max_runtime_hours": "Läuft eine Bewässerungszone länger, erscheint ein Hinweis unter Reparaturen (z. B. ein hängendes Ventil).",
+          "ai_budget": "In Euro, wenn ein Kurs gesetzt ist, sonst in US-Dollar. Bei 80 % erscheint ein Hinweis.",
+          "ai_debug": "Nur zur Fehlersuche; Prompts können Angaben zu Pflanzen enthalten.",
+          "ai_retention_days": "Ältere Aufrufe bleiben als Tagessummen erhalten."
         }
       }
     }
@@ -63,6 +73,15 @@
       },
       "rain_forecast": {
         "name": "Regen morgen"
+      },
+      "ai_cost_month": {
+        "name": "KI-Kosten im Monat"
+      },
+      "ai_tokens_month": {
+        "name": "KI-Tokens im Monat"
+      },
+      "ai_requests_today": {
+        "name": "KI-Anfragen heute"
       }
     },
     "binary_sensor": {
@@ -78,6 +97,14 @@
     "long_run": {
       "title": "Bewässerungszone {zone} läuft seit {hours} h",
       "description": "{entity} ist seit {hours} Stunden eingeschaltet. Prüfe, ob das Ventil hängt. Plant Garden schaltet selbst nichts. Der Hinweis verschwindet, sobald die Zone wieder aus ist."
+    },
+    "budget_warning": {
+      "title": "80 % des KI-Monatsbudgets verbraucht",
+      "description": "Plant Garden hat in diesem Monat {spent} von {budget} {currency} für KI ausgegeben."
+    },
+    "budget_exceeded": {
+      "title": "KI-Monatsbudget verbraucht",
+      "description": "Plant Garden hat in diesem Monat {spent} von {budget} {currency} für KI ausgegeben. Ist der Stopp eingeschaltet, gibt es bis zum nächsten Monat keine KI-Aufrufe mehr."
     }
   },
   "exceptions": {
@@ -92,6 +119,12 @@
     },
     "minutes_needed": {
       "message": "Für Bewässerungszonen bitte die Minuten angeben."
+    },
+    "no_photos": {
+      "message": "Diese Pflanze hat noch keine Fotos."
+    },
+    "ai_failed": {
+      "message": "Der KI-Aufruf ist fehlgeschlagen: {error}"
     }
   },
   "services": {
@@ -120,6 +153,20 @@
     "refresh_weather": {
       "name": "Wetter aktualisieren",
       "description": "Holt das Wetter sofort (sonst stündlich) und berechnet die Wasserbilanz neu."
+    },
+    "identify_plant": {
+      "name": "Pflanze bestimmen",
+      "description": "Bestimmt eine Pflanze anhand ihrer neuesten Fotos mit der eingestellten KI (kostet Tokens). Die Vorschläge erscheinen auf der Pflanzenseite.",
+      "fields": {
+        "device_id": {
+          "name": "Pflanze",
+          "description": "Eine Pflanze von Plant Garden."
+        },
+        "photos": {
+          "name": "Fotos",
+          "description": "Wie viele der neuesten Fotos (1 bis 3)."
+        }
+      }
     }
   },
   "config_subentries": {
@@ -164,6 +211,60 @@
         "nothing_to_configure": "Wetterdienste haben keine Einstellungen.",
         "reconfigure_successful": "Sensoren aktualisiert."
       }
+    },
+    "ai": {
+      "entry_type": "KI-Anbieter",
+      "initiate_flow": {
+        "user": "KI-Anbieter hinzufügen",
+        "reconfigure": "Neuer Key oder Modell"
+      },
+      "step": {
+        "user": {
+          "title": "KI-Anbieter",
+          "description": "Die KI bestimmt Pflanzen auf Fotos und schlägt Pflege vor. Sie wird nur aufgerufen, wenn du es startest. Was gesendet wird: die Fotos, die du auswählst, die Angaben zur Pflanze (Name, Kategorie; deine Notizen nicht) und die Jahreszeit mit der Halbkugel. Nie dein genauer Standort, Namen von Personen oder Entity-IDs. Jeder Aufruf wird mit Tokens und Kosten auf der Technikseite protokolliert.",
+          "data": {
+            "kind": "Anbieter"
+          }
+        },
+        "ai_task": {
+          "title": "Home Assistant AI Task",
+          "description": "Nutzt eine KI, die in Home Assistant schon eingerichtet ist (ohne eigenen Key). Sie meldet keine Tokens, die Kosten bleiben deshalb unbekannt.",
+          "data": {
+            "entity_id": "AI-Task-Entität"
+          }
+        },
+        "openai": {
+          "title": "OpenAI-kompatibler Dienst",
+          "description": "OpenAI, OpenRouter (meldet die Kosten jedes Aufrufs), Ollama oder LM Studio in deinem Netz oder ein anderer OpenAI-kompatibler Server.",
+          "data": {
+            "preset": "Dienst",
+            "base_url": "Basis-URL (nur für andere Server)",
+            "api_key": "API-Key (für lokale Server nicht nötig)"
+          }
+        },
+        "key": {
+          "title": "{provider}",
+          "description": "Der Key wird in Home Assistant gespeichert und nie wieder angezeigt. Geprüft wird er mit einem kostenlosen Aufruf.",
+          "data": {
+            "api_key": "API-Key"
+          }
+        },
+        "model": {
+          "title": "Modell",
+          "description": "Wähle ein Modell, das Fotos versteht. In den Optionen der Integration ordnest du Anbieter den Funktionen zu.",
+          "data": {
+            "model": "Modell"
+          }
+        }
+      },
+      "error": {
+        "invalid_auth": "Der Key wurde abgelehnt.",
+        "cannot_connect": "Der Dienst war nicht erreichbar oder hat mit einem Fehler geantwortet.",
+        "invalid_url": "Bitte gib eine http://- oder https://-Adresse ein."
+      },
+      "abort": {
+        "reconfigure_successful": "Anbieter aktualisiert."
+      }
     }
   },
   "selector": {
@@ -172,6 +273,24 @@
         "open_meteo": "Open-Meteo (weltweit, ohne Key)",
         "bright_sky": "Bright Sky – Deutscher Wetterdienst (Deutschland, ohne Key)",
         "home_assistant": "Meine eigenen Sensoren in Home Assistant"
+      }
+    },
+    "ai_kind": {
+      "options": {
+        "ha_ai_task": "Home Assistant AI Task (nutzt eine vorhandene KI-Integration)",
+        "openai_compatible": "OpenAI-kompatibel (OpenAI, OpenRouter, Ollama, LM Studio …)",
+        "anthropic": "Anthropic Claude",
+        "gemini": "Google Gemini",
+        "plantnet": "Pl@ntNet (nur Artbestimmung, 500 kostenlos pro Tag)"
+      }
+    },
+    "ai_preset": {
+      "options": {
+        "openai": "OpenAI",
+        "openrouter": "OpenRouter",
+        "ollama": "Ollama (lokal)",
+        "lmstudio": "LM Studio (lokal)",
+        "custom": "Anderer Server"
       }
     }
   }

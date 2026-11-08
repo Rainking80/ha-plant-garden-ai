@@ -1,7 +1,9 @@
 import { vi } from "vitest";
 
 import type {
+  AIStatus,
   Background,
+  Identification,
   IrrigationEvent,
   IrrigationSummary,
   Marker,
@@ -9,7 +11,13 @@ import type {
   Plant,
   PlantDetail,
   Point,
+  PricingInfo,
+  Prices,
   Shape,
+  TechInfo,
+  UsageRow,
+  UsageSummary,
+  UsageTotals,
   WaterSummary,
 } from "../src/api/types";
 import type { HomeAssistant } from "../src/types/hass";
@@ -78,12 +86,114 @@ export function makePhoto(id: string, takenAt: string, overrides: Partial<Photo>
   };
 }
 
+export function makeTotals(overrides: Partial<UsageTotals> = {}): UsageTotals {
+  return {
+    requests: 0,
+    errors: 0,
+    input: 0,
+    cached_input: 0,
+    cache_write: 0,
+    output: 0,
+    reasoning: 0,
+    images: 0,
+    cost: null,
+    unknown_cost: 0,
+    latency_ms: 0,
+    ...overrides,
+  };
+}
+
+export function makeIdentification(overrides: Partial<Identification> = {}): Identification {
+  return {
+    created: "2026-06-02T10:00:00+00:00",
+    photos: ["P1"],
+    model: "claude-opus-5-5",
+    provider: "Claude",
+    plantnet: null,
+    result: {
+      candidates: [
+        {
+          scientific_name: "Hydrangea macrophylla",
+          common_name_de: "Bauernhortensie",
+          common_name_en: "Bigleaf hydrangea",
+          variety: null,
+          family: "Hydrangeaceae",
+          confidence: 0.9,
+          reason: "Ballförmige Blütenstände",
+        },
+      ],
+      health: { status: "healthy", summary: "Wirkt gesund." },
+      size: { basis: null, confidence: 0.3 },
+      care: { pruning: null },
+      questions: ["Welche Farbe haben die Blüten?"],
+    },
+    accepted: [],
+    rejected: [],
+    suggestions: [
+      {
+        key: "scientific_name",
+        value: "Hydrangea macrophylla",
+        confidence: 0.9,
+        current: null,
+        state: "new",
+      },
+      { key: "water_need", value: "high", confidence: 0.8, current: "low", state: "differs" },
+    ],
+    ...overrides,
+  };
+}
+
+export interface FakeAI {
+  status: AIStatus;
+  identifications: Record<string, Identification | null>;
+  summary: UsageSummary;
+  rows: UsageRow[];
+  pricing: PricingInfo;
+  tech: TechInfo;
+}
+
+function fakeAI(overrides: Partial<FakeAI> = {}): FakeAI {
+  return {
+    status: { available: false, identify: null, plantnet: false, currency: "EUR" },
+    identifications: {},
+    summary: {
+      currency: "EUR",
+      rate: 0.9,
+      budget: 0,
+      budget_stop: false,
+      today: makeTotals(),
+      month: makeTotals(),
+      total: makeTotals(),
+      by: { provider: [], model: [], feature: [], plant_id: [] },
+      daily: [],
+      providers: [],
+    },
+    rows: [],
+    pricing: {
+      as_of: "2026-11-08",
+      sources: { anthropic: "https://example.invalid/pricing" },
+      currency: "EUR",
+      prices: { anthropic: { "claude-opus-5-5": { input: 4, output: 20 } } },
+      overrides: {},
+    },
+    tech: {
+      version: "0.1.0",
+      storage: { photos: 2048, backgrounds: 0, database: 4096 },
+      entities: 12,
+      plants: 3,
+      weather: { updated: null, sources: [], last_error: null },
+      providers: [],
+    },
+    ...overrides,
+  };
+}
+
 export interface FakeBackend {
   hass: HomeAssistant;
   callWS: ReturnType<typeof vi.fn>;
   /** Push a change event as the backend subscription would. */
   emit: (event: {
-    kind: "plant" | "plant_removed" | "layout" | "irrigation" | "water";
+    kind: "plant" | "plant_removed" | "layout" | "irrigation" | "water" | "ai";
     plant_id?: string | null;
     shape_id?: string | null;
   }) => void;
@@ -97,6 +207,8 @@ export interface FakeBackend {
   irrigation: IrrigationSummary;
   events: IrrigationEvent[];
   water: WaterSummary;
+  ai: FakeAI;
+  isAdmin: boolean;
 }
 
 /** What the backend does to stored coordinates when the origin moves (keeping places). */
@@ -134,6 +246,8 @@ export function fakeBackend(
     irrigation?: IrrigationSummary;
     events?: IrrigationEvent[];
     water?: WaterSummary;
+    ai?: Partial<FakeAI>;
+    isAdmin?: boolean;
     language?: string;
   } = {},
 ): FakeBackend {
@@ -148,6 +262,8 @@ export function fakeBackend(
     irrigation: options.irrigation ?? { plants: {}, zones: {} },
     events: options.events ?? [],
     water: options.water ?? { configured: false, updated: null, sources: [], weather: [] },
+    ai: fakeAI(options.ai),
+    isAdmin: options.isAdmin ?? true,
   } as FakeBackend;
   const layout = () => ({
     origin: backend.origin,
@@ -159,7 +275,12 @@ export function fakeBackend(
   backend.callWS = vi.fn(async (msg: Record<string, unknown> & { type: string }) => {
     switch (msg.type) {
       case "plant_garden/info":
-        return { entry_id: "e", garden_name: "Schrebergarten", version: "0.1.0", is_admin: true };
+        return {
+          entry_id: "e",
+          garden_name: "Schrebergarten",
+          version: "0.1.0",
+          is_admin: backend.isAdmin,
+        };
       case "plant_garden/plants/list":
         return { plants: backend.plants };
       case "plant_garden/plants/create": {
@@ -269,6 +390,68 @@ export function fakeBackend(
       case "plant_garden/irrigation/delete":
         backend.events = backend.events.filter((event) => event.id !== msg.event_id);
         return null;
+      case "plant_garden/ai/status":
+        return backend.ai.status;
+      case "plant_garden/ai/identification":
+        return backend.ai.identifications[String(msg.plant_id)] ?? null;
+      case "plant_garden/ai/estimate":
+        return { cost: 0.0123, currency: backend.ai.status.currency };
+      case "plant_garden/ai/identify": {
+        const photos = msg.photos as { photo_id: string }[];
+        const record = makeIdentification({ photos: photos.map((p) => p.photo_id) });
+        backend.ai.identifications[String(msg.plant_id)] = record;
+        return record;
+      }
+      case "plant_garden/ai/decide": {
+        const record = backend.ai.identifications[String(msg.plant_id)];
+        if (!record) throw { code: "not_found", message: "Not found" };
+        const state = msg.accept ? "accepted" : "rejected";
+        const updated: Identification = {
+          ...record,
+          suggestions: record.suggestions.map((s) => (s.key === msg.key ? { ...s, state } : s)),
+        };
+        backend.ai.identifications[String(msg.plant_id)] = updated;
+        return updated;
+      }
+      case "plant_garden/ai/usage/summary":
+        return backend.ai.summary;
+      case "plant_garden/ai/usage/log": {
+        const rows = backend.ai.rows.filter(
+          (row) =>
+            (!msg.feature || row.feature === msg.feature) &&
+            (!msg.status || row.status === msg.status),
+        );
+        const offset = Number(msg.offset ?? 0);
+        return { rows: rows.slice(offset, offset + Number(msg.limit ?? 100)) };
+      }
+      case "plant_garden/ai/pricing/get":
+        return backend.ai.pricing;
+      case "plant_garden/ai/pricing/set": {
+        const kind = String(msg.kind);
+        const model = String(msg.model);
+        const overrides = { ...backend.ai.pricing.overrides };
+        const own = Object.fromEntries(
+          Object.entries(overrides[kind] ?? {}).filter(([name]) => name !== model),
+        );
+        if (msg.prices !== null) own[model] = msg.prices as Prices;
+        overrides[kind] = own;
+        const prices = { ...backend.ai.pricing.prices };
+        prices[kind] = { ...prices[kind], ...own };
+        backend.ai.pricing = { ...backend.ai.pricing, overrides, prices };
+        return backend.ai.pricing;
+      }
+      case "plant_garden/ai/test":
+        backend.ai.tech = {
+          ...backend.ai.tech,
+          providers: backend.ai.tech.providers.map((p) =>
+            p.id === msg.provider_id
+              ? { ...p, status: { ok: true, error: null, checked: "2026-06-02T10:00:00+00:00" } }
+              : p,
+          ),
+        };
+        return { ok: true, error: null };
+      case "plant_garden/tech/info":
+        return backend.ai.tech;
       default:
         throw new Error(`unexpected ${msg.type}`);
     }

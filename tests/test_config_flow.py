@@ -78,5 +78,12 @@ async def test_options_flow_sets_the_run_time_warning(
         result["flow_id"], {"max_runtime_hours": 3.0}
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert loaded_entry.options == {"max_runtime_hours": 3}
+    assert loaded_entry.options == {
+        "max_runtime_hours": 3,
+        "ai_budget": 0,
+        "ai_budget_stop": False,
+        "ai_debug": False,
+        "ai_retention_days": 90,
+        "usd_eur": 0,
+    }
     assert loaded_entry.runtime_data.irrigation._max_runtime_hours() == 3

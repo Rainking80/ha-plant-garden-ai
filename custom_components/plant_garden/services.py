@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
-from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse, callback
-from homeassistant.exceptions import ServiceValidationError
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+    callback,
+)
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 import probatio
 
+from .ai.base import AIError
 from .const import DOMAIN
 from .garden import NotFoundError
 from .runtime import get_loaded_entry
@@ -89,6 +96,7 @@ def async_register_services(hass: HomeAssistant) -> None:
 
 
 SERVICE_REFRESH_WEATHER = "refresh_weather"
+SERVICE_IDENTIFY_PLANT = "identify_plant"
 
 
 @callback
@@ -100,3 +108,48 @@ def async_register_weather_service(hass: HomeAssistant) -> None:
         await entry.runtime_data.water.async_refresh()
 
     hass.services.async_register(DOMAIN, SERVICE_REFRESH_WEATHER, refresh_weather)
+
+    async def identify_plant(call: ServiceCall) -> ServiceResponse:
+        """Identify a plant from its newest photos; returns the suggestions."""
+        entry = get_loaded_entry(hass)
+        if entry is None:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_loaded")
+        plants, _ = _targets(hass, [call.data["device_id"]])
+        if not plants:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="not_plant_or_zone",
+                translation_placeholders={"device_id": call.data["device_id"]},
+            )
+        manager = entry.runtime_data.manager
+        photos = await manager.async_list_photos(plants[0])
+        if not photos:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="no_photos")
+        try:
+            result = await entry.runtime_data.ai.async_identify(
+                plants[0],
+                [(photo.id, "auto") for photo in photos[: call.data["photos"]]],
+                hass.config.language,
+            )
+        except AIError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="ai_failed",
+                translation_placeholders={"error": str(err)},
+            ) from err
+        return {"suggestions": result.get("suggestions", []), "result": result.get("result")}
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_IDENTIFY_PLANT,
+        identify_plant,
+        schema=probatio.Schema(
+            {
+                probatio.Required("device_id"): str,
+                probatio.Optional("photos", default=3): probatio.All(
+                    probatio.Coerce(int), probatio.Range(min=1, max=3)
+                ),
+            }
+        ),
+        supports_response=SupportsResponse.OPTIONAL,
+    )

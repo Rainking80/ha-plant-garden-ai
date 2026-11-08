@@ -34,6 +34,7 @@ import "../components/growth-chart";
 import type { PgPhotoViewer } from "../components/photo-viewer";
 import "../components/photo-viewer";
 import "../components/water-panel";
+import "../components/ai-panel";
 import type { PgPlantForm } from "../components/plant-form";
 import "../components/plant-form";
 import type { TranslationKey } from "../i18n";
@@ -514,6 +515,15 @@ export class PgPlantDetail extends PgElement {
           .store=${this.store}
           .plantId=${plant.id}
         ></pg-water-panel>
+      </section>
+
+      <section class="card block">
+        <pg-ai-panel
+          .hass=${this.hass}
+          .store=${this.store}
+          .plantId=${plant.id}
+          .photos=${photos}
+        ></pg-ai-panel>
       </section>
 
       <section

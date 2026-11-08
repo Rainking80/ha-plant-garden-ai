@@ -86,6 +86,53 @@ MIGRATIONS: tuple[str, ...] = (
         fetched_at TEXT NOT NULL
     );
     """,
+    """
+    CREATE TABLE ai_usage (
+        id TEXT PRIMARY KEY,
+        ts TEXT NOT NULL,
+        day TEXT NOT NULL,
+        feature TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        provider_title TEXT NOT NULL DEFAULT '',
+        model TEXT NOT NULL,
+        plant_id TEXT,
+        status TEXT NOT NULL,
+        error TEXT,
+        input INTEGER NOT NULL DEFAULT 0,
+        cached_input INTEGER NOT NULL DEFAULT 0,
+        cache_write INTEGER NOT NULL DEFAULT 0,
+        output INTEGER NOT NULL DEFAULT 0,
+        reasoning INTEGER NOT NULL DEFAULT 0,
+        images INTEGER NOT NULL DEFAULT 0,
+        cost REAL,
+        cost_source TEXT NOT NULL DEFAULT 'unknown',
+        latency_ms INTEGER NOT NULL DEFAULT 0,
+        request_id TEXT,
+        prompt_version TEXT NOT NULL DEFAULT '',
+        prompt TEXT,
+        response TEXT
+    );
+    CREATE INDEX ai_usage_by_day ON ai_usage (day);
+
+    CREATE TABLE ai_usage_daily (
+        day TEXT NOT NULL,
+        feature TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        model TEXT NOT NULL,
+        requests INTEGER NOT NULL,
+        errors INTEGER NOT NULL,
+        input INTEGER NOT NULL,
+        cached_input INTEGER NOT NULL,
+        cache_write INTEGER NOT NULL,
+        output INTEGER NOT NULL,
+        reasoning INTEGER NOT NULL,
+        images INTEGER NOT NULL,
+        cost REAL,
+        unknown_cost INTEGER NOT NULL,
+        latency_ms INTEGER NOT NULL,
+        PRIMARY KEY (day, feature, provider, model)
+    );
+    """,
 )
 SCHEMA_VERSION = len(MIGRATIONS)
 
@@ -485,6 +532,130 @@ class GardenDatabase:
                 (since.isoformat(),),
             ).fetchall()
         return [json.loads(row["data"]) for row in rows]
+
+    # ------------------------------------------------------------ AI usage
+    USAGE_COLUMNS = (
+        "id", "ts", "day", "feature", "provider", "provider_title", "model", "plant_id",
+        "status", "error", "input", "cached_input", "cache_write", "output", "reasoning",
+        "images", "cost", "cost_source", "latency_ms", "request_id", "prompt_version",
+        "prompt", "response",
+    )  # fmt: skip
+    # single calls plus the daily sums older calls were folded into (purge_usage)
+    _ALL_USAGE = (
+        "SELECT day, feature, provider, model, NULL AS plant_id, requests, errors, input,"
+        " cached_input, cache_write, output, reasoning, images, cost, unknown_cost, latency_ms"
+        " FROM ai_usage_daily UNION ALL"
+        " SELECT day, feature, provider, model, plant_id, 1, status != 'ok', input,"
+        " cached_input, cache_write, output, reasoning, images, cost, cost IS NULL, latency_ms"
+        " FROM ai_usage"
+    )
+    _SUMS = (
+        "COALESCE(SUM(requests), 0) AS requests, COALESCE(SUM(errors), 0) AS errors,"
+        " COALESCE(SUM(input), 0) AS input, COALESCE(SUM(cached_input), 0) AS cached_input,"
+        " COALESCE(SUM(cache_write), 0) AS cache_write, COALESCE(SUM(output), 0) AS output,"
+        " COALESCE(SUM(reasoning), 0) AS reasoning, COALESCE(SUM(images), 0) AS images,"
+        " SUM(cost) AS cost, COALESCE(SUM(unknown_cost), 0) AS unknown_cost,"
+        " COALESCE(SUM(latency_ms), 0) AS latency_ms"
+    )
+
+    def insert_usage(self, row: dict[str, Any]) -> None:
+        marks = ", ".join("?" * len(self.USAGE_COLUMNS))
+        with self._cursor() as conn:
+            conn.execute(
+                f"INSERT INTO ai_usage ({', '.join(self.USAGE_COLUMNS)}) VALUES ({marks})",  # noqa: S608
+                [row.get(column) for column in self.USAGE_COLUMNS],
+            )
+
+    def usage_totals(self, since: date | None) -> dict[str, Any]:
+        """Sums over all calls from `since` on (None: everything ever)."""
+        where = "WHERE day >= ?" if since else ""
+        params = (since.isoformat(),) if since else ()
+        with self._cursor() as conn:
+            row = conn.execute(
+                f"SELECT {self._SUMS} FROM ({self._ALL_USAGE}) {where}",  # noqa: S608
+                params,
+            ).fetchone()
+        return dict(row)
+
+    def usage_breakdown(self, since: date, column: str) -> list[dict[str, Any]]:
+        """Sums per feature, provider, model or plant from `since` on."""
+        if column not in ("feature", "provider", "model", "plant_id"):
+            raise ValueError(column)
+        with self._cursor() as conn:
+            rows = conn.execute(
+                f"SELECT {column} AS key, {self._SUMS} FROM ({self._ALL_USAGE})"  # noqa: S608
+                f" WHERE day >= ? AND {column} IS NOT NULL GROUP BY {column}"
+                " ORDER BY SUM(cost) DESC, requests DESC",
+                (since.isoformat(),),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def usage_daily_cost(self, since: date) -> list[dict[str, Any]]:
+        """Cost and requests per day and model (for the stacked chart)."""
+        with self._cursor() as conn:
+            rows = conn.execute(
+                "SELECT day, model, SUM(cost) AS cost, SUM(requests) AS requests"  # noqa: S608
+                f" FROM ({self._ALL_USAGE}) WHERE day >= ? GROUP BY day, model ORDER BY day",
+                (since.isoformat(),),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def usage_log(
+        self,
+        *,
+        limit: int,
+        offset: int = 0,
+        feature: str | None = None,
+        status: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Single calls, newest first (kept for the retention period)."""
+        clauses: list[str] = []
+        params: list[Any] = []
+        if feature:
+            clauses.append("feature = ?")
+            params.append(feature)
+        if status:
+            clauses.append("status = ?")
+            params.append(status)
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        with self._cursor() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM ai_usage {where} ORDER BY ts DESC LIMIT ? OFFSET ?",  # noqa: S608
+                (*params, limit, offset),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def purge_usage(self, before: date) -> int:
+        """Fold single calls older than `before` into daily sums and delete them."""
+        with self._cursor() as conn:
+            conn.execute(
+                "INSERT INTO ai_usage_daily SELECT day, feature, provider, model, COUNT(*),"
+                " SUM(status != 'ok'), SUM(input), SUM(cached_input), SUM(cache_write),"
+                " SUM(output), SUM(reasoning), SUM(images), SUM(cost), SUM(cost IS NULL),"
+                " SUM(latency_ms) FROM ai_usage WHERE day < ?"
+                " GROUP BY day, feature, provider, model"
+                " ON CONFLICT (day, feature, provider, model) DO UPDATE SET"
+                " requests = requests + excluded.requests, errors = errors + excluded.errors,"
+                " input = input + excluded.input,"
+                " cached_input = cached_input + excluded.cached_input,"
+                " cache_write = cache_write + excluded.cache_write,"
+                " output = output + excluded.output, reasoning = reasoning + excluded.reasoning,"
+                " images = images + excluded.images,"
+                " cost = COALESCE(cost, 0) + COALESCE(excluded.cost, 0),"
+                " unknown_cost = unknown_cost + excluded.unknown_cost,"
+                " latency_ms = latency_ms + excluded.latency_ms",
+                (before.isoformat(),),
+            )
+            deleted = conn.execute("DELETE FROM ai_usage WHERE day < ?", (before.isoformat(),))
+        return int(deleted.rowcount)
+
+    def storage_stats(self) -> dict[str, int]:
+        """Size of the database file and its write-ahead log in bytes."""
+        sizes = {"database": 0}
+        for path in (self.path, self.path.with_name(self.path.name + "-wal")):
+            if path.exists():
+                sizes["database"] += path.stat().st_size
+        return sizes
 
     # ------------------------------------------------------------ plants
     def delete_plant_records(self, plant_id: str) -> None:

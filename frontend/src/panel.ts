@@ -12,12 +12,14 @@ import { navigate } from "./util/navigate";
 import "./views/garden-view";
 import "./views/plant-detail";
 import "./views/plants-view";
+import "./views/tech-view";
 import "./views/water-view";
 
 export type View =
   | { name: "plan"; focusPlantId: string | null }
   | { name: "plants" }
   | { name: "water" }
+  | { name: "tech" }
   | { name: "plant"; plantId: string };
 
 const FRESHNESS_CHECK_MS = 15 * 60 * 1000;
@@ -29,6 +31,7 @@ export function parseRoute(path: string | undefined): View {
   if (plant?.[1]) return { name: "plant", plantId: plant[1] };
   if (/^\/plants\/?$/.test(value)) return { name: "plants" };
   if (/^\/water\/?$/.test(value)) return { name: "water" };
+  if (/^\/tech\/?$/.test(value)) return { name: "tech" };
   const focus = /^\/plan\/([0-9A-Za-z]+)\/?$/.exec(value);
   return { name: "plan", focusPlantId: focus?.[1] ?? null };
 }
@@ -55,7 +58,7 @@ export class PlantGardenPanel extends LitElement {
   private _localize: Localize = createLocalize("en");
   private _language = "";
   /** Where "back" from a plant goes: the tab that was used last. */
-  private _lastList: "plan" | "plants" | "water" = "plan";
+  private _lastList: "plan" | "plants" | "water" | "tech" = "plan";
   private _freshnessTimer?: ReturnType<typeof setInterval>;
 
   private readonly _onStoreChange = () => this.requestUpdate();
@@ -184,6 +187,16 @@ export class PlantGardenPanel extends LitElement {
                   @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/water`)}
                   >${t("nav.water")}</a
                 >
+                ${
+                  this._info?.is_admin
+                    ? html`<a
+                        href="${this._prefix}/tech"
+                        aria-current=${view.name === "tech" ? "page" : "false"}
+                        @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/tech`)}
+                        >${t("nav.tech")}</a
+                      >`
+                    : nothing
+                }
               </nav>`
         }
       </header>
@@ -238,6 +251,9 @@ export class PlantGardenPanel extends LitElement {
           .store=${this._store}
           .prefix=${this._prefix}
         ></pg-water-view>`;
+      case "tech":
+        if (!this._info.is_admin) return nothing;
+        return html`<pg-tech-view .hass=${this.hass} .store=${this._store}></pg-tech-view>`;
       default:
         return html`<pg-garden-view
           .hass=${this.hass}

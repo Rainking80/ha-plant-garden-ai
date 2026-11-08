@@ -47,6 +47,8 @@ describe("parseRoute", () => {
     expect(parseRoute("/plants/01JABC")).toEqual({ name: "plant", plantId: "01JABC" });
     expect(parseRoute("/plants/01JABC/")).toEqual({ name: "plant", plantId: "01JABC" });
     expect(parseRoute("/plants/../x")).toEqual({ name: "plan", focusPlantId: null });
+    expect(parseRoute("/water")).toEqual({ name: "water" });
+    expect(parseRoute("/tech/")).toEqual({ name: "tech" });
   });
 });
 
@@ -63,8 +65,23 @@ describe("plant-garden-panel", () => {
       "Gartenplan",
       "Pflanzen",
       "Wasser & Wetter",
+      "Technik",
     ]);
     expect(tabs[0]?.getAttribute("aria-current")).toBe("page");
+  });
+
+  it("shows the tech page to admins only", async () => {
+    const user = await mount(fakeBackend({ isAdmin: false }), "/tech");
+    await vi.waitFor(() => expect(user.shadowRoot?.querySelectorAll(".tabs a")).toHaveLength(3));
+    expect(deepQuery(user, "pg-tech-view")).toBeNull();
+    document.body.innerHTML = "";
+
+    const admin = await mount(fakeBackend(), "/tech");
+    await vi.waitFor(() => expect(deepText(admin)).toContain("KI-Nutzung und System"));
+    expect(deepText(admin)).toContain("Noch keine KI-Anfragen.");
+    expect(deepText(admin)).toContain("0,00 EUR");
+    expect(deepText(admin)).toContain("keine eingerichtet");
+    expect(deepText(admin)).not.toContain("Aufteilung");
   });
 
   it("welcomes a new garden with an empty state", async () => {

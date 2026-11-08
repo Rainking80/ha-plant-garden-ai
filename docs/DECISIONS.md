@@ -281,3 +281,60 @@ minutes), because automations know devices, not internal plant ids.
   (weighted by probability) does not cover it; the run time refills the thirstiest
   plant (area zones: depth rate x share; drippers: litres), capped at 4 h.
 - **Frost**: the coldest forecast night below a plant's minimum temperature.
+
+## D-027 AI providers over plain HTTP, one usage format (2026-11-08)
+
+- **Providers** are config subentries of type `ai`: Home Assistant's own AI task
+  entities (`ai_task.generate_data`), OpenAI-compatible endpoints (OpenAI,
+  OpenRouter, Ollama, LM Studio, any URL), Anthropic, Google Gemini and Pl@ntNet.
+  No vendor SDKs: each provider is a small aiohttp client with HA's session. The
+  options pick one provider for photos and one for text; without a choice the
+  first suitable one is used.
+- **Keys** live only in the subentry data. They are tested before saving, never
+  sent to the panel (masked `sk-…abcd`), logged or written to diagnostics.
+- **Usage** is normalised per call to input without cache, cache reads, cache
+  writes, output, reasoning (included in output) and images, because the
+  providers count differently: Anthropic reports `input_tokens` without cached
+  tokens; OpenAI and Gemini include cached tokens in the prompt count, so the
+  cached part is subtracted; Gemini bills thinking tokens as output; OpenRouter
+  reports the cost itself (used as is, marked "provider"). `ai_task` reports no
+  tokens: those calls are counted and timed, their cost is "unknown".
+- **Prices** come with the integration (`ai/pricing_defaults.json`, USD per million
+  tokens, as of 2026-11-08, source per provider) and can be overridden per model on
+  the tech page. Dated model ids match their base id (`claude-opus-5-5-20261101`
+  → `claude-opus-5-5`). Local models have no price until the user enters one.
+- **Budget**: a monthly limit in the display currency (USD → EUR rate in the
+  options). A repair notice at 80 % and at 100 %; optionally further calls are
+  refused (`budget_exceeded`). The check uses the estimate of the planned call.
+- **Retries**: 429 and 5xx twice with `Retry-After` (max 30 s); an answer that is
+  not valid JSON is repaired once with the error message. Pl@ntNet is never
+  retried because failed requests also use up the daily credits.
+- **Log**: every call is a row (`ai_usage`) with tokens, cost, latency, status and
+  error; prompts and answers only with the debug option. After the retention (90
+  days by default) rows are folded into daily totals, so totals stay complete.
+- **Code layout**: the AI layer is a sub-package (`ai/`, `ai/providers/`). Ruff's
+  TID252 (no relative parent imports) is switched off below the package root, as
+  `from ..const import …` is clearer there than absolute imports of our own
+  package.
+
+## D-028 Identification: Pl@ntNet proposes, the language model decides (2026-11-08)
+
+- **Flow**: the user picks 1 to 3 photos and says what each shows (leaf, flower,
+  fruit, bark, whole plant). Pl@ntNet (if set up) gets the original JPEGs and
+  returns species candidates; the language model gets the medium WebPs (1024 px),
+  the candidates, the season and what is already known about the plant, and
+  answers with a strict JSON schema (candidates with confidence and reason,
+  health, size estimate with its basis, care hints, questions). Without Pl@ntNet
+  the model decides alone and the panel says that this is less accurate.
+- **Never over user values**: the result becomes one suggestion per field. Fields
+  the user entered show "AI sees this differently" and stay; everything else is
+  taken over only on "accept", with source `ai`, confidence and model. Size
+  estimates become measurements with source `ai`; an age becomes an age reference.
+- **No AI without a user action**: identification starts from the plant page or
+  the action `plant_garden.identify_plant`; automatic identification after an
+  upload is not built (it would be an option, off by default).
+- **Pl@ntNet terms**: the free plan (500 identifications per day) asks for no
+  attribution, but we show "candidates from Pl@ntNet" anyway. Whether a personal
+  key may be used inside a third-party app is not stated in the terms (not
+  verified with Pl@ntNet); the README tells users to use their own key under their
+  own account.

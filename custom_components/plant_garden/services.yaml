@@ -28,3 +28,19 @@ log_watering:
         text:
 
 refresh_weather:
+
+identify_plant:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          filter:
+            - integration: plant_garden
+    photos:
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 3
+          mode: box

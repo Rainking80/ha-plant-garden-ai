@@ -19,7 +19,22 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import dt as dt_util
 import probatio
 
-from .const import CONF_GARDEN_NAME, CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS, DOMAIN
+from .ai.flow import AISubentryFlow
+from .const import (
+    CONF_AI_BUDGET,
+    CONF_AI_BUDGET_STOP,
+    CONF_AI_DEBUG,
+    CONF_AI_IDENTIFY,
+    CONF_AI_RETENTION_DAYS,
+    CONF_AI_TEXT,
+    CONF_GARDEN_NAME,
+    CONF_MAX_RUNTIME_HOURS,
+    CONF_USD_EUR,
+    DEFAULT_AI_RETENTION_DAYS,
+    DEFAULT_MAX_RUNTIME_HOURS,
+    DOMAIN,
+    SUBENTRY_AI,
+)
 from .water import CONF_SOURCE, SUBENTRY_WEATHER
 from .weather import bright_sky, home_assistant, open_meteo
 from .weather.base import (
@@ -50,7 +65,7 @@ class PlantGardenConfigFlow(ConfigFlow, domain=DOMAIN):
     def async_get_supported_subentry_types(
         cls, config_entry: ConfigEntry
     ) -> dict[str, type[ConfigSubentryFlow]]:
-        return {SUBENTRY_WEATHER: WeatherSubentryFlow}
+        return {SUBENTRY_WEATHER: WeatherSubentryFlow, SUBENTRY_AI: AISubentryFlow}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Ask for the garden name."""
@@ -76,27 +91,67 @@ class PlantGardenOptionsFlow(OptionsFlow):
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
-            return self.async_create_entry(
-                data={CONF_MAX_RUNTIME_HOURS: int(user_input[CONF_MAX_RUNTIME_HOURS])}
+            data = {
+                CONF_MAX_RUNTIME_HOURS: int(user_input[CONF_MAX_RUNTIME_HOURS]),
+                CONF_AI_BUDGET: float(user_input.get(CONF_AI_BUDGET) or 0),
+                CONF_AI_BUDGET_STOP: bool(user_input.get(CONF_AI_BUDGET_STOP)),
+                CONF_AI_DEBUG: bool(user_input.get(CONF_AI_DEBUG)),
+                CONF_AI_RETENTION_DAYS: int(
+                    user_input.get(CONF_AI_RETENTION_DAYS) or DEFAULT_AI_RETENTION_DAYS
+                ),
+                CONF_USD_EUR: float(user_input.get(CONF_USD_EUR) or 0),
+            }
+            for key in (CONF_AI_IDENTIFY, CONF_AI_TEXT):
+                if user_input.get(key):
+                    data[key] = user_input[key]
+            return self.async_create_entry(data=data)
+        options = self.config_entry.options
+
+        def number(minimum: float, maximum: float, step: float, unit: str | None = None) -> Any:
+            config = selector.NumberSelectorConfig(
+                min=minimum, max=maximum, step=step, mode=selector.NumberSelectorMode.BOX
             )
-        current = self.config_entry.options.get(CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS)
+            if unit:
+                config["unit_of_measurement"] = unit
+            return selector.NumberSelector(config)
+
+        providers = [
+            selector.SelectOptionDict(value=sub.subentry_id, label=sub.title)
+            for sub in self.config_entry.subentries.values()
+            if sub.subentry_type == SUBENTRY_AI and sub.data.get("kind") != "plantnet"
+        ]
+        fields: dict[Any, Any] = {
+            probatio.Required(
+                CONF_MAX_RUNTIME_HOURS,
+                default=options.get(CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS),
+            ): number(1, 48, 1, "h"),
+        }
+        if providers:
+            for key in (CONF_AI_IDENTIFY, CONF_AI_TEXT):
+                fields[
+                    probatio.Optional(key, description={"suggested_value": options.get(key)})
+                ] = selector.SelectSelector(selector.SelectSelectorConfig(options=providers))
+        fields.update(
+            {
+                probatio.Required(CONF_AI_BUDGET, default=options.get(CONF_AI_BUDGET, 0)): number(
+                    0, 10000, 0.5
+                ),
+                probatio.Required(
+                    CONF_AI_BUDGET_STOP, default=options.get(CONF_AI_BUDGET_STOP, False)
+                ): bool,
+                probatio.Required(CONF_USD_EUR, default=options.get(CONF_USD_EUR, 0)): number(
+                    0, 10, 0.001
+                ),
+                probatio.Required(CONF_AI_DEBUG, default=options.get(CONF_AI_DEBUG, False)): bool,
+                probatio.Required(
+                    CONF_AI_RETENTION_DAYS,
+                    default=options.get(CONF_AI_RETENTION_DAYS, DEFAULT_AI_RETENTION_DAYS),
+                ): number(7, 730, 1, "d"),
+            }
+        )
         return self.async_show_form(
             step_id="init",
-            data_schema=probatio.Schema(
-                {
-                    probatio.Required(CONF_MAX_RUNTIME_HOURS, default=current): (
-                        selector.NumberSelector(
-                            selector.NumberSelectorConfig(
-                                min=1,
-                                max=48,
-                                step=1,
-                                unit_of_measurement="h",
-                                mode=selector.NumberSelectorMode.BOX,
-                            )
-                        )
-                    )
-                }
-            ),
+            data_schema=probatio.Schema(fields),
         )
 
 

@@ -136,6 +136,29 @@ GARDEN_SENSORS: tuple[GardenSensorDescription, ...] = (
         suggested_display_precision=1,
         value=lambda stats: stats.get("rain_forecast"),
     ),
+    GardenSensorDescription(
+        key="ai_cost_month",
+        translation_key="ai_cost_month",
+        item=GARDEN,
+        device_class=SensorDeviceClass.MONETARY,
+        suggested_display_precision=2,
+        value=lambda stats: stats.get("month_cost"),
+    ),
+    GardenSensorDescription(
+        key="ai_tokens_month",
+        translation_key="ai_tokens_month",
+        item=GARDEN,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement="tokens",
+        value=lambda stats: stats.get("month_tokens"),
+    ),
+    GardenSensorDescription(
+        key="ai_requests_today",
+        translation_key="ai_requests_today",
+        item=GARDEN,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value=lambda stats: stats.get("today_requests"),
+    ),
 )
 
 
@@ -146,6 +169,12 @@ class GardenSensor(GardenEntity, SensorEntity):
     def native_value(self) -> float | datetime | None:
         value: float | datetime | None = self.entity_description.value(self._stats())
         return value
+
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        if self.entity_description.key == "ai_cost_month":
+            return self._data.ai.currency()
+        return self.entity_description.native_unit_of_measurement
 
 
 async def async_setup_entry(

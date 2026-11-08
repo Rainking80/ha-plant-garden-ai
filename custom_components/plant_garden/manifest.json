@@ -1,7 +1,7 @@
 {
   "domain": "plant_garden",
   "name": "Plant Garden",
-  "after_dependencies": ["recorder"],
+  "after_dependencies": ["ai_task", "media_source", "recorder"],
   "codeowners": ["@Rainking80"],
   "config_flow": true,
   "dependencies": ["frontend", "http", "panel_custom", "websocket_api"],

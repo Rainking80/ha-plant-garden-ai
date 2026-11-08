@@ -8,6 +8,28 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M6 AI layer:
+  - AI providers in the integration settings ("Add AI provider"): Home
+    Assistant's own AI task entities (no key), OpenAI-compatible APIs (OpenAI,
+    OpenRouter, Ollama, LM Studio, any URL), Anthropic Claude, Google Gemini and
+    Pl@ntNet. Keys are tested before saving and only ever shown masked; the model
+    is picked from the provider's list.
+  - Identify a plant from 1 to 3 photos (what each shows: leaf, flower, fruit,
+    bark, whole plant) with a cost estimate before starting. Pl@ntNet proposes
+    species, the language model decides with the season and what you already
+    entered. The result shows confidence, health, a size estimate and questions;
+    every suggestion is taken over or dismissed on its own and never replaces a
+    value you entered. Also as action `plant_garden.identify_plant`.
+  - Tech tab for administrators: requests, tokens and costs today, this month
+    and overall, cost per day and model, breakdowns by provider, model, feature
+    and plant, a request log with filters and CSV export, "test connection", the
+    price table (as of 2026-11-08) with your own prices, storage and weather
+    source status.
+  - Options: provider for photos and for text, monthly budget (repair notice at
+    80 % and 100 %, optionally stop), USD → EUR rate, debug log of prompts, log
+    retention (older calls are kept as daily totals).
+  - Sensors for the garden: AI cost this month, AI tokens this month, AI requests
+    today. Plant photos are available as a media source.
 - M5 weather and water balance:
   - Weather sources in the integration settings: Open-Meteo (worldwide), Bright
     Sky / German Weather Service (Germany) and your own sensors (rain, ET₀,

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
+from .ai.service import AIService
 from .const import DOMAIN
 from .garden import GardenManager
 from .irrigation import IrrigationTracker
@@ -21,6 +22,7 @@ class PlantGardenData:
     manager: GardenManager
     irrigation: IrrigationTracker
     water: WaterCoordinator
+    ai: AIService
 
 
 type PlantGardenConfigEntry = ConfigEntry[PlantGardenData]
@@ -45,3 +47,8 @@ def get_irrigation(hass: HomeAssistant) -> IrrigationTracker | None:
 def get_water(hass: HomeAssistant) -> WaterCoordinator | None:
     entry = get_loaded_entry(hass)
     return entry.runtime_data.water if entry else None
+
+
+def get_ai(hass: HomeAssistant) -> AIService | None:
+    entry = get_loaded_entry(hass)
+    return entry.runtime_data.ai if entry else None

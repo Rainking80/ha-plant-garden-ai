@@ -1,6 +1,6 @@
 # Plant Garden for Home Assistant
 
-> **Status: early development (0.1.0).** Plants, photos, growth measurements and the garden plan editor work; aerial imagery, irrigation tracking, water balance and AI features are being built step by step (see [roadmap](#roadmap)).
+> **Status: early development (0.1.0).** Plants, photos, growth measurements, the garden plan editor, aerial imagery, irrigation tracking, the water balance and AI identification with a cost page are built and in review; the assistant (tasks, diagnosis, tips) follows (see [roadmap](#roadmap)).
 
 Plant Garden turns Home Assistant into a garden planner and plant journal:
 
@@ -28,6 +28,31 @@ Aerial imagery comes directly from the state survey offices (Berlin/Brandenburg,
 3. **Settings → Devices & services → Add integration → Plant Garden**, choose a name for your garden.
 4. Open the new sidebar entry.
 
+## AI providers and costs
+
+AI is optional and only runs when you start it (for example "Identify" on a plant
+page or the action `plant_garden.identify_plant`). Add a provider under
+**Settings → Devices & services → Plant Garden → Add AI provider**:
+
+- **Home Assistant AI task** – an AI you already set up in Home Assistant, no
+  extra key. Home Assistant does not report tokens, so these calls are counted
+  but their cost shows as unknown.
+- **OpenAI-compatible** – OpenAI, OpenRouter, Ollama, LM Studio or any compatible
+  URL; **Anthropic Claude**; **Google Gemini** – with your own API key.
+- **Pl@ntNet** – species candidates for identification (free key with 500
+  identifications per day at [my.plantnet.org](https://my.plantnet.org)). Use a
+  key from your own account; failed requests count against the daily limit too.
+
+What is sent: the photos you choose (re-encoded, all metadata such as GPS
+removed), the plant's name, category, location type and the names you entered,
+the month and the hemisphere – never your location. Keys stay in Home Assistant
+and are shown masked only.
+
+The **Tech** tab (administrators) shows requests, tokens and costs per day,
+model, feature and plant, a request log with CSV export, and the price table
+(as of 2026-11-08, editable per model). A monthly budget in the integration
+options warns at 80 % and can stop further calls.
+
 ## Roadmap
 
 | Milestone | Content | State |
@@ -36,9 +61,9 @@ Aerial imagery comes directly from the state survey offices (Berlin/Brandenburg,
 | M1 | Plants, photos, growth measurements | ✅ |
 | M2 | Garden plan editor: layout, plants by drag and drop, view/edit mode | 🧪 built, in review |
 | M3 | Aerial imagery (WMS), own background image, sensor markers | 🧪 built, in review |
-| M4 | Irrigation zones linked to HA entities (display and tracking) | |
-| M5 | Weather, evapotranspiration, water balance | |
-| M6 | AI: HA AI Task, OpenAI-compatible, Claude, Gemini, Pl@ntNet; token & cost page | |
+| M4 | Irrigation zones linked to HA entities (display and tracking) | 🧪 built, in review |
+| M5 | Weather, evapotranspiration, water balance | 🧪 built, in review |
+| M6 | AI: HA AI Task, OpenAI-compatible, Claude, Gemini, Pl@ntNet; token & cost page | 🧪 built, in review |
 | M7 | Assistant: tasks, problems, questions, tips | |
 | M8 | Polish & release | |
 

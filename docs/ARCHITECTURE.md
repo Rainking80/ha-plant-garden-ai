@@ -1,7 +1,8 @@
 # Architecture
 
-Status: **M5** (weather and water balance; M2 to M5 await a
-hands-on check by the user in a real browser).
+Status: **M6** (AI layer: providers, identification, usage and costs; M2 to M6
+await a hands-on check by the user in a real browser, M6 also a live test with
+real API keys).
 This document describes what exists today and is updated with every milestone.
 The target picture is in [AGENT_SYSTEM_PROMPT.md](AGENT_SYSTEM_PROMPT.md).
 
@@ -25,7 +26,7 @@ Browser (HA frontend)                              Home Assistant core
 | Module | Responsibility |
 |---|---|
 | `__init__.py` | `async_setup`: static path, HTTP views, WebSocket commands (once per HA run). `async_setup_entry`: creates the `GardenManager` (DB errors → `ConfigEntryNotReady`), registers the panel. `async_unload_entry`: removes the panel, flushes and closes storage. |
-| `config_flow.py` | One step: garden name. `single_config_entry` limits it to one garden. Options: warning limit for long zone runs. |
+| `config_flow.py` | One step: garden name. `single_config_entry` limits it to one garden. Options: warning limit for long zone runs; AI: provider for photos and for text, monthly budget (warn at 80 %, optionally stop), USD → EUR rate, debug log (store prompts), log retention. Subentry types `weather` and `ai` (`ai/flow.py`). |
 | `models.py` | Dataclasses and enums: `Plant` (with per-field provenance `sources`, plan `position` and `crown_diameter_m`), `AgeReference`, `Photo`, `Measurement`, `Point`, `Shape`/`ShapeKind`, `GeoPoint`, `Layout`. Explicit `as_dict`/`from_dict`. |
 | `garden.py` | `GardenManager`: the only way to read or change data. Validates/normalises fields, records provenance, coordinates Store + SQLite + files, sets the plan origin from `zone.home` once (moving it later reprojects everything), notifies subscribers (`GardenChange` with `kind` plant / plant_removed / layout). |
 | `storage.py` | `GardenStore` (HA `Store`, key `plant_garden.garden`, version 1.2 with step-wise migrations; 1.2 added the layout). Holds plants and layout. Writes are delayed by 2 s to batch edits. |
@@ -37,14 +38,23 @@ Browser (HA frontend)                              Home Assistant core
 | `panel.py` | Serves `frontend/` under `/plant_garden_static`, registers the panel with a content-hash cache buster. |
 | `geometry.py` | Point-in-shape, areas, footprints of plants (linked areas or crown circle) and zone coverage on a 16 × 16 sample grid (same as the panel's `util/coverage.ts`). |
 | `irrigation.py` | `IrrigationTracker`: follows the entities linked to zones (`async_track_state_change_event`), persists open runs (Store `plant_garden.irrigation`), fills gaps from the recorder history on start, ignores runs under 5 s, marks runs ended by `unavailable` as uncertain, raises a repair issue for runs longer than the option `max_runtime_hours`, fires `plant_garden_irrigation_finished`. `distribute` turns a run into litres per plant (D-024). Keeps the water summary for the panel and the sensors. |
-| `sensor.py` | Sensors per plant (water received in L `total_increasing`, water today, last watering, soil water deficit), per zone (run time and litres today, recommended run time) and for the garden (ET₀ today, rain today, rain tomorrow). |
-| `services.py` | Actions `plant_garden.log_watering` (plant devices: litres each; zone devices: minutes) and `plant_garden.refresh_weather`. |
+| `sensor.py` | Sensors per plant (water received in L `total_increasing`, water today, last watering, soil water deficit), per zone (run time and litres today, recommended run time) and for the garden (ET₀ today, rain today, rain tomorrow, AI cost this month, AI tokens this month, AI requests today). |
+| `services.py` | Actions `plant_garden.log_watering` (plant devices: litres each; zone devices: minutes), `plant_garden.refresh_weather` and `plant_garden.identify_plant` (newest photos of a plant device, optional response). |
 | `et0.py` | FAO-56 Penman-Monteith (daily, with FAO fallbacks for missing humidity, wind, radiation) and Hargreaves-Samani; tested against the FAO-56 worked examples. |
 | `water_balance.py`, `water_defaults.json` | Soil water bucket per plant (TAW, RAW, K, effective rain, shelter by roofs), defaults with sources (D-026). |
 | `weather/` | Sources: `open_meteo.py`, `bright_sky.py` (hourly to daily), `home_assistant.py` (statistics + `weather.get_forecasts`); `base.py` `DailyWeather` with per-value merging. |
 | `water.py` | `WaterCoordinator` (DataUpdateCoordinator, hourly): fetches all weather subentries (own sensors first), merges, fills ET₀, stores the days, recomputes every plant's bucket (also 3 s after plant, layout or irrigation changes), frost warnings and zone advice; notifies `water`. |
 | `entity.py`, `binary_sensor.py` | Device handling shared by the platforms; binary sensors "needs water" (plant) and "irrigation recommended" (zone). |
-| `runtime.py` | `PlantGardenData` (manager, irrigation tracker) in `entry.runtime_data`; `get_manager(hass)`, `get_irrigation(hass)`. |
+| `ai/base.py` | Provider contract: `AIRequest` (system, messages with images, JSON schema, max output tokens, feature, plant), `AIResponse`, normalised `Usage` (input without cache, cache read, cache write, output, reasoning, images), `AIError`/`AuthError`/`BudgetExceededError`. |
+| `ai/http.py` | Plain aiohttp with HA's session: timeout, 2 retries on 429/5xx honouring `Retry-After` (max 30 s), 401/403 → `AuthError`. |
+| `ai/providers/` | `anthropic.py` (Messages API, structured output, prompt caching), `openai_compat.py` (OpenAI, OpenRouter, Ollama, LM Studio, any compatible URL; presets), `gemini.py` (generateContent, response schema), `ha_ai_task.py` (`ai_task.generate_data` with photos as media-source attachments; HA reports no tokens), `plantnet.py` (species candidates, no retries because failed calls cost credits). Each maps its usage fields to `Usage` (D-027). |
+| `ai/pricing.py`, `ai/pricing_defaults.json` | Prices per provider kind and model (USD per million tokens, as of 2026-11-08, with sources), prefix match for dated model ids, user overrides, cost of a call, rough estimate before a call. |
+| `ai/schemas.py`, `ai/prompts/` | Strict JSON schema of an identification and its cleaning; versioned prompts (`identify-1`) in German and English. |
+| `ai/service.py` | `AIService`: builds providers from subentries, budget check before every call, usage log, one JSON repair retry, Pl@ntNet first then the language model with the candidates, suggestions per field (never over user values), accept/reject, usage summary, daily purge of old log rows, status per provider (Store `plant_garden.ai`). |
+| `ai/flow.py` | Subentry flow `ai`: Home Assistant AI task entity, OpenAI-compatible (preset, URL), Anthropic, Gemini or Pl@ntNet; the key is tested before saving, then the model is picked from the provider's list. |
+| `media_source.py` | Media source `plant_garden`: plant photos (medium WebP) for `ai_task` attachments and HA's media browser. |
+| `websocket_ai.py` | The `ai/*` and `tech/info` commands below. |
+| `runtime.py` | `PlantGardenData` (manager, irrigation tracker, water coordinator, AI service) in `entry.runtime_data`; `get_manager`, `get_irrigation`, `get_water`, `get_ai`. |
 | `brand/` | `icon.png`, `icon@2x.png` (generated by `scripts/generate_brand.py`). |
 
 Validation uses `probatio` (HA's replacement for voluptuous since 2026.9).
@@ -59,6 +69,9 @@ Validation uses `probatio` (HA's replacement for voluptuous since 2026.9).
 | Running zones, history checked up to | `.storage/plant_garden.irrigation` |
 | Daily weather (merged, past days) | `<config>/plant_garden/plant_garden.db` table `weather_daily` (schema 3) |
 | Weather sources | config subentries of type `weather` |
+| AI providers (with their keys) | config subentries of type `ai` (keys never leave the backend; the panel and diagnostics see them masked) |
+| AI usage log and daily totals | `<config>/plant_garden/plant_garden.db` tables `ai_usage`, `ai_usage_daily` (schema 4); rows older than the retention are folded into the daily totals |
+| Own prices, last identification per plant, provider status | `.storage/plant_garden.ai` |
 | Image files | `<config>/plant_garden/photos/<plant_id>/<photo_id>{.jpg,.medium.webp,.thumb.webp}` |
 
 Nothing is keyed by config entry id: removing and re-adding the integration keeps the garden.
@@ -68,7 +81,7 @@ Nothing is keyed by config entry id: removing and re-adding the integration keep
 | Command | Purpose |
 |---|---|
 | `info` | entry id, garden name, version, admin flag |
-| `subscribe` | events `{kind: "plant" | "plant_removed" | "layout" | "irrigation", plant_id, shape_id}` on every change; clients refetch |\| "plant_removed", plant_id}` on every change; clients refetch |
+| `subscribe` | events `{kind, plant_id, shape_id}` on every change, kind one of plant, plant_removed, layout, irrigation, water, ai; clients refetch |
 | `plants/list` | all plants incl. `age_months_now`, `photo_count`, `cover` (signed URLs), latest `height_cm`/`width_cm` |
 | `plants/get` | plant + photos (newest first) + measurements (oldest first) |
 | `plants/create`, `plants/update` | fields as in `models.EDITABLE_FIELDS`; every field sent is recorded with source `user` |
@@ -90,6 +103,14 @@ Nothing is keyed by config entry id: removing and re-adding the integration keep
 | `irrigation/delete` | removes an event and its water |
 | `water/summary` | `configured`, source status, weather of the last 14 days and the forecast (with ET₀ method), soil water per plant (deficit, TAW, RAW, soil, needs water, frost, 14 days of the bucket), advice per zone |
 | `water/refresh` | fetches the weather now and returns the summary |
+| `ai/status` | is a provider set up for photos, is Pl@ntNet there, display currency |
+| `ai/estimate` | rough cost of an identification with n photos |
+| `ai/identify` | `{plant_id, photos: [{photo_id, organ}]}` (1–3); errors `ai_error`, `budget_exceeded` |
+| `ai/identification`, `ai/decide` | last result of a plant with its suggestions; take over or dismiss one (`{key, accept}`) |
+| `ai/test` (admin) | test the connection of one provider |
+| `ai/usage/summary`, `ai/usage/log` (admin) | totals today, month, overall; breakdowns by provider, model, feature, plant; cost per day and model; single calls with filters and paging |
+| `ai/pricing/get`, `ai/pricing/set` (admin) | price table with sources; own price per model (`null` removes it) |
+| `tech/info` (admin) | version, storage, entities, weather source status, providers (masked keys) |
 
 Plan coordinates are metres east (x) and south (y) of the origin (D-017, D-022),
 at most 10 km (`const.PLAN_EXTENT_M`); `geo.py` mirrors the panel's projection
@@ -107,7 +128,7 @@ geometry is one of `rect` (centre, width, height, rotation in degrees clockwise)
 ## Frontend (`frontend/`)
 
 - TypeScript (strict) + Lit 3, built by Vite 8 in library mode into **one ES module** in `custom_components/plant_garden/frontend/` (≈71 KB gzip).
-- Routing: HA passes `route.path`; `""` → garden plan, `/plan/<id>` → plan centred on a plant, `/plants` → plant list, `/plants/<id>` → detail, `/water` → water and weather (`views/water-view.ts`: rain/ET₀ chart with forecast, soil water of every plant, zone advice, source status, refresh; a setup hint without sources). Tabs switch between plan and list; "back" from a plant returns to whichever was used last. Navigation uses `history.pushState` + `location-changed`, so the browser back button and deep links work.
+- Routing: HA passes `route.path`; `""` → garden plan, `/plan/<id>` → plan centred on a plant, `/plants` → plant list, `/plants/<id>` → detail, `/water` → water and weather (`views/water-view.ts`: rain/ET₀ chart with forecast, soil water of every plant, zone advice, source status, refresh; a setup hint without sources), `/tech` → tech page (admins). Tabs switch between the views; "back" from a plant returns to whichever was used last. Navigation uses `history.pushState` + `location-changed`, so the browser back button and deep links work.
 - Garden plan (`views/garden-view.ts` + `components/garden-canvas.ts`):
   - The canvas is one SVG whose user units are metres. **Pan and zoom never re-render Lit**: they set the `viewBox`, a `--mpp` (metres per pixel) CSS variable used for constant-size strokes, labels and handles, and redraw the grid path directly. Zoom-dependent minimum sizes re-render once zooming pauses.
   - Pointer Events for mouse, pen and touch (`touch-action: none`), two-finger pinch, wheel zoom around the cursor. View mode: drag pans, tap/hover shows the info card. Edit mode: drag moves plants and shapes, handles resize rectangles (also rotated), circles, polygon vertices (midpoints insert, double click removes) and crowns; tools draw rectangles, circles and polygons; snapping to a selectable grid (Alt disables).
@@ -124,7 +145,8 @@ geometry is one of `rect` (centre, width, height, rotation in degrees clockwise)
 - GPS suggestion (`util/exif.ts`, `util/upload.ts`): EXIF GPS → plan metres (`geoToPlan`), only within 1 km of home; offered in the create dialog and after uploads on the plant page (D-020).
 - `state/garden-store.ts`: plants, layout and the water summary + backend subscription; debounced refresh on change events (`irrigation` events reload only the water summary); "stale" after 1 h. The panel refreshes stale data when the tab becomes visible and every 15 min, so signed URLs (24 h) never expire in an open panel.
 - Components (`src/components/`): `PgElement` base (hass + cached `t`), plant card, plant form dialog (create/edit; sends only changed fields so provenance of untouched fields is kept), photo viewer (tags, note, cover, delete, keyboard navigation), growth chart (SVG, ResizeObserver), confirm dialog. Native `<dialog>` everywhere.
-- Views (`src/views/`): plant list (search, status filter, empty state, FAB), plant detail (profile with provenance marks, notes, growth chart + measurements, water (`components/water-panel.ts`: today, total, 14-day bars, latest events with delete, "log watering"), photo timeline by month, drag-and-drop upload).
+- Views (`src/views/`): plant list (search, status filter, empty state, FAB), plant detail (profile with provenance marks, notes, growth chart + measurements, water (`components/water-panel.ts`: today, total, 14-day bars, latest events with delete, "log watering"), AI identification (`components/ai-panel.ts`: pick 1–3 photos and what they show, cost estimate, result with confidence, Pl@ntNet attribution, suggestions to take over or dismiss one by one, questions), photo timeline by month, drag-and-drop upload).
+- Tech page (`views/tech-view.ts`, `/tech`, tab only for admins): AI cost, requests and tokens today / this month / overall, budget bar, stacked cost per day and model, breakdowns, request log with filters, paging and CSV export, providers with "test connection", price editor, storage, entities and weather sources.
 - Theme: tokens on the panel root only (`styles/tokens.ts`, HA theme variables + nature palette, `dark` attribute); nested elements inherit them. Shared controls in `styles/shared.ts`.
 - No HA-internal `ha-*` elements; icons from `@mdi/js`.
 - i18n: `src/i18n/en.ts` defines keys, `de.ts` must match (tests check keys and placeholders).
