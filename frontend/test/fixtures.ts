@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 
-import type { Photo, Plant, PlantDetail } from "../src/api/types";
+import type { Photo, Plant, PlantDetail, Point, Shape } from "../src/api/types";
 import type { HomeAssistant } from "../src/types/hass";
 
 export function makePlant(overrides: Partial<Plant> = {}): Plant {
@@ -25,6 +25,8 @@ export function makePlant(overrides: Partial<Plant> = {}): Plant {
     created_at: "2026-06-01T08:00:00+00:00",
     updated_at: "2026-06-01T08:00:00+00:00",
     cover_photo_id: null,
+    position: null,
+    crown_diameter_m: null,
     sources: {
       name: {
         source: "user",
@@ -68,31 +70,67 @@ export interface FakeBackend {
   hass: HomeAssistant;
   callWS: ReturnType<typeof vi.fn>;
   /** Push a change event as the backend subscription would. */
-  emit: (event: { kind: "plant" | "plant_removed"; plant_id: string }) => void;
+  emit: (event: {
+    kind: "plant" | "plant_removed" | "layout";
+    plant_id?: string | null;
+    shape_id?: string | null;
+  }) => void;
   plants: Plant[];
+  shapes: Shape[];
   details: Record<string, PlantDetail>;
 }
 
 /** A hass object whose callWS answers the plant_garden commands from in-memory data. */
 export function fakeBackend(
-  options: { plants?: Plant[]; details?: Record<string, PlantDetail>; language?: string } = {},
+  options: {
+    plants?: Plant[];
+    shapes?: Shape[];
+    details?: Record<string, PlantDetail>;
+    language?: string;
+  } = {},
 ): FakeBackend {
   const backend = {
     plants: options.plants ?? [],
+    shapes: options.shapes ?? [],
     details: options.details ?? {},
   } as FakeBackend;
   let listener: ((event: unknown) => void) | undefined;
-  backend.callWS = vi.fn(async (msg: { type: string; plant_id?: string }) => {
+  backend.callWS = vi.fn(async (msg: Record<string, unknown> & { type: string }) => {
     switch (msg.type) {
       case "plant_garden/info":
         return { entry_id: "e", garden_name: "Schrebergarten", version: "0.1.0", is_admin: true };
       case "plant_garden/plants/list":
         return { plants: backend.plants };
       case "plant_garden/plants/get": {
-        const detail = backend.details[msg.plant_id ?? ""];
+        const detail = backend.details[String(msg.plant_id ?? "")];
         if (!detail) throw { code: "not_found", message: "Not found" };
         return detail;
       }
+      case "plant_garden/layout/get":
+        return { origin: { latitude: 52.4, longitude: 13.06 }, shapes: backend.shapes };
+      case "plant_garden/plants/move": {
+        const moves = msg.moves as { plant_id: string; position: Point | null }[];
+        backend.plants = backend.plants.map((plant) => {
+          const move = moves.find((m) => m.plant_id === plant.id);
+          return move ? { ...plant, position: move.position } : plant;
+        });
+        return { positions: {} };
+      }
+      case "plant_garden/plants/update": {
+        const { type: _type, plant_id: plantId, ...fields } = msg;
+        backend.plants = backend.plants.map((plant) =>
+          plant.id === plantId ? { ...plant, ...fields } : plant,
+        );
+        return backend.plants.find((plant) => plant.id === plantId);
+      }
+      case "plant_garden/layout/shapes/save": {
+        const shape = msg.shape as Shape;
+        backend.shapes = [...backend.shapes.filter((s) => s.id !== shape.id), shape];
+        return shape;
+      }
+      case "plant_garden/layout/shapes/delete":
+        backend.shapes = backend.shapes.filter((s) => s.id !== msg.shape_id);
+        return null;
       default:
         throw new Error(`unexpected ${msg.type}`);
     }

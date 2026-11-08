@@ -1,6 +1,6 @@
 # Plant Garden for Home Assistant
 
-> **Status: early development (0.1.0).** Plants, photos and growth measurements work; the garden plan, irrigation tracking, water balance and AI features are being built step by step (see [roadmap](#roadmap)).
+> **Status: early development (0.1.0).** Plants, photos, growth measurements and the garden plan editor work; aerial imagery, irrigation tracking, water balance and AI features are being built step by step (see [roadmap](#roadmap)).
 
 Plant Garden turns Home Assistant into a garden planner and plant journal:
 
@@ -32,7 +32,7 @@ Photos are stored in `<config>/plant_garden/` (three sizes per photo, metadata s
 |---|---|---|
 | M0 | Scaffolding, CI, dev environment, sidebar panel | ✅ |
 | M1 | Plants, photos, growth measurements | ✅ |
-| M2 | Garden plan editor: layout, plants by drag and drop, view/edit mode | ⏳ |
+| M2 | Garden plan editor: layout, plants by drag and drop, view/edit mode | 🧪 built, in review |
 | M3 | Aerial imagery (WMS), own background image, sensor markers | |
 | M4 | Irrigation zones linked to HA entities (display and tracking) | |
 | M5 | Weather, evapotranspiration, water balance | |

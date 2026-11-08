@@ -9,17 +9,25 @@ import { shared } from "./styles/shared";
 import { tokens } from "./styles/tokens";
 import type { HomeAssistant, PanelInfo, PlantGardenPanelConfig, Route } from "./types/hass";
 import { navigate } from "./util/navigate";
+import "./views/garden-view";
 import "./views/plant-detail";
 import "./views/plants-view";
 
-export type View = { name: "plants" } | { name: "plant"; plantId: string };
+export type View =
+  | { name: "plan"; focusPlantId: string | null }
+  | { name: "plants" }
+  | { name: "plant"; plantId: string };
 
 const FRESHNESS_CHECK_MS = 15 * 60 * 1000;
 
 /** Map the part of the URL after the panel prefix to a view. */
 export function parseRoute(path: string | undefined): View {
-  const match = /^\/plants\/([0-9A-Za-z]+)\/?$/.exec(path ?? "");
-  return match?.[1] ? { name: "plant", plantId: match[1] } : { name: "plants" };
+  const value = path ?? "";
+  const plant = /^\/plants\/([0-9A-Za-z]+)\/?$/.exec(value);
+  if (plant?.[1]) return { name: "plant", plantId: plant[1] };
+  if (/^\/plants\/?$/.test(value)) return { name: "plants" };
+  const focus = /^\/plan\/([0-9A-Za-z]+)\/?$/.exec(value);
+  return { name: "plan", focusPlantId: focus?.[1] ?? null };
 }
 
 export class PlantGardenPanel extends LitElement {
@@ -43,7 +51,8 @@ export class PlantGardenPanel extends LitElement {
   private _started = false;
   private _localize: Localize = createLocalize("en");
   private _language = "";
-
+  /** Where "back" from a plant goes: the plan or the list, whichever was used last. */
+  private _lastList: "plan" | "plants" = "plan";
   private _freshnessTimer?: ReturnType<typeof setInterval>;
 
   private readonly _onStoreChange = () => this.requestUpdate();
@@ -74,6 +83,10 @@ export class PlantGardenPanel extends LitElement {
   }
 
   protected override willUpdate(changed: PropertyValues): void {
+    if (changed.has("route")) {
+      const view = parseRoute(this.route?.path);
+      if (view.name !== "plant") this._lastList = view.name;
+    }
     if (!changed.has("hass") || !this.hass) return;
     const language = this.hass.locale?.language ?? this.hass.language;
     if (language !== this._language) {
@@ -116,8 +129,8 @@ export class PlantGardenPanel extends LitElement {
     const t = this._localize;
     const view = parseRoute(this.route?.path);
     const gardenName = this._info?.garden_name ?? this.panel?.title ?? "Plant Garden";
-    const title =
-      view.name === "plant" ? (this._store.getPlant(view.plantId)?.name ?? gardenName) : gardenName;
+    const plantName =
+      view.name === "plant" ? (this._store.getPlant(view.plantId)?.name ?? gardenName) : "";
 
     return html`
       <header class="toolbar">
@@ -125,7 +138,8 @@ export class PlantGardenPanel extends LitElement {
           view.name === "plant"
             ? html`<button
                 class="icon-button"
-                @click=${() => navigate(this._prefix)}
+                @click=${() =>
+                  navigate(this._lastList === "plants" ? `${this._prefix}/plants` : this._prefix)}
                 aria-label=${t("panel.back")}
                 title=${t("panel.back")}
               >
@@ -142,10 +156,36 @@ export class PlantGardenPanel extends LitElement {
                 </button>`
               : nothing
         }
-        <h1>${title}</h1>
+        <h1>${view.name === "plant" ? plantName : gardenName}</h1>
+        ${
+          view.name === "plant"
+            ? nothing
+            : html`<nav class="tabs">
+                <a
+                  href=${this._prefix}
+                  aria-current=${view.name === "plan" ? "page" : "false"}
+                  @click=${(e: MouseEvent) => this._go(e, this._prefix)}
+                  >${t("nav.plan")}</a
+                >
+                <a
+                  href="${this._prefix}/plants"
+                  aria-current=${view.name === "plants" ? "page" : "false"}
+                  @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/plants`)}
+                  >${t("nav.plants")}</a
+                >
+              </nav>`
+        }
       </header>
-      <main>${this._renderBody(t, view, gardenName)}</main>
+      <main class=${view.name === "plan" ? "full" : ""}>
+        ${this._renderBody(t, view, gardenName)}
+      </main>
     `;
+  }
+
+  private _go(event: MouseEvent, path: string): void {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return;
+    event.preventDefault();
+    navigate(path);
   }
 
   private _renderBody(t: Localize, view: View, gardenName: string) {
@@ -166,20 +206,29 @@ export class PlantGardenPanel extends LitElement {
     if (!this._store.loaded || !this._info) {
       return html`<p class="muted loading" aria-live="polite">${t("panel.loading")}</p>`;
     }
-    if (view.name === "plant") {
-      return html`<pg-plant-detail
-        .hass=${this.hass}
-        .store=${this._store}
-        .plantId=${view.plantId}
-        .prefix=${this._prefix}
-      ></pg-plant-detail>`;
+    switch (view.name) {
+      case "plant":
+        return html`<pg-plant-detail
+          .hass=${this.hass}
+          .store=${this._store}
+          .plantId=${view.plantId}
+          .prefix=${this._prefix}
+        ></pg-plant-detail>`;
+      case "plants":
+        return html`<pg-plants-view
+          .hass=${this.hass}
+          .store=${this._store}
+          .gardenName=${gardenName}
+          .prefix=${this._prefix}
+        ></pg-plants-view>`;
+      default:
+        return html`<pg-garden-view
+          .hass=${this.hass}
+          .store=${this._store}
+          .prefix=${this._prefix}
+          .focusPlantId=${view.focusPlantId}
+        ></pg-garden-view>`;
     }
-    return html`<pg-plants-view
-      .hass=${this.hass}
-      .store=${this._store}
-      .gardenName=${gardenName}
-      .prefix=${this._prefix}
-    ></pg-plants-view>`;
   }
 
   static override styles = [
@@ -187,8 +236,10 @@ export class PlantGardenPanel extends LitElement {
     shared,
     css`
       :host {
-        display: block;
+        display: flex;
+        flex-direction: column;
         min-height: 100%;
+        height: 100%;
         background: var(--pg-bg);
         color: var(--pg-text);
         font-family: var(--pg-font);
@@ -201,6 +252,7 @@ export class PlantGardenPanel extends LitElement {
         display: flex;
         align-items: center;
         gap: 4px;
+        flex: none;
         height: var(--header-height, 56px);
         padding: 0 12px;
         background: var(--app-header-background-color, var(--pg-accent));
@@ -208,23 +260,58 @@ export class PlantGardenPanel extends LitElement {
         border-bottom: var(--app-header-border-bottom, none);
       }
       .toolbar h1 {
-        margin: 0 0 0 8px;
+        margin: 0 12px 0 8px;
         font-size: 20px;
         font-weight: 400;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      .tabs {
+        display: flex;
+        align-self: stretch;
+        margin-left: auto;
+      }
+      .tabs a {
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        color: inherit;
+        text-decoration: none;
+        opacity: 0.75;
+        border-bottom: 3px solid transparent;
+        font-weight: 500;
+        font-size: 14px;
+      }
+      .tabs a[aria-current="page"] {
+        opacity: 1;
+        border-bottom-color: currentColor;
+      }
+      .tabs a:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: -4px;
+      }
       main {
+        flex: 1;
+        width: 100%;
         max-width: 1200px;
         margin: 0 auto;
         padding: 20px 16px 32px;
+        box-sizing: border-box;
+      }
+      main.full {
+        max-width: none;
+        padding: 0;
+        min-height: 0;
+        height: calc(100vh - var(--header-height, 56px));
+        height: calc(100dvh - var(--header-height, 56px));
       }
       .loading {
         text-align: center;
         padding: 48px 0;
       }
       .state {
+        margin: 20px 16px;
         padding: 32px 24px;
         text-align: center;
         display: grid;
@@ -242,6 +329,15 @@ export class PlantGardenPanel extends LitElement {
       }
       .state .button {
         margin-top: 12px;
+      }
+      @media (max-width: 520px) {
+        .toolbar h1 {
+          font-size: 18px;
+          margin-right: 4px;
+        }
+        .tabs a {
+          padding: 0 10px;
+        }
       }
     `,
   ];

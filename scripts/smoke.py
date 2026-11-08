@@ -161,8 +161,33 @@ async def check_plants_and_photos(
         detail = await call(type="plant_garden/plants/get", plant_id=plant["id"])
         assert detail["plant"]["photo_count"] == 1, detail
         assert detail["plant"]["height_cm"] == 35, detail
+        print("  measurement added")
+
+        # garden plan: a bed, the plant inside it
+        layout = await call(type="plant_garden/layout/get")
+        assert layout["origin"], layout
+        bed = await call(
+            type="plant_garden/layout/shapes/save",
+            shape={
+                "kind": "bed",
+                "label": "Smoke-Beet",
+                "geometry": {"type": "rect", "cx": 2, "cy": 1, "w": 4, "h": 2, "rotation": 10},
+            },
+        )
+        await call(
+            type="plant_garden/plants/move",
+            moves=[{"plant_id": plant["id"], "position": {"x": 2, "y": 1}}],
+        )
+        layout = await call(type="plant_garden/layout/get")
+        assert [s["id"] for s in layout["shapes"]] == [bed["id"]], layout
+        plants = await call(type="plant_garden/plants/list")
+        placed = {p["id"]: p["position"] for p in plants["plants"]}
+        assert placed[plant["id"]] == {"x": 2.0, "y": 1.0}, placed
+        print(f"  plan: origin {layout['origin']}, bed saved, plant placed")
+
+        await call(type="plant_garden/layout/shapes/delete", shape_id=bed["id"])
         await call(type="plant_garden/plants/delete", plant_id=plant["id"])
-        print("  measurement added, plant deleted")
+        print("  bed and plant deleted")
 
 
 async def main(base: str) -> None:

@@ -164,10 +164,34 @@ ENUM_FIELDS: dict[str, type[StrEnum]] = {
     "soil_type": SoilType,
     "status": PlantStatus,
 }
-NUMBER_FIELDS = ("min_temperature_c", "root_depth_cm")
+NUMBER_FIELDS = ("min_temperature_c", "root_depth_cm", "crown_diameter_m")
 EDITABLE_FIELDS = frozenset(
-    ("name", *TEXT_FIELDS, *ENUM_FIELDS, *NUMBER_FIELDS, "planted_on", "age", "tags")
+    (
+        "name",
+        *TEXT_FIELDS,
+        *ENUM_FIELDS,
+        *NUMBER_FIELDS,
+        "planted_on",
+        "age",
+        "tags",
+        "position",
+    )
 )
+
+
+@dataclass(slots=True, frozen=True)
+class Point:
+    """A position on the plan: metres east (x) and south (y) of the origin."""
+
+    x: float
+    y: float
+
+    def as_dict(self) -> dict[str, float]:
+        return {"x": self.x, "y": self.y}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(x=float(data["x"]), y=float(data["y"]))
 
 
 @dataclass(slots=True, kw_only=True)
@@ -194,6 +218,10 @@ class Plant:
     age: AgeReference | None = None
     tags: list[str] = field(default_factory=list)
     cover_photo_id: str | None = None
+    # Garden plan: None = not placed yet. The crown diameter is the size drawn on
+    # the plan; without it the panel falls back to the measured width.
+    position: Point | None = None
+    crown_diameter_m: float | None = None
     sources: dict[str, FieldSource] = field(default_factory=dict)
 
     def age_months(self, today: date) -> int | None:
@@ -214,6 +242,7 @@ class Plant:
             "age": self.age.as_dict() if self.age else None,
             "tags": list(self.tags),
             "cover_photo_id": self.cover_photo_id,
+            "position": self.position.as_dict() if self.position else None,
             "sources": {key: src.as_dict() for key, src in self.sources.items()},
         }
         for key in (*TEXT_FIELDS, *NUMBER_FIELDS):
@@ -234,6 +263,7 @@ class Plant:
             "age": AgeReference.from_dict(data["age"]) if data.get("age") else None,
             "tags": list(data.get("tags", [])),
             "cover_photo_id": data.get("cover_photo_id"),
+            "position": Point.from_dict(data["position"]) if data.get("position") else None,
             "sources": {
                 key: FieldSource.from_dict(src) for key, src in data.get("sources", {}).items()
             },
@@ -244,6 +274,106 @@ class Plant:
             if data.get(key) is not None:
                 kwargs[key] = enum(data[key])
         return cls(**kwargs)
+
+
+class ShapeKind(StrEnum):
+    """Elements of the garden layout."""
+
+    BOUNDARY = "boundary"
+    HOUSE = "house"
+    TERRACE = "terrace"
+    PATH = "path"
+    BED = "bed"
+    RAISED_BED = "raised_bed"
+    LAWN = "lawn"
+    HEDGE = "hedge"
+    POND = "pond"
+    GREENHOUSE = "greenhouse"
+    ROOF = "roof"
+    OTHER = "other"
+
+
+@dataclass(slots=True, kw_only=True)
+class Shape:
+    """One element of the layout.
+
+    `geometry` is one of (all in plan metres, see Point):
+      {"type": "rect", "cx", "cy", "w", "h", "rotation"}   rotation in degrees, clockwise
+      {"type": "circle", "cx", "cy", "r"}
+      {"type": "polygon", "points": [[x, y], ...]}
+    It is validated by the WebSocket schema and stored as is.
+    """
+
+    id: str
+    kind: ShapeKind
+    geometry: dict[str, Any]
+    label: str | None = None
+    plant_id: str | None = None
+    soil_type: SoilType | None = None
+    locked: bool = False
+    z: int = 0
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "kind": self.kind.value,
+            "geometry": self.geometry,
+            "label": self.label,
+            "plant_id": self.plant_id,
+            "soil_type": self.soil_type.value if self.soil_type else None,
+            "locked": self.locked,
+            "z": self.z,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(
+            id=data["id"],
+            kind=ShapeKind(data["kind"]),
+            geometry=data["geometry"],
+            label=data.get("label"),
+            plant_id=data.get("plant_id"),
+            soil_type=SoilType(data["soil_type"]) if data.get("soil_type") else None,
+            locked=bool(data.get("locked", False)),
+            z=int(data.get("z", 0)),
+        )
+
+
+@dataclass(slots=True, frozen=True)
+class GeoPoint:
+    """Latitude/longitude of the plan origin."""
+
+    latitude: float
+    longitude: float
+
+    def as_dict(self) -> dict[str, float]:
+        return {"latitude": self.latitude, "longitude": self.longitude}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(latitude=float(data["latitude"]), longitude=float(data["longitude"]))
+
+
+@dataclass(slots=True, kw_only=True)
+class Layout:
+    """The garden plan apart from the plants (which carry their own position)."""
+
+    origin: GeoPoint | None = None
+    shapes: dict[str, Shape] = field(default_factory=dict)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "origin": self.origin.as_dict() if self.origin else None,
+            "shapes": [shape.as_dict() for shape in self.shapes.values()],
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        shapes = [Shape.from_dict(item) for item in data.get("shapes", [])]
+        return cls(
+            origin=GeoPoint.from_dict(data["origin"]) if data.get("origin") else None,
+            shapes={shape.id: shape for shape in shapes},
+        )
 
 
 @dataclass(slots=True, kw_only=True)

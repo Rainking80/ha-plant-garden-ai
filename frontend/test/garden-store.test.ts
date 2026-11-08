@@ -44,10 +44,45 @@ describe("GardenStore", () => {
     const store = new GardenStore(() => backend.hass);
     expect(store.stale).toBe(true);
     await Promise.all([store.refresh(), store.refresh()]);
-    expect(backend.callWS).toHaveBeenCalledTimes(1);
+    // one refresh = plants + layout
+    expect(backend.callWS.mock.calls.map(([msg]) => (msg as { type: string }).type)).toEqual([
+      "plant_garden/plants/list",
+      "plant_garden/layout/get",
+    ]);
+    expect(store.layout?.origin).toEqual({ latitude: 52.4, longitude: 13.06 });
     expect(store.stale).toBe(false);
     store.lastRefresh = Date.now() - STALE_AFTER_MS - 1;
     expect(store.stale).toBe(true);
+  });
+
+  it("applies optimistic edits and reloads on layout events", async () => {
+    vi.useFakeTimers();
+    const backend = fakeBackend({ plants: [makePlant({ id: "A" })] });
+    const store = new GardenStore(() => backend.hass);
+    await store.connect();
+    const changes = vi.fn();
+    store.addEventListener("change", changes);
+
+    store.patchPlant("A", { position: { x: 1, y: 2 } });
+    expect(store.getPlant("A")?.position).toEqual({ x: 1, y: 2 });
+    store.putShape({
+      id: "S",
+      kind: "bed",
+      geometry: { type: "circle", cx: 0, cy: 0, r: 1 },
+      label: null,
+      plant_id: null,
+      soil_type: null,
+      locked: false,
+      z: 0,
+    });
+    expect(store.getShape("S")).toBeDefined();
+    store.removeShape("S");
+    expect(store.getShape("S")).toBeUndefined();
+    expect(changes).toHaveBeenCalledTimes(3);
+
+    backend.emit({ kind: "layout", shape_id: "S" });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(changes).toHaveBeenCalledTimes(4);
   });
 
   it("reports errors", async () => {

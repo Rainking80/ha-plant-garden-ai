@@ -8,6 +8,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M2 garden plan (new start page of the panel, tabs "Garden plan" / "Plants"):
+  - To-scale plan in metres around your Home Assistant home location, north up,
+    with grid, scale bar and "show everything".
+  - View mode (tap or hover a plant for photo, age, height and a link to its
+    details; nothing can be moved by accident) and edit mode.
+  - Draw beds, raised beds, lawn, hedges, terraces, paths, buildings,
+    greenhouses, roofs, ponds and the property boundary as rectangles (rotatable),
+    circles or polygons; label them, set the soil of beds, link an area to a
+    plant (e.g. lawn), lock elements, see their area.
+  - Place plants by drag and drop from a tray (or tap plant, then spot on
+    touch screens); plants show as photo circles in crown size with a status
+    ring; crown size adjustable with a handle.
+  - Undo/redo (also Ctrl+Z / Ctrl+Y), grid snapping (Alt for free placement),
+    pinch and wheel zoom, live updates from other devices.
+  - "Show on plan" button on the plant page.
 - M1 plants and photos:
   - Plant list with search, status filter and an empty state; plant detail with
     profile, notes, growth chart, measurements and a photo timeline by month.

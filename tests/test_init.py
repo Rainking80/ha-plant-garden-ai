@@ -21,7 +21,7 @@ from custom_components.plant_garden.const import (
 from custom_components.plant_garden.database import DatabaseError
 from custom_components.plant_garden.panel import _bundle_fingerprint
 from custom_components.plant_garden.runtime import get_manager
-from custom_components.plant_garden.storage import STORAGE_KEY
+from custom_components.plant_garden.storage import STORAGE_KEY, STORAGE_MINOR_VERSION
 
 from .images import make_image
 
@@ -61,12 +61,41 @@ async def test_setup_retries_when_database_fails(
 async def test_old_store_is_migrated(
     hass: HomeAssistant, hass_storage: dict, mock_config_entry: MockConfigEntry
 ) -> None:
+    """A 1.1 store (plants only, as written by M1) gains an empty layout."""
+    plant = {
+        "id": "01JPLANT00000000000000000A",
+        "name": "Feige",
+        "created_at": "2026-06-01T08:00:00+00:00",
+        "updated_at": "2026-06-01T08:00:00+00:00",
+    }
+    hass_storage[STORAGE_KEY] = {
+        "version": 1,
+        "minor_version": 1,
+        "key": STORAGE_KEY,
+        "data": {"plants": [plant]},
+    }
+    hass.config.latitude, hass.config.longitude = 52.4, 13.06
+    await _setup(hass, mock_config_entry)
+    manager = get_manager(hass)
+    assert manager is not None
+    assert [p.name for p in manager.plants] == ["Feige"]
+    assert manager.plants[0].position is None
+    assert manager.layout.shapes == {}
+    # the origin is taken from HA's home location once
+    assert manager.layout.origin is not None
+    assert (manager.layout.origin.latitude, manager.layout.origin.longitude) == (52.4, 13.06)
+    assert hass_storage[STORAGE_KEY]["minor_version"] == STORAGE_MINOR_VERSION
+
+
+async def test_store_from_before_plants_is_migrated(
+    hass: HomeAssistant, hass_storage: dict, mock_config_entry: MockConfigEntry
+) -> None:
     hass_storage[STORAGE_KEY] = {"version": 1, "minor_version": 0, "key": STORAGE_KEY, "data": {}}
     await _setup(hass, mock_config_entry)
     manager = get_manager(hass)
     assert manager is not None
     assert manager.plants == []
-    assert hass_storage[STORAGE_KEY]["minor_version"] == 1
+    assert manager.layout.shapes == {}
 
 
 async def _setup(hass: HomeAssistant, entry: MockConfigEntry) -> None:

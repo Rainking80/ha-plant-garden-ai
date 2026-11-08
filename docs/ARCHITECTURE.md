@@ -1,8 +1,8 @@
 # Architecture
 
-Status: **M1** (plants, photos, measurements). This document describes what exists
-today and is updated with every milestone. The target picture is in
-[AGENT_SYSTEM_PROMPT.md](AGENT_SYSTEM_PROMPT.md).
+Status: **M2** (garden plan editor; awaiting a hands-on check in a real browser).
+This document describes what exists today and is updated with every milestone.
+The target picture is in [AGENT_SYSTEM_PROMPT.md](AGENT_SYSTEM_PROMPT.md).
 
 ## Overview
 
@@ -25,9 +25,9 @@ Browser (HA frontend)                              Home Assistant core
 |---|---|
 | `__init__.py` | `async_setup`: static path, HTTP views, WebSocket commands (once per HA run). `async_setup_entry`: creates the `GardenManager` (DB errors → `ConfigEntryNotReady`), registers the panel. `async_unload_entry`: removes the panel, flushes and closes storage. |
 | `config_flow.py` | One step: garden name. `single_config_entry` limits it to one garden. |
-| `models.py` | Dataclasses and enums: `Plant` (with per-field provenance `sources`), `AgeReference`, `Photo`, `Measurement`. Explicit `as_dict`/`from_dict`. |
-| `garden.py` | `GardenManager`: the only way to read or change data. Validates/normalises fields, records provenance, coordinates Store + SQLite + files, notifies subscribers (`GardenChange`). |
-| `storage.py` | `GardenStore` (HA `Store`, key `plant_garden.garden`, version 1.1, migration hook). Holds plants. Writes are delayed by 2 s to batch edits. |
+| `models.py` | Dataclasses and enums: `Plant` (with per-field provenance `sources`, plan `position` and `crown_diameter_m`), `AgeReference`, `Photo`, `Measurement`, `Point`, `Shape`/`ShapeKind`, `GeoPoint`, `Layout`. Explicit `as_dict`/`from_dict`. |
+| `garden.py` | `GardenManager`: the only way to read or change data. Validates/normalises fields, records provenance, coordinates Store + SQLite + files, sets the plan origin from `zone.home` once, notifies subscribers (`GardenChange` with `kind` plant / plant_removed / layout). |
+| `storage.py` | `GardenStore` (HA `Store`, key `plant_garden.garden`, version 1.2 with step-wise migrations; 1.2 added the layout). Holds plants and layout. Writes are delayed by 2 s to batch edits. |
 | `database.py` | `GardenDatabase`: SQLite in WAL mode, schema migrations via `PRAGMA user_version`. Tables `photos`, `measurements`. Blocking; always called through the executor; a lock serialises access. |
 | `photos.py` | `process_image` (Pillow, executor): validates format/pixel count, reads EXIF capture time, applies EXIF orientation, strips all metadata, renders `original` (≤2560 px JPEG), `medium` (1024 px WebP), `thumb` (360 px WebP). `PhotoFiles` writes atomically; IDs must be ULIDs (no path tricks). |
 | `http.py` | `POST /api/plant_garden/photos` (multipart: plant_id, file, taken_at, tags, note; 20 MB limit). `GET /api/plant_garden/photos/{id}/{variant}` with its own auth check (see D-011). |
@@ -43,7 +43,7 @@ Validation uses `probatio` (HA's replacement for voluptuous since 2026.9).
 
 | What | Where |
 |---|---|
-| Plants | `.storage/plant_garden.garden` |
+| Plants, plan origin and shapes | `.storage/plant_garden.garden` |
 | Photos and measurements (metadata) | `<config>/plant_garden/plant_garden.db` |
 | Image files | `<config>/plant_garden/photos/<plant_id>/<photo_id>{.jpg,.medium.webp,.thumb.webp}` |
 
@@ -62,6 +62,15 @@ Nothing is keyed by config entry id: removing and re-adding the integration keep
 | `plants/set_cover` | photo must belong to the plant; `null` = newest photo |
 | `photos/update`, `photos/delete` | tags, note, taken_at |
 | `measurements/add`, `measurements/update`, `measurements/delete` | height and/or width in cm; editing an AI estimate turns it into a user value |
+| `plants/move` | set or clear the plan position of up to 1000 plants in one save |
+| `layout/get` | origin (lat/lon) and shapes in drawing order (z) |
+| `layout/shapes/save` | create or replace a shape; the client may choose the id (ULID) so that undoing a delete restores the same element |
+| `layout/shapes/delete` | |
+
+Plan coordinates are metres east (x) and south (y) of the origin (D-017). Shape
+geometry is one of `rect` (centre, width, height, rotation in degrees clockwise),
+`circle` (centre, radius) or `polygon` (3–500 points), validated in
+`websocket_api.GEOMETRY`. Deleting a plant unlinks shapes that referenced it.
 
 ### Photo flow
 
@@ -71,8 +80,15 @@ Nothing is keyed by config entry id: removing and re-adding the integration keep
 
 ## Frontend (`frontend/`)
 
-- TypeScript (strict) + Lit 3, built by Vite 8 in library mode into **one ES module** in `custom_components/plant_garden/frontend/` (≈32 KB gzip).
-- Routing: HA passes `route.path`; `""` → plant list, `/plants/<id>` → detail. Navigation uses `history.pushState` + `location-changed`, so the browser back button and deep links work.
+- TypeScript (strict) + Lit 3, built by Vite 8 in library mode into **one ES module** in `custom_components/plant_garden/frontend/` (≈54 KB gzip).
+- Routing: HA passes `route.path`; `""` → garden plan, `/plan/<id>` → plan centred on a plant, `/plants` → plant list, `/plants/<id>` → detail. Tabs switch between plan and list; "back" from a plant returns to whichever was used last. Navigation uses `history.pushState` + `location-changed`, so the browser back button and deep links work.
+- Garden plan (`views/garden-view.ts` + `components/garden-canvas.ts`):
+  - The canvas is one SVG whose user units are metres. **Pan and zoom never re-render Lit**: they set the `viewBox`, a `--mpp` (metres per pixel) CSS variable used for constant-size strokes, labels and handles, and redraw the grid path directly. Zoom-dependent minimum sizes re-render once zooming pauses.
+  - Pointer Events for mouse, pen and touch (`touch-action: none`), two-finger pinch, wheel zoom around the cursor. View mode: drag pans, tap/hover shows the info card. Edit mode: drag moves plants and shapes, handles resize rectangles (also rotated), circles, polygon vertices (midpoints insert, double click removes) and crowns; tools draw rectangles, circles and polygons; snapping to a selectable grid (Alt disables).
+  - Placing plants: tray in edit mode; mouse/pen drag a plant onto the plan, touch taps the plant and then its spot.
+  - Every change is a `Command` in `util/history.ts` (undo/redo, Ctrl+Z/Y) that updates the store optimistically, calls the backend and rolls back with a message on failure.
+  - The viewport and grid choice are stored per device in `localStorage` (`plant-garden.viewport.v1`, `plant-garden.snap.v1`); the first visit fits the whole garden.
+  - Pure helpers with tests: `util/geometry.ts` (rotated rectangles, hit tests, areas, resizing, crown size defaults), `util/viewport.ts` (screen ↔ plan, zoom, fit, grid step, scale bar), `util/ulid.ts`.
 - `state/garden-store.ts`: plant list + backend subscription; debounced refresh on change events; "stale" after 1 h. The panel refreshes stale data when the tab becomes visible and every 15 min, so signed URLs (24 h) never expire in an open panel.
 - Components (`src/components/`): `PgElement` base (hass + cached `t`), plant card, plant form dialog (create/edit; sends only changed fields so provenance of untouched fields is kept), photo viewer (tags, note, cover, delete, keyboard navigation), growth chart (SVG, ResizeObserver), confirm dialog. Native `<dialog>` everywhere.
 - Views (`src/views/`): plant list (search, status filter, empty state, FAB), plant detail (profile with provenance marks, notes, growth chart + measurements, photo timeline by month, drag-and-drop upload).
@@ -85,7 +101,7 @@ Nothing is keyed by config entry id: removing and re-adding the integration keep
 
 - Python venv in `~/.venvs/ha-plant-garden` (outside the repo). All scripts source `scripts/env.sh`.
 - `scripts/develop`: HA with config dir `~/.ha-plant-garden-dev`, integration and `dev/*.yaml` symlinked; demo irrigation entities in `dev/demo_garden.yaml`.
-- `scripts/smoke`: throw-away HA; checks onboarding → config flow → panel → WebSocket → bundle → plant + photo upload + signed URLs (403 for unsigned) → measurement → delete.
+- `scripts/smoke`: throw-away HA; checks onboarding → config flow → panel → WebSocket → bundle → plant + photo upload + signed URLs (403 for unsigned) → measurement → plan (origin, shape, placement) → delete.
 - `scripts/test-min-version`: tests against HA 2026.9.0 in a separate venv.
 
 ## CI (`.github/workflows/`)

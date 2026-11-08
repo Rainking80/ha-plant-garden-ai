@@ -1,5 +1,5 @@
-import { errorMessage, listPlants, subscribeGarden } from "../api/client";
-import type { GardenChangeEvent, Plant } from "../api/types";
+import { errorMessage, getLayout, listPlants, subscribeGarden } from "../api/client";
+import type { GardenChangeEvent, Layout, Plant, Shape } from "../api/types";
 import type { HomeAssistant } from "../types/hass";
 
 /** How long signed photo URLs are trusted before a refresh (backend: 24 h). */
@@ -9,13 +9,17 @@ const REFRESH_DEBOUNCE_MS = 150;
 export type StoreEvent = "change" | "plant-changed";
 
 /**
- * Keeps the plant list in sync with the backend.
+ * Keeps plants and the garden layout in sync with the backend.
  *
- * Fires "change" when `plants` was replaced and "plant-changed" (detail:
- * GardenChangeEvent) for every backend change, so detail views can reload.
+ * Fires "change" whenever `plants` or `layout` changed and "plant-changed"
+ * (detail: GardenChangeEvent) for every backend change, so detail views can
+ * reload. Editors apply changes optimistically with patchPlant/putShape/
+ * removeShape before the backend confirms; the next refresh brings the
+ * authoritative state.
  */
 export class GardenStore extends EventTarget {
   plants: Plant[] = [];
+  layout: Layout | null = null;
   loaded = false;
   error: string | undefined;
   lastRefresh = 0;
@@ -59,7 +63,11 @@ export class GardenStore extends EventTarget {
     return this.plants.find((plant) => plant.id === id);
   }
 
-  /** Reload the plant list. Concurrent calls share one request. */
+  getShape(id: string): Shape | undefined {
+    return this.layout?.shapes.find((shape) => shape.id === id);
+  }
+
+  /** Reload plants and layout. Concurrent calls share one request. */
   refresh(): Promise<void> {
     this._pending ??= this._load().finally(() => {
       this._pending = undefined;
@@ -67,9 +75,37 @@ export class GardenStore extends EventTarget {
     return this._pending;
   }
 
+  // ------------------------------------------------------------ optimistic edits
+  patchPlant(id: string, changes: Partial<Plant>): void {
+    this.plants = this.plants.map((plant) => (plant.id === id ? { ...plant, ...changes } : plant));
+    this._emit("change");
+  }
+
+  putShape(shape: Shape): void {
+    if (!this.layout) return;
+    const exists = this.layout.shapes.some((item) => item.id === shape.id);
+    const shapes = exists
+      ? this.layout.shapes.map((item) => (item.id === shape.id ? shape : item))
+      : [...this.layout.shapes, shape];
+    this.layout = { ...this.layout, shapes: shapes.sort((a, b) => a.z - b.z) };
+    this._emit("change");
+  }
+
+  removeShape(id: string): void {
+    if (!this.layout) return;
+    this.layout = { ...this.layout, shapes: this.layout.shapes.filter((s) => s.id !== id) };
+    this._emit("change");
+  }
+
+  // ------------------------------------------------------------ internals
   private async _load(): Promise<void> {
     try {
-      this.plants = await listPlants(this._hass());
+      const [plants, layout] = await Promise.all([
+        listPlants(this._hass()),
+        getLayout(this._hass()),
+      ]);
+      this.plants = plants;
+      this.layout = layout;
       this.error = undefined;
       this.loaded = true;
       this.lastRefresh = Date.now();

@@ -170,12 +170,12 @@ async def test_subscribe_receives_changes(
     assert event == {
         "id": subscription,
         "type": "event",
-        "event": {"kind": "plant", "plant_id": created["id"]},
+        "event": {"kind": "plant", "plant_id": created["id"], "shape_id": None},
     }
 
     await _call(other, type="plant_garden/plants/delete", plant_id=created["id"])
     event = await client.receive_json()
-    assert event["event"] == {"kind": "plant_removed", "plant_id": created["id"]}
+    assert event["event"] == {"kind": "plant_removed", "plant_id": created["id"], "shape_id": None}
 
 
 async def test_commands_when_not_loaded(

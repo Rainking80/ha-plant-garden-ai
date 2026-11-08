@@ -86,11 +86,21 @@ export interface PlantFields {
   tags: string[];
 }
 
+/** Plan coordinates: metres east (x) and south (y) of the origin (zone.home). */
+export interface Point {
+  x: number;
+  y: number;
+}
+
 export interface Plant extends PlantFields {
   id: string;
   created_at: string;
   updated_at: string;
   cover_photo_id: string | null;
+  /** null = not placed on the plan yet */
+  position: Point | null;
+  /** Size drawn on the plan; null = derive from width or category. */
+  crown_diameter_m: number | null;
   sources: Partial<Record<keyof PlantFields, FieldSource>>;
   age_months_now: number | null;
   photo_count: number;
@@ -134,7 +144,61 @@ export interface PlantDetail {
   measurements: Measurement[];
 }
 
+export const SHAPE_KINDS = [
+  "bed",
+  "raised_bed",
+  "lawn",
+  "hedge",
+  "terrace",
+  "path",
+  "house",
+  "greenhouse",
+  "roof",
+  "pond",
+  "boundary",
+  "other",
+] as const;
+export type ShapeKind = (typeof SHAPE_KINDS)[number];
+
+export interface RectGeometry {
+  type: "rect";
+  cx: number;
+  cy: number;
+  w: number;
+  h: number;
+  /** degrees, clockwise */
+  rotation: number;
+}
+export interface CircleGeometry {
+  type: "circle";
+  cx: number;
+  cy: number;
+  r: number;
+}
+export interface PolygonGeometry {
+  type: "polygon";
+  points: [number, number][];
+}
+export type Geometry = RectGeometry | CircleGeometry | PolygonGeometry;
+
+export interface Shape {
+  id: string;
+  kind: ShapeKind;
+  geometry: Geometry;
+  label: string | null;
+  plant_id: string | null;
+  soil_type: SoilType | null;
+  locked: boolean;
+  z: number;
+}
+
+export interface Layout {
+  origin: { latitude: number; longitude: number } | null;
+  shapes: Shape[];
+}
+
 export interface GardenChangeEvent {
-  kind: "plant" | "plant_removed";
-  plant_id: string;
+  kind: "plant" | "plant_removed" | "layout";
+  plant_id: string | null;
+  shape_id: string | null;
 }

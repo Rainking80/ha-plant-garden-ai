@@ -5,6 +5,7 @@ import {
   mdiImagePlusOutline,
   mdiPencilOutline,
   mdiSprout,
+  mdiMapMarkerRadiusOutline,
   mdiStar,
 } from "@mdi/js";
 import { css, html, nothing, type PropertyValues } from "lit";
@@ -412,6 +413,16 @@ export class PgPlantDetail extends PgElement {
             <button class="button secondary" @click=${this._edit}>
               ${icon(mdiPencilOutline)} ${t("detail.edit")}
             </button>
+            ${
+              plant.position
+                ? html`<button
+                    class="button secondary"
+                    @click=${() => navigate(`${this.prefix}/plan/${plant.id}`)}
+                  >
+                    ${icon(mdiMapMarkerRadiusOutline)} ${t("plan.show_on_plan")}
+                  </button>`
+                : nothing
+            }
             <button class="button text danger" @click=${this._delete}>
               ${icon(mdiDeleteOutline)} ${t("detail.delete")}
             </button>

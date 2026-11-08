@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 import logging
@@ -20,9 +20,15 @@ from .models import (
     TEXT_FIELDS,
     AgeReference,
     FieldSource,
+    GeoPoint,
+    Layout,
     Measurement,
     Photo,
     Plant,
+    Point,
+    Shape,
+    ShapeKind,
+    SoilType,
     Source,
 )
 from .photos import PhotoFiles, PhotoVariant, process_image
@@ -39,10 +45,15 @@ class NotFoundError(Exception):
 
 @dataclass(slots=True, frozen=True)
 class GardenChange:
-    """Sent to subscribers whenever garden data changes."""
+    """Sent to subscribers whenever garden data changes.
 
-    kind: str  # "plant" (created/updated, incl. photos and measurements) | "plant_removed"
-    plant_id: str
+    kind: "plant" (created/updated, incl. photos, measurements, position),
+    "plant_removed", or "layout" (a shape was saved or deleted).
+    """
+
+    kind: str
+    plant_id: str | None = None
+    shape_id: str | None = None
 
 
 def _clean_text(value: Any) -> str | None:
@@ -70,12 +81,20 @@ class GardenManager:
         self._db = GardenDatabase(data_dir / "plant_garden.db")
         self._files = PhotoFiles(data_dir / "photos")
         self._plants: dict[str, Plant] = {}
+        self._layout = Layout()
         self._listeners: list[Callable[[GardenChange], None]] = []
 
     # ------------------------------------------------------------ lifecycle
     async def async_setup(self) -> None:
         stored = await self._store.async_load() or empty_garden_data()
         self._plants = {item["id"]: Plant.from_dict(item) for item in stored["plants"]}
+        self._layout = Layout.from_dict(stored.get("layout") or {})
+        if self._layout.origin is None:
+            # Fixed once: moving "home" in HA later must not shift the garden.
+            self._layout.origin = GeoPoint(
+                latitude=self.hass.config.latitude, longitude=self.hass.config.longitude
+            )
+            self._schedule_save()
         await self.hass.async_add_executor_job(self._db.open)
         _LOGGER.debug("Loaded %s plants from %s", len(self._plants), self.data_dir)
 
@@ -89,7 +108,10 @@ class GardenManager:
         await self.hass.async_add_executor_job(self._db.checkpoint)
 
     def _data_to_save(self) -> GardenData:
-        return {"plants": [plant.as_dict() for plant in self._plants.values()]}
+        return {
+            "plants": [plant.as_dict() for plant in self._plants.values()],
+            "layout": self._layout.as_dict(),
+        }
 
     def _schedule_save(self) -> None:
         self._store.async_delay_save(self._data_to_save, SAVE_DELAY)
@@ -106,8 +128,8 @@ class GardenManager:
         return unsubscribe
 
     @callback
-    def _notify(self, kind: str, plant_id: str) -> None:
-        change = GardenChange(kind=kind, plant_id=plant_id)
+    def _notify(self, kind: str, plant_id: str | None = None, shape_id: str | None = None) -> None:
+        change = GardenChange(kind=kind, plant_id=plant_id, shape_id=shape_id)
         for listener in list(self._listeners):
             listener(change)
 
@@ -145,6 +167,10 @@ class GardenManager:
         await self.hass.async_add_executor_job(self._db.delete_plant_records, plant_id)
         await self.hass.async_add_executor_job(self._files.delete_plant, plant_id)
         del self._plants[plant_id]
+        for shape in self._layout.shapes.values():
+            if shape.plant_id == plant_id:
+                shape.plant_id = None
+                self._notify("layout", shape_id=shape.id)
         self._schedule_save()
         self._notify("plant_removed", plant_id)
 
@@ -173,9 +199,58 @@ class GardenManager:
                 )
             elif key == "tags":
                 plant.tags = _clean_tags(value)
+            elif key == "position":
+                plant.position = Point(x=float(value["x"]), y=float(value["y"])) if value else None
             else:
                 raise ValueError(f"unknown field {key}")
             plant.sources[key] = FieldSource(source=source, updated_at=now)
+
+    async def async_move_plants(self, moves: Sequence[tuple[str, Point | None]]) -> list[Plant]:
+        """Set several positions at once (one save, used for drag and drop and undo)."""
+        plants = [self.get_plant(plant_id) for plant_id, _ in moves]  # validate all first
+        now = dt_util.utcnow()
+        for plant, (_, position) in zip(plants, moves, strict=True):
+            plant.position = position
+            plant.sources["position"] = FieldSource(source=Source.USER, updated_at=now)
+            plant.updated_at = now
+        self._schedule_save()
+        for plant in plants:
+            self._notify("plant", plant.id)
+        return plants
+
+    # ------------------------------------------------------------ layout
+    @property
+    def layout(self) -> Layout:
+        return self._layout
+
+    def shapes(self) -> list[Shape]:
+        """Drawing order: z ascending, then creation order."""
+        return sorted(self._layout.shapes.values(), key=lambda shape: shape.z)
+
+    async def async_save_shape(self, data: dict[str, Any]) -> Shape:
+        """Create or replace a shape. Clients may choose the id (needed to undo a delete)."""
+        if (plant_id := data.get("plant_id")) is not None:
+            self.get_plant(plant_id)
+        shape = Shape(
+            id=data.get("id") or ulid_now(),
+            kind=ShapeKind(data["kind"]),
+            geometry=data["geometry"],
+            label=_clean_text(data.get("label")),
+            plant_id=plant_id,
+            soil_type=SoilType(data["soil_type"]) if data.get("soil_type") else None,
+            locked=bool(data.get("locked", False)),
+            z=int(data.get("z", 0)),
+        )
+        self._layout.shapes[shape.id] = shape
+        self._schedule_save()
+        self._notify("layout", shape_id=shape.id)
+        return shape
+
+    async def async_delete_shape(self, shape_id: str) -> None:
+        if self._layout.shapes.pop(shape_id, None) is None:
+            raise NotFoundError(shape_id)
+        self._schedule_save()
+        self._notify("layout", shape_id=shape_id)
 
     # ------------------------------------------------------------ summaries
     async def async_plant_summaries(self) -> list[tuple[Plant, dict[str, Any]]]:

@@ -1,11 +1,14 @@
 import type { HomeAssistant } from "../types/hass";
 import type {
   GardenChangeEvent,
+  Layout,
   Measurement,
   Photo,
   Plant,
   PlantDetail,
   PlantFields,
+  Point,
+  Shape,
 } from "./types";
 
 export const WS_PREFIX = "plant_garden";
@@ -51,7 +54,7 @@ export function createPlant(
 export function updatePlant(
   hass: HomeAssistant,
   plantId: string,
-  fields: Partial<PlantFields>,
+  fields: Partial<PlantFields> & { crown_diameter_m?: number | null },
 ): Promise<Plant> {
   return hass.callWS<Plant>({ type: `${WS_PREFIX}/plants/update`, plant_id: plantId, ...fields });
 }
@@ -70,6 +73,26 @@ export function setCover(
     plant_id: plantId,
     photo_id: photoId,
   });
+}
+
+export async function movePlants(
+  hass: HomeAssistant,
+  moves: { plant_id: string; position: Point | null }[],
+): Promise<void> {
+  await hass.callWS<unknown>({ type: `${WS_PREFIX}/plants/move`, moves });
+}
+
+// ------------------------------------------------------------ layout
+export function getLayout(hass: HomeAssistant): Promise<Layout> {
+  return hass.callWS<Layout>({ type: `${WS_PREFIX}/layout/get` });
+}
+
+export function saveShape(hass: HomeAssistant, shape: Shape): Promise<Shape> {
+  return hass.callWS<Shape>({ type: `${WS_PREFIX}/layout/shapes/save`, shape });
+}
+
+export async function deleteShape(hass: HomeAssistant, shapeId: string): Promise<void> {
+  await hass.callWS<null>({ type: `${WS_PREFIX}/layout/shapes/delete`, shape_id: shapeId });
 }
 
 export function subscribeGarden(

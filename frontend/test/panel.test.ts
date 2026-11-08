@@ -39,11 +39,14 @@ afterEach(() => {
 
 describe("parseRoute", () => {
   it("maps paths to views", () => {
-    expect(parseRoute("")).toEqual({ name: "plants" });
-    expect(parseRoute(undefined)).toEqual({ name: "plants" });
+    expect(parseRoute("")).toEqual({ name: "plan", focusPlantId: null });
+    expect(parseRoute(undefined)).toEqual({ name: "plan", focusPlantId: null });
+    expect(parseRoute("/plan/01JABC")).toEqual({ name: "plan", focusPlantId: "01JABC" });
+    expect(parseRoute("/plants")).toEqual({ name: "plants" });
+    expect(parseRoute("/plants/")).toEqual({ name: "plants" });
     expect(parseRoute("/plants/01JABC")).toEqual({ name: "plant", plantId: "01JABC" });
     expect(parseRoute("/plants/01JABC/")).toEqual({ name: "plant", plantId: "01JABC" });
-    expect(parseRoute("/plants/../x")).toEqual({ name: "plants" });
+    expect(parseRoute("/plants/../x")).toEqual({ name: "plan", focusPlantId: null });
   });
 });
 
@@ -52,8 +55,16 @@ describe("plant-garden-panel", () => {
     expect(customElements.get("plant-garden-panel")).toBeDefined();
   });
 
-  it("welcomes a new garden with an empty state", async () => {
+  it("opens with the garden plan and offers tabs", async () => {
     const el = await mount(fakeBackend());
+    await vi.waitFor(() => expect(deepQuery(el, "pg-garden-canvas")).not.toBeNull());
+    const tabs = [...(el.shadowRoot?.querySelectorAll(".tabs a") ?? [])];
+    expect(tabs.map((tab) => tab.textContent?.trim())).toEqual(["Gartenplan", "Pflanzen"]);
+    expect(tabs[0]?.getAttribute("aria-current")).toBe("page");
+  });
+
+  it("welcomes a new garden with an empty state", async () => {
+    const el = await mount(fakeBackend(), "/plants");
     await vi.waitFor(() => expect(deepText(el)).toContain("Willkommen in Schrebergarten"));
     expect(deepText(el)).toContain("Pflanze hinzufügen");
   });
@@ -66,7 +77,7 @@ describe("plant-garden-panel", () => {
         makePlant({ id: "B", name: "Rose", status: "problem" }),
       ],
     });
-    const el = await mount(backend);
+    const el = await mount(backend, "/plants");
     await vi.waitFor(() => expect(deepText(el)).toContain("Rose"));
     expect(deepText(el)).toContain("2 years, 2 months");
     expect(deepText(el)).toContain("3 photos");
@@ -79,7 +90,7 @@ describe("plant-garden-panel", () => {
 
   it("updates the list when another client changes a plant", async () => {
     const backend = fakeBackend({ plants: [makePlant({ id: "A", name: "Hortensie" })] });
-    const el = await mount(backend);
+    const el = await mount(backend, "/plants");
     await vi.waitFor(() => expect(deepText(el)).toContain("Hortensie"));
     backend.plants = [...backend.plants, makePlant({ id: "B", name: "Lavendel" })];
     backend.emit({ kind: "plant", plant_id: "B" });
@@ -88,7 +99,7 @@ describe("plant-garden-panel", () => {
 
   it("navigates to a plant when its card is clicked", async () => {
     const backend = fakeBackend({ plants: [makePlant({ id: "A1", name: "Hortensie" })] });
-    const el = await mount(backend);
+    const el = await mount(backend, "/plants");
     await vi.waitFor(() => expect(deepQuery(el, "a.card")).not.toBeNull());
     const changed = vi.fn();
     window.addEventListener("location-changed", changed);
@@ -164,7 +175,7 @@ describe("plant-garden-panel", () => {
       code: "not_loaded",
       message: "Plant Garden is not set up",
     });
-    const el = await mount(backend);
+    const el = await mount(backend, "/plants");
     await vi.waitFor(() => expect(deepText(el)).toContain("Plant Garden is not set up"));
     el.shadowRoot?.querySelector<HTMLButtonElement>(".state .button")?.click();
     await vi.waitFor(() => expect(deepText(el)).toContain("Willkommen in Schrebergarten"));

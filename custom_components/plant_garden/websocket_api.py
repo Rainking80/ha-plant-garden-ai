@@ -14,7 +14,16 @@ import probatio
 
 from .const import DOMAIN
 from .garden import GardenChange, GardenManager, NotFoundError
-from .models import Light, LocationType, PlantCategory, PlantStatus, SoilType, WaterNeed
+from .models import (
+    Light,
+    LocationType,
+    PlantCategory,
+    PlantStatus,
+    Point,
+    ShapeKind,
+    SoilType,
+    WaterNeed,
+)
 from .runtime import get_loaded_entry, get_manager
 from .serialize import measurement_dict, photo_dict, plant_dict
 
@@ -40,6 +49,47 @@ def _number(minimum: float, maximum: float) -> Any:
 
 TAGS = [probatio.All(str, probatio.Length(max=40))]
 
+# Plan coordinates in metres around the origin; a garden is far smaller than 10 km.
+COORD = _number(-10000, 10000)
+POINT = {probatio.Required("x"): COORD, probatio.Required("y"): COORD}
+ID = probatio.Match(r"^[0-9A-Z]{26}$")
+LENGTH_M = _number(0.01, 5000)
+
+GEOMETRY = probatio.Any(
+    {
+        probatio.Required("type"): "rect",
+        probatio.Required("cx"): COORD,
+        probatio.Required("cy"): COORD,
+        probatio.Required("w"): LENGTH_M,
+        probatio.Required("h"): LENGTH_M,
+        probatio.Optional("rotation", default=0): _number(-360, 360),
+    },
+    {
+        probatio.Required("type"): "circle",
+        probatio.Required("cx"): COORD,
+        probatio.Required("cy"): COORD,
+        probatio.Required("r"): LENGTH_M,
+    },
+    {
+        probatio.Required("type"): "polygon",
+        probatio.Required("points"): probatio.All(
+            [probatio.All([COORD], probatio.Length(min=2, max=2))],
+            probatio.Length(min=3, max=500),
+        ),
+    },
+)
+
+SHAPE = {
+    probatio.Optional("id"): ID,
+    probatio.Required("kind"): probatio.In([kind.value for kind in ShapeKind]),
+    probatio.Required("geometry"): GEOMETRY,
+    probatio.Optional("label"): _text(100),
+    probatio.Optional("plant_id"): probatio.Any(None, str),
+    probatio.Optional("soil_type"): _choice(SoilType),
+    probatio.Optional("locked"): bool,
+    probatio.Optional("z"): probatio.All(int, probatio.Range(min=-1000, max=1000)),
+}
+
 PLANT_FIELDS: dict[Any, Any] = {
     probatio.Optional("scientific_name"): _text(200),
     probatio.Optional("variety"): _text(200),
@@ -62,6 +112,8 @@ PLANT_FIELDS: dict[Any, Any] = {
         },
     ),
     probatio.Optional("tags"): TAGS,
+    probatio.Optional("position"): probatio.Any(None, POINT),
+    probatio.Optional("crown_diameter_m"): probatio.Any(None, _number(0.05, 100)),
 }
 NAME = probatio.All(str, probatio.Length(min=1, max=100))
 SIZE_CM = probatio.Any(None, _number(0, 10000))
@@ -79,6 +131,10 @@ def async_register_websocket_commands(hass: HomeAssistant) -> None:
         ws_plants_update,
         ws_plants_delete,
         ws_plants_set_cover,
+        ws_plants_move,
+        ws_layout_get,
+        ws_shapes_save,
+        ws_shapes_delete,
         ws_photos_update,
         ws_photos_delete,
         ws_measurements_add,
@@ -181,7 +237,8 @@ def ws_subscribe(
     def forward(change: GardenChange) -> None:
         connection.send_message(
             websocket_api.event_message(
-                msg["id"], {"kind": change.kind, "plant_id": change.plant_id}
+                msg["id"],
+                {"kind": change.kind, "plant_id": change.plant_id, "shape_id": change.shape_id},
             )
         )
 
@@ -290,6 +347,86 @@ async def ws_plants_set_cover(
 ) -> dict[str, Any]:
     await manager.async_set_cover(msg["plant_id"], msg["photo_id"])
     return await _plant_result(hass, connection, manager, msg["plant_id"])
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/plants/move",
+        probatio.Required("moves"): probatio.All(
+            [
+                {
+                    probatio.Required("plant_id"): str,
+                    probatio.Required("position"): probatio.Any(None, POINT),
+                }
+            ],
+            probatio.Length(min=1, max=1000),
+        ),
+    }
+)
+async def ws_plants_move(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Place, move or unplace plants (several at once, e.g. for undo)."""
+    moves = [
+        (move["plant_id"], Point(x=move["position"]["x"], y=move["position"]["y"]))
+        if move["position"]
+        else (move["plant_id"], None)
+        for move in msg["moves"]
+    ]
+    plants = await manager.async_move_plants(moves)
+    return {
+        "positions": {
+            plant.id: plant.position.as_dict() if plant.position else None for plant in plants
+        }
+    }
+
+
+# ---------------------------------------------------------------- layout
+@garden_command({probatio.Required("type"): f"{DOMAIN}/layout/get"})
+async def ws_layout_get(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Origin and shapes in drawing order. Plant positions come with the plants."""
+    origin = manager.layout.origin
+    return {
+        "origin": origin.as_dict() if origin else None,
+        "shapes": [shape.as_dict() for shape in manager.shapes()],
+    }
+
+
+@garden_command(
+    {probatio.Required("type"): f"{DOMAIN}/layout/shapes/save", probatio.Required("shape"): SHAPE}
+)
+async def ws_shapes_save(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Create (without id or with a new id) or replace a shape."""
+    shape = await manager.async_save_shape(msg["shape"])
+    return shape.as_dict()
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/layout/shapes/delete",
+        probatio.Required("shape_id"): str,
+    }
+)
+async def ws_shapes_delete(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> None:
+    await manager.async_delete_shape(msg["shape_id"])
 
 
 # ---------------------------------------------------------------- photos
