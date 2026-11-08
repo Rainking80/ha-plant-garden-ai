@@ -18,5 +18,81 @@
     "abort": {
       "single_instance_allowed": "Plant Garden ist bereits eingerichtet."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Einstellungen",
+        "data": {
+          "max_runtime_hours": "Warnung nach Laufzeit"
+        },
+        "data_description": {
+          "max_runtime_hours": "Läuft eine Bewässerungszone länger, erscheint ein Hinweis unter Reparaturen (z. B. ein hängendes Ventil)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "water_total": {
+        "name": "Wasser erhalten"
+      },
+      "water_today": {
+        "name": "Wasser heute"
+      },
+      "last_watering": {
+        "name": "Letzte Bewässerung"
+      },
+      "runtime_today": {
+        "name": "Laufzeit heute"
+      },
+      "zone_water_today": {
+        "name": "Wasser heute"
+      }
+    }
+  },
+  "issues": {
+    "long_run": {
+      "title": "Bewässerungszone {zone} läuft seit {hours} h",
+      "description": "{entity} ist seit {hours} Stunden eingeschaltet. Prüfe, ob das Ventil hängt. Plant Garden schaltet selbst nichts. Der Hinweis verschwindet, sobald die Zone wieder aus ist."
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "Plant Garden ist nicht eingerichtet."
+    },
+    "not_plant_or_zone": {
+      "message": "{device_id} ist keine Pflanze und keine Bewässerungszone von Plant Garden."
+    },
+    "liters_needed": {
+      "message": "Für Pflanzen bitte die Liter angeben."
+    },
+    "minutes_needed": {
+      "message": "Für Bewässerungszonen bitte die Minuten angeben."
+    }
+  },
+  "services": {
+    "log_watering": {
+      "name": "Gießen erfassen",
+      "description": "Trägt Wasser ein, das Plant Garden nicht selbst gesehen hat: Liter pro Pflanze (Gießkanne) oder Minuten für eine Zone (z. B. mit dem Schlauch).",
+      "fields": {
+        "device_id": {
+          "name": "Pflanzen oder Zonen",
+          "description": "Geräte von Plant Garden: Pflanzen und/oder Bewässerungszonen."
+        },
+        "liters": {
+          "name": "Liter pro Pflanze",
+          "description": "Für jede gewählte Pflanze."
+        },
+        "minutes": {
+          "name": "Minuten",
+          "description": "Laufzeit für jede gewählte Zone; die Menge ergibt sich aus der Niederschlagsrate der Zone."
+        },
+        "note": {
+          "name": "Notiz",
+          "description": "Optional."
+        }
+      }
+    }
   }
 }

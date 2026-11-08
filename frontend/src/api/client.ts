@@ -2,6 +2,8 @@ import type { HomeAssistant } from "../types/hass";
 import type {
   Background,
   GardenChangeEvent,
+  IrrigationEvent,
+  IrrigationSummary,
   Layout,
   Marker,
   Measurement,
@@ -296,4 +298,46 @@ export async function deleteMeasurement(hass: HomeAssistant, measurementId: stri
     type: `${WS_PREFIX}/measurements/delete`,
     measurement_id: measurementId,
   });
+}
+
+// ------------------------------------------------------------ irrigation
+export function irrigationSummary(hass: HomeAssistant): Promise<IrrigationSummary> {
+  return hass.callWS<IrrigationSummary>({ type: `${WS_PREFIX}/irrigation/summary` });
+}
+
+export async function irrigationEvents(
+  hass: HomeAssistant,
+  filter: { zone_id?: string; plant_id?: string; limit?: number } = {},
+): Promise<IrrigationEvent[]> {
+  const result = await hass.callWS<{ events: IrrigationEvent[] }>({
+    type: `${WS_PREFIX}/irrigation/events`,
+    ...filter,
+  });
+  return result.events;
+}
+
+/** Watering by hand: litres per plant. */
+export function logWatering(
+  hass: HomeAssistant,
+  plants: { plant_id: string; liters: number }[],
+  note = "",
+): Promise<IrrigationEvent> {
+  return hass.callWS<IrrigationEvent>({ type: `${WS_PREFIX}/irrigation/log`, plants, note });
+}
+
+/** A zone run that was not seen live (e.g. watered with the hose over the zone). */
+export function logZoneRun(
+  hass: HomeAssistant,
+  zoneId: string,
+  minutes: number,
+): Promise<IrrigationEvent> {
+  return hass.callWS<IrrigationEvent>({
+    type: `${WS_PREFIX}/irrigation/log_zone`,
+    zone_id: zoneId,
+    minutes,
+  });
+}
+
+export async function deleteIrrigationEvent(hass: HomeAssistant, eventId: string): Promise<void> {
+  await hass.callWS<null>({ type: `${WS_PREFIX}/irrigation/delete`, event_id: eventId });
 }

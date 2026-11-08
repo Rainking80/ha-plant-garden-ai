@@ -99,6 +99,55 @@ SHAPES: list[dict[str, Any]] = [
         "link": "Hainbuchenhecke",
         "geometry": {"type": "rect", "cx": 0, "cy": 9.4, "w": 29, "h": 0.9, "rotation": 0},
     },
+    # irrigation zones on the simulated valves of dev/demo_garden.yaml
+    {
+        "kind": "zone",
+        "label": "Regner Rasen",
+        "z": 7,
+        "geometry": {"type": "rect", "cx": -3.5, "cy": 3.75, "w": 19, "h": 9.5, "rotation": 0},
+        "irrigation": {
+            "entity_id": "input_boolean.demo_zone_lawn",
+            "timer_entity_id": "timer.demo_zone_lawn",
+            "emitter": "rotor",
+            "rate_mm_h": 12,
+        },
+    },
+    {
+        "kind": "zone",
+        "label": "Sprühdüsen Staudenbeet",
+        "z": 7,
+        "geometry": {
+            "type": "polygon",
+            "points": [[7, 0.5], [13.5, 0.5], [13.5, 6], [10, 8.5], [7, 6]],
+        },
+        "irrigation": {
+            "entity_id": "input_boolean.demo_zone_bed_south",
+            "emitter": "spray",
+            "flow_l_min": 6,
+        },
+    },
+    {
+        "kind": "zone",
+        "label": "Tropfschlauch Hecke",
+        "z": 7,
+        "geometry": {"type": "rect", "cx": 0, "cy": 9.4, "w": 29, "h": 1.2, "rotation": 0},
+        "irrigation": {
+            "entity_id": "input_boolean.demo_zone_hedge",
+            "emitter": "drip_line",
+            "rate_mm_h": 8,
+        },
+    },
+    {
+        "kind": "zone",
+        "label": "Tropfer Hochbeet",
+        "z": 7,
+        "geometry": {"type": "rect", "cx": 10.5, "cy": -6, "w": 4.4, "h": 1.6, "rotation": 0},
+        "irrigation": {
+            "entity_id": "switch.demo_ventil_hochbeet",
+            "emitter": "drip",
+            "drip_l_h": 2,
+        },
+    },
 ]
 
 # name, fields, position or None (stays in the tray), height and width in cm

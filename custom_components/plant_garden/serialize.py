@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
 from .const import BACKGROUND_FILE_URL, PHOTO_FILE_URL
-from .models import Layout, Measurement, Photo, Plant
+from .models import IrrigationEvent, Layout, Measurement, Photo, Plant
 from .photos import PhotoVariant
 
 # Long enough for a panel that stays open all day; the panel reloads data when
@@ -103,4 +103,25 @@ def measurement_dict(measurement: Measurement) -> dict[str, Any]:
         "confidence": measurement.confidence,
         "photo_id": measurement.photo_id,
         "note": measurement.note,
+    }
+
+
+def event_dict(event: IrrigationEvent) -> dict[str, Any]:
+    return {
+        "id": event.id,
+        "zone_id": event.zone_id,
+        "started_at": event.started_at.isoformat(),
+        "ended_at": event.ended_at.isoformat(),
+        "duration_s": round(event.duration_s),
+        "day": event.day.isoformat(),
+        "source": event.source.value,
+        "liters": event.liters,
+        "depth_mm": event.depth_mm,
+        "uncertain": event.uncertain,
+        "reconstructed": event.reconstructed,
+        "note": event.note,
+        "plants": [
+            {"plant_id": share.plant_id, "liters": share.liters, "mm": share.mm}
+            for share in event.plants
+        ],
     }

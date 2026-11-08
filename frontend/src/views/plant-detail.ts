@@ -33,6 +33,7 @@ import "../components/confirm-dialog";
 import "../components/growth-chart";
 import type { PgPhotoViewer } from "../components/photo-viewer";
 import "../components/photo-viewer";
+import "../components/water-panel";
 import type { PgPlantForm } from "../components/plant-form";
 import "../components/plant-form";
 import type { TranslationKey } from "../i18n";
@@ -505,6 +506,14 @@ export class PgPlantDetail extends PgElement {
           <button class="button secondary" type="submit">${t("detail.add_measurement")}</button>
           ${this._mError ? html`<p class="error-text" role="alert">${this._mError}</p>` : nothing}
         </form>
+      </section>
+
+      <section class="card block">
+        <pg-water-panel
+          .hass=${this.hass}
+          .store=${this.store}
+          .plantId=${plant.id}
+        ></pg-water-panel>
       </section>
 
       <section

@@ -8,6 +8,26 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M4 irrigation zones (display and tracking only, the integration never switches):
+  - Draw zones as rectangles, circles or polygons and link a valve, switch, input
+    boolean or binary sensor; optionally a timer (remaining time on the plan) and a
+    water meter (real litres instead of an estimate).
+  - Emitter type (spray heads, rotors, drip line, drippers per plant, by hand),
+    precipitation rate or flow (converted over the area), efficiency with typical
+    defaults.
+  - The plan shows which plants a zone reaches and how much of each; plants can be
+    added or excluded by hand. A running zone is animated (not with reduced motion).
+  - Every run becomes an event with water per plant; runs survive restarts, gaps
+    are filled from the recorder history, runs ending in "unavailable" are marked
+    uncertain, very long runs raise a repair notice (limit in the options).
+  - Plant page: water today, in total, the last 14 days as bars, latest events,
+    "log watering" for the watering can.
+  - Devices per plant and zone with sensors (water received in litres for the
+    long-term statistics, water today, last watering, zone run time and litres
+    today), the action `plant_garden.log_watering` and the event
+    `plant_garden_irrigation_finished` for automations.
+  - Demo garden: zones on the simulated valves, a timer that switches the lawn
+    sprinkler off.
 - Garden location: the plan can be moved to where the garden really is (e.g. an
   allotment away from home) – to the map centre, Home Assistant's home or pasted
   coordinates. Everything already drawn stays in place on the map or, if you

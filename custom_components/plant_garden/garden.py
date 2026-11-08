@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from functools import partial
 import logging
 from pathlib import Path
 from typing import Any
@@ -16,6 +17,7 @@ from homeassistant.util.ulid import ulid_now
 from .const import PLAN_EXTENT_M
 from .database import GardenDatabase
 from .geo import reproject
+from .irrigation import water_summary
 from .models import (
     ENUM_FIELDS,
     NUMBER_FIELDS,
@@ -23,11 +25,14 @@ from .models import (
     AgeReference,
     FieldSource,
     GeoPoint,
+    Irrigation,
+    IrrigationEvent,
     Layout,
     Marker,
     Measurement,
     Photo,
     Plant,
+    PlantStatus,
     Point,
     Shape,
     ShapeKind,
@@ -55,7 +60,8 @@ class GardenChange:
     """Sent to subscribers whenever garden data changes.
 
     kind: "plant" (created/updated, incl. photos, measurements, position),
-    "plant_removed", or "layout" (a shape was saved or deleted).
+    "plant_removed", "layout" (a shape was saved or deleted) or "irrigation"
+    (a zone started or stopped, water was logged or deleted).
     """
 
     kind: str
@@ -195,8 +201,16 @@ class GardenManager:
         await self.hass.async_add_executor_job(self._files.delete_plant, plant_id)
         del self._plants[plant_id]
         for shape in self._layout.shapes.values():
+            changed = False
             if shape.plant_id == plant_id:
                 shape.plant_id = None
+                changed = True
+            zone = shape.irrigation
+            if zone and plant_id in (*zone.include, *zone.exclude):
+                zone.include = [listed for listed in zone.include if listed != plant_id]
+                zone.exclude = [listed for listed in zone.exclude if listed != plant_id]
+                changed = True
+            if changed:
                 self._notify("layout", shape_id=shape.id)
         self._schedule_save()
         self._notify("plant_removed", plant_id)
@@ -258,15 +272,23 @@ class GardenManager:
         """Create or replace a shape. Clients may choose the id (needed to undo a delete)."""
         if (plant_id := data.get("plant_id")) is not None:
             self.get_plant(plant_id)
+        kind = ShapeKind(data["kind"])
+        irrigation = None
+        if kind is ShapeKind.ZONE:
+            irrigation = Irrigation.from_dict(data.get("irrigation") or {})
+            for listed in (irrigation.include, irrigation.exclude):
+                for listed_id in listed:
+                    self.get_plant(listed_id)
         shape = Shape(
             id=data.get("id") or ulid_now(),
-            kind=ShapeKind(data["kind"]),
+            kind=kind,
             geometry=data["geometry"],
             label=_clean_text(data.get("label")),
             plant_id=plant_id,
             soil_type=SoilType(data["soil_type"]) if data.get("soil_type") else None,
             locked=bool(data.get("locked", False)),
             z=int(data.get("z", 0)),
+            irrigation=irrigation,
         )
         self._layout.shapes[shape.id] = shape
         self._schedule_save()
@@ -278,6 +300,58 @@ class GardenManager:
             raise NotFoundError(shape_id)
         self._schedule_save()
         self._notify("layout", shape_id=shape_id)
+
+    # ------------------------------------------------------------ zones and water
+    def zones(self) -> list[Shape]:
+        return [shape for shape in self.shapes() if shape.kind is ShapeKind.ZONE]
+
+    def get_zone(self, zone_id: str) -> Shape:
+        shape = self._layout.shapes.get(zone_id)
+        if shape is None or shape.kind is not ShapeKind.ZONE:
+            raise NotFoundError(zone_id)
+        return shape
+
+    def watered_plants(self) -> list[Plant]:
+        """Plants that can receive water (removed ones are no longer in the garden)."""
+        return [plant for plant in self._plants.values() if plant.status is not PlantStatus.REMOVED]
+
+    async def async_latest_widths(self) -> dict[str, float]:
+        sizes = await self.hass.async_add_executor_job(self._db.latest_sizes)
+        return {plant_id: s["width_cm"] for plant_id, s in sizes.items() if s.get("width_cm")}
+
+    async def async_insert_event(self, event: IrrigationEvent) -> bool:
+        """Store an irrigation event; False if this zone run is already recorded."""
+        return await self.hass.async_add_executor_job(self._db.insert_event, event)
+
+    async def async_delete_event(self, event_id: str) -> None:
+        if await self.hass.async_add_executor_job(self._db.get_event, event_id) is None:
+            raise NotFoundError(event_id)
+        await self.hass.async_add_executor_job(self._db.delete_event, event_id)
+
+    async def async_recent_events(
+        self, *, zone_id: str | None = None, plant_id: str | None = None, limit: int = 50
+    ) -> list[IrrigationEvent]:
+        return await self.hass.async_add_executor_job(
+            partial(self._db.recent_events, zone_id=zone_id, plant_id=plant_id, limit=limit)
+        )
+
+    async def async_water_summary(self, today: date, days: int) -> dict[str, Any]:
+        def query() -> dict[str, Any]:
+            return water_summary(
+                by_day=self._db.plant_water_by_day(today - timedelta(days=days - 1)),
+                totals=self._db.plant_totals(),
+                zone_today=self._db.zone_day_totals(today),
+                zone_last=self._db.zone_last_runs(),
+                today=today,
+                days=days,
+            )
+
+        return await self.hass.async_add_executor_job(query)
+
+    @callback
+    def notify_irrigation(self) -> None:
+        """Irrigation data changed (a run started or ended, an event was logged)."""
+        self._notify("irrigation")
 
     # ------------------------------------------------------------ origin
     async def async_set_origin(

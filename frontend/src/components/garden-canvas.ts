@@ -34,6 +34,7 @@ import {
   type Bounds,
   type Corner,
 } from "../util/geometry";
+import { isRunning } from "../util/coverage";
 import { formatNumber } from "../util/format";
 import {
   DEFAULT_VIEWPORT,
@@ -156,6 +157,7 @@ const LABEL_MAX_MPP = 0.06; // show plant names from ~17 px per metre
 const ROTATE_HANDLE_PX = 28;
 const ROTATE_STEP = 15;
 const CLOSE_POLYGON_PX = 14;
+const CLOCK_MS = 15000; // zone timers show whole minutes
 
 function parseHandle(value: string): Handle | null {
   const [kind, arg] = value.split(":");
@@ -197,7 +199,7 @@ export class PgGardenCanvas extends PgElement {
     plants: { attribute: false },
     shapes: { attribute: false },
     markers: { attribute: false },
-    /** entity_id -> state for the markers; a new object only when one of them changed */
+    /** entity_id -> state for markers and zones; a new object only when one of them changed */
     states: { attribute: false },
     background: { attribute: false },
     origin: { attribute: false },
@@ -206,6 +208,11 @@ export class PgGardenCanvas extends PgElement {
     selection: { attribute: false },
     snapStep: { attribute: false },
     armed: { attribute: false },
+    /** plants the selected zone reaches, drawn with a water ring */
+    highlight: { attribute: false },
+    /** draw irrigation zones */
+    showZones: { type: Boolean },
+    _clock: { state: true },
     _override: { state: true },
     _draft: { state: true },
     _polygon: { state: true },
@@ -227,6 +234,10 @@ export class PgGardenCanvas extends PgElement {
   declare selection: Selection;
   declare snapStep: number;
   declare armed: Armed | null;
+  declare highlight: ReadonlySet<string>;
+  declare showZones: boolean;
+  /** ticks while a zone timer runs, so its remaining time stays current */
+  declare _clock: number;
   declare _override: Override | null;
   declare _draft: Geometry | null;
   declare _polygon: Point[] | null;
@@ -246,6 +257,7 @@ export class PgGardenCanvas extends PgElement {
   private _wmsTimer?: ReturnType<typeof setTimeout>;
   private _wmsRequest = "";
   private _resizeObserver?: ResizeObserver;
+  private _clockTimer?: ReturnType<typeof setInterval>;
 
   constructor() {
     super();
@@ -260,6 +272,9 @@ export class PgGardenCanvas extends PgElement {
     this.selection = null;
     this.snapStep = 0.5;
     this.armed = null;
+    this.highlight = new Set();
+    this.showZones = true;
+    this._clock = Date.now();
     this._override = null;
     this._draft = null;
     this._polygon = null;
@@ -364,6 +379,8 @@ export class PgGardenCanvas extends PgElement {
     clearTimeout(this._settleTimer);
     clearTimeout(this._viewportTimer);
     clearTimeout(this._wmsTimer);
+    clearInterval(this._clockTimer);
+    this._clockTimer = undefined;
   }
 
   protected override firstUpdated(): void {
@@ -374,6 +391,16 @@ export class PgGardenCanvas extends PgElement {
     if (changed.has("mode") || changed.has("tool")) {
       if (this.mode !== "edit" || this.tool !== "polygon") this.cancelDrawing();
       if (this.tool !== "calibrate") this._calibration = [];
+    }
+    if (changed.has("states") || changed.has("shapes")) {
+      // remaining time of zone timers: tick only while one runs
+      const ticking = this.shapes.some((shape) => this._timerEnd(shape) !== null);
+      if (ticking && this._clockTimer === undefined) {
+        this._clockTimer = setInterval(() => (this._clock = Date.now()), CLOCK_MS);
+      } else if (!ticking && this._clockTimer !== undefined) {
+        clearInterval(this._clockTimer);
+        this._clockTimer = undefined;
+      }
     }
     if (changed.has("background") || changed.has("origin")) {
       this._wmsRequest = "";
@@ -1087,6 +1114,34 @@ export class PgGardenCanvas extends PgElement {
     </g>`;
   }
 
+  /** Epoch ms when the zone's timer ends, if it is running. */
+  private _timerEnd(shape: Shape): number | null {
+    const timer = shape.irrigation?.timer_entity_id;
+    const state = timer ? this.states[timer] : undefined;
+    const finishes = state?.state === "active" ? state.attributes.finishes_at : undefined;
+    const end = typeof finishes === "string" ? Date.parse(finishes) : NaN;
+    return Number.isFinite(end) ? end : null;
+  }
+
+  private _renderZone(shape: Shape) {
+    const g = this._geometryOf(shape);
+    const selected = this.selection?.type === "shape" && this.selection.id === shape.id;
+    const entity = shape.irrigation?.entity_id;
+    const running = isRunning(entity ? this.states[entity]?.state : undefined);
+    const end = this._timerEnd(shape);
+    const minutes = end === null ? null : Math.max(0, Math.ceil((end - this._clock) / 60000));
+    const text = [shape.label, minutes === null ? "" : this.t("zone.remaining", { minutes })]
+      .filter(Boolean)
+      .join(" · ");
+    const label = labelPoint(g);
+    return svg`<g class="shape zone ${running ? "running" : ""} ${selected ? "selected" : ""} ${
+      shape.locked ? "locked" : ""
+    }" data-shape-id=${shape.id}>
+      ${this._renderGeometry(g, "body")}
+      ${text ? svg`<text class="shape-label zone-label" x=${label.x} y=${label.y}>${text}</text>` : nothing}
+    </g>`;
+  }
+
   private _renderPlant(plant: Plant, mpp: number) {
     const o = this._override;
     const mine = o?.plantId === plant.id;
@@ -1095,7 +1150,10 @@ export class PgGardenCanvas extends PgElement {
     const diameter = (mine && o?.crown) || crownDiameter(plant);
     const r = Math.max(diameter / 2, MIN_PLANT_PX * mpp);
     const selected = this.selection?.type === "plant" && this.selection.id === plant.id;
-    return svg`<g class="plant status-${plant.status} ${selected ? "selected" : ""}"
+    const covered = this.highlight.has(plant.id);
+    return svg`<g class="plant status-${plant.status} ${selected ? "selected" : ""} ${
+      covered ? "covered" : ""
+    }"
         data-plant-id=${plant.id} transform="translate(${position.x} ${position.y})">
       <circle class="shadow" r=${r} cy=${r * 0.08}></circle>
       <circle class="crown" r=${r}></circle>
@@ -1292,10 +1350,21 @@ export class PgGardenCanvas extends PgElement {
         <path class="grid-major"></path>
         <g class="shapes">
           ${repeat(
-            this.shapes,
+            this.shapes.filter((shape) => shape.kind !== "zone"),
             (shape) => shape.id,
             (shape) => this._renderShape(shape),
           )}
+        </g>
+        <g class="zones">
+          ${
+            this.showZones
+              ? repeat(
+                  this.shapes.filter((shape) => shape.kind === "zone"),
+                  (shape) => shape.id,
+                  (shape) => this._renderZone(shape),
+                )
+              : nothing
+          }
         </g>
         <g class="plants">
           ${repeat(
@@ -1466,6 +1535,42 @@ export class PgGardenCanvas extends PgElement {
       stroke: var(--pg-accent);
       stroke-width: 2.5;
     }
+
+    /* ---------------------------------------------- irrigation zones */
+    .zone .body {
+      fill: color-mix(in srgb, var(--pg-water) 14%, transparent);
+      stroke: var(--pg-water);
+      stroke-width: 1.5;
+      stroke-dasharray: 7 5;
+    }
+    svg.with-backdrop .zone .body {
+      fill-opacity: 1;
+      fill: color-mix(in srgb, var(--pg-water) 22%, transparent);
+    }
+    .zone.running .body,
+    svg.with-backdrop .zone.running .body {
+      fill: color-mix(in srgb, var(--pg-water) 34%, transparent);
+      stroke-width: 3;
+      animation: pg-flow 0.9s linear infinite;
+    }
+    .zone.selected .body {
+      stroke: var(--pg-accent);
+      stroke-width: 2.5;
+    }
+    .zone-label {
+      fill: color-mix(in srgb, var(--pg-water) 70%, var(--pg-text));
+    }
+    @keyframes pg-flow {
+      to {
+        stroke-dashoffset: -24;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .zone.running .body {
+        animation: none;
+        stroke-dasharray: none;
+      }
+    }
     .shape-label,
     .plant-label,
     .measure {
@@ -1524,6 +1629,11 @@ export class PgGardenCanvas extends PgElement {
     .plant.selected .ring {
       stroke: var(--pg-accent);
       stroke-width: 4;
+    }
+    .plant.covered .ring {
+      stroke: var(--pg-water);
+      stroke-width: 4;
+      stroke-dasharray: none;
     }
     .plant-label {
       display: none;

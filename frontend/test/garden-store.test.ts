@@ -44,10 +44,11 @@ describe("GardenStore", () => {
     const store = new GardenStore(() => backend.hass);
     expect(store.stale).toBe(true);
     await Promise.all([store.refresh(), store.refresh()]);
-    // one refresh = plants + layout
+    // one refresh = plants + layout + water summary
     expect(backend.callWS.mock.calls.map(([msg]) => (msg as { type: string }).type)).toEqual([
       "plant_garden/plants/list",
       "plant_garden/layout/get",
+      "plant_garden/irrigation/summary",
     ]);
     expect(store.layout?.origin).toEqual({ latitude: 52.4, longitude: 13.06 });
     expect(store.stale).toBe(false);
@@ -83,6 +84,28 @@ describe("GardenStore", () => {
     backend.emit({ kind: "layout", shape_id: "S" });
     await vi.advanceTimersByTimeAsync(500);
     expect(changes).toHaveBeenCalledTimes(4);
+
+    // irrigation events reload only the water summary
+    backend.callWS.mockClear();
+    backend.irrigation = {
+      plants: { A: { today_l: 2, today_mm: 3, total_l: 9, last_watering: null, days: [] } },
+      zones: {},
+    };
+    backend.emit({ kind: "irrigation" });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(backend.callWS.mock.calls.map(([msg]) => (msg as { type: string }).type)).toEqual([
+      "plant_garden/irrigation/summary",
+    ]);
+    expect(store.irrigation.plants.A?.total_l).toBe(9);
+    expect(changes).toHaveBeenCalledTimes(5);
+
+    // a failing summary keeps the old one
+    backend.callWS.mockRejectedValueOnce(new Error("gone"));
+    backend.emit({ kind: "irrigation" });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(store.irrigation.plants.A?.total_l).toBe(9);
+    expect(changes).toHaveBeenCalledTimes(5);
+    vi.useRealTimers();
   });
 
   it("reports errors", async () => {

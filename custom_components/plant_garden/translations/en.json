@@ -18,5 +18,81 @@
     "abort": {
       "single_instance_allowed": "Plant Garden is already set up."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Settings",
+        "data": {
+          "max_runtime_hours": "Warn after run time"
+        },
+        "data_description": {
+          "max_runtime_hours": "If an irrigation zone runs longer, a notice appears under Repairs (e.g. a stuck valve)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "water_total": {
+        "name": "Water received"
+      },
+      "water_today": {
+        "name": "Water today"
+      },
+      "last_watering": {
+        "name": "Last watering"
+      },
+      "runtime_today": {
+        "name": "Run time today"
+      },
+      "zone_water_today": {
+        "name": "Water today"
+      }
+    }
+  },
+  "issues": {
+    "long_run": {
+      "title": "Irrigation zone {zone} has been running for {hours} h",
+      "description": "{entity} has been on for {hours} hours. Check whether the valve is stuck. Plant Garden never switches anything itself. This notice disappears once the zone is off again."
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "Plant Garden is not set up."
+    },
+    "not_plant_or_zone": {
+      "message": "{device_id} is neither a plant nor an irrigation zone of Plant Garden."
+    },
+    "liters_needed": {
+      "message": "Please give the litres for plants."
+    },
+    "minutes_needed": {
+      "message": "Please give the minutes for irrigation zones."
+    }
+  },
+  "services": {
+    "log_watering": {
+      "name": "Log watering",
+      "description": "Records water that Plant Garden did not see itself: litres per plant (watering can) or minutes for a zone (e.g. with the hose).",
+      "fields": {
+        "device_id": {
+          "name": "Plants or zones",
+          "description": "Plant Garden devices: plants and/or irrigation zones."
+        },
+        "liters": {
+          "name": "Litres per plant",
+          "description": "For each selected plant."
+        },
+        "minutes": {
+          "name": "Minutes",
+          "description": "Run time for each selected zone; the amount follows from the zone's precipitation rate."
+        },
+        "note": {
+          "name": "Note",
+          "description": "Optional."
+        }
+      }
+    }
   }
 }

@@ -160,6 +160,7 @@ export const SHAPE_KINDS = [
   "pond",
   "boundary",
   "other",
+  "zone",
 ] as const;
 export type ShapeKind = (typeof SHAPE_KINDS)[number];
 
@@ -193,6 +194,8 @@ export interface Shape {
   soil_type: SoilType | null;
   locked: boolean;
   z: number;
+  /** Only for kind "zone". */
+  irrigation?: Irrigation | null;
 }
 
 export interface WmsBackground {
@@ -238,7 +241,84 @@ export interface Layout {
 }
 
 export interface GardenChangeEvent {
-  kind: "plant" | "plant_removed" | "layout";
+  kind: "plant" | "plant_removed" | "layout" | "irrigation";
   plant_id: string | null;
   shape_id: string | null;
+}
+
+// ------------------------------------------------------------ irrigation
+export const EMITTERS = ["spray", "rotor", "drip_line", "drip", "manual"] as const;
+export type Emitter = (typeof EMITTERS)[number];
+
+/** Share of the water that reaches the roots; same defaults as the backend (D-023). */
+export const DEFAULT_EFFICIENCY: Record<Emitter, number> = {
+  rotor: 0.75,
+  spray: 0.65,
+  drip: 0.9,
+  drip_line: 0.85,
+  manual: 0.8,
+};
+
+/** Domains a zone can follow; the integration only reads them, it never switches. */
+export const ZONE_ENTITY_DOMAINS = ["valve", "switch", "input_boolean", "binary_sensor"] as const;
+
+export interface Irrigation {
+  entity_id: string | null;
+  timer_entity_id: string | null;
+  meter_entity_id: string | null;
+  emitter: Emitter;
+  /** precipitation rate over the zone */
+  rate_mm_h: number | null;
+  /** flow, spread over the zone area */
+  flow_l_min: number | null;
+  /** drippers: litres per hour per plant */
+  drip_l_h: number | null;
+  /** null: DEFAULT_EFFICIENCY of the emitter */
+  efficiency: number | null;
+  include: string[];
+  exclude: string[];
+}
+
+export interface WaterDay {
+  day: string;
+  liters: number;
+  mm: number;
+}
+
+export interface PlantWaterStats {
+  today_l: number;
+  today_mm: number;
+  total_l: number;
+  last_watering: string | null;
+  /** last 14 days, oldest first */
+  days: WaterDay[];
+}
+
+export interface ZoneStats {
+  runtime_today_s: number;
+  liters_today: number;
+  last_run: string | null;
+  running_since: string | null;
+}
+
+export interface IrrigationSummary {
+  plants: Record<string, PlantWaterStats>;
+  zones: Record<string, ZoneStats>;
+}
+
+export interface IrrigationEvent {
+  id: string;
+  /** null: watered by hand */
+  zone_id: string | null;
+  started_at: string;
+  ended_at: string;
+  duration_s: number;
+  day: string;
+  source: "estimate" | "meter" | "manual" | "unknown";
+  liters: number | null;
+  depth_mm: number | null;
+  uncertain: boolean;
+  reconstructed: boolean;
+  note: string;
+  plants: { plant_id: string; liters: number; mm: number }[];
 }

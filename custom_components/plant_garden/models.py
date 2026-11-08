@@ -291,6 +291,89 @@ class ShapeKind(StrEnum):
     GREENHOUSE = "greenhouse"
     ROOF = "roof"
     OTHER = "other"
+    ZONE = "zone"  # irrigation zone; carries `irrigation` settings
+
+
+class Emitter(StrEnum):
+    """How an irrigation zone delivers water."""
+
+    ROTOR = "rotor"  # Versenkregner / Getrieberegner
+    SPRAY = "spray"  # Sprühdüse
+    DRIP = "drip"  # single drippers per plant (rate in L/h per plant)
+    DRIP_LINE = "drip_line"  # drip hose over an area
+    MANUAL = "manual"  # watered by hand or with a hose over the area
+
+
+# Share of the delivered water that reaches the roots (application efficiency).
+# Sprinklers about 75 %, drip about 90 % (FAO Irrigation Water Management,
+# Training Manual 4); spray heads lose more to wind and evaporation than rotors,
+# drip hoses a little more than single drippers (D-023).
+DEFAULT_EFFICIENCY: dict[Emitter, float] = {
+    Emitter.ROTOR: 0.75,
+    Emitter.SPRAY: 0.65,
+    Emitter.DRIP: 0.9,
+    Emitter.DRIP_LINE: 0.85,
+    Emitter.MANUAL: 0.8,
+}
+
+
+@dataclass(slots=True, kw_only=True)
+class Irrigation:
+    """Settings of an irrigation zone (a Shape of kind ZONE).
+
+    The water rate is one of: `rate_mm_h` (precipitation rate over the zone),
+    `flow_l_min` (converted over the zone area) or, for DRIP, `drip_l_h` per
+    plant. With a `meter_entity_id` (a litre or m³ counter) measured litres
+    replace the estimate for sessions seen live.
+    """
+
+    entity_id: str | None = None
+    timer_entity_id: str | None = None
+    meter_entity_id: str | None = None
+    emitter: Emitter = Emitter.SPRAY
+    rate_mm_h: float | None = None
+    flow_l_min: float | None = None
+    drip_l_h: float | None = None
+    efficiency: float | None = None  # None: DEFAULT_EFFICIENCY of the emitter
+    include: list[str] = field(default_factory=list)  # plant ids watered regardless of position
+    exclude: list[str] = field(default_factory=list)  # plant ids never counted
+
+    @property
+    def effective_efficiency(self) -> float:
+        return self.efficiency if self.efficiency is not None else DEFAULT_EFFICIENCY[self.emitter]
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "entity_id": self.entity_id,
+            "timer_entity_id": self.timer_entity_id,
+            "meter_entity_id": self.meter_entity_id,
+            "emitter": self.emitter.value,
+            "rate_mm_h": self.rate_mm_h,
+            "flow_l_min": self.flow_l_min,
+            "drip_l_h": self.drip_l_h,
+            "efficiency": self.efficiency,
+            "include": list(self.include),
+            "exclude": list(self.exclude),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        def number(key: str) -> float | None:
+            value = data.get(key)
+            return float(value) if value is not None else None
+
+        return cls(
+            entity_id=data.get("entity_id") or None,
+            timer_entity_id=data.get("timer_entity_id") or None,
+            meter_entity_id=data.get("meter_entity_id") or None,
+            emitter=Emitter(data.get("emitter") or Emitter.SPRAY),
+            rate_mm_h=number("rate_mm_h"),
+            flow_l_min=number("flow_l_min"),
+            drip_l_h=number("drip_l_h"),
+            efficiency=number("efficiency"),
+            include=list(data.get("include") or []),
+            exclude=list(data.get("exclude") or []),
+        )
 
 
 @dataclass(slots=True, kw_only=True)
@@ -312,6 +395,7 @@ class Shape:
     soil_type: SoilType | None = None
     locked: bool = False
     z: int = 0
+    irrigation: Irrigation | None = None  # only for kind ZONE
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -323,19 +407,23 @@ class Shape:
             "soil_type": self.soil_type.value if self.soil_type else None,
             "locked": self.locked,
             "z": self.z,
+            "irrigation": self.irrigation.as_dict() if self.irrigation else None,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        kind = ShapeKind(data["kind"])
+        irrigation = data.get("irrigation")
         return cls(
             id=data["id"],
-            kind=ShapeKind(data["kind"]),
+            kind=kind,
             geometry=data["geometry"],
             label=data.get("label"),
             plant_id=data.get("plant_id"),
             soil_type=SoilType(data["soil_type"]) if data.get("soil_type") else None,
             locked=bool(data.get("locked", False)),
             z=int(data.get("z", 0)),
+            irrigation=(Irrigation.from_dict(irrigation or {}) if kind is ShapeKind.ZONE else None),
         )
 
 
@@ -447,3 +535,43 @@ class Measurement:
     confidence: float | None = None
     photo_id: str | None = None
     note: str = ""
+
+
+class WaterSource(StrEnum):
+    """Where the amount of an irrigation event comes from."""
+
+    ESTIMATE = "estimate"  # zone rate x run time
+    METER = "meter"  # litres counted by the zone's meter entity
+    MANUAL = "manual"  # logged by hand (watering can)
+    UNKNOWN = "unknown"  # the zone has no rate: run time only
+
+
+@dataclass(slots=True, frozen=True)
+class PlantWater:
+    """Water one plant received from one event."""
+
+    plant_id: str
+    liters: float
+    mm: float  # depth over the plant's footprint
+
+
+@dataclass(slots=True, kw_only=True)
+class IrrigationEvent:
+    """A finished zone run or a manual watering (zone_id None)."""
+
+    id: str
+    zone_id: str | None
+    started_at: datetime
+    ended_at: datetime
+    day: date  # local date the water counts for (the start)
+    source: WaterSource
+    liters: float | None  # delivered in total (None: zone rate unknown)
+    depth_mm: float | None = None  # area-based zones: depth that reached the ground
+    uncertain: bool = False  # the entity became unavailable during the run
+    reconstructed: bool = False  # found in the recorder history, not seen live
+    note: str = ""
+    plants: list[PlantWater] = field(default_factory=list)
+
+    @property
+    def duration_s(self) -> float:
+        return (self.ended_at - self.started_at).total_seconds()

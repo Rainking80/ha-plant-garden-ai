@@ -1,5 +1,19 @@
-import { errorMessage, getLayout, listPlants, subscribeGarden } from "../api/client";
-import type { Background, GardenChangeEvent, Layout, Marker, Plant, Shape } from "../api/types";
+import {
+  errorMessage,
+  getLayout,
+  irrigationSummary,
+  listPlants,
+  subscribeGarden,
+} from "../api/client";
+import type {
+  Background,
+  GardenChangeEvent,
+  IrrigationSummary,
+  Layout,
+  Marker,
+  Plant,
+  Shape,
+} from "../api/types";
 import type { HomeAssistant } from "../types/hass";
 
 /** How long signed photo URLs are trusted before a refresh (backend: 24 h). */
@@ -20,12 +34,15 @@ export type StoreEvent = "change" | "plant-changed";
 export class GardenStore extends EventTarget {
   plants: Plant[] = [];
   layout: Layout | null = null;
+  /** Water per plant and run time per zone (refreshed on irrigation events). */
+  irrigation: IrrigationSummary = { plants: {}, zones: {} };
   loaded = false;
   error: string | undefined;
   lastRefresh = 0;
 
   private _unsubscribe?: () => Promise<void>;
   private _refreshTimer?: ReturnType<typeof setTimeout>;
+  private _irrigationTimer?: ReturnType<typeof setTimeout>;
   private _pending?: Promise<void>;
 
   constructor(private readonly _hass: () => HomeAssistant) {
@@ -46,6 +63,7 @@ export class GardenStore extends EventTarget {
 
   async disconnect(): Promise<void> {
     clearTimeout(this._refreshTimer);
+    clearTimeout(this._irrigationTimer);
     const unsubscribe = this._unsubscribe;
     this._unsubscribe = undefined;
     try {
@@ -137,12 +155,14 @@ export class GardenStore extends EventTarget {
   // ------------------------------------------------------------ internals
   private async _load(): Promise<void> {
     try {
-      const [plants, layout] = await Promise.all([
+      const [plants, layout, irrigation] = await Promise.all([
         listPlants(this._hass()),
         getLayout(this._hass()),
+        irrigationSummary(this._hass()),
       ]);
       this.plants = plants;
       this.layout = layout;
+      this.irrigation = irrigation;
       this.error = undefined;
       this.loaded = true;
       this.lastRefresh = Date.now();
@@ -154,8 +174,23 @@ export class GardenStore extends EventTarget {
 
   private _onChange(event: GardenChangeEvent): void {
     this.dispatchEvent(new CustomEvent<GardenChangeEvent>("plant-changed", { detail: event }));
+    if (event.kind === "irrigation") {
+      // runs start and stop often: reload only the water summary
+      clearTimeout(this._irrigationTimer);
+      this._irrigationTimer = setTimeout(() => void this._loadIrrigation(), REFRESH_DEBOUNCE_MS);
+      return;
+    }
     clearTimeout(this._refreshTimer);
     this._refreshTimer = setTimeout(() => void this.refresh(), REFRESH_DEBOUNCE_MS);
+  }
+
+  private async _loadIrrigation(): Promise<void> {
+    try {
+      this.irrigation = await irrigationSummary(this._hass());
+    } catch {
+      return; // the next full refresh brings it
+    }
+    this._emit("change");
   }
 
   private _emit(type: StoreEvent): void {

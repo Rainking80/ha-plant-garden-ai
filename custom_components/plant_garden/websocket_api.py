@@ -12,9 +12,10 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 import probatio
 
-from .const import DOMAIN, PLAN_EXTENT_M
+from .const import DOMAIN, PLAN_EXTENT_M, ZONE_ENTITY_DOMAINS
 from .garden import GardenChange, GardenManager, NotFoundError, OutOfRangeError
 from .models import (
+    Emitter,
     Light,
     LocationType,
     PlantCategory,
@@ -24,8 +25,8 @@ from .models import (
     SoilType,
     WaterNeed,
 )
-from .runtime import get_loaded_entry, get_manager
-from .serialize import layout_dict, measurement_dict, photo_dict, plant_dict
+from .runtime import get_irrigation, get_loaded_entry, get_manager
+from .serialize import event_dict, layout_dict, measurement_dict, photo_dict, plant_dict
 
 type GardenHandler = Callable[
     [HomeAssistant, websocket_api.ActiveConnection, dict[str, Any], GardenManager],
@@ -79,6 +80,21 @@ GEOMETRY = probatio.Any(
     },
 )
 
+PLANT_IDS = probatio.All([str], probatio.Length(max=1000))
+
+IRRIGATION = {
+    probatio.Optional("entity_id"): probatio.Any(None, cv.entity_domain(list(ZONE_ENTITY_DOMAINS))),
+    probatio.Optional("timer_entity_id"): probatio.Any(None, cv.entity_domain("timer")),
+    probatio.Optional("meter_entity_id"): probatio.Any(None, cv.entity_domain("sensor")),
+    probatio.Optional("emitter"): probatio.In([emitter.value for emitter in Emitter]),
+    probatio.Optional("rate_mm_h"): probatio.Any(None, _number(0.1, 500)),
+    probatio.Optional("flow_l_min"): probatio.Any(None, _number(0.01, 1000)),
+    probatio.Optional("drip_l_h"): probatio.Any(None, _number(0.1, 500)),
+    probatio.Optional("efficiency"): probatio.Any(None, _number(0.1, 1)),
+    probatio.Optional("include"): PLANT_IDS,
+    probatio.Optional("exclude"): PLANT_IDS,
+}
+
 SHAPE = {
     probatio.Optional("id"): ID,
     probatio.Required("kind"): probatio.In([kind.value for kind in ShapeKind]),
@@ -88,6 +104,7 @@ SHAPE = {
     probatio.Optional("soil_type"): _choice(SoilType),
     probatio.Optional("locked"): bool,
     probatio.Optional("z"): probatio.All(int, probatio.Range(min=-1000, max=1000)),
+    probatio.Optional("irrigation"): probatio.Any(None, IRRIGATION),
 }
 
 OPACITY = _number(0.05, 1)
@@ -180,6 +197,11 @@ def async_register_websocket_commands(hass: HomeAssistant) -> None:
         ws_measurements_add,
         ws_measurements_update,
         ws_measurements_delete,
+        ws_irrigation_summary,
+        ws_irrigation_events,
+        ws_irrigation_log,
+        ws_irrigation_log_zone,
+        ws_irrigation_delete,
     ):
         websocket_api.async_register_command(hass, command)
 
@@ -635,3 +657,107 @@ async def ws_measurements_delete(
     manager: GardenManager,
 ) -> None:
     await manager.async_delete_measurement(msg["measurement_id"])
+
+
+# ---------------------------------------------------------------- irrigation
+def _tracker(hass: HomeAssistant) -> Any:
+    tracker = get_irrigation(hass)
+    if tracker is None:  # pragma: no cover - the manager check runs first
+        raise NotFoundError("irrigation")
+    return tracker
+
+
+@garden_command({probatio.Required("type"): f"{DOMAIN}/irrigation/summary"})
+async def ws_irrigation_summary(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Water per plant (today, total, last 14 days) and run time per zone (incl. running)."""
+    summary: dict[str, Any] = _tracker(hass).summary()
+    return summary
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/irrigation/events",
+        probatio.Optional("zone_id"): str,
+        probatio.Optional("plant_id"): str,
+        probatio.Optional("limit", default=50): probatio.All(int, probatio.Range(min=1, max=500)),
+    }
+)
+async def ws_irrigation_events(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Newest irrigation events, optionally of one zone or reaching one plant."""
+    events = await manager.async_recent_events(
+        zone_id=msg.get("zone_id"), plant_id=msg.get("plant_id"), limit=msg["limit"]
+    )
+    return {"events": [event_dict(event) for event in events]}
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/irrigation/log",
+        probatio.Required("plants"): probatio.All(
+            [
+                {
+                    probatio.Required("plant_id"): str,
+                    probatio.Required("liters"): _number(0.01, 10000),
+                }
+            ],
+            probatio.Length(min=1, max=500),
+        ),
+        probatio.Optional("at"): cv.datetime,
+        probatio.Optional("note", default=""): probatio.All(str, probatio.Length(max=500)),
+    }
+)
+async def ws_irrigation_log(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Watering by hand (watering can): litres per plant."""
+    liters = {item["plant_id"]: float(item["liters"]) for item in msg["plants"]}
+    event = await _tracker(hass).async_log_watering(liters, at=msg.get("at"), note=msg["note"])
+    return event_dict(event)
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/irrigation/log_zone",
+        probatio.Required("zone_id"): str,
+        probatio.Required("minutes"): _number(0.1, 1440),
+        probatio.Optional("end"): cv.datetime,
+        probatio.Optional("note", default=""): probatio.All(str, probatio.Length(max=500)),
+    }
+)
+async def ws_irrigation_log_zone(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """A zone run that was not seen live, e.g. watered with the hose over the zone."""
+    event = await _tracker(hass).async_log_zone_run(
+        msg["zone_id"], float(msg["minutes"]), end=msg.get("end"), note=msg["note"]
+    )
+    return event_dict(event)
+
+
+@garden_command(
+    {probatio.Required("type"): f"{DOMAIN}/irrigation/delete", probatio.Required("event_id"): str}
+)
+async def ws_irrigation_delete(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> None:
+    """Remove a wrong event (e.g. a test run); the plants lose its water."""
+    await _tracker(hass).async_delete_event(msg["event_id"])

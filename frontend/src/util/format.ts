@@ -57,3 +57,19 @@ export function formatBytes(bytes: number, language: string): string {
   if (bytes < 1024 * 1024) return `${formatNumber(bytes / 1024, language, 0)} KB`;
   return `${formatNumber(bytes / 1024 / 1024, language, 1)} MB`;
 }
+
+/** Date and time of a timestamp, e.g. "8. Nov., 06:30" (today: only the time). */
+export function formatDateTime(iso: string, language: string, now = new Date()): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const time = date.toLocaleTimeString(language, { hour: "2-digit", minute: "2-digit" });
+  if (date.toDateString() === now.toDateString()) return time;
+  const day = date.toLocaleDateString(language, { day: "numeric", month: "short" });
+  return `${day}, ${time}`;
+}
+
+/** Litres with a sensible precision: 0.35 L, 4.2 L, 120 L. */
+export function formatLiters(liters: number, language: string): string {
+  const digits = liters < 1 ? 2 : liters < 10 ? 1 : 0;
+  return `${formatNumber(liters, language, digits)} L`;
+}

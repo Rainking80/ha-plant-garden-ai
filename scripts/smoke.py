@@ -208,6 +208,7 @@ async def check_plants_and_photos(
         print(f"  plan: origin {layout['origin']}, bed saved, plant placed")
 
         await check_background_and_markers(session, base, headers, call)
+        await check_irrigation(session, base, headers, call, plant["id"])
 
         await call(type="plant_garden/layout/shapes/delete", shape_id=bed["id"])
         await call(type="plant_garden/plants/delete", plant_id=plant["id"])
@@ -271,6 +272,64 @@ async def check_background_and_markers(
 
     await call(type="plant_garden/layout/markers/delete", marker_id=marker["id"])
     await call(type="plant_garden/layout/set_background", background={"type": "none"})
+
+
+async def check_irrigation(
+    session: aiohttp.ClientSession,
+    base: str,
+    headers: dict[str, str],
+    call: Callable[..., Awaitable[dict]],
+    plant_id: str,
+) -> None:
+    """A zone over the plant follows a (REST-created) entity: one run waters the plant."""
+    valve = "input_boolean.smoke_zone"
+
+    async def set_valve(state: str) -> None:
+        async with session.post(
+            f"{base}/api/states/{valve}", json={"state": state}, headers=headers
+        ) as resp:
+            assert resp.status in (200, 201), await resp.text()
+
+    await set_valve("off")
+    zone = await call(
+        type="plant_garden/layout/shapes/save",
+        shape={
+            "kind": "zone",
+            "label": "Smoke-Zone",
+            "geometry": {"type": "rect", "cx": 2, "cy": 1, "w": 4, "h": 4, "rotation": 0},
+            "irrigation": {"entity_id": valve, "emitter": "spray", "rate_mm_h": 500},
+        },
+    )
+    await set_valve("on")
+    await asyncio.sleep(6)
+    await set_valve("off")
+    events: list[dict] = []
+    for _ in range(20):
+        events = (await call(type="plant_garden/irrigation/events", zone_id=zone["id"]))["events"]
+        if events:
+            break
+        await asyncio.sleep(0.5)
+    assert len(events) == 1, events
+    [share] = events[0]["plants"]
+    assert share["plant_id"] == plant_id, events[0]
+    assert share["liters"] > 0, events[0]
+    summary = await call(type="plant_garden/irrigation/summary")
+    assert summary["plants"][plant_id]["total_l"] > 0, summary
+    async with session.get(f"{base}/api/states", headers=headers) as resp:
+        states = await resp.json()
+    received = [
+        s
+        for s in states
+        if s["entity_id"].startswith("sensor.smoke_tomate")
+        and s["attributes"].get("unit_of_measurement") == "L"
+    ]
+    assert received, states
+    assert float(received[0]["state"]) > 0, received
+    print(
+        f"  irrigation: zone run of {events[0]['duration_s']} s recorded, "
+        f"{share['liters']} L for the plant, {received[0]['entity_id']} = {received[0]['state']}"
+    )
+    await call(type="plant_garden/layout/shapes/delete", shape_id=zone["id"])
 
 
 async def main(base: str) -> None:

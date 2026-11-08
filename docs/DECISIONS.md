@@ -191,3 +191,61 @@ by about 0.3 % at 10 km north or south. If reprojecting would push anything past
 the limit, nothing changes and the backend answers `out_of_range`. The panel checks
 the limit before saving and explains it; in edit mode it offers "move location
 here" once the view is more than 1 km away (photo GPS suggestions also stop there).
+
+## D-023 Irrigation zones are shapes of kind `zone` (2026-11-08)
+
+A zone needs everything a drawn area has (rectangle, circle or polygon, moving,
+handles, undo, locking, label), so it is a `Shape` with `kind: "zone"` and an
+`irrigation` block (linked entity, optional timer and water meter, emitter type,
+rate, efficiency, manual include/exclude). It is drawn in its own layer between
+the areas and the plants and can be hidden per device. Circle sectors for
+sprinklers with a spray angle are not built yet; a polygon covers them.
+
+Rates: `rate_mm_h` (precipitation rate over the zone) or `flow_l_min` (spread over
+the zone area, `PR = Q · 60 / A`); drippers (`drip`) use litres per hour per plant.
+Default application efficiencies: rotor 75 %, spray 65 %, drip line 85 %, drippers
+90 %, by hand 80 % (sprinklers about 75 % and drip about 90 % after FAO, Irrigation
+Water Management Training Manual 4; spray heads lose more to wind and evaporation
+than rotors). Every value can be overridden per zone.
+
+Alternatives: a separate zone list with its own editor (duplicates all geometry
+editing), zones as a property of beds (one bed often has several zones and vice
+versa).
+
+## D-024 How a zone run turns into water per plant (2026-11-08)
+
+- **Footprint** of a plant: the areas linked to it (lawn, hedge …), otherwise its
+  crown circle at its position. Plants without either, and removed plants, get no
+  water from zones.
+- **Coverage**: the share of the footprint inside the zone, from a 16 × 16 grid of
+  sample points (backend `geometry.py` and panel `util/coverage.ts` use the same
+  grid, so the plan shows what the backend counts). Included plants count fully,
+  excluded ones not at all. Overlapping zones add up.
+- **Area zones**: depth = delivered litres × efficiency / zone area; a plant gets
+  depth × its share, in litres over its footprint area. **Drippers**: each reached
+  plant gets its drippers' litres × efficiency.
+- **Delivered litres**: rate × run time, or the difference of the zone's water meter
+  (litres or m³) at start and end. The meter is only used for runs seen live; runs
+  found in the recorder history and runs where the meter went backwards fall back
+  to the estimate. A zone without any rate records the run time only.
+- **Runs**: `on`, `open` and `opening` count as running. Switching for less than
+  5 s is ignored (test clicks). `unavailable`/`unknown` ends a run as "uncertain".
+  A run counts for the local day it started on. Open runs survive restarts; on
+  start the recorder history since the last check fills gaps, each zone run is
+  stored once (`zone_id`, start) so repeated catch-ups cannot double count.
+- A run longer than the configured limit (option, default 6 h) raises a repair
+  issue that disappears when the zone stops. The integration never switches.
+
+## D-025 Plant and zone devices; watering is logged per device (2026-11-08)
+
+Every plant and every zone is a device below a "garden" service device, linked
+with `via_device_id` (HA 2026.9+ deprecates `via_device`). Devices and their
+sensors appear and disappear with plants and zones; the entity name comes from
+the device (plant name, zone label or the linked entity's name). M4 adds the
+irrigation sensors only (water received in L as `total_increasing` for long-term
+statistics, water today in mm, last watering; zone run time and litres today);
+the other per-plant sensors from the spec follow with the features they report
+on (water balance in M5, tasks and problems in M7).
+
+The action `plant_garden.log_watering` targets devices (plants: litres each, zones:
+minutes), because automations know devices, not internal plant ids.

@@ -1,6 +1,16 @@
 import { vi } from "vitest";
 
-import type { Background, Marker, Photo, Plant, PlantDetail, Point, Shape } from "../src/api/types";
+import type {
+  Background,
+  IrrigationEvent,
+  IrrigationSummary,
+  Marker,
+  Photo,
+  Plant,
+  PlantDetail,
+  Point,
+  Shape,
+} from "../src/api/types";
 import type { HomeAssistant } from "../src/types/hass";
 import { reproject, type GeoOrigin } from "../src/util/wms";
 
@@ -72,7 +82,7 @@ export interface FakeBackend {
   callWS: ReturnType<typeof vi.fn>;
   /** Push a change event as the backend subscription would. */
   emit: (event: {
-    kind: "plant" | "plant_removed" | "layout";
+    kind: "plant" | "plant_removed" | "layout" | "irrigation";
     plant_id?: string | null;
     shape_id?: string | null;
   }) => void;
@@ -83,6 +93,8 @@ export interface FakeBackend {
   origin: GeoOrigin;
   todo: Record<string, { uid: string; summary: string; status: string }[]>;
   details: Record<string, PlantDetail>;
+  irrigation: IrrigationSummary;
+  events: IrrigationEvent[];
 }
 
 /** What the backend does to stored coordinates when the origin moves (keeping places). */
@@ -117,6 +129,8 @@ export function fakeBackend(
     todo?: FakeBackend["todo"];
     states?: Record<string, unknown>;
     details?: Record<string, PlantDetail>;
+    irrigation?: IrrigationSummary;
+    events?: IrrigationEvent[];
     language?: string;
   } = {},
 ): FakeBackend {
@@ -128,6 +142,8 @@ export function fakeBackend(
     background: options.background ?? null,
     origin: { latitude: 52.4, longitude: 13.06 },
     todo: options.todo ?? {},
+    irrigation: options.irrigation ?? { plants: {}, zones: {} },
+    events: options.events ?? [],
   } as FakeBackend;
   const layout = () => ({
     origin: backend.origin,
@@ -211,6 +227,40 @@ export function fakeBackend(
       }
       case "plant_garden/layout/shapes/delete":
         backend.shapes = backend.shapes.filter((s) => s.id !== msg.shape_id);
+        return null;
+      case "plant_garden/irrigation/summary":
+        return backend.irrigation;
+      case "plant_garden/irrigation/events":
+        return {
+          events: backend.events.filter(
+            (event) =>
+              (!msg.zone_id || event.zone_id === msg.zone_id) &&
+              (!msg.plant_id || event.plants.some((p) => p.plant_id === msg.plant_id)),
+          ),
+        };
+      case "plant_garden/irrigation/log": {
+        const plants = msg.plants as { plant_id: string; liters: number }[];
+        const now = new Date().toISOString();
+        const event: IrrigationEvent = {
+          id: `EV${backend.events.length}`,
+          zone_id: null,
+          started_at: now,
+          ended_at: now,
+          duration_s: 0,
+          day: now.slice(0, 10),
+          source: "manual",
+          liters: plants.reduce((sum, p) => sum + p.liters, 0),
+          depth_mm: null,
+          uncertain: false,
+          reconstructed: false,
+          note: String(msg.note ?? ""),
+          plants: plants.map((p) => ({ ...p, mm: p.liters })),
+        };
+        backend.events = [event, ...backend.events];
+        return event;
+      }
+      case "plant_garden/irrigation/delete":
+        backend.events = backend.events.filter((event) => event.id !== msg.event_id);
         return null;
       default:
         throw new Error(`unexpected ${msg.type}`);

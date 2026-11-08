@@ -20,6 +20,9 @@ import {
   mdiSprout,
   mdiUndo,
   mdiVectorPolygon,
+  mdiWater,
+  mdiWaterOffOutline,
+  mdiWaterOutline,
 } from "@mdi/js";
 import type { HassEntity } from "home-assistant-js-websocket";
 import { css, html, nothing, svg, type PropertyValues } from "lit";
@@ -37,8 +40,13 @@ import {
   updatePlant,
 } from "../api/client";
 import {
+  DEFAULT_EFFICIENCY,
+  EMITTERS,
   SHAPE_KINDS,
   SOIL_TYPES,
+  ZONE_ENTITY_DOMAINS,
+  type Emitter,
+  type Irrigation,
   type Background,
   type Geometry,
   type Marker,
@@ -77,13 +85,27 @@ import {
   type PgOriginDialog,
 } from "../components/origin-dialog";
 import { plantPath } from "../components/plant-card";
+import {
+  footprints,
+  isRunning,
+  precipitationRate,
+  rateField,
+  zoneCoverage,
+} from "../util/coverage";
 import "../components/plant-form";
 import type { PgPlantForm, PlantSavedDetail } from "../components/plant-form";
 import type { TranslationKey } from "../i18n";
 import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
 import { sparklinePath } from "../util/chart";
-import { formatAge, formatDate, formatLength, formatNumber } from "../util/format";
+import {
+  formatAge,
+  formatDate,
+  formatDateTime,
+  formatLength,
+  formatLiters,
+  formatNumber,
+} from "../util/format";
 import {
   PLAN_EXTENT_M,
   anchorPoints,
@@ -103,6 +125,37 @@ import { planToGeo, reproject, type GeoOrigin } from "../util/wms";
 import { matchesQuery } from "./plants-view";
 
 const VIEWPORT_KEY = "plant-garden.viewport.v1";
+const ZONES_KEY = "plant-garden.zones.v1";
+const NO_PLANTS: ReadonlySet<string> = new Set();
+
+function defaultIrrigation(): Irrigation {
+  return {
+    entity_id: null,
+    timer_entity_id: null,
+    meter_entity_id: null,
+    emitter: "spray",
+    rate_mm_h: null,
+    flow_l_min: null,
+    drip_l_h: null,
+    efficiency: null,
+    include: [],
+    exclude: [],
+  };
+}
+
+/** A positive number from a form field, or null when empty or invalid. */
+function positive(raw: string, max: number): number | null {
+  const value = Number(raw.replace(",", ".").trim());
+  return raw.trim() !== "" && value > 0 && value <= max ? value : null;
+}
+
+/** Entities a zone links to, and the domains the picker offers for each. */
+const ZONE_PICKS = {
+  entity_id: ZONE_ENTITY_DOMAINS as readonly string[],
+  timer_entity_id: ["timer"],
+  meter_entity_id: ["sensor"],
+} as const;
+type ZonePick = keyof typeof ZONE_PICKS;
 const SNAP_KEY = "plant-garden.snap.v1";
 const SNAP_STEPS = [0, 0.1, 0.25, 0.5, 1];
 
@@ -139,6 +192,7 @@ const KIND_Z: Record<ShapeKind, number> = {
   greenhouse: 4,
   house: 5,
   roof: 6,
+  zone: 7,
 };
 
 function readStorage<T>(key: string, valid: (value: unknown) => value is T): T | null {
@@ -219,6 +273,8 @@ export class PgGardenView extends PgElement {
     _historyTick: { state: true },
     _markerHistory: { state: true },
     _farM: { state: true },
+    _showZones: { state: true },
+    _zonePick: { state: true },
   };
 
   declare store: GardenStore;
@@ -238,12 +294,21 @@ export class PgGardenView extends PgElement {
   declare _markerHistory: MarkerHistory | null;
   /** Distance of the view from the garden's location when that is far (else 0). */
   declare _farM: number;
+  declare _showZones: boolean;
+  /** which entity of the selected zone the picker fills in */
+  declare _zonePick: ZonePick | null;
 
   private readonly _history = new History();
   private _fitted = false;
   private _focused: string | null = null;
   private _errorTimer?: ReturnType<typeof setTimeout>;
   private _states: Record<string, HassEntity | undefined> = {};
+  private _highlightMemo: {
+    zone: Shape;
+    plants: Plant[];
+    shapes: Shape[];
+    set: ReadonlySet<string>;
+  } | null = null;
 
   private readonly _onStoreChange = () => {
     this.requestUpdate();
@@ -268,6 +333,8 @@ export class PgGardenView extends PgElement {
     this._historyTick = 0;
     this._markerHistory = null;
     this._farM = 0;
+    this._showZones = readStorage(ZONES_KEY, (v): v is boolean => typeof v === "boolean") ?? true;
+    this._zonePick = null;
   }
 
   override connectedCallback(): void {
@@ -326,15 +393,40 @@ export class PgGardenView extends PgElement {
    * so the canvas does not re-render for every state change in the house.
    */
   private _markerStates(): Record<string, HassEntity | undefined> {
+    const ids = new Set(this._markers.map((marker) => marker.entity_id));
+    for (const shape of this._shapes) {
+      const zone = shape.irrigation;
+      if (zone?.entity_id) ids.add(zone.entity_id);
+      if (zone?.timer_entity_id) ids.add(zone.timer_entity_id);
+    }
     const next: Record<string, HassEntity | undefined> = {};
-    let changed = Object.keys(this._states).length !== this._markers.length;
-    for (const marker of this._markers) {
-      const state = this.hass?.states[marker.entity_id];
-      next[marker.entity_id] = state;
-      if (this._states[marker.entity_id] !== state) changed = true;
+    let changed = Object.keys(this._states).length !== ids.size;
+    for (const id of ids) {
+      const state = this.hass?.states[id];
+      next[id] = state;
+      if (this._states[id] !== state) changed = true;
     }
     if (changed) this._states = next;
     return this._states;
+  }
+
+  /** Plants the selected zone reaches (shown with a water ring). */
+  private _highlight(): ReadonlySet<string> {
+    const selection = this._selection;
+    const zone = selection?.type === "shape" ? this.store?.getShape(selection.id) : undefined;
+    if (zone?.kind !== "zone") return NO_PLANTS;
+    // the store replaces its arrays on every change, so identity tells when to recompute
+    const memo = this._highlightMemo;
+    if (memo?.zone !== zone || memo.plants !== this._plants || memo.shapes !== this._shapes) {
+      const set = new Set(this._coverage(zone).keys());
+      this._highlightMemo = { zone, plants: this._plants, shapes: this._shapes, set };
+      return set;
+    }
+    return memo.set;
+  }
+
+  private _coverage(zone: Shape): Map<string, number> {
+    return zoneCoverage(zone, footprints(this._plants, this._shapes));
   }
 
   /** On first visit: show the whole garden. */
@@ -559,6 +651,7 @@ export class PgGardenView extends PgElement {
       soil_type: null,
       locked: false,
       z: KIND_Z[this._newKind],
+      irrigation: this._newKind === "zone" ? defaultIrrigation() : null,
     };
     this._tool = "select";
     this._selection = { type: "shape", id: shape.id };
@@ -737,7 +830,7 @@ export class PgGardenView extends PgElement {
   }
 
   private _openEntityPicker(): void {
-    this.renderRoot.querySelector<PgEntityPicker>("pg-entity-picker")?.open();
+    this.renderRoot.querySelector<PgEntityPicker>("pg-entity-picker.marker-picker")?.open();
   }
 
   private _onEntityPicked(event: CustomEvent<{ entityId: string }>): void {
@@ -840,6 +933,8 @@ export class PgGardenView extends PgElement {
             .selection=${this._selection}
             .snapStep=${this._snap}
             .armed=${this._armed}
+            .highlight=${this._highlight()}
+            .showZones=${this._showZones}
             @select=${this._onSelect}
             @hover=${this._onHover}
             @move-plant=${this._onMovePlant}
@@ -882,9 +977,17 @@ export class PgGardenView extends PgElement {
         @origin-change=${this._onOriginChange}
       ></pg-origin-dialog>
       <pg-entity-picker
+        class="marker-picker"
         .hass=${this.hass}
         .heading=${this.t("plan.add_marker")}
         @entity-picked=${this._onEntityPicked}
+      ></pg-entity-picker>
+      <pg-entity-picker
+        class="zone-picker"
+        .hass=${this.hass}
+        .domains=${this._zonePick ? [...ZONE_PICKS[this._zonePick]] : undefined}
+        .heading=${this._zonePick ? this.t(`zone.${this._zonePick}`) : ""}
+        @entity-picked=${this._onZoneEntityPicked}
       ></pg-entity-picker>
       <pg-number-dialog .hass=${this.hass}></pg-number-dialog>
     `;
@@ -1016,15 +1119,38 @@ export class PgGardenView extends PgElement {
               </div>`
           : nothing
       }
-      <button
-        class="tool group fit"
-        @click=${() => this._canvas?.fit()}
-        aria-label=${t("plan.fit")}
-        title=${t("plan.fit")}
-      >
-        ${icon(mdiFitToScreenOutline)}
-      </button>
+      <div class="group fit" role="group">
+        ${
+          this._shapes.some((shape) => shape.kind === "zone")
+            ? html`<button
+                class="tool"
+                aria-pressed=${this._showZones}
+                @click=${this._toggleZones}
+                aria-label=${t("zone.layer")}
+                title=${t("zone.layer")}
+              >
+                ${icon(this._showZones ? mdiWater : mdiWaterOffOutline)}
+              </button>`
+            : nothing
+        }
+        <button
+          class="tool"
+          @click=${() => this._canvas?.fit()}
+          aria-label=${t("plan.fit")}
+          title=${t("plan.fit")}
+        >
+          ${icon(mdiFitToScreenOutline)}
+        </button>
+      </div>
     </div>`;
+  }
+
+  private _toggleZones(): void {
+    this._showZones = !this._showZones;
+    writeStorage(ZONES_KEY, this._showZones);
+    if (!this._showZones && this.store.getShape(this._selection?.id ?? "")?.kind === "zone") {
+      this._selection = null;
+    }
   }
 
   private _renderHint() {
@@ -1157,6 +1283,7 @@ export class PgGardenView extends PgElement {
         ${plant.scientific_name ? html`<p class="latin">${plant.scientific_name}</p>` : nothing}
         <p class="status status-${plant.status}">${t(`status.${plant.status}`)}</p>
         <p class="muted facts">${facts.join(" · ")}</p>
+        ${this._renderWaterFacts(plant.id)}
         ${
           pinned
             ? html`<button
@@ -1171,7 +1298,20 @@ export class PgGardenView extends PgElement {
     </article>`;
   }
 
+  private _renderWaterFacts(plantId: string) {
+    const water = this.store.irrigation.plants[plantId];
+    if (!water?.last_watering) return nothing;
+    const { t, language } = this;
+    return html`<p class="muted small water-facts">
+      ${icon(mdiWaterOutline)}
+      ${t("water.last", { time: formatDateTime(water.last_watering, language) })}
+      ${water.today_l > 0 ? ` · ${t("water.today", { liters: formatLiters(water.today_l, language) })}` : ""}
+    </p>`;
+  }
+
   private _renderShapeCard(shape: Shape) {
+    if (shape.kind === "zone" && shape.irrigation)
+      return this._renderZoneCard(shape, shape.irrigation);
     const { t, language } = this;
     const plant = shape.plant_id ? this.store.getPlant(shape.plant_id) : undefined;
     return html`<article class="card info pinned side-card">
@@ -1352,7 +1492,8 @@ export class PgGardenView extends PgElement {
         <select
           @change=${(e: Event) => {
             const kind = (e.target as HTMLSelectElement).value as ShapeKind;
-            update({ kind, z: KIND_Z[kind] });
+            const irrigation = kind === "zone" ? (shape.irrigation ?? defaultIrrigation()) : null;
+            update({ kind, z: KIND_Z[kind], irrigation });
           }}
         >
           ${SHAPE_KINDS.map(
@@ -1371,6 +1512,33 @@ export class PgGardenView extends PgElement {
           @change=${(e: Event) => update({ label: (e.target as HTMLInputElement).value.trim() || null })}
         />
       </label>
+      ${
+        shape.kind === "zone" && shape.irrigation
+          ? this._renderZoneSettings(shape, shape.irrigation)
+          : this._renderAreaSettings(shape, soil)
+      }
+      <label class="check">
+        <input
+          type="checkbox"
+          .checked=${shape.locked}
+          @change=${(e: Event) => update({ locked: (e.target as HTMLInputElement).checked })}
+        />
+        <span>${t("plan.locked")}</span>
+      </label>
+      <p class="muted">${t("plan.area")}: ${formatNumber(area(shape.geometry), language, 1)} m²</p>
+      <div class="props-actions">
+        <button class="button text danger" @click=${this._onDeleteSelection}>
+          ${icon(mdiDeleteOutline)} ${t("plan.delete_shape")}
+        </button>
+      </div>
+    </section>`;
+  }
+
+  private _renderAreaSettings(shape: Shape, soil: boolean) {
+    const { t } = this;
+    const update = (changes: Partial<Shape>) =>
+      void this._replaceShape(shape, { ...shape, ...changes });
+    return html`
       <label class="field">
         <span>${t("plan.linked_plant")}</span>
         <select
@@ -1407,21 +1575,250 @@ export class PgGardenView extends PgElement {
             </label>`
           : nothing
       }
-      <label class="check">
-        <input
-          type="checkbox"
-          .checked=${shape.locked}
-          @change=${(e: Event) => update({ locked: (e.target as HTMLInputElement).checked })}
-        />
-        <span>${t("plan.locked")}</span>
-      </label>
-      <p class="muted">${t("plan.area")}: ${formatNumber(area(shape.geometry), language, 1)} m²</p>
-      <div class="props-actions">
-        <button class="button text danger" @click=${this._onDeleteSelection}>
-          ${icon(mdiDeleteOutline)} ${t("plan.delete_shape")}
-        </button>
+    `;
+  }
+
+  private _entityLabel(entityId: string | null): string {
+    if (!entityId) return this.t("zone.none");
+    return markerName(this.hass?.states[entityId], entityId);
+  }
+
+  private _renderZoneSettings(shape: Shape, zone: Irrigation) {
+    const { t, language } = this;
+    const set = (changes: Partial<Irrigation>) =>
+      void this._replaceShape(shape, { ...shape, irrigation: { ...zone, ...changes } });
+    const pick = (field: ZonePick) => html`
+      <div class="field">
+        <span>${t(`zone.${field}`)}</span>
+        <div class="pick">
+          <button class="button secondary pick-button" @click=${() => this._openZonePicker(field)}>
+            ${this._entityLabel(zone[field])}
+          </button>
+          ${
+            zone[field]
+              ? html`<button
+                  class="icon-button small"
+                  aria-label=${t("zone.unlink")}
+                  title=${t("zone.unlink")}
+                  @click=${() => set({ [field]: null })}
+                >
+                  ${icon(mdiClose)}
+                </button>`
+              : nothing
+          }
+        </div>
       </div>
-    </section>`;
+    `;
+    const drip = zone.emitter === "drip";
+    const rateKey = rateField(zone.emitter);
+    const pr = precipitationRate(zone, shape.geometry);
+    const coverage = this._coverage(shape);
+    const listed = this._plants.filter(
+      (plant) => coverage.has(plant.id) || zone.exclude.includes(plant.id),
+    );
+    const others = this._plants.filter((plant) => !listed.includes(plant));
+    return html`
+      ${pick("entity_id")}
+      <label class="field">
+        <span>${t("zone.emitter")}</span>
+        <select
+          @change=${(e: Event) => set({ emitter: (e.target as HTMLSelectElement).value as Emitter })}
+        >
+          ${EMITTERS.map(
+            (emitter) =>
+              html`<option value=${emitter} ?selected=${emitter === zone.emitter}>
+                ${t(`emitter.${emitter}`)}
+              </option>`,
+          )}
+        </select>
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>${t(drip ? "zone.drip_l_h" : "zone.rate_mm_h")}</span>
+          <input
+            type="number"
+            min="0"
+            step="0.1"
+            inputmode="decimal"
+            .value=${zone[rateKey] === null ? "" : String(zone[rateKey])}
+            @change=${(e: Event) => set({ [rateKey]: positive((e.target as HTMLInputElement).value, 500) })}
+          />
+        </label>
+        <label class="field">
+          <span>${t("zone.flow_l_min")}</span>
+          <input
+            type="number"
+            min="0"
+            step="0.1"
+            inputmode="decimal"
+            .value=${zone.flow_l_min === null ? "" : String(zone.flow_l_min)}
+            @change=${(e: Event) =>
+              set({ flow_l_min: positive((e.target as HTMLInputElement).value, 1000) })}
+          />
+        </label>
+      </div>
+      <p class="muted small">
+        ${
+          pr !== null
+            ? t("zone.rate_result", { rate: formatNumber(pr, language, 1) })
+            : t(drip ? "zone.drip_hint" : "zone.rate_hint")
+        }
+      </p>
+      <label class="field">
+        <span>${t("zone.efficiency")}</span>
+        <input
+          type="number"
+          min="10"
+          max="100"
+          step="5"
+          inputmode="numeric"
+          .value=${zone.efficiency === null ? "" : String(Math.round(zone.efficiency * 100))}
+          placeholder=${t("zone.efficiency_default", {
+            percent: Math.round(DEFAULT_EFFICIENCY[zone.emitter] * 100),
+          })}
+          @change=${(e: Event) => {
+            const percent = positive((e.target as HTMLInputElement).value, 100);
+            set({ efficiency: percent === null ? null : Math.max(0.1, percent / 100) });
+          }}
+        />
+      </label>
+      ${pick("timer_entity_id")} ${pick("meter_entity_id")}
+      <div class="field">
+        <span>${t("zone.plants", { count: coverage.size })}</span>
+        <ul class="zone-plants">
+          ${listed.map((plant) => {
+            const share = coverage.get(plant.id);
+            const excluded = zone.exclude.includes(plant.id);
+            return html`<li>
+              <label class="check">
+                <input
+                  type="checkbox"
+                  .checked=${!excluded}
+                  @change=${(e: Event) => {
+                    const on = (e.target as HTMLInputElement).checked;
+                    set({
+                      exclude: on
+                        ? zone.exclude.filter((id) => id !== plant.id)
+                        : [...zone.exclude, plant.id],
+                      include: on ? zone.include : zone.include.filter((id) => id !== plant.id),
+                    });
+                  }}
+                />
+                <span>${plant.name}</span>
+              </label>
+              <span class="muted small">
+                ${
+                  excluded
+                    ? t("zone.excluded")
+                    : zone.include.includes(plant.id)
+                      ? t("zone.included")
+                      : `${Math.round((share ?? 0) * 100)} %`
+                }
+              </span>
+            </li>`;
+          })}
+        </ul>
+        ${
+          others.length
+            ? html`<select
+                class="add-plant"
+                @change=${(e: Event) => {
+                  const id = (e.target as HTMLSelectElement).value;
+                  if (id) set({ include: [...zone.include, id] });
+                }}
+              >
+                <option value="" selected>${t("zone.add_plant")}</option>
+                ${others.map((plant) => html`<option value=${plant.id}>${plant.name}</option>`)}
+              </select>`
+            : nothing
+        }
+      </div>
+    `;
+  }
+
+  private _openZonePicker(field: ZonePick): void {
+    this._zonePick = field;
+    void this.updateComplete.then(() =>
+      this.renderRoot.querySelector<PgEntityPicker>("pg-entity-picker.zone-picker")?.open(),
+    );
+  }
+
+  private _onZoneEntityPicked(event: CustomEvent<{ entityId: string }>): void {
+    const selection = this._selection;
+    const shape = selection?.type === "shape" ? this.store.getShape(selection.id) : undefined;
+    const field = this._zonePick;
+    if (!shape?.irrigation || !field) return;
+    void this._replaceShape(shape, {
+      ...shape,
+      irrigation: { ...shape.irrigation, [field]: event.detail.entityId },
+    });
+  }
+
+  private _renderZoneCard(shape: Shape, zone: Irrigation) {
+    const { t, language } = this;
+    const state = zone.entity_id ? this.hass?.states[zone.entity_id] : undefined;
+    const running = isRunning(state?.state);
+    const stats = this.store.irrigation.zones[shape.id];
+    const pr = precipitationRate(zone, shape.geometry);
+    const covered = [...this._coverage(shape).keys()]
+      .map((id) => this.store.getPlant(id)?.name)
+      .filter(Boolean);
+    const minutes = (stats?.runtime_today_s ?? 0) / 60;
+    return html`<article class="card info pinned side-card zone-card">
+      <div class="info-body">
+        <div class="info-title">
+          <h3>${shape.label ?? t("kind.zone")}</h3>
+          <button
+            class="icon-button small"
+            @click=${() => (this._selection = null)}
+            aria-label=${t("common.close")}
+          >
+            ${icon(mdiClose)}
+          </button>
+        </div>
+        <p class="zone-state ${running ? "running" : ""}">
+          ${icon(running ? mdiWater : mdiWaterOffOutline)}
+          ${
+            zone.entity_id
+              ? `${this._entityLabel(zone.entity_id)}: ${
+                  state ? markerValue(state, language, t) : t("zone.missing")
+                }`
+              : t("zone.no_entity")
+          }
+        </p>
+        <p class="muted small">
+          ${t(`emitter.${zone.emitter}`)}
+          ${pr !== null ? ` · ${formatNumber(pr, language, 1)} mm/h` : ""}
+          ${zone.emitter === "drip" && zone.drip_l_h !== null ? ` · ${formatNumber(zone.drip_l_h, language, 1)} L/h` : ""}
+        </p>
+        <p>
+          ${t("zone.today", {
+            minutes: formatNumber(minutes, language, 0),
+            liters: formatNumber(stats?.liters_today ?? 0, language, 0),
+          })}
+        </p>
+        ${
+          stats?.last_run
+            ? html`<p class="muted small">
+                ${t("zone.last_run", { time: formatDateTime(stats.last_run, language) })}
+              </p>`
+            : nothing
+        }
+        <p class="muted small">
+          ${covered.length ? t("zone.covers", { plants: covered.join(", ") }) : t("zone.covers_none")}
+        </p>
+        ${
+          zone.entity_id
+            ? html`<button
+                class="button secondary"
+                @click=${() => this.fire("hass-more-info", { entityId: zone.entity_id })}
+              >
+                ${icon(mdiOpenInNew)} ${t("plan.details")}
+              </button>`
+            : nothing
+        }
+      </div>
+    </article>`;
   }
 
   private _renderMarkerProperties(marker: Marker) {
@@ -1778,6 +2175,65 @@ export class PgGardenView extends PgElement {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
+      }
+
+      /* ---------------------------------------------- irrigation zones */
+      .pick {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .pick-button {
+        flex: 1;
+        min-width: 0;
+        justify-content: flex-start;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .zone-plants {
+        list-style: none;
+        margin: 4px 0;
+        padding: 0;
+        display: grid;
+        gap: 4px;
+        max-height: 180px;
+        overflow: auto;
+      }
+      .zone-plants li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .zone-state {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+      }
+      .zone-state .icon {
+        width: 18px;
+        height: 18px;
+        color: var(--pg-text-muted);
+      }
+      .zone-state.running .icon {
+        color: var(--pg-water);
+      }
+      .water-facts {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .water-facts .icon {
+        width: 16px;
+        height: 16px;
+        color: var(--pg-water);
       }
       .check {
         display: flex;

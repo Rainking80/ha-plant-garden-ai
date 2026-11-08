@@ -62,3 +62,21 @@ async def test_only_one_garden(hass: HomeAssistant, mock_config_entry: MockConfi
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": SOURCE_USER})
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "single_instance_allowed"
+
+
+async def test_options_flow_sets_the_run_time_warning(
+    hass: HomeAssistant, loaded_entry: MockConfigEntry
+) -> None:
+    """The warning limit for long zone runs is an option (default 6 h)."""
+    result = await hass.config_entries.options.async_init(loaded_entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "init"
+    schema_keys = {str(key): key for key in result["data_schema"].schema}
+    assert schema_keys["max_runtime_hours"].default() == 6
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"max_runtime_hours": 3.0}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert loaded_entry.options == {"max_runtime_hours": 3}
+    assert loaded_entry.runtime_data.irrigation._max_runtime_hours() == 3

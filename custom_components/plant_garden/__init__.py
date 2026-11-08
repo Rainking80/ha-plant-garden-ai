@@ -7,21 +7,23 @@ from pathlib import Path
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 
-from .const import DOMAIN
+from .const import CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS, DOMAIN
 from .database import DatabaseError
 from .garden import GardenManager
 from .http import BackgroundFileView, BackgroundUploadView, PhotoFileView, PhotoUploadView
+from .irrigation import IrrigationTracker
 from .panel import async_register_panel, async_register_static_path, async_unregister_panel
 from .runtime import PlantGardenConfigEntry, PlantGardenData
+from .services import async_register_services
 from .websocket_api import async_register_websocket_commands
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-PLATFORMS: list[Platform] = []
+PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -30,6 +32,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     for view in (PhotoUploadView(), PhotoFileView(), BackgroundUploadView(), BackgroundFileView()):
         hass.http.register_view(view)
     async_register_websocket_commands(hass)
+    async_register_services(hass)
     return True
 
 
@@ -43,7 +46,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) 
         await manager.async_setup()
     except DatabaseError as err:
         raise ConfigEntryNotReady(str(err)) from err
-    entry.runtime_data = PlantGardenData(version=str(integration.version), manager=manager)
+    irrigation = IrrigationTracker(
+        hass,
+        manager,
+        lambda: float(entry.options.get(CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS)),
+    )
+    await irrigation.async_start()
+    entry.runtime_data = PlantGardenData(
+        version=str(integration.version), manager=manager, irrigation=irrigation
+    )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await async_register_panel(hass, entry)
     return True
@@ -54,5 +65,20 @@ async def async_unload_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry)
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         async_unregister_panel(hass)
+        await entry.runtime_data.irrigation.async_stop()
         await entry.runtime_data.manager.async_shutdown()
     return unloaded
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: PlantGardenConfigEntry, device: dr.DeviceEntry
+) -> bool:
+    """Allow removing a plant or zone device whose plant or zone no longer exists."""
+    manager = entry.runtime_data.manager
+    existing = {f"plant_{plant.id}" for plant in manager.plants} | {
+        f"zone_{zone.id}" for zone in manager.zones()
+    }
+    existing.add("garden")
+    return not any(
+        domain == DOMAIN and identifier in existing for domain, identifier in device.identifiers
+    )

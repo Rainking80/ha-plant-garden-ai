@@ -43,3 +43,32 @@ template:
         icon: mdi:storage-tank-outline
         state_class: measurement
         state: "72"
+
+# A timer like real irrigation controllers use: the plan shows the remaining time.
+timer:
+  demo_zone_lawn:
+    name: Demo Timer Rasen
+    duration: "00:10:00"
+
+automation:
+  - id: plant_garden_demo_lawn_timer
+    alias: Demo Regner Rasen startet Timer
+    triggers:
+      - trigger: state
+        entity_id: input_boolean.demo_zone_lawn
+        to: "on"
+    actions:
+      - action: timer.start
+        target:
+          entity_id: timer.demo_zone_lawn
+  - id: plant_garden_demo_lawn_off
+    alias: Demo Regner Rasen aus, wenn der Timer abläuft
+    triggers:
+      - trigger: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.demo_zone_lawn
+    actions:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.demo_zone_lawn

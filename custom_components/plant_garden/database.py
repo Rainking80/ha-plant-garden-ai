@@ -16,7 +16,7 @@ import sqlite3
 import threading
 from typing import Any
 
-from .models import Measurement, Photo, Source
+from .models import IrrigationEvent, Measurement, Photo, PlantWater, Source, WaterSource
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,6 +50,35 @@ MIGRATIONS: tuple[str, ...] = (
     );
     CREATE INDEX measurements_by_plant ON measurements (plant_id, measured_on);
     """,
+    """
+    CREATE TABLE irrigation_events (
+        id TEXT PRIMARY KEY,
+        zone_id TEXT,
+        started_at TEXT NOT NULL,
+        ended_at TEXT NOT NULL,
+        day TEXT NOT NULL,
+        source TEXT NOT NULL,
+        liters REAL,
+        depth_mm REAL,
+        uncertain INTEGER NOT NULL DEFAULT 0,
+        reconstructed INTEGER NOT NULL DEFAULT 0,
+        note TEXT NOT NULL DEFAULT ''
+    );
+    CREATE UNIQUE INDEX irrigation_once_per_start
+        ON irrigation_events (zone_id, started_at) WHERE zone_id IS NOT NULL;
+    CREATE INDEX irrigation_by_day ON irrigation_events (day);
+
+    CREATE TABLE plant_water (
+        event_id TEXT NOT NULL REFERENCES irrigation_events (id) ON DELETE CASCADE,
+        plant_id TEXT NOT NULL,
+        day TEXT NOT NULL,
+        ended_at TEXT NOT NULL,
+        liters REAL NOT NULL,
+        mm REAL NOT NULL,
+        PRIMARY KEY (event_id, plant_id)
+    );
+    CREATE INDEX plant_water_by_plant ON plant_water (plant_id, day);
+    """,
 )
 SCHEMA_VERSION = len(MIGRATIONS)
 
@@ -82,6 +111,22 @@ def _measurement_from_row(row: sqlite3.Row) -> Measurement:
         source=Source(row["source"]),
         confidence=row["confidence"],
         photo_id=row["photo_id"],
+        note=row["note"],
+    )
+
+
+def _event_from_row(row: sqlite3.Row) -> IrrigationEvent:
+    return IrrigationEvent(
+        id=row["id"],
+        zone_id=row["zone_id"],
+        started_at=datetime.fromisoformat(row["started_at"]),
+        ended_at=datetime.fromisoformat(row["ended_at"]),
+        day=date.fromisoformat(row["day"]),
+        source=WaterSource(row["source"]),
+        liters=row["liters"],
+        depth_mm=row["depth_mm"],
+        uncertain=bool(row["uncertain"]),
+        reconstructed=bool(row["reconstructed"]),
         note=row["note"],
     )
 
@@ -281,8 +326,142 @@ class GardenDatabase:
                     entry[f"{column}_on"] = row["measured_on"]
         return result
 
+    # ------------------------------------------------------------ irrigation
+    def insert_event(self, event: IrrigationEvent) -> bool:
+        """Store an event with its plant shares. False if the zone run is already known."""
+        with self._cursor() as conn:
+            cursor = conn.execute(
+                "INSERT OR IGNORE INTO irrigation_events (id, zone_id, started_at, ended_at, day,"
+                " source, liters, depth_mm, uncertain, reconstructed, note)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    event.id,
+                    event.zone_id,
+                    event.started_at.isoformat(),
+                    event.ended_at.isoformat(),
+                    event.day.isoformat(),
+                    event.source.value,
+                    event.liters,
+                    event.depth_mm,
+                    int(event.uncertain),
+                    int(event.reconstructed),
+                    event.note,
+                ),
+            )
+            if cursor.rowcount == 0:
+                return False
+            conn.executemany(
+                "INSERT INTO plant_water (event_id, plant_id, day, ended_at, liters, mm)"
+                " VALUES (?, ?, ?, ?, ?, ?)",
+                [
+                    (
+                        event.id,
+                        share.plant_id,
+                        event.day.isoformat(),
+                        event.ended_at.isoformat(),
+                        share.liters,
+                        share.mm,
+                    )
+                    for share in event.plants
+                ],
+            )
+        return True
+
+    def get_event(self, event_id: str) -> IrrigationEvent | None:
+        events = self._events("WHERE e.id = ?", (event_id,), 1)
+        return events[0] if events else None
+
+    def delete_event(self, event_id: str) -> None:
+        with self._cursor() as conn:
+            conn.execute("DELETE FROM irrigation_events WHERE id = ?", (event_id,))
+
+    def recent_events(
+        self, *, zone_id: str | None = None, plant_id: str | None = None, limit: int = 50
+    ) -> list[IrrigationEvent]:
+        """Newest first, optionally only one zone's runs or what reached one plant."""
+        if zone_id is not None:
+            return self._events("WHERE e.zone_id = ?", (zone_id,), limit)
+        if plant_id is not None:
+            return self._events(
+                "WHERE e.id IN (SELECT event_id FROM plant_water WHERE plant_id = ?)",
+                (plant_id,),
+                limit,
+            )
+        return self._events("", (), limit)
+
+    def _events(self, where: str, params: tuple[Any, ...], limit: int) -> list[IrrigationEvent]:
+        with self._cursor() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM irrigation_events e {where}"  # noqa: S608 - fixed fragments
+                " ORDER BY e.ended_at DESC, e.id DESC LIMIT ?",
+                (*params, limit),
+            ).fetchall()
+            events = [_event_from_row(row) for row in rows]
+            if events:
+                marks = ",".join("?" * len(events))
+                shares = conn.execute(
+                    f"SELECT * FROM plant_water WHERE event_id IN ({marks})"  # noqa: S608
+                    " ORDER BY plant_id",
+                    [event.id for event in events],
+                ).fetchall()
+                by_id = {event.id: event for event in events}
+                for row in shares:
+                    by_id[row["event_id"]].plants.append(
+                        PlantWater(plant_id=row["plant_id"], liters=row["liters"], mm=row["mm"])
+                    )
+        return events
+
+    def plant_water_by_day(self, since: date) -> dict[str, dict[str, tuple[float, float]]]:
+        """plant_id -> day (ISO) -> (litres, mm) from `since` on."""
+        result: dict[str, dict[str, tuple[float, float]]] = {}
+        with self._cursor() as conn:
+            rows = conn.execute(
+                "SELECT plant_id, day, SUM(liters) AS liters, SUM(mm) AS mm FROM plant_water"
+                " WHERE day >= ? GROUP BY plant_id, day",
+                (since.isoformat(),),
+            ).fetchall()
+        for row in rows:
+            result.setdefault(row["plant_id"], {})[row["day"]] = (row["liters"], row["mm"])
+        return result
+
+    def plant_totals(self) -> dict[str, tuple[float, str]]:
+        """plant_id -> (all litres ever received, end of the latest watering)."""
+        with self._cursor() as conn:
+            rows = conn.execute(
+                "SELECT plant_id, SUM(liters) AS liters, MAX(ended_at) AS last FROM plant_water"
+                " GROUP BY plant_id"
+            ).fetchall()
+        return {row["plant_id"]: (row["liters"], row["last"]) for row in rows}
+
+    def zone_day_totals(self, day: date) -> dict[str, tuple[float, float]]:
+        """zone_id -> (seconds run, litres delivered) for runs that started on `day`."""
+        with self._cursor() as conn:
+            rows = conn.execute(
+                "SELECT zone_id, started_at, ended_at, liters FROM irrigation_events"
+                " WHERE day = ? AND zone_id IS NOT NULL",
+                (day.isoformat(),),
+            ).fetchall()
+        result: dict[str, tuple[float, float]] = {}
+        for row in rows:
+            seconds = (
+                datetime.fromisoformat(row["ended_at"]) - datetime.fromisoformat(row["started_at"])
+            ).total_seconds()
+            run, liters = result.get(row["zone_id"], (0.0, 0.0))
+            result[row["zone_id"]] = (run + seconds, liters + (row["liters"] or 0.0))
+        return result
+
+    def zone_last_runs(self) -> dict[str, str]:
+        """zone_id -> end of its latest run."""
+        with self._cursor() as conn:
+            rows = conn.execute(
+                "SELECT zone_id, MAX(ended_at) AS last FROM irrigation_events"
+                " WHERE zone_id IS NOT NULL GROUP BY zone_id"
+            ).fetchall()
+        return {row["zone_id"]: row["last"] for row in rows}
+
     # ------------------------------------------------------------ plants
     def delete_plant_records(self, plant_id: str) -> None:
         with self._cursor() as conn:
             conn.execute("DELETE FROM photos WHERE plant_id = ?", (plant_id,))
             conn.execute("DELETE FROM measurements WHERE plant_id = ?", (plant_id,))
+            conn.execute("DELETE FROM plant_water WHERE plant_id = ?", (plant_id,))
