@@ -4,11 +4,11 @@
 
 Plant Garden turns Home Assistant into a garden planner and plant journal:
 
-- **Garden plan** – draw your garden, drag plants and irrigation zones into place, hover a plant to see its photos, water statistics, tasks and problems.
+- **Garden plan** – a to-scale plan from above, on official aerial imagery where available, your own sketch or a drawn layout; drag plants into place, see irrigation zones and sensor values, hover or tap a plant to see its photos, water statistics, tasks and problems.
 - **Plants & photos** – document growth and problems with photos for every plant; height and age are tracked over time.
 - **Irrigation tracking** – link drawn zones to your existing `valve`/`switch` entities; every run is attributed to the plants it waters.
 - **Water balance** – rain and evapotranspiration (from your sensors, a weather API or computed with FAO-56) per plant, daily.
-- **AI assistant (bring your own key)** – plant identification, diagnosis of problem photos and care tips via OpenAI, Anthropic Claude, Google Gemini, Mistral, OpenRouter, Azure OpenAI, any OpenAI-compatible endpoint, Ollama, Pl@ntNet or Plant.id – with a page that shows tokens and costs.
+- **AI assistant** – plant identification, diagnosis of problem photos and care tips. Use an AI you already set up in Home Assistant (AI Task, no extra key) or bring your own key for any OpenAI-compatible API (OpenAI, OpenRouter, Ollama …), Anthropic Claude or Google Gemini, plus Pl@ntNet for identification – with a page that shows tokens and costs.
 
 Plant Garden never switches your valves; it only reads their state and offers recommendations as entities for your own automations.
 
@@ -32,12 +32,13 @@ Photos are stored in `<config>/plant_garden/` (three sizes per photo, metadata s
 |---|---|---|
 | M0 | Scaffolding, CI, dev environment, sidebar panel | ✅ |
 | M1 | Plants, photos, growth measurements | ✅ |
-| M2 | AI providers, identification, token & cost page | ⏳ |
-| M3 | Graphical garden editor | |
-| M4 | Irrigation zones linked to HA entities | |
+| M2 | Garden plan editor: layout, plants by drag and drop, view/edit mode | ⏳ |
+| M3 | Aerial imagery (WMS), own background image, sensor markers | |
+| M4 | Irrigation zones linked to HA entities (display and tracking) | |
 | M5 | Weather, evapotranspiration, water balance | |
-| M6 | Assistant: tasks, problems, questions, tips | |
-| M7 | Polish & release 1.0 | |
+| M6 | AI: HA AI Task, OpenAI-compatible, Claude, Gemini, Pl@ntNet; token & cost page | |
+| M7 | Assistant: tasks, problems, questions, tips | |
+| M8 | Polish & release | |
 
 ## Development
 

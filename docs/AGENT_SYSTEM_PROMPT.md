@@ -77,25 +77,38 @@ Der Nutzer trägt seine eigenen API-Keys ein, sowohl für KI-Dienste (mehrere An
 
 Ablauf:
 
-1. Der Nutzer startet „Bestimmen" für ein oder mehrere Fotos. Alternativ startet die Bestimmung automatisch nach dem Upload, wenn er das in den Einstellungen aktiviert hat (Default: aus).
-2. Ist ein spezialisierter Bestimmungsdienst konfiguriert (Pl@ntNet, Plant.id/Kindwise), liefert er zuerst Artkandidaten mit Konfidenz.
-3. Ein Vision-LLM bekommt die Fotos, die Kandidaten aus Schritt 2 und die bereits bekannten Nutzerangaben. Es liefert strukturiertes JSON (Schema in Abschnitt 6.4) mit:
+1. Der Nutzer startet „Bestimmen" für 1 bis 3 Fotos und gibt pro Foto an, was zu sehen ist: Blatt, Blüte, Frucht, Rinde oder ganze Pflanze. Alternativ startet die Bestimmung automatisch nach dem Upload, wenn er das in den Einstellungen aktiviert hat (Default: aus).
+2. Ist **Pl@ntNet** konfiguriert (eigener Key des Nutzers), liefert es zuerst Artkandidaten mit Konfidenz. Dabei gilt:
+   - Die Pflanzenteile aus Schritt 1 gehen als `organs` mit.
+   - Das Tageskontingent (derzeit 500 Anfragen am Tag frei, beim Bau prüfen) wird auf der Technikseite angezeigt.
+   - Im UI steht die Quellenangabe „Pl@ntNet".
+   - Ob Drittanbieter-Apps mit dem Key des Nutzers erlaubt sind, wird **vor** dem Bau anhand der Nutzungsbedingungen geklärt und in der README dokumentiert.
+3. Ein Vision-LLM bekommt die Fotos, die Kandidaten aus Schritt 2 und die bereits bekannten Nutzerangaben. Es bestätigt oder korrigiert die Art (Rolle „Schiedsrichter"). Ohne Pl@ntNet bestimmt das LLM allein; das UI weist dann auf die geringere Genauigkeit hin. Die Antwort ist strukturiertes JSON (Schema in Abschnitt 6.4) mit:
    - Artkandidaten (botanischer Name, deutscher und englischer Trivialname, Sorte, Familie, Konfidenz, Begründung),
    - geschätzter Höhe und Breite als Wert mit Spanne, Konfidenz und Grundlage (z. B. „Referenzobjekt Gießkanne"),
    - geschätztem Alter oder Wachstumsstadium mit Spanne und Konfidenz,
    - erster Gesundheitseinschätzung,
-   - vorgeschlagenem Pflegeprofil (Wasserbedarfsklasse, Licht, Frosthärte),
+   - vorgeschlagenem Pflegeprofil (Wasserbedarfsklasse, Licht, Frosthärte, Kronendurchmesser ausgewachsen, Schnittzeiten),
    - Rückfragen bei niedriger Konfidenz, z. B. „Bitte ein Foto der Blüte oder der Blattunterseite".
 4. Das UI zeigt die Ergebnisse als **Vorschläge pro Feld** mit Konfidenzbalken und Quelle. Der Nutzer übernimmt, bearbeitet oder verwirft jeden einzeln. Felder mit Nutzerwerten werden nur als „KI sieht das anders" angezeigt und nie ersetzt.
 5. Größenschätzungen aus Fotos sind unsicher, und das UI kennzeichnet sie so. Die Upload-Ansicht gibt den Tipp, ein Referenzobjekt mit ins Bild zu nehmen, z. B. einen Zollstock.
 
 ### 4.4 Gartenplan (grafischer Editor)
 
-- **Grundriss zeichnen:** Polygone, Rechtecke (mit Drehung) und Kreise. Elementtypen: Grundstücksgrenze, Haus, Terrasse, Weg, Beet, Hochbeet, Rasen, Hecke, Teich, Gewächshaus, Überdachung, Sonstiges. Jeder Typ hat einen eigenen Stil, Beschriftung, Z-Reihenfolge und eine Sperre. Die Typen Überdachung, Gewächshaus und Haus schließen Regen für darunterliegende Pflanzen aus. Für Beete lässt sich ein Bodentyp festlegen.
-- **Maßstab:** Weltkoordinaten in Metern. Kalibrieren geht auf zwei Wegen: Linie ziehen und reale Länge eingeben, oder Gartenmaße direkt eingeben. Der Nordpfeil ist einstellbar.
-- **Hintergrundbild (optional):** Luftbild oder Skizze als Vorlage mit einstellbarer Deckkraft. Ausgerichtet wird es per Zwei-Punkt-Kalibrierung.
+- **Koordinaten:** Nullpunkt ist `zone.home` (Breite und Länge aus der HA-Konfiguration, beim Anlegen des Plans gespeichert, damit ein späteres Verschieben von „Zuhause" den Garten nicht verschiebt). Alle Objekte liegen in **Metern relativ zum Nullpunkt**, x zeigt nach Osten, y nach Süden (SVG-Richtung). Der Plan ist genordet.
+- **Ansicht:** Ausschnitt (Mittelpunkt und Breite in Metern) wird getrennt von den Objekten gespeichert, und zwar pro Gerät. Verschieben oder Zoomen ändert nie eine Objektposition. Eine Schaltfläche „Alles anzeigen" passt den Ausschnitt an den Inhalt an.
+- **Zwei Modi:** **Ansicht** (Tippen zeigt Infos, nichts lässt sich versehentlich verschieben; Standard auf Handy und Wandtablet) und **Bearbeiten** (Ziehen, Größe ändern, Zeichnen, Löschen).
+- **Hintergrund**, wählbar:
+  1. **Amtliches Luftbild (Standard, wo verfügbar)** per WMS. Der Maßstab ergibt sich aus der Georeferenz. Die Integration bringt eine Liste geprüfter, frei nutzbarer Dienste mit (z. B. Brandenburg/Berlin DOP20; jede URL und jeder Layer wird per `GetCapabilities` verifiziert, bevor er in die Liste kommt). Ein eigener WMS ist eintragbar (URL, Layer, Quellenangabe).
+     - Abfrage mit WMS 1.3.0 und `CRS=EPSG:3857`. BBOX: `mx = R·lon_rad`, `my = R·ln(tan(π/4 + lat_rad/2))` mit `R = 6378137`; Plan-Meter werden mit dem Faktor `1/cos(lat)` in Mercator-Einheiten umgerechnet.
+     - Das Bild lädt der Browser direkt, ohne Proxy. Die Quellenangabe des Dienstes (z. B. „© GeoBasis-DE/LGB, dl-de/by-2.0") wird im Plan dauerhaft eingeblendet.
+  2. **Eigene Vorlage** hochladen (Lageplan, Foto einer Handskizze). Maßstab per Zwei-Punkt-Kalibrierung: zwei Punkte antippen, Abstand in Metern eingeben. Deckkraft einstellbar.
+  3. **Ohne Hintergrund**, nur der gezeichnete Grundriss.
+- **Grundriss zeichnen:** Polygone, Rechtecke (mit Drehung) und Kreise. Elementtypen: Grundstücksgrenze, Haus, Terrasse, Weg, Beet, Hochbeet, Rasen, Hecke, Teich, Gewächshaus, Überdachung, Sonstiges. Jeder Typ hat einen eigenen Stil, Beschriftung, Z-Reihenfolge und eine Sperre. Die Typen Überdachung, Gewächshaus und Haus schließen Regen für darunterliegende Pflanzen aus. Für Beete lässt sich ein Bodentyp festlegen. Eine Fläche (z. B. Rasen, Hecke) kann mit einer Pflanze verknüpft werden.
 - **Navigation:** Pan und Zoom mit Mausrad, Trackpad und Pinch. Raster mit Einrasten (10, 25, 50 oder 100 cm), Einrasten an Eckpunkten, Hilfslinien, Messwerkzeug.
-- **Pflanzen platzieren:** Die Seitenleiste listet alle Pflanzen (nicht platzierte zuerst) mit Suche. Per Drag-and-drop auf die Karte ziehen. Platzierte Pflanzen lassen sich verschieben, der Kronenradius per Griff ändern.
+- **Pflanzen platzieren:** Eine Ablage am Rand listet alle Pflanzen (nicht platzierte zuerst) als Kärtchen mit Foto und Suche. Per Drag-and-drop auf den Standort ziehen. Platzierte Pflanzen lassen sich verschieben, der Kronendurchmesser per Griff ändern. Dargestellt wird jede Pflanze als Kreis in Kronengröße mit Foto und farbigem Status-Ring. Optional schlägt der Browser die Position aus GPS-Daten des Fotos vor (nur Vorschlag, die GPS-Daten werden nie gespeichert).
+- **Sensor-Marker:** Beliebige HA-Entitäten (Bodenfeuchte, Regenmesser, Zisterne, Mähroboter …) lassen sich als Marker platzieren und zeigen ihren Live-Wert. Tippen öffnet ein Detailfeld mit Verlauf.
+- **Import:** Eine vorhandene HA-To-do-Liste mit Pflanzennamen lässt sich einmalig als Pflanzen importieren.
 - **Bewässerungszonen:** siehe 4.5.
 - **Ebenen ein- und ausblenden:** Hintergrund, Grundriss, Pflanzen, Bewässerung, Abdeckungs-Heatmap (Wasser pro m² und Überlappungen), Wasserdefizit-Heatmap.
 - **Bearbeiten:** Undo/Redo über einen Command-Stack, Mehrfachauswahl, Kopieren und Einfügen, Tastatursteuerung (Pfeiltasten, Entf, Esc, Strg+Z/Y).
@@ -131,9 +144,9 @@ Ablauf:
   - `unavailable` beendet eine Sitzung mit dem Kennzeichen „unsicher".
   - Läuft eine Sitzung ungewöhnlich lange (konfigurierbar, Default 6 h), erzeugt die Integration ein Repair-Issue oder eine Benachrichtigung.
 - **Statistik pro Pflanze:** Für jedes Bewässerungsereignis werden Zone, Start, Ende, Dauer, Wassermenge in mm und Litern (anteilig) und die Quelle (Schätzung oder Zähler) gespeichert. Daraus entstehen Tages- und Monatssummen sowie die Langzeitstatistik über Sensor-Entitäten (Abschnitt 5.5).
-- **Live-Anzeige:** Eine laufende Zone ist im Plan dezent animiert, z. B. mit Wellen oder einem pulsierenden Rand. Mit `prefers-reduced-motion` entfällt die Animation.
+- **Live-Anzeige:** Eine laufende Zone ist im Plan dezent animiert, z. B. mit Wellen oder einem pulsierenden Rand. Mit `prefers-reduced-motion` entfällt die Animation. Ist der Zone optional eine `timer`-Entität zugeordnet, zeigt der Plan die Restlaufzeit aus deren Attribut `finishes_at`.
 - **Manuelles Gießen:** Gießen mit der Gießkanne lässt sich als Ereignis erfassen, mit Litern pro Pflanze.
-- **Grenze:** Die Integration **steuert keine Ventile.** Sie liefert pro Zone Empfehlungen als Entitäten (Abschnitt 5.5), die der Nutzer in eigenen Automationen verwenden kann.
+- **Grenze:** Die Integration **steuert keine Ventile**, auch nicht per Schaltfläche im Plan. Zonen werden nur angezeigt und ausgewertet. Sie liefert pro Zone Empfehlungen als Entitäten (Abschnitt 5.5), die der Nutzer in eigenen Automationen verwenden kann. Start/Stopp aus dem Plan (über ein vom Nutzer gewähltes Script pro Zone) ist ein Kandidat für später und braucht eine eigene Entscheidung.
 
 ### 4.6 Wetter, Regen, Verdunstung und Wasserbilanz
 
@@ -356,19 +369,17 @@ Alle Aktionen sind in `services.yaml` beschrieben und übersetzt.
 
 ### 6.2 Zu unterstützende Anbieter
 
+Bewusst wenige, dafür sauber (Entscheidung D-014):
+
 | Anbieter | Auth | Hinweis |
 |---|---|---|
-| OpenAI | API-Key | Vision, Structured Outputs |
+| **HA AI Task** | – | **Einfachste Option:** nutzt eine in HA bereits eingerichtete `ai_task`-Entität (OpenAI, Google, Anthropic, Ollama … über deren HA-Integrationen), ohne eigenen Key. `ai_task.generate_data` unterstützt Fotos als Anhang und `structure`, liefert aber **keine Token- oder Kostendaten** (in HA 2026.10 geprüft). Die Technikseite zählt Anfragen und zeigt „Kosten unbekannt". |
+| OpenAI-kompatibel | Base-URL und API-Key (bei lokalen Servern optional) | eine Implementierung für alle Anbieter mit OpenAI-kompatibler Chat-Completions-API: OpenAI selbst, OpenRouter (kann Kosten pro Anfrage zurückliefern), Ollama, LM Studio u. a. Voreinstellungen für die gängigen Base-URLs; Kompatibilität (Vision, JSON-Schema, Usage-Felder) wird je Voreinstellung mit Fixtures belegt |
 | Anthropic (Claude) | API-Key | Vision, JSON über Tool-Use oder Structured Output, Prompt-Caching |
 | Google Gemini | API-Key | Vision, `responseSchema` |
-| Mistral | API-Key | Vision-fähige Modelle |
-| OpenRouter | API-Key | OpenAI-kompatibel, viele Modelle, kann Kosten pro Anfrage zurückliefern |
-| Azure OpenAI | Endpoint, Deployment, API-Version, Key | |
-| OpenAI-kompatibel (generisch) | Base-URL und optional Key | deckt z. B. Groq, DeepSeek, xAI, Together, LM Studio, vLLM ab |
-| Ollama (lokal) | Base-URL, kein Key | Kosten 0 |
-| Pl@ntNet | API-Key | nur Artbestimmung |
-| Plant.id / Kindwise | API-Key | Artbestimmung und Gesundheit, Credits pro Anfrage |
-| HA AI Task (optional) | – | nutzt eine vorhandene `ai_task`-Entität, Kosten und Tokens unbekannt, im UI so gekennzeichnet |
+| Pl@ntNet | API-Key | nur Artbestimmung (siehe 4.3), Kontingent pro Tag |
+
+Weitere Anbieter (Azure OpenAI, Mistral nativ, Plant.id/Kindwise) nur auf ausdrücklichen Wunsch.
 
 ### 6.3 Schnittstelle
 
@@ -405,6 +416,7 @@ class AIResponse:
 - **Wiederholungen:** Exponentielles Backoff bei 429 und 5xx, `Retry-After` beachten. Bei 400, 401 und 403 kein Retry. Timeouts pro Funktion.
 - **Budgetprüfung** (`budget.py`) vor jedem Aufruf, mit Token-Schätzung.
 - **Bilder an die KI:** EXIF entfernen, lange Kante passend zum Modell begrenzen (ca. 1024–1600 px), Anzahl pro Anfrage begrenzen.
+- **Fotos für `ai_task`:** Die Integration stellt ihre Fotos über eine eigene Media-Source-Plattform (`media_source.py`) bereit. `ai_task` liest Anhänge über `media_source.async_resolve_media` und braucht dafür nur einen lokalen Pfad (`PlayMedia.path`). Die Fotos bleiben also unter `<config>/plant_garden/` und müssen nicht nach `/media` kopiert werden.
 
 ### 6.4 Prompts und Schemas
 
@@ -551,28 +563,35 @@ Ziel ist eine **schöne, reaktive Gartenoberfläche**.
 |---|---|---|
 | **M0** | Gerüst: Repo-Struktur, Tooling, CI, Devcontainer/Docker, leere Integration mit Config-Flow, Panel mit Platzhalterseite, Demo-Setup | HA startet mit der Integration, das Panel erscheint in der Seitenleiste, hassfest, HACS-Validierung und alle Linter in CI sind grün |
 | **M1** | Domänenmodell, Store und SQLite mit Migrationen, WebSocket-API, Pflanzen-CRUD, Foto-Upload mit Verarbeitung und signierten URLs, Pflanzenliste und Detailansicht mit Messverlauf und Foto-Zeitstrahl | Pflanzen lassen sich anlegen, bearbeiten und löschen. Fotos lassen sich hochladen und erscheinen als Thumbnail. Alter wird aus der Bezugsangabe berechnet. Daten überstehen einen Neustart. Tests grün |
-| **M2** | KI-Schicht: Subentry-Flows, alle Anbieter aus 6.2, Validierung, Modelllisten, Usage-Tracking, Preise, Budget, Technikseite, Bestimmung mit Vorschlags-UI | Mit mindestens zwei echten Anbietern manuell getestet. Vorschläge lassen sich pro Feld übernehmen und verwerfen, Nutzerwerte bleiben unangetastet. Jeder Aufruf erscheint mit Tokens und Kosten auf der Technikseite. Usage-Mapping pro Anbieter durch Fixture-Tests belegt |
-| **M3** | Gartenplan: Grundriss-Werkzeuge, Maßstab und Kalibrierung, Pan und Zoom, Raster und Snapping, Drag-and-drop der Pflanzen, Hover-Karte, Detail-Drawer, Undo/Redo, Autosave, Touch-Bedienung, Hintergrundbild | Einen Demo-Garten zu zeichnen und zu bestücken fühlt sich flüssig an (500 Pflanzen ohne Ruckeln). Die Hover-Karte zeigt Foto, Daten, Aufgaben, Probleme und Fragen. Das Ganze funktioniert auf Smartphone-Breite |
-| **M4** | Bewässerungszonen: Rechteck, Kreis (optional Sektor), Entitäten-Verknüpfung, Live-Animation, Laufzeiterfassung inklusive Neustart und Recorder-Rekonstruktion, Abdeckungsberechnung, manuelle Ein- und Ausschlüsse, Statistik pro Pflanze, Entitäten | Das Schalten eines simulierten Ventils erzeugt korrekte Ereignisse und anteilige Wassermengen bei den abgedeckten Pflanzen, auch über einen HA-Neustart hinweg. Sensoren erscheinen in der HA-Statistik |
-| **M5** | Wetter und Wasserbilanz: Anbieter aus Kapitel 7, ET₀ (Penman-Monteith und Hargreaves), Bucket-Modell, Vorhersage, Nachholen fehlender Tage, Charts, Gießbedarf- und Empfehlungs-Entitäten, Heatmaps | ET₀-Tests gegen die FAO-56-Beispiele sind grün. Die Bilanz ist mit Demo-Daten nachvollziehbar. Gießbedarf schaltet plausibel |
-| **M6** | Assistent: Problem-Workflow mit Diagnose, Aufgaben mit Wiederholung und To-do-Sync, Fragen in beide Richtungen, Tipps mit übernehmbaren Aufgaben, Chat mit Streaming, optionaler Wochen-Check, Aktionen und Events | Eine Diagnose eines Problemfotos liefert strukturierte Ursachen und Maßnahmen. Aufgaben erscheinen in der HA-To-do-Liste und lassen sich dort abhaken. Alle KI-Funktionen sind budgetgeprüft und protokolliert |
-| **M7** | Feinschliff und Release: i18n vollständig, Barrierefreiheit, Performance, Diagnostics, Repairs, Backup-Plattform, Doku (README, USER_GUIDE), Screenshots, Release 0.1.0 | Ein frisches HA lässt sich per HACS-Custom-Repository installieren und einrichten. Alle Checks sind grün. Das Release ist veröffentlicht |
+| **M2** | Gartenplan-Editor: Koordinatenmodell (`zone.home`, Meter, x Ost, y Süd), Modi Ansicht/Bearbeiten, Pan und Zoom (Maus, Trackpad, Touch), Raster und Snapping, Grundriss-Werkzeuge (Rechteck, Kreis, Polygon) mit Elementtypen, Pflanzen-Ablage mit Drag-and-drop, Kronenkreise mit Foto und Status-Ring, Info-Karte bei Hover/Tippen, Undo/Redo, Speichern pro Änderung, „Alles anzeigen" | Einen Demo-Garten zu zeichnen und zu bestücken fühlt sich flüssig an, auch mit 500 Pflanzen. Im Ansichtsmodus lässt sich nichts verschieben. Funktioniert mit Maus und auf Smartphone-Breite mit Touch. Daten überstehen einen Neustart |
+| **M3** | Plan-Hintergründe und Marker: WMS-Luftbild (mindestens ein per `GetCapabilities` geprüfter Dienst plus eigener WMS) mit Quellenangabe, eigene Vorlage mit Zwei-Punkt-Kalibrierung, Sensor-Marker mit Live-Wert, einmaliger Import aus einer HA-To-do-Liste, optionaler GPS-Positionsvorschlag | Für einen Ort in Brandenburg erscheint das Luftbild maßstabsgetreu unter dem Grundriss. Eine hochgeladene Skizze lässt sich kalibrieren. Marker zeigen Live-Werte |
+| **M4** | Bewässerungszonen (nur Anzeige und Auswertung, kein Schalten): Rechteck, Kreis (optional Sektor, Polygon), Entitäten-Verknüpfung, optionaler Timer mit Restlaufzeit, Live-Animation, Laufzeiterfassung inklusive Neustart und Recorder-Rekonstruktion, Abdeckungsberechnung, manuelle Ein- und Ausschlüsse, Statistik pro Pflanze, Entitäten | Das Schalten eines simulierten Ventils erzeugt korrekte Ereignisse und anteilige Wassermengen bei den abgedeckten Pflanzen, auch über einen HA-Neustart hinweg. Sensoren erscheinen in der HA-Statistik |
+| **M5** | Wetter und Wasserbilanz: HA-Sensoren zuerst (z. B. vorhandener ET₀-Sensor), dann Anbieter aus Kapitel 7, ET₀ (Penman-Monteith und Hargreaves), Bucket-Modell, Vorhersage, Nachholen fehlender Tage, Charts, Gießbedarf- und Empfehlungs-Entitäten, Status-Ringe Gießbedarf und Frostschutz, Heatmaps | ET₀-Tests gegen die FAO-56-Beispiele sind grün. Die Bilanz ist mit Demo-Daten nachvollziehbar. Gießbedarf schaltet plausibel |
+| **M6** | KI-Schicht: Subentry-Flows, Anbieter aus 6.2 (HA AI Task, OpenAI-kompatibel, Claude, Gemini, Pl@ntNet), Media-Source-Plattform für Fotos, Validierung, Modelllisten, Usage-Tracking, Preise, Budget, Technikseite, Bestimmung mit Vorschlags-UI, Pflegeprofil | Mit mindestens zwei echten Anbietern manuell getestet, einer davon HA AI Task. Vorschläge lassen sich pro Feld übernehmen und verwerfen, Nutzerwerte bleiben unangetastet. Jeder Aufruf erscheint auf der Technikseite, mit Tokens und Kosten, wo der Anbieter sie liefert. Usage-Mapping pro Anbieter durch Fixture-Tests belegt |
+| **M7** | Assistent: Problem-Workflow mit Diagnose, Aufgaben mit Wiederholung und To-do-Sync, Fragen in beide Richtungen, Tipps mit übernehmbaren Aufgaben, Chat mit Streaming, optionaler Wochen-Check, Status-Ring „Schnitt fällig", Aktionen und Events | Eine Diagnose eines Problemfotos liefert strukturierte Ursachen und Maßnahmen. Aufgaben erscheinen in der HA-To-do-Liste und lassen sich dort abhaken. Alle KI-Funktionen sind budgetgeprüft und protokolliert |
+| **M8** | Feinschliff und Release: i18n vollständig, Barrierefreiheit, Performance, Diagnostics, Repairs, Backup-Plattform, Doku (README, USER_GUIDE), Screenshots, Release 0.1.0 | Ein frisches HA lässt sich per HACS-Custom-Repository installieren und einrichten. Alle Checks sind grün. Das Release ist veröffentlicht |
 
 ---
 
 ## 13. Leitplanken und Nicht-Ziele
 
-- **Keine** Steuerung von Ventilen oder Schaltern durch die Integration. Sie liest nur und gibt Empfehlungen.
+- **Keine** Steuerung von Ventilen oder Schaltern durch die Integration, auch keine Start/Stopp-Schaltflächen im Plan. Sie liest nur und gibt Empfehlungen.
+- **Keine** HA-App (Add-on): Die Lösung bleibt eine Integration über HACS (D-013).
+- **Kein** 3D in dieser Version.
 - **Kein** eigenes Cloud-Backend, keine Telemetrie, keine Nutzerkonten außerhalb von HA.
 - **Keine** Hersteller-SDKs, keine schweren Python-Abhängigkeiten, kein zweites UI-Framework neben Lit.
 - **Keine** blockierenden Aufrufe im Event-Loop.
 - **Keine** hartkodierten Modellnamen oder Preise als „Wahrheit". Defaults sind datiert, recherchiert und editierbar.
 - **Keine** KI-Aufrufe ohne Nutzeraktion oder ausdrückliches Opt-in.
 - **Keine** Funktionen außerhalb dieses Umfangs ohne Rückfrage. Gute Ideen kommen nach `docs/IDEAS.md`. Kandidaten dafür:
-  - Bodenfeuchtesensoren verknüpfen,
+  - Bodenfeuchtesensoren mit einzelnen Pflanzen verknüpfen (über die reine Marker-Anzeige hinaus),
+  - Zonen aus dem Plan starten und stoppen über ein vom Nutzer gewähltes Script pro Zone,
+  - KI-Import einer Skizze: Foto → `ai_task` mit `structure` → Formen zum Nachbearbeiten,
+  - Lovelace-Karte mit dem Plan (schreibgeschützt),
   - Pflegedaten aus OpenPlantbook,
   - Besonnungssimulation anhand von Gebäudeschatten,
-  - Zeitraffer aus Kamera-Snapshots.
+  - Zeitraffer aus Kamera-Snapshots,
+  - optionale 3D-Ansicht.
 
 ---
 

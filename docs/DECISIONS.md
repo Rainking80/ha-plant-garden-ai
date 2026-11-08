@@ -95,4 +95,55 @@ when the tab becomes visible.
 
 Every field the backend receives is recorded with source `user`. The form therefore
 sends only fields that changed; otherwise saving a plant would silently turn all
-AI suggestions (M2) into "entered by you".
+AI suggestions (M6) into "entered by you".
+
+## D-013 Integration via HACS, not a Home Assistant app (2026-11-08)
+
+**Context.** A second design proposed a Home Assistant app (add-on) with ingress,
+FastAPI backend, `/data/garden.json` and photos in `/media`.
+
+**Decision.** Stay a custom integration distributed via HACS.
+
+**Reasons.** HACS was a requirement, and apps cannot be installed through HACS. Apps
+only run on HA OS / Supervised; integrations run on every installation type. Plants
+as entities with long-term statistics, a to-do list, actions and events are native
+to an integration; an app would need MQTT discovery as a workaround. The app's
+advantages (own process, ingress auth for images) are covered by executor jobs and
+signed URLs (D-011).
+
+**Adopted from the proposal:** georeferenced coordinates, official aerial imagery
+via WMS, view/edit modes, sensor markers, timer remaining time, Pl@ntNet organs and
+attribution, to-do list import, GPS position suggestion, plan before AI.
+
+## D-014 AI: HA AI Task plus a few direct providers (2026-11-08)
+
+`ai_task.generate_data` accepts image attachments and a `structure`, but returns only
+`conversation_id` and `data` – no token usage (checked in HA 2026.10 source). Using
+it exclusively would make the requested token/cost page impossible.
+
+**Decision.** Offer HA AI Task as the zero-configuration option (costs shown as
+unknown) and direct providers with exact usage tracking: one OpenAI-compatible
+implementation (OpenAI, OpenRouter, Ollama, …), Anthropic, Gemini, plus Pl@ntNet for
+identification. Fewer providers than originally planned, each one tested with
+fixtures. Photos reach `ai_task` through an own media source platform (it only needs
+a local path), so they stay in `<config>/plant_garden/`.
+
+## D-015 Irrigation zones are display and tracking only (2026-11-08)
+
+No start/stop buttons in the plan for now; the integration never switches anything.
+Starting zones via a user-chosen script is listed as a later candidate.
+
+## D-016 Garden plan before AI (2026-11-08)
+
+The plan is the centrepiece and gives visible value without any API key; the AI
+milestone depends on keys and provider terms (Pl@ntNet third-party use) that are
+being clarified. New order: M2 plan editor, M3 backgrounds and markers, M4 zones,
+M5 weather and water balance, M6 AI, M7 assistant, M8 release.
+
+## D-017 Plan coordinates (2026-11-08)
+
+Origin is `zone.home`, stored when the plan is created so that moving "home" later
+does not shift the garden. Units are metres, x east, y south (SVG direction), the
+plan is north-up. The viewport (centre and width in metres) is stored per device,
+not with the garden, so a wall tablet and a phone do not fight over it; it never
+changes object positions.
