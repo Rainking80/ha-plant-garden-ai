@@ -16,7 +16,14 @@ MSYS_NO_PATHCONV=1 wsl.exe -d Ubuntu --cd /mnt/d/Workspace/ha-plant-maintainance
 ```
 
 (`--exec` avoids a second round of shell parsing; PowerShell mangles nested quotes.)
-Scripts: `setup`, `test`, `test-min-version`, `lint [--fix]`, `develop`, `smoke`.
+Scripts: `setup`, `test`, `test-min-version`, `lint [--fix]`, `develop`, `smoke`, `demo.py`.
+
+Dev instance: `scripts/develop` (config in `~/.ha-plant-garden-dev`, port 8123, also
+reachable from Windows). `uv run python scripts/demo.py` onboards it (login `dev`,
+random password printed once), keeps a long-lived token in that config dir and fills a
+demo garden. `scripts/smoke` needs port 8123 free – stop the dev instance first.
+WSL has no C compiler: `scripts/develop` installs prebuilt audio wheels HA core needs,
+otherwise the HA frontend hangs on "loading" after login (`get_services` fails).
 Frontend: `cd frontend && npm run build|test|lint|typecheck|format`.
 
 ## Rules that are easy to get wrong

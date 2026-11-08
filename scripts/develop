@@ -15,6 +15,15 @@ ln -sfn "$REPO_ROOT/custom_components/plant_garden" "$CONFIG_DIR/custom_componen
 ln -sfn "$REPO_ROOT/dev/configuration.yaml" "$CONFIG_DIR/configuration.yaml"
 ln -sfn "$REPO_ROOT/dev/demo_garden.yaml" "$CONFIG_DIR/demo_garden.yaml"
 
+# HA core imports assist_pipeline whenever the frontend lists services (right after
+# login). The audio packages it needs have no Python 3.14 wheels in the versions HA
+# pins, and building them requires a C compiler. Their newer releases ship ready
+# wheels; installing those is enough for the import (voice is not used here).
+if ! "$UV_PROJECT_ENVIRONMENT/bin/python" -c "import pymicro_vad, pyspeex_noise" 2>/dev/null; then
+  echo "Installiere Audio-Pakete für HA (fertige Wheels) ..."
+  uv pip install --quiet --python "$UV_PROJECT_ENVIRONMENT/bin/python" "pymicro-vad>=2" "pyspeex-noise>=2"
+fi
+
 if [[ ! -f custom_components/plant_garden/frontend/plant-garden-panel.js ]]; then
   echo "Frontend-Bundle fehlt, baue es ..."
   (cd frontend && npm run build)

@@ -89,6 +89,16 @@ async def check_websocket(session: aiohttp.ClientSession, base: str, token: str)
         await ws.send_json({"type": "auth", "access_token": token})
         assert (await ws.receive_json())["type"] == "auth_ok"
 
+        # what the HA frontend asks right after login; if one of these fails the
+        # whole UI hangs on "loading" (happened with a broken dev environment)
+        for msg_id, msg_type in enumerate(
+            ("get_config", "get_services", "get_states", "frontend/get_themes"), start=100
+        ):
+            await ws.send_json({"id": msg_id, "type": msg_type})
+            reply = await ws.receive_json()
+            assert reply.get("success"), (msg_type, reply)
+        print("  HA frontend start-up calls answer (get_config, get_services, …)")
+
         await ws.send_json({"id": 1, "type": "get_panels"})
         panels = (await ws.receive_json())["result"]
         panel = panels.get("plant-garden")
