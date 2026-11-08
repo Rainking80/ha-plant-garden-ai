@@ -18,7 +18,55 @@ from custom_components.plant_garden.const import (
     PANEL_WEBCOMPONENT,
     STATIC_URL_PATH,
 )
+from custom_components.plant_garden.database import DatabaseError
 from custom_components.plant_garden.panel import _bundle_fingerprint
+from custom_components.plant_garden.runtime import get_manager
+from custom_components.plant_garden.storage import STORAGE_KEY
+
+from .images import make_image
+
+
+async def test_data_survives_reload(
+    hass: HomeAssistant, mock_config_entry: MockConfigEntry
+) -> None:
+    """Plants, photos and their files are still there after a reload."""
+    await _setup(hass, mock_config_entry)
+    manager = get_manager(hass)
+    assert manager is not None
+    plant = await manager.async_create_plant({"name": "Feige"})
+    photo = await manager.async_add_photo(plant.id, make_image())
+
+    assert await hass.config_entries.async_reload(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    reloaded = get_manager(hass)
+    assert reloaded is not None
+    assert reloaded is not manager
+    assert reloaded.get_plant(plant.id).name == "Feige"
+    assert [p.id for p in await reloaded.async_list_photos(plant.id)] == [photo.id]
+
+
+async def test_setup_retries_when_database_fails(
+    hass: HomeAssistant, mock_config_entry: MockConfigEntry
+) -> None:
+    mock_config_entry.add_to_hass(hass)
+    with patch(
+        "custom_components.plant_garden.garden.GardenDatabase.open",
+        side_effect=DatabaseError("disk full"),
+    ):
+        await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    assert mock_config_entry.state is ConfigEntryState.SETUP_RETRY
+
+
+async def test_old_store_is_migrated(
+    hass: HomeAssistant, hass_storage: dict, mock_config_entry: MockConfigEntry
+) -> None:
+    hass_storage[STORAGE_KEY] = {"version": 1, "minor_version": 0, "key": STORAGE_KEY, "data": {}}
+    await _setup(hass, mock_config_entry)
+    manager = get_manager(hass)
+    assert manager is not None
+    assert manager.plants == []
+    assert hass_storage[STORAGE_KEY]["minor_version"] == 1
 
 
 async def _setup(hass: HomeAssistant, entry: MockConfigEntry) -> None:

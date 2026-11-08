@@ -16,3 +16,7 @@ PANEL_ICON: Final = "mdi:flower"
 FRONTEND_DIR: Final = Path(__file__).parent / "frontend"
 FRONTEND_BUNDLE: Final = "plant-garden-panel.js"
 STATIC_URL_PATH: Final = "/plant_garden_static"
+
+# HTTP API
+PHOTO_UPLOAD_URL: Final = "/api/plant_garden/photos"
+PHOTO_FILE_URL: Final = "/api/plant_garden/photos/{photo_id}/{variant}"
