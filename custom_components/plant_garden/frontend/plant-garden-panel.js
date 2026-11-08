@@ -3299,7 +3299,7 @@ N("pg-garden-canvas", class extends j {
 	}
 	_rect() {
 		let e = this._svg?.getBoundingClientRect() ?? this.getBoundingClientRect();
-		return e.width > 0 ? e : {
+		return e.width > 0 && e.height > 0 ? e : {
 			left: e.left,
 			top: e.top,
 			width: 800,
@@ -8719,6 +8719,11 @@ var Ki = class extends O {
         max-width: none;
         padding: 0;
         min-height: 0;
+        /* Home Assistant's panel container has no definite height, so neither
+           flex: 1 nor height: 100% below reach the window: with them the plan
+           (only absolutely positioned layers) collapsed to 0 px in view mode.
+           A fixed size from the viewport is the only reliable reference. */
+        flex: none;
         height: calc(100vh - var(--header-height, 56px));
         height: calc(100dvh - var(--header-height, 56px));
       }

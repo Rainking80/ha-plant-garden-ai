@@ -66,6 +66,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- The garden plan stayed empty in view mode inside Home Assistant (it collapsed to
+  0 px height; only edit mode, whose side panel gave it a height, showed it). The
+  plan now fills the window in both modes, the edit side panel scrolls on its own
+  instead of the whole page, and "show everything" no longer zooms out to 5 km
+  while the plan is not laid out yet.
 - The dashed property boundary could hardly be selected (only its thin dashes
   reacted), so it could not be moved or deleted. It now has a wide invisible grip
   along its line; its inside stays free for panning.

@@ -450,7 +450,10 @@ export class PgGardenCanvas extends PgElement {
 
   private _rect(): ScreenRect {
     const rect = this._svg?.getBoundingClientRect() ?? this.getBoundingClientRect();
-    return rect.width > 0 ? rect : { left: rect.left, top: rect.top, width: 800, height: 600 };
+    // not laid out (yet): a zero height would make "show everything" zoom out to the maximum
+    return rect.width > 0 && rect.height > 0
+      ? rect
+      : { left: rect.left, top: rect.top, width: 800, height: 600 };
   }
 
   private _mpp(): number {

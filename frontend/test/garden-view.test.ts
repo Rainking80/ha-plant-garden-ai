@@ -97,6 +97,23 @@ describe("pg-garden-view", () => {
     expect(canvas.viewport).toEqual({ cx: 0, cy: 0, width: 40 });
   });
 
+  it("shows everything at a sensible scale even before the plan has a height", async () => {
+    // first visit, and the panel is not laid out yet: width known, height still 0
+    localStorage.removeItem("plant-garden.viewport.v1");
+    const rect = vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+      ...{ x: 0, y: 0, left: 0, top: 0, right: 1024, bottom: 0, width: 1024, height: 0 },
+      toJSON: () => ({}),
+    });
+    try {
+      const { view } = await mount(fakeBackend({ shapes: [BED] }));
+      await vi.waitFor(() => expect(canvasOf(view).hasViewport).toBe(true));
+      // the 4 m bed plus a margin, not zoomed out to the 5 km maximum
+      expect(canvasOf(view).viewport.width).toBeLessThan(10);
+    } finally {
+      rect.mockRestore();
+    }
+  });
+
   it("shows the tray in edit mode and places a plant by tapping", async () => {
     const backend = fakeBackend({ plants: [makePlant({ id: "B", name: "Minze" })] });
     const { view, store } = await mount(backend);
