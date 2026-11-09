@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Water & weather: the chart shows a week back and a week ahead with weekday and
+  date. Above each coming day, the plants that need water then are grouped as
+  circles in a cloud – worked out from the forecast evaporation and the forecast
+  rain (weighted by its probability). The soil water list tells the next watering
+  day, or "rain expected" for a thirsty plant the coming rain will refill. The
+  weather is fetched seven days ahead instead of three.
+
 - Plan: sprinklers, circular sprinklers and drip lines (edit tool bar →
   Irrigation). A sprinkler shows its symbol and the area it waters in transparent
   blue; drag the ends of the arc for the angle (45° to start) and its middle for
@@ -181,6 +188,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Water & weather: the soil water bars of plants with a "needs water" badge no
+  longer shift; all rows share the same columns.
 - The garden plan stayed empty in view mode inside Home Assistant (it collapsed to
   0 px height; only edit mode, whose side panel gave it a height, showed it). The
   plan now fills the window in both modes, the edit side panel scrolls on its own

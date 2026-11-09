@@ -686,6 +686,13 @@ export const en = {
   "zone.width": "Wetted width (m)",
   "zone.flow_l_h_m": "L/h per metre",
   "zone.length": "Length {length} m",
+  "weather.legend_water": "Plants to water",
+  "weather.outlook_hint":
+    "Circles: the plants that need water on that day, with the forecast rain taken into account (weighted by its probability). A plant counts as watered after its day.",
+  "weather.cloud": "{day}: water {plants}",
+  "balance.rain_expected": "rain expected",
+  "balance.rain_expected_hint": "Needs water, but the rain of the next two days will refill it.",
+  "balance.next": "water {day}",
 } as const;
 
 export type TranslationKey = keyof typeof en;

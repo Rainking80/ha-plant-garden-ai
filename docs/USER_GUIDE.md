@@ -72,9 +72,16 @@ fetched before you add one; the services receive your location rounded to about
 1 km.
 
 Plant Garden keeps a soil water "bucket" for every plant from rain, evaporation
-(FAO-56 ET₀), soil, root depth, water need and irrigation. The **Water & weather**
-tab shows the last two weeks and the forecast; a plant "needs water" when its
-readily available water is used up. Plants under a roof get no rain.
+(FAO-56 ET₀), soil, root depth, water need and irrigation; a plant "needs water"
+when its readily available water is used up. Plants under a roof get no rain.
+
+The **Water & weather** tab shows rain and evaporation of the last week and the
+next seven days, with weekday and date. Above each coming day, the plants that
+will need water then are circles in a cloud (tap one to open the plant): the
+bucket is run forward with the forecast evaporation and the forecast rain,
+weighted by its probability. If the rain of the next two days will refill a
+thirsty plant, it waits; after its watering day a plant counts as watered. The
+soil water list shows each plant's next watering day, or "rain expected".
 
 ## 5. AI identification (optional)
 

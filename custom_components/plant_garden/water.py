@@ -27,9 +27,11 @@ from .geometry import footprints, precipitation_rate, zone_coverage
 from .models import Emitter, Plant, Shape
 from .water_balance import (
     BalanceDay,
+    OutlookDay,
     SoilWater,
     WeatherDay,
-    effective_rain,
+    expected_rain as day_rain,
+    outlook,
     run_balance,
     soil_water,
 )
@@ -49,7 +51,8 @@ CONF_SOURCE = "source"
 UPDATE_INTERVAL = timedelta(hours=1)
 FETCH_DAYS = 30  # past days fetched every hour (sources fill gaps after downtime)
 KEEP_DAYS = 365  # the balance starts at field capacity this long ago at most
-FORECAST_DAYS = 3
+FORECAST_DAYS = 7  # the outlook of when plants need water
+FROST_DAYS = 3  # frost warnings look this far ahead
 SHOW_DAYS = 14
 RECOMPUTE_DELAY = 3  # seconds; batches quick edits
 MAX_RECOMMENDED_MIN = 240
@@ -74,6 +77,7 @@ class PlantWaterState:
     needs_water: bool
     frost: float | None  # coldest forecast night below the plant's limit
     days: list[BalanceDay]
+    outlook: list[OutlookDay] = field(default_factory=list)  # today and the forecast days
 
 
 @dataclass(slots=True)
@@ -149,16 +153,19 @@ def fill_et0(
     return result, methods
 
 
+def forecast_days(weather: list[DailyWeather], today: date) -> list[WeatherDay]:
+    """The forecast part of the weather, for the balance."""
+    return [
+        WeatherDay(day=w.day, et0=w.et0_mm, rain=w.precip_mm, probability=w.rain_probability)
+        for w in weather
+        if today < w.day <= today + timedelta(days=FORECAST_DAYS)
+    ]
+
+
 def expected_rain(weather: list[DailyWeather], today: date, defaults: Mapping[str, Any]) -> float:
     """Effective rain expected over the next days, weighted by its probability."""
-    total = 0.0
-    for offset in range(1, RAIN_LOOKAHEAD_DAYS + 1):
-        day = next((w for w in weather if w.day == today + timedelta(days=offset)), None)
-        if day is None or not day.precip_mm:
-            continue
-        probability = day.rain_probability if day.rain_probability is not None else 100
-        total += effective_rain(day.precip_mm, defaults) * probability / 100
-    return total
+    ahead = today + timedelta(days=RAIN_LOOKAHEAD_DAYS)
+    return sum(day_rain(day, defaults) for day in forecast_days(weather, today) if day.day <= ahead)
 
 
 def zone_advice(
@@ -346,10 +353,21 @@ class WaterCoordinator(DataUpdateCoordinator[WaterData]):
         shapes = self._manager.shapes()
         plants: dict[str, PlantWaterState] = {}
         balance_days = [WeatherDay(day=w.day, et0=w.et0_mm, rain=w.precip_mm) for w in past]
-        forecast = [w for w in weather if w.day > today]
+        forecast = forecast_days(weather, today)
+        lows = [
+            w.t_min
+            for w in weather
+            if today < w.day <= today + timedelta(days=FROST_DAYS) and w.t_min is not None
+        ]
         for plant in self._manager.watered_plants():
             plants[plant.id] = self._plant_state(
-                plant, shapes, balance_days, irrigation.get(plant.id, {}), forecast
+                plant,
+                shapes,
+                balance_days,
+                irrigation.get(plant.id, {}),
+                forecast=forecast,
+                lows=lows,
+                today=today,
             )
         zones: dict[str, ZoneAdvice] = {}
         if plants:
@@ -376,22 +394,34 @@ class WaterCoordinator(DataUpdateCoordinator[WaterData]):
         shapes: list[Shape],
         days: list[WeatherDay],
         irrigation: Mapping[date, float],
-        forecast: list[DailyWeather],
+        *,
+        forecast: list[WeatherDay],
+        lows: list[float],
+        today: date,
     ) -> PlantWaterState:
         soil = soil_water(plant, shapes, self.defaults)
         balance = run_balance(plant, soil, days, irrigation, self.defaults)
         depletion = balance[-1].depletion if balance else 0.0
         frost = None
-        if plant.min_temperature_c is not None:
-            lows = [w.t_min for w in forecast if w.t_min is not None]
-            if lows and min(lows) < plant.min_temperature_c:
-                frost = min(lows)
+        if plant.min_temperature_c is not None and lows and min(lows) < plant.min_temperature_c:
+            frost = min(lows)
         return PlantWaterState(
             soil=soil,
             depletion=depletion,
             needs_water=bool(balance) and depletion > soil.raw,
             frost=frost,
             days=balance[-SHOW_DAYS:],
+            outlook=outlook(
+                plant,
+                soil,
+                today=today,
+                depletion=depletion,
+                forecast=forecast,
+                defaults=self.defaults,
+                rain_lookahead=RAIN_LOOKAHEAD_DAYS,
+            )
+            if balance
+            else [],
         )
 
 
@@ -437,6 +467,10 @@ def water_summary(data: WaterData | None, has_sources: bool) -> dict[str, Any]:
                         "depletion": d.depletion,
                     }
                     for d in state.days
+                ],
+                "outlook": [
+                    {"day": d.day.isoformat(), "depletion": d.depletion, "water": d.water}
+                    for d in state.outlook
                 ],
             }
             for plant_id, state in data.plants.items()

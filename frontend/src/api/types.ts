@@ -394,6 +394,16 @@ export interface PlantBalance {
   /** coldest forecast night below the plant's limit, °C */
   frost: number | null;
   days: BalanceDay[];
+  /** today and the forecast days: when the plant needs water (forecast rain included) */
+  outlook?: OutlookDay[];
+}
+
+export interface OutlookDay {
+  day: string;
+  /** soil water deficit at the end of the day, before watering, mm */
+  depletion: number;
+  /** the plant needs watering on this day */
+  water: boolean;
 }
 
 export interface ZoneAdvice {

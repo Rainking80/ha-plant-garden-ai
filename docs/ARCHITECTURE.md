@@ -43,7 +43,7 @@ Browser (HA frontend)                              Home Assistant core
 | `et0.py` | FAO-56 Penman-Monteith (daily, with FAO fallbacks for missing humidity, wind, radiation) and Hargreaves-Samani; tested against the FAO-56 worked examples. |
 | `water_balance.py`, `water_defaults.json` | Soil water bucket per plant (TAW, RAW, K, effective rain, shelter by roofs), defaults with sources (D-026). |
 | `weather/` | Sources: `open_meteo.py`, `bright_sky.py` (hourly to daily), `home_assistant.py` (statistics + `weather.get_forecasts`); `base.py` `DailyWeather` with per-value merging. |
-| `water.py` | `WaterCoordinator` (DataUpdateCoordinator, hourly): fetches all weather subentries (own sensors first), merges, fills ET₀, stores the days, recomputes every plant's bucket (also 3 s after plant, layout or irrigation changes), frost warnings and zone advice; notifies `water`. |
+| `water.py` | `WaterCoordinator` (DataUpdateCoordinator, hourly): fetches all weather subentries (own sensors first), merges, fills ET₀, stores the days, recomputes every plant's bucket (also 3 s after plant, layout or irrigation changes) and its outlook over the 7 forecast days (`water_balance.outlook`: watering days with the forecast rain, D-037), frost warnings (3 days) and zone advice; notifies `water`. |
 | `entity.py`, `binary_sensor.py` | Device handling shared by the platforms; binary sensors "needs water" and "problem" (plant) and "irrigation recommended" (zone). |
 | `ai/base.py` | Provider contract: `AIRequest` (system, messages with images, JSON schema, max output tokens, feature, plant), `AIResponse`, normalised `Usage` (input without cache, cache read, cache write, output, reasoning, images), `AIError`/`AuthError`/`BudgetExceededError`. |
 | `ai/http.py` | Plain aiohttp with HA's session: timeout, 2 retries on 429/5xx honouring `Retry-After` (max 30 s), 401/403 → `AuthError`. |
@@ -111,7 +111,7 @@ Nothing is keyed by config entry id: removing and re-adding the integration keep
 | `irrigation/log` | watering by hand: `{plants: [{plant_id, liters}], at?, note?}` |
 | `irrigation/log_zone` | a zone run that was not seen: `{zone_id, minutes, end?}`; the same start twice is refused |
 | `irrigation/delete` | removes an event and its water |
-| `water/summary` | `configured`, source status, weather of the last 14 days and the forecast (with ET₀ method), soil water per plant (deficit, TAW, RAW, soil, needs water, frost, 14 days of the bucket), advice per zone |
+| `water/summary` | `configured`, source status, weather of the last 14 days and the forecast (with ET₀ method), soil water per plant (deficit, TAW, RAW, soil, needs water, frost, 14 days of the bucket, `outlook`: today and the forecast days with depletion and whether to water), advice per zone |
 | `water/refresh` | fetches the weather now and returns the summary |
 | `ai/status` | is a provider set up for photos, is Pl@ntNet there, display currency |
 | `ai/estimate` | rough cost of an identification with n photos |

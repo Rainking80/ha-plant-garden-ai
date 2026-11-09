@@ -59,3 +59,36 @@ export function weatherChart(days: WeatherDay[], width: number, height: number):
     top,
   };
 }
+
+/** Day → ids of the plants that need watering that day (today and the forecast). */
+export function wateringDays(plants: Record<string, PlantBalance>): Map<string, string[]> {
+  const days = new Map<string, string[]>();
+  for (const [plantId, balance] of Object.entries(plants)) {
+    for (const day of balance.outlook ?? []) {
+      if (day.water) days.set(day.day, [...(days.get(day.day) ?? []), plantId]);
+    }
+  }
+  return days;
+}
+
+/** The first day the plant needs water, from today on (null: not within the forecast). */
+export function nextWatering(balance: PlantBalance): string | null {
+  return balance.outlook?.find((day) => day.water)?.day ?? null;
+}
+
+/** Spacing of the spiral: unit circles stay apart (closest centres 2.09 apart). */
+const CLOUD_SPACING = 1.35;
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+
+/**
+ * Centres of `count` circles of radius 1 packed in a round cloud (a sunflower
+ * spiral, densest in the middle), and the radius the cloud needs.
+ */
+export function cloudLayout(count: number): { points: { x: number; y: number }[]; radius: number } {
+  const points = Array.from({ length: count }, (_, i) => {
+    const r = count === 1 ? 0 : CLOUD_SPACING * Math.sqrt(i + 0.5);
+    return { x: r * Math.cos(i * GOLDEN_ANGLE), y: r * Math.sin(i * GOLDEN_ANGLE) };
+  });
+  const radius = Math.max(1, ...points.map((p) => Math.hypot(p.x, p.y) + 1));
+  return { points, radius };
+}

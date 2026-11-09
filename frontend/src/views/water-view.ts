@@ -1,4 +1,11 @@
-import { mdiAlertCircleOutline, mdiOpenInNew, mdiRefresh, mdiSnowflake, mdiWater } from "@mdi/js";
+import {
+  mdiAlertCircleOutline,
+  mdiOpenInNew,
+  mdiRefresh,
+  mdiSnowflake,
+  mdiSprout,
+  mdiWater,
+} from "@mdi/js";
 import { css, html, nothing, svg } from "lit";
 
 import { errorMessage, refreshWater } from "../api/client";
@@ -7,12 +14,38 @@ import { PgElement, define, icon } from "../components/base";
 import { plantPath } from "../components/plant-card";
 import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
-import { formatDate, formatDateTime, formatNumber } from "../util/format";
+import {
+  formatDate,
+  formatDateTime,
+  formatDayMonth,
+  formatNumber,
+  formatWeekday,
+} from "../util/format";
 import { navigate } from "../util/navigate";
-import { deficitColor, deficitFraction, weatherChart } from "../util/water";
+import {
+  cloudLayout,
+  deficitColor,
+  deficitFraction,
+  nextWatering,
+  wateringDays,
+  weatherChart,
+} from "../util/water";
 
 const CHART_W = 600;
 const CHART_H = 120;
+/** The chart shows this many days before today and after it. */
+const PAST_DAYS = 7;
+const FUTURE_DAYS = 7;
+/** How far a puff of the cloud reaches around a plant (plant radius 1). */
+const PUFF = 1.55;
+
+/** The days the chart shows: a week back, today and the forecast week. */
+export function chartDays(days: WeatherDay[]): WeatherDay[] {
+  return [
+    ...days.filter((day) => !day.forecast).slice(-(PAST_DAYS + 1)),
+    ...days.filter((day) => day.forecast).slice(0, FUTURE_DAYS),
+  ];
+}
 
 /** Weather, soil water of every plant and what the zones should do (spec 8.2). */
 export class PgWaterView extends PgElement {
@@ -107,16 +140,24 @@ export class PgWaterView extends PgElement {
     `;
   }
 
-  private _renderWeather(days: WeatherDay[]) {
+  private _renderWeather(all: WeatherDay[]) {
     const { t, language } = this;
-    if (!days.length) {
+    if (!all.length) {
       return html`<section class="card block">
         <p class="muted">${t("weather.no_data")}</p>
       </section>`;
     }
+    const days = chartDays(all);
     const chart = weatherChart(days, CHART_W, CHART_H);
     const today = days.filter((day) => !day.forecast).at(-1);
     const tomorrow = days.find((day) => day.forecast);
+    const due = wateringDays(this.store.water?.plants ?? {});
+    const columns = `grid-template-columns: repeat(${days.length}, minmax(0, 1fr))`;
+    const todayIndex = today ? days.indexOf(today) : -1;
+    const slot = CHART_W / days.length;
+    // one scale for all clouds: the largest, at least three plants big
+    const largest = Math.max(3, ...days.map((day) => due.get(day.day)?.length ?? 0));
+    const cloudSize = cloudLayout(largest).radius + PUFF - 1;
     return html`<section class="card block">
       <h3>${t("weather.title")}</h3>
       <p class="today">
@@ -137,33 +178,106 @@ export class PgWaterView extends PgElement {
             : nothing
         }
       </p>
-      <svg
-        class="chart"
-        viewBox="0 0 ${CHART_W} ${CHART_H}"
-        preserveAspectRatio="none"
-        role="img"
-        aria-label=${t("weather.chart")}
-      >
-        ${
-          chart.forecastX !== null
-            ? svg`<rect class="forecast" x=${chart.forecastX} y="0"
-                width=${CHART_W - chart.forecastX} height=${CHART_H}></rect>`
-            : nothing
-        }
-        ${chart.rain.map(
-          (bar) => svg`<rect class="rain" x=${bar.x} y=${bar.y} width=${bar.w} height=${bar.h}>
-            <title>${formatDate(bar.day.day, language)}: ${formatNumber(bar.day.precip_mm ?? 0, language, 1)} mm</title>
-          </rect>`,
-        )}
-        ${chart.et0 ? svg`<path class="et0" d=${chart.et0}></path>` : nothing}
+      <svg class="defs" aria-hidden="true">
+        <clipPath id="pg-dot-clip" clipPathUnits="objectBoundingBox">
+          <circle cx="0.5" cy="0.5" r="0.5"></circle>
+        </clipPath>
       </svg>
+      <div class="timeline">
+        <div class="clouds" style=${columns}>
+          ${days.map((day) => this._renderCloud(day.day, due.get(day.day) ?? [], cloudSize))}
+        </div>
+        <svg
+          class="chart"
+          viewBox="0 0 ${CHART_W} ${CHART_H}"
+          preserveAspectRatio="none"
+          role="img"
+          aria-label=${t("weather.chart")}
+        >
+          ${
+            chart.forecastX !== null
+              ? svg`<rect class="forecast" x=${chart.forecastX} y="0"
+                  width=${CHART_W - chart.forecastX} height=${CHART_H}></rect>`
+              : nothing
+          }
+          ${
+            todayIndex >= 0
+              ? svg`<rect class="today" x=${todayIndex * slot} y="0" width=${slot} height=${CHART_H}></rect>`
+              : nothing
+          }
+          ${chart.rain.map(
+            (bar) => svg`<rect class="rain" x=${bar.x} y=${bar.y} width=${bar.w} height=${bar.h}>
+              <title>${formatDate(bar.day.day, language)}: ${formatNumber(bar.day.precip_mm ?? 0, language, 1)} mm</title>
+            </rect>`,
+          )}
+          ${chart.et0 ? svg`<path class="et0" d=${chart.et0}></path>` : nothing}
+        </svg>
+        <div class="axis" style=${columns}>
+          ${days.map(
+            (day) =>
+              html`<span class="tick ${day === today ? "today" : ""}">
+                <span class="weekday">${formatWeekday(day.day, language)}</span>
+                <span class="date">${formatDayMonth(day.day, language)}</span>
+              </span>`,
+          )}
+        </div>
+      </div>
       <p class="legend small">
         <span class="key rain"></span>${t("weather.legend_rain")}
         <span class="key et0"></span>${t("weather.legend_et0")}
         <span class="key forecast"></span>${t("weather.legend_forecast")}
+        <span class="key dot"></span>${t("weather.legend_water")}
         <span class="muted">· ${t("weather.scale", { top: chart.top })}</span>
       </p>
+      <p class="muted small">${t("weather.outlook_hint")}</p>
     </section>`;
+  }
+
+  /**
+   * The plants that need water on a day, as circles grouped in a cloud. Every
+   * cloud is drawn to the scale of the largest (`size`, its radius), so a plant
+   * has the same size on every day; the cloud sits on the bottom of its cell.
+   */
+  private _renderCloud(day: string, plantIds: string[], size: number) {
+    const plants = plantIds
+      .map((id) => this.store.getPlant(id))
+      .filter((plant): plant is Plant => plant !== undefined)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (!plants.length) return html`<span class="cloud"></span>`;
+    const { language } = this;
+    const { points, radius } = cloudLayout(plants.length);
+    const r = radius + PUFF - 1;
+    const box = `${-size} ${r - 2 * size} ${2 * size} ${2 * size}`;
+    const label = this.t("weather.cloud", {
+      day: `${formatWeekday(day, language)} ${formatDayMonth(day, language)}`,
+      plants: plants.map((plant) => plant.name).join(", "),
+    });
+    const puffs = points.map((p) => svg`<circle cx=${p.x} cy=${p.y} r=${PUFF}></circle>`);
+    return html`<span class="cloud" role="group" aria-label=${label} title=${label}>
+      <svg viewBox=${box} preserveAspectRatio="xMidYMax meet">
+        <g class="puffs">${puffs}</g>
+        <g class="puffs fill">${puffs}</g>
+        ${plants.map((plant, i) => {
+          const p = points[i] ?? { x: 0, y: 0 };
+          const href = plantPath(plant, this.prefix);
+          return svg`<a href=${href} @click=${(e: MouseEvent) => {
+            e.preventDefault();
+            navigate(href);
+          }}>
+            <title>${plant.name}</title>
+            <circle class="dot" cx=${p.x} cy=${p.y} r="1"></circle>
+            ${
+              plant.cover
+                ? svg`<image href=${plant.cover.urls.thumb} x=${p.x - 1} y=${p.y - 1} width="2" height="2"
+                    preserveAspectRatio="xMidYMid slice" clip-path="url(#pg-dot-clip)"></image>`
+                : svg`<path class="sprout" d=${mdiSprout}
+                    transform="translate(${p.x - 0.65} ${p.y - 0.65}) scale(${1.3 / 24})"></path>`
+            }
+            <circle class="dot-ring" cx=${p.x} cy=${p.y} r="1"></circle>
+          </a>`;
+        })}
+      </svg>
+    </span>`;
   }
 
   private _renderPlants() {
@@ -209,7 +323,7 @@ export class PgWaterView extends PgElement {
               ${formatNumber(balance.taw, language, 0)} mm
             </span>
             <span class="badges">
-              ${balance.needs_water ? html`<span class="badge thirsty">${t("balance.needs")}</span>` : nothing}
+              ${this._renderNext(balance)}
               ${
                 balance.frost !== null
                   ? html`<span
@@ -224,6 +338,30 @@ export class PgWaterView extends PgElement {
         })}
       </ul>
     </section>`;
+  }
+
+  /**
+   * When a plant needs water: today, not yet because rain is coming, or the next
+   * day within the forecast.
+   */
+  private _renderNext(balance: PlantBalance) {
+    const { t, language } = this;
+    const next = nextWatering(balance);
+    const today = balance.outlook?.[0]?.day;
+    if (balance.needs_water) {
+      // without an outlook (older data) the plant simply needs water
+      return next === today || !balance.outlook
+        ? html`<span class="badge thirsty">${t("balance.needs")}</span>`
+        : html`<span class="badge rain" title=${t("balance.rain_expected_hint")}
+            >${t("balance.rain_expected")}</span
+          >`;
+    }
+    if (!next) return nothing;
+    return html`<span class="next muted small">
+      ${t("balance.next", {
+        day: `${formatWeekday(next, language)} ${formatDayMonth(next, language)}`,
+      })}
+    </span>`;
   }
 
   private _renderZones() {
@@ -281,10 +419,87 @@ export class PgWaterView extends PgElement {
         height: 40px;
         color: var(--pg-water);
       }
+      .defs {
+        position: absolute;
+        width: 0;
+        height: 0;
+      }
+      .timeline {
+        display: grid;
+      }
+      .clouds,
+      .axis {
+        display: grid;
+      }
+      .cloud {
+        position: relative;
+        height: 72px;
+        padding: 0 2px;
+      }
+      .cloud svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      .cloud .puffs circle {
+        fill: color-mix(in srgb, var(--pg-water) 14%, var(--pg-surface));
+        stroke: color-mix(in srgb, var(--pg-water) 45%, transparent);
+        stroke-width: 1.5px;
+        vector-effect: non-scaling-stroke;
+      }
+      /* drawn again without an edge: only the outline of the whole cloud remains */
+      .cloud .puffs.fill circle {
+        stroke: none;
+      }
+      .cloud .dot {
+        fill: var(--pg-leaf-soft, #dcedc8);
+      }
+      .cloud .sprout {
+        fill: var(--pg-leaf, #43a047);
+      }
+      .cloud .dot-ring {
+        fill: none;
+        stroke: var(--pg-thirsty, #e08a1e);
+        stroke-width: 1.5px;
+        vector-effect: non-scaling-stroke;
+      }
+      .cloud a:hover .dot-ring,
+      .cloud a:focus-visible .dot-ring {
+        stroke: var(--pg-accent);
+        stroke-width: 2.5px;
+      }
       .chart {
         display: block;
         width: 100%;
         height: 140px;
+      }
+      .chart .today {
+        fill: color-mix(in srgb, var(--pg-accent) 10%, transparent);
+      }
+      .axis {
+        margin-top: 4px;
+        font-size: 11px;
+        line-height: 1.25;
+        text-align: center;
+        color: var(--pg-text-muted);
+      }
+      .tick {
+        display: grid;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      .tick .weekday {
+        font-weight: 500;
+        color: var(--pg-text);
+      }
+      .tick.today {
+        color: var(--pg-accent);
+        font-weight: 600;
+      }
+      .tick.today .weekday {
+        color: var(--pg-accent);
       }
       .chart .rain {
         fill: var(--pg-water);
@@ -322,6 +537,11 @@ export class PgWaterView extends PgElement {
       .key.forecast {
         background: color-mix(in srgb, var(--pg-text) 12%, transparent);
       }
+      .key.dot {
+        border-radius: 50%;
+        background: var(--pg-leaf-soft, #dcedc8);
+        box-shadow: inset 0 0 0 1.5px var(--pg-thirsty, #e08a1e);
+      }
       ul {
         list-style: none;
         margin: 0;
@@ -329,11 +549,22 @@ export class PgWaterView extends PgElement {
         display: grid;
         gap: 8px;
       }
+      /* one set of columns for all rows: the bars line up whatever stands behind them */
+      .plants {
+        grid-template-columns: minmax(90px, 1fr) minmax(120px, 2fr) auto auto;
+        column-gap: 12px;
+      }
       .plants li {
         display: grid;
-        grid-template-columns: minmax(90px, 1fr) 2fr auto auto;
+        grid-column: 1 / -1;
+        grid-template-columns: subgrid;
         align-items: center;
-        gap: 10px;
+      }
+      .badges {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
       }
       .plants a {
         color: inherit;
@@ -374,6 +605,10 @@ export class PgWaterView extends PgElement {
         background: color-mix(in srgb, var(--pg-thirsty, #e08a1e) 18%, transparent);
         color: var(--pg-thirsty, #b86a10);
       }
+      .badge.rain {
+        background: color-mix(in srgb, var(--pg-water) 16%, transparent);
+        color: color-mix(in srgb, var(--pg-water) 75%, var(--pg-text));
+      }
       .badge.frost .icon {
         width: 16px;
         height: 16px;
@@ -392,12 +627,18 @@ export class PgWaterView extends PgElement {
         height: 18px;
       }
       @media (max-width: 600px) {
-        .plants li {
-          grid-template-columns: 1fr auto;
+        .plants {
+          grid-template-columns: 1fr auto auto;
         }
         .plants .meter {
           grid-column: 1 / -1;
           order: 3;
+        }
+        .tick .date {
+          display: none;
+        }
+        .cloud {
+          height: 44px;
         }
       }
     `,

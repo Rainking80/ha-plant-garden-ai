@@ -73,10 +73,18 @@ Open-Meteo (weltweit) oder Bright Sky / Deutscher Wetterdienst. Vorher wird nich
 abgerufen; die Dienste erhalten den Standort auf etwa 1 km gerundet.
 
 Plant Garden führt für jede Pflanze einen Bodenwasser-„Eimer“ aus Regen,
-Verdunstung (FAO-56 ET₀), Boden, Wurzeltiefe, Wasserbedarf und Bewässerung. Der
-Tab **Wasser & Wetter** zeigt zwei Wochen und die Vorhersage; Gießbedarf besteht,
-wenn das leicht verfügbare Wasser verbraucht ist. Pflanzen unter einem Dach
-bekommen keinen Regen.
+Verdunstung (FAO-56 ET₀), Boden, Wurzeltiefe, Wasserbedarf und Bewässerung;
+Gießbedarf besteht, wenn das leicht verfügbare Wasser verbraucht ist. Pflanzen
+unter einem Dach bekommen keinen Regen.
+
+Der Tab **Wasser & Wetter** zeigt Regen und Verdunstung der letzten Woche und der
+nächsten sieben Tage, mit Wochentag und Datum. Über jedem kommenden Tag stehen die
+Pflanzen, die dann Wasser brauchen, als Kreise in einer Wolke (Antippen öffnet die
+Pflanze): Der Eimer wird mit der vorhergesagten Verdunstung und dem
+vorhergesagten Regen – nach seiner Wahrscheinlichkeit – weitergerechnet. Füllt der
+Regen der nächsten zwei Tage eine durstige Pflanze wieder auf, wartet sie; nach
+ihrem Gießtag gilt sie als gegossen. Die Bodenwasser-Liste zeigt für jede Pflanze
+den nächsten Gießtag oder „Regen erwartet“.
 
 ## 5. KI-Bestimmung (optional)
 

@@ -18,6 +18,18 @@ export function formatDate(iso: string | null | undefined, language: string): st
   return new Intl.DateTimeFormat(language, { dateStyle: "medium" }).format(date);
 }
 
+/** Short weekday of a "YYYY-MM-DD" day ("Mo", "Mon"). */
+export function formatWeekday(iso: string, language: string): string {
+  return new Intl.DateTimeFormat(language, { weekday: "short" }).format(parseLocalDate(iso));
+}
+
+/** Day and month of a "YYYY-MM-DD" day ("07.11.", "11/07"). */
+export function formatDayMonth(iso: string, language: string): string {
+  return new Intl.DateTimeFormat(language, { day: "2-digit", month: "2-digit" }).format(
+    parseLocalDate(iso),
+  );
+}
+
 export function formatMonth(iso: string, language: string): string {
   return new Intl.DateTimeFormat(language, { month: "long", year: "numeric" }).format(
     new Date(iso),

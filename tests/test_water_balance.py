@@ -33,6 +33,7 @@ from custom_components.plant_garden.water_balance import (
     crop_coefficient,
     effective_rain,
     load_defaults,
+    outlook,
     run_balance,
     soil_water,
 )
@@ -138,6 +139,52 @@ def replace_sheltered(water: SoilWater) -> SoilWater:
         raw=water.raw,
         sheltered=True,
     )
+
+
+def test_outlook_finds_the_watering_days_with_the_rain_to_come() -> None:
+    plant = _plant()  # moderate: ETc = 0.5 x ET0 = 3 mm a day
+    water = SoilWater(soil="loam", root_depth_m=0.4, taw=52, raw=26, sheltered=False)
+
+    def forecast(rain: dict[int, tuple[float, float | None]]) -> list[WeatherDay]:
+        return [
+            WeatherDay(
+                day=DAY + timedelta(days=i),
+                et0=6,
+                rain=rain.get(i, (0, None))[0],
+                probability=rain.get(i, (0, None))[1],
+            )
+            for i in range(1, 8)
+        ]
+
+    def run(
+        depletion: float, rain: dict[int, tuple[float, float | None]], soil: SoilWater = water
+    ) -> list[tuple[float, bool]]:
+        days = outlook(
+            plant,
+            soil,
+            today=DAY,
+            depletion=depletion,
+            forecast=forecast(rain),
+            defaults=DEFAULTS,
+            rain_lookahead=2,
+        )
+        assert [d.day for d in days] == [DAY + timedelta(days=i) for i in range(8)]
+        return [(d.depletion, d.water) for d in days]
+
+    # dry: passes RAW (26 mm) on day 3, is watered, starts again from field capacity
+    dry = run(20, {})
+    assert [depletion for depletion, _ in dry] == [20, 23, 26, 29, 3, 6, 9, 12]
+    assert [i for i, (_, water_it) in enumerate(dry) if water_it] == [3]
+    # 42 mm of rain on day 4 (32 mm effective) refill it: no watering at all
+    wet = run(20, {4: (42, None)})
+    assert not any(water_it for _, water_it in wet)
+    assert wet[4] == (0, False)
+    # the same rain at 50 % is not enough to wait for
+    assert run(20, {4: (42, 50)})[3] == (29, True)
+    # under a roof the rain does not count
+    assert run(20, {4: (42, None)}, replace_sheltered(water))[3] == (29, True)
+    # thirsty today: water today
+    assert run(30, {})[:2] == [(30, True), (3, False)]
 
 
 # ---------------------------------------------------------------- merging sources

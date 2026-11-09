@@ -700,4 +700,12 @@ export const de: Translations = {
   "zone.width": "Benetzte Breite (m)",
   "zone.flow_l_h_m": "L/h je Meter",
   "zone.length": "Länge {length} m",
+  "weather.legend_water": "Pflanzen gießen",
+  "weather.outlook_hint":
+    "Kreise: die Pflanzen, die an dem Tag Wasser brauchen – mit dem vorhergesagten Regen gerechnet (nach seiner Wahrscheinlichkeit). Danach gilt die Pflanze als gegossen.",
+  "weather.cloud": "{day}: {plants} gießen",
+  "balance.rain_expected": "Regen erwartet",
+  "balance.rain_expected_hint":
+    "Braucht Wasser, aber der Regen der nächsten zwei Tage füllt es wieder auf.",
+  "balance.next": "gießen {day}",
 };

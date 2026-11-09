@@ -501,3 +501,20 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   sensors can follow if it is needed.
 - Coverage, areas and water per plant use the same point-in-shape, area and bounds
   functions as for areas, in the backend and the panel alike.
+
+## D-037 A week's outlook of when plants need water (2026-11-09)
+
+- The weather is fetched seven days ahead (was three); frost warnings still look
+  three days ahead.
+- From today's bucket every plant is run forward day by day: ETc from the
+  forecast ET₀, minus the forecast rain made effective and weighted by its
+  probability. A day needs watering when the depletion passes RAW and the rain
+  expected over the next two days would not refill it – the same rule the zone
+  advice uses. The plant is then taken as watered to field capacity and the run
+  goes on, so a plant can show up again later in the week.
+- "Needs water" (sensor, ring on the plan) stays what the soil holds now; the
+  outlook adds when. A plant that needs water while rain is coming shows
+  "rain expected" instead of a watering day.
+- The Water & weather tab shows a week back and a week ahead with weekday and
+  date; the plants of each watering day are circles grouped in a cloud above it,
+  all clouds at one scale so a plant has the same size on every day.

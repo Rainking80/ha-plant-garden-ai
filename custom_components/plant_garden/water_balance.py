@@ -7,9 +7,9 @@ available water RAW = p x TAW. All defaults with sources in water_defaults.json.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 import json
 from pathlib import Path
 from typing import Any
@@ -144,6 +144,15 @@ class WeatherDay:
     day: date
     et0: float | None
     rain: float | None
+    probability: float | None = None  # chance of rain in %, forecast days only
+
+
+def expected_rain(day: WeatherDay, defaults: Mapping[str, Any]) -> float:
+    """Effective rain of a forecast day, weighted by its probability."""
+    if not day.rain:
+        return 0.0
+    probability = day.probability if day.probability is not None else 100
+    return effective_rain(day.rain, defaults) * probability / 100
 
 
 @dataclass(slots=True, frozen=True)
@@ -192,4 +201,51 @@ def run_balance(
                 depletion=round(depletion, 2),
             )
         )
+    return result
+
+
+@dataclass(slots=True, frozen=True)
+class OutlookDay:
+    """One coming day of a plant's soil water bucket."""
+
+    day: date
+    depletion: float  # Dr at the end of the day (mm), before watering
+    water: bool  # the plant needs watering on this day
+
+
+def outlook(
+    plant: Plant,
+    water: SoilWater,
+    *,
+    today: date,
+    depletion: float,
+    forecast: Sequence[WeatherDay],
+    defaults: Mapping[str, Any],
+    rain_lookahead: int,
+) -> list[OutlookDay]:
+    """The days the plant will need water, from today over the forecast.
+
+    `depletion` is today's bucket. Every forecast day adds ETc and takes away
+    the rain expected for it (weighted by its probability). A day needs watering
+    when the depletion passes RAW and the rain expected over the next
+    `rain_lookahead` days would not refill it (as the zone advice decides); the
+    plant is then taken as watered back to field capacity.
+    """
+    rain = {day.day: 0.0 if water.sheltered else expected_rain(day, defaults) for day in forecast}
+
+    def rain_ahead(day: date) -> float:
+        return sum(rain.get(day + timedelta(days=i), 0.0) for i in range(1, rain_lookahead + 1))
+
+    result = []
+    days = [today, *sorted(day.day for day in forecast if day.day > today)]
+    weather = {day.day: day for day in forecast}
+    for day in days:
+        if day > today:
+            et0 = weather[day].et0
+            etc = crop_coefficient(plant, day, defaults) * et0 if et0 is not None else 0.0
+            depletion = min(max(depletion - rain[day] + etc, 0.0), water.taw)
+        due = depletion > water.raw and depletion - rain_ahead(day) > 0
+        result.append(OutlookDay(day=day, depletion=round(depletion, 2), water=due))
+        if due:
+            depletion = 0.0
     return result

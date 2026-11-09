@@ -71,6 +71,8 @@ sensors and offers recommendations as entities for your own automations.
 - A soil water bucket per plant from rain, evaporation, soil, root depth, water
   need and irrigation; "needs water" per plant and "irrigation recommended" with a
   run time per zone, taking expected rain into account.
+- A week's outlook: which plants need water on which of the next seven days,
+  with the forecast rain – shown as clouds of plants above the weather chart.
 
 **Tasks and problems**
 - Tasks (water, fertilise, prune, repot, check for pests, harvest, take a photo,

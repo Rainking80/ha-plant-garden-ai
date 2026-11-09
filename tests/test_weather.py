@@ -246,6 +246,14 @@ async def test_weather_drives_the_water_balance(
     assert rose["needs_water"] is True
     assert rose["frost"] == 14  # nights of 14 °C, the plant wants 15 °C
     assert len(rose["days"]) == 14
+    # the outlook: water today, then 2.5 mm a day from field capacity
+    assert [(d["depletion"], d["water"]) for d in rose["outlook"]] == [
+        (69.5, True),
+        (2.5, False),
+        (5, False),
+        (7.5, False),
+    ]
+    assert rose["outlook"][0]["day"] == today.isoformat()
     advice = summary["zones"][zone.id]
     assert advice["recommended"] is True
     # 69.5 mm minus 0 mm expected (2 mm tomorrow is intercepted) at 7.5 mm/h, capped

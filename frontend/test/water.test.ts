@@ -11,7 +11,14 @@ import "../src/views/garden-view";
 import type { PgGardenView } from "../src/views/garden-view";
 import "../src/views/water-view";
 import type { PgWaterView } from "../src/views/water-view";
-import { deficitColor, deficitFraction, weatherChart } from "../src/util/water";
+import {
+  cloudLayout,
+  deficitColor,
+  deficitFraction,
+  nextWatering,
+  wateringDays,
+  weatherChart,
+} from "../src/util/water";
 import { deepGet, deepQuery, deepText, fakeBackend, makePlant, type FakeBackend } from "./fixtures";
 
 const day = (iso: string, rain: number, et0: number, forecast = false): WeatherDay => ({
@@ -168,6 +175,68 @@ describe("pg-water-view", () => {
     expect(backend.callWS).toHaveBeenCalledWith({ type: "plant_garden/water/refresh" });
   });
 
+  it("marks the days with weekday and date and clouds the plants to water", async () => {
+    // today is Tuesday 2026-07-14; two weeks back and nine days ahead are cut to 7 + 1 + 7
+    const weather = [
+      ...Array.from({ length: 14 }, (_, i) =>
+        day(`2026-07-${String(i + 1).padStart(2, "0")}`, 0, 4),
+      ),
+      ...Array.from({ length: 9 }, (_, i) => day(`2026-07-${String(i + 15)}`, 2, 4, true)),
+    ];
+    const outlook = (watered: string[]) =>
+      ["2026-07-14", "2026-07-15", "2026-07-16"].map((d) => ({
+        day: d,
+        depletion: 40,
+        water: watered.includes(d),
+      }));
+    const water: WaterSummary = {
+      ...WATER,
+      weather,
+      plants: {
+        // the rose needs water, but rain is coming; it is due the day after tomorrow
+        R: balance(45, { outlook: outlook(["2026-07-16"]) }),
+        L: balance(20, { outlook: outlook(["2026-07-16"]) }),
+        X: balance(50, { outlook: outlook(["2026-07-14"]) }),
+      },
+    };
+    const plants = [...PLANTS, makePlant({ id: "X", name: "Phlox" })];
+    const backend = fakeBackend({ plants, water });
+    const view = document.createElement("pg-water-view") as PgWaterView;
+    view.hass = backend.hass;
+    view.store = await storeFor(backend);
+    document.body.append(view);
+    await view.updateComplete;
+
+    const ticks = [...(view.shadowRoot?.querySelectorAll(".axis .tick") ?? [])];
+    expect(ticks).toHaveLength(15);
+    expect(deepText(ticks[0] as Element).trim()).toBe("Di 07.07.");
+    expect(deepGet(view, ".axis .tick.today").textContent?.replace(/\s+/g, " ").trim()).toBe(
+      "Di 14.07.",
+    );
+    expect(view.shadowRoot?.querySelectorAll(".chart .rain")).toHaveLength(15);
+
+    // one cloud for today (Phlox), one with two plants the day after tomorrow
+    const clouds = [...(view.shadowRoot?.querySelectorAll(".cloud[role=group]") ?? [])];
+    expect(clouds.map((cloud) => cloud.getAttribute("aria-label"))).toEqual([
+      "Di 14.07.: Phlox gießen",
+      "Do 16.07.: Lavendel, Rose gießen",
+    ]);
+    expect(clouds[1]?.querySelectorAll("a")).toHaveLength(2);
+
+    // the list tells when: today, rain expected, or the next day
+    const rows = Object.fromEntries(
+      [...(view.shadowRoot?.querySelectorAll(".plants li") ?? [])].map((li) => [
+        li.querySelector("a")?.textContent?.trim(),
+        deepText(li.querySelector(".badges") as Element).trim(),
+      ]),
+    );
+    expect(rows).toEqual({
+      Phlox: "Gießbedarf",
+      Rose: "Regen erwartet",
+      Lavendel: "gießen Do 16.07.",
+    });
+  });
+
   it("reports a failing refresh", async () => {
     const backend = fakeBackend({ water: { ...WATER, weather: [] } });
     const view = document.createElement("pg-water-view") as PgWaterView;
@@ -249,5 +318,38 @@ describe("soil water on the plan and the plant page", () => {
     expect(deepGet<HTMLElement>(panel, ".meter .used").getAttribute("style")).toContain(
       "width: 76.9",
     );
+  });
+});
+
+describe("watering outlook", () => {
+  it("collects the plants per day and finds each plant's next day", () => {
+    const outlook = (due: string[]) =>
+      ["2026-07-14", "2026-07-15"].map((d) => ({ day: d, depletion: 1, water: due.includes(d) }));
+    const plants = {
+      A: balance(10, { outlook: outlook(["2026-07-15"]) }),
+      B: balance(50, { outlook: outlook(["2026-07-14", "2026-07-15"]) }),
+      C: balance(10, { outlook: outlook([]) }),
+      D: balance(10),
+    };
+    expect([...wateringDays(plants)]).toEqual([
+      ["2026-07-15", ["A", "B"]],
+      ["2026-07-14", ["B"]],
+    ]);
+    expect(nextWatering(plants.A)).toBe("2026-07-15");
+    expect(nextWatering(plants.C)).toBeNull();
+    expect(nextWatering(plants.D)).toBeNull();
+  });
+
+  it("packs a cloud of plants without overlaps", () => {
+    expect(cloudLayout(1)).toEqual({ points: [{ x: 0, y: 0 }], radius: 1 });
+    for (let count = 2; count <= 40; count++) {
+      const { points, radius } = cloudLayout(count);
+      for (const [i, a] of points.entries()) {
+        expect(Math.hypot(a.x, a.y) + 1).toBeLessThanOrEqual(radius + 1e-9);
+        for (const b of points.slice(i + 1)) {
+          expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(2);
+        }
+      }
+    }
   });
 });
