@@ -14,6 +14,10 @@ record.
 Plant Garden never switches anything. It reads the state of your valves and
 sensors and offers recommendations as entities for your own automations.
 
+![The garden plan: lawn, terrace, buildings, a beech hedge drawn as one plant, plants with their names and irrigation zones (dashed blue); dashed amber outlines mark plants that need water](docs/images/plan.png)
+
+<sub>The demo garden in view mode, shown here without its aerial background.</sub>
+
 ## Features
 
 **Garden plan**
@@ -92,6 +96,10 @@ sensors and offers recommendations as entities for your own automations.
   the same place on the map.
 
 The interface is available in English and German.
+
+| Plants | A plant's page | Water & weather |
+|---|---|---|
+| [![The plant list with photos, botanical names, age and status filters](docs/images/plants.png)](docs/images/plants.png) | [![A plant's page with its photo, details, growth and soil water](docs/images/plant.png)](docs/images/plant.png) | [![Rain and evaporation of the last two weeks with the forecast, and the soil water of every plant](docs/images/water.png)](docs/images/water.png) |
 
 ## Requirements
 
