@@ -1,140 +1,285 @@
 # Plant Garden for Home Assistant
 
-> **Status: early development (0.1.0).** Plants, photos, growth measurements, the garden plan editor, aerial imagery, irrigation tracking, the water balance, AI identification with a cost page and the assistant (tasks, problems with diagnosis, tips, chat) are built and in review; polish and the first release follow (see [roadmap](#roadmap)).
+A garden planner and plant journal inside Home Assistant: draw your garden to
+scale on aerial imagery, place your plants, document them with photos, see which
+plant got how much water from your irrigation, follow the soil water of every
+plant, keep care tasks in Home Assistant's to-do list – and, if you like, let an
+AI identify plants, diagnose problems and give tips, with every token and cent on
+record.
 
-Plant Garden turns Home Assistant into a garden planner and plant journal:
+> **Status:** early development, version 0.1.0. All features below are built and
+> tested; the first release is being prepared. Changes are listed in the
+> [changelog](CHANGELOG.md).
 
-- **Garden plan** – a to-scale plan from above, on official aerial imagery where available, your own sketch or a drawn layout; drag plants into place, see irrigation zones and sensor values, hover or tap a plant to see its photos, water statistics, tasks and problems.
-- **Plants & photos** – document growth and problems with photos for every plant; height and age are tracked over time.
-- **Irrigation tracking** – link drawn zones to your existing `valve`/`switch` entities; every run is attributed to the plants it waters.
-- **Water balance** – rain and evapotranspiration (from your sensors, a weather API or computed with FAO-56) per plant, daily.
-- **AI assistant** – plant identification, diagnosis of problem photos and care tips. Use an AI you already set up in Home Assistant (AI Task, no extra key) or bring your own key for any OpenAI-compatible API (OpenAI, OpenRouter, Ollama …), Anthropic Claude or Google Gemini, plus Pl@ntNet for identification – with a page that shows tokens and costs.
+Plant Garden never switches anything. It reads the state of your valves and
+sensors and offers recommendations as entities for your own automations.
 
-Plant Garden never switches your valves; it only reads their state and offers recommendations as entities for your own automations.
+## Features
 
-Photos are stored in `<config>/plant_garden/` (three sizes per photo, metadata such as GPS removed) and are therefore part of your Home Assistant backups.
+**Garden plan**
+- A to-scale plan of your garden in metres, anchored at its real location.
+- Background: official aerial imagery of 12 German states (with the required
+  attribution), any WMS service, or your own site plan or sketch, calibrated with
+  two known points.
+- Areas as rectangles, circles, polygons or drawn freehand: beds, raised beds,
+  lawn, hedges, terrace, paths, buildings, greenhouses, roofs, ponds, the property
+  boundary. Grid snapping, undo/redo, everything saved immediately.
+- Plants as round photo avatars in their crown size – or drawn as an area, so a
+  whole beech hedge or the lawn is one plant, not a hundred.
+- Rings at a glance: needs water, frost expected, pruning due, open problem.
+  Layers for the soil water deficit and the irrigation coverage.
+- Markers that show live values of any Home Assistant entity (soil moisture,
+  temperature, …) with a 24 h history.
+- View mode for looking (nothing moves by accident), edit mode for changing;
+  mouse, pen and touch.
 
-Aerial imagery comes directly from the state survey offices (Berlin/Brandenburg, Bavaria, Baden-Württemberg, Bremen, Hesse, Mecklenburg-Western Pomerania, Lower Saxony, North Rhine-Westphalia, Rhineland-Palatinate, Saarland, Schleswig-Holstein, Thuringia) under their open licences; the attribution is shown on the plan. Your browser loads the images from these services, which therefore see the map area you view.
+**Plants and photos**
+- Name, botanical name, variety, family, category, location, light, water need,
+  frost limit, soil, root depth, status, tags, notes – every field marked with
+  where it came from (you, the AI with its confidence, a default).
+- Age from a planting date or an estimate ("about 3 years old in May 2026").
+- Height and width as measurements over time, with a growth chart.
+- Photos from file or camera, a timeline per plant. Capture dates are read from
+  the photo; GPS and all other metadata are removed.
+- A care profile per plant: watering, fertilising, pruning.
+- One-time import of plant names from an existing to-do list.
+
+**Irrigation (tracking, not switching)**
+- Draw irrigation zones and link the `valve`, `switch`, `input_boolean` or
+  `binary_sensor` that waters them, optionally a `timer` (remaining time on the
+  plan) and a water meter (real litres instead of an estimate).
+- Spray heads, rotors, drip lines, drippers per plant or by hand, with typical
+  efficiencies.
+- Every run becomes an event with litres per plant – also across restarts, with
+  gaps filled from the recorder. Stuck valves raise a repair notice.
+- Watering with a can is logged on the plant page or with an action.
+
+**Weather and water balance**
+- Weather from your own sensors, [Open-Meteo](https://open-meteo.com) (worldwide)
+  or [Bright Sky](https://brightsky.dev) / German Weather Service (Germany).
+- Evapotranspiration after FAO-56 (Penman-Monteith or Hargreaves) where no source
+  provides it.
+- A soil water bucket per plant from rain, evaporation, soil, root depth, water
+  need and irrigation; "needs water" per plant and "irrigation recommended" with a
+  run time per zone, taking expected rain into account.
+
+**Tasks and problems**
+- Tasks (water, fertilise, prune, repot, check for pests, harvest, take a photo,
+  other) with due date, repetition every N days or weeks and optional season
+  months. They are also Home Assistant's to-do list **Garden tasks** – tick them
+  off there or on your phone.
+- Problems from "Report a problem" or a photo tagged `problem`, with status and a
+  log of what was done.
+
+**AI (optional)**
+- Providers: an AI you already set up in Home Assistant (AI Task), any
+  OpenAI-compatible API (OpenAI, OpenRouter, Ollama, LM Studio, custom URL),
+  Anthropic Claude, Google Gemini, and Pl@ntNet for species candidates.
+- Identification from 1–3 photos: species, size, age, care – every suggestion is
+  taken over or dismissed on its own and never replaces what you entered.
+- Diagnosis of a problem: symptoms, possible causes with confidence and evidence,
+  what to do and how urgent, warnings.
+- Tips for a plant or the whole garden, with tasks you take over in one click; a
+  chat about the garden or one plant; an optional weekly garden check.
+- A **Tech** page for administrators: requests, tokens and costs per day, model,
+  feature and plant, a request log with CSV export, editable prices, a monthly
+  budget that warns and can stop.
+
+**Moving and backups**
+- All data lives in your Home Assistant configuration folder and is part of every
+  Home Assistant backup.
+- Export the garden as a JSON file and import it into another Home Assistant – at
+  the same place on the map.
+
+The interface is available in English and German.
 
 ## Requirements
 
 - Home Assistant **2026.9.0** or newer
-- [HACS](https://hacs.xyz)
+- [HACS](https://hacs.xyz) for the recommended installation
 
-## Installation (HACS custom repository)
+## Installation
 
-> While the repository is private, HACS cannot install it (HACS only works with
-> public repositories). Install it by hand instead: copy the folder
-> `custom_components/plant_garden` of this repository into
-> `<config>/custom_components/` of your Home Assistant (Samba, SSH or the Studio
-> Code Server add-on) and restart Home Assistant.
+### With HACS (recommended)
 
+1. In HACS, open the menu (⋮) → **Custom repositories**.
+2. Add `https://github.com/Rainking80/ha-plant-maintainance` with the type
+   **Integration**.
+3. Search for **Plant Garden**, choose **Download** and restart Home Assistant.
 
-1. HACS → ⋮ → **Custom repositories** → add `https://github.com/Rainking80/ha-plant-maintainance`, category **Integration**.
-2. Install **Plant Garden**, restart Home Assistant.
-3. **Settings → Devices & services → Add integration → Plant Garden**, choose a name for your garden.
-4. Open the new sidebar entry.
+### Manually
 
-## AI providers and costs
+1. Download this repository (or the latest release) and copy the folder
+   `custom_components/plant_garden` into the `custom_components` folder of your
+   Home Assistant configuration (create it if it does not exist), for example with
+   the Samba share, SSH or Studio Code Server add-on.
+2. Restart Home Assistant.
 
-AI is optional and only runs when you start it (for example "Identify" on a plant
-page or the action `plant_garden.identify_plant`). Add a provider under
-**Settings → Devices & services → Plant Garden → Add AI provider**:
+To update, replace the folder and restart again.
 
-- **Home Assistant AI task** – an AI you already set up in Home Assistant, no
-  extra key. Home Assistant does not report tokens, so these calls are counted
-  but their cost shows as unknown.
-- **OpenAI-compatible** – OpenAI, OpenRouter, Ollama, LM Studio or any compatible
-  URL; **Anthropic Claude**; **Google Gemini** – with your own API key.
-- **Pl@ntNet** – species candidates for identification (free key with 500
-  identifications per day at [my.plantnet.org](https://my.plantnet.org)). Use a
-  key from your own account; failed requests count against the daily limit too.
+### Set up
 
-What is sent: the photos you choose (re-encoded, all metadata such as GPS
-removed), the plant's name, category, location type and the names you entered,
-the month and the hemisphere – never your location. Keys stay in Home Assistant
-and are shown masked only.
+1. **Settings → Devices & services → Add integration → Plant Garden.**
+2. Give your garden a name. A new sidebar entry **Plant Garden** appears.
 
-The **assistant** (tips, problem diagnosis, chat, optional weekly check) also
-sends a compact summary of the garden: plant details with where each value came
-from, measurements, soil water and weather of the last two weeks, irrigation,
-open tasks and problems – and, for a diagnosis, the problem's title and log. Your
-plant notes are not sent. How much may be sent per feature is set in the options.
-Tasks work without any AI and also appear in Home Assistant's to-do list
-"Garden tasks".
+## First steps
 
-The **Tech** tab (administrators) shows requests, tokens and costs per day,
-model, feature and plant, a request log with CSV export, and the price table
-(as of 2026-11-08, editable per model). A monthly budget in the integration
-options warns at 80 % and can stop further calls.
+1. **Plants** tab: add your plants (name and category are enough to start).
+2. **Garden plan** tab → **Edit**:
+   - check the location: the plan starts at Home Assistant's home location; if
+     your garden is elsewhere (an allotment), move the plan to it,
+   - choose a background (aerial imagery is suggested where available),
+   - draw the beds, lawn, hedges and buildings,
+   - drag the plants from the list on the right onto the plan, or draw a plant as
+     an area (✎ next to it).
+3. For irrigation: **Irrigation zone** in the edit tool bar, draw the area a valve
+   waters, then link the valve.
+4. For the water balance: **Settings → Devices & services → Plant Garden → Add
+   weather source**.
+5. Optional, for the AI: **Add AI provider** in the same place.
 
-Where to get keys: [Claude](https://platform.claude.com/settings/keys),
-[OpenAI](https://platform.openai.com/api-keys),
-[Gemini](https://aistudio.google.com/apikey),
-[OpenRouter](https://openrouter.ai/settings/keys),
-[Pl@ntNet](https://my.plantnet.org). Local models (Ollama, LM Studio) need no key.
+The [user guide](docs/USER_GUIDE.md) ([Deutsch](docs/USER_GUIDE.de.md)) explains
+every part in detail.
 
-The full guide – plan, irrigation, water balance, AI, tasks, automations,
-privacy – is in [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
-([Deutsch](docs/USER_GUIDE.de.md)).
+## Configuration
+
+Everything is set up in the user interface; there is no YAML.
+
+**Weather sources** (Plant Garden → *Add weather source*): your own sensors (rain,
+ET₀, temperature, humidity, wind, solar radiation, a weather entity for the
+forecast), Open-Meteo or Bright Sky. Your own sensors win; services fill the gaps.
+Nothing is fetched before you add a source, and the services only receive the
+garden's location rounded to about 1 km.
+
+**AI providers** (Plant Garden → *Add AI provider*):
+
+| Provider | Key | Notes |
+|---|---|---|
+| Home Assistant AI Task | none | uses an AI already set up in Home Assistant; it reports no tokens, so costs show as unknown |
+| Anthropic Claude | [platform.claude.com/settings/keys](https://platform.claude.com/settings/keys) | |
+| OpenAI | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | |
+| Google Gemini | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | |
+| OpenRouter | [openrouter.ai/settings/keys](https://openrouter.ai/settings/keys) | reports the cost of every call itself |
+| Ollama, LM Studio | none | local models; set a price of 0 on the Tech page |
+| Pl@ntNet | [my.plantnet.org](https://my.plantnet.org) | species candidates; 500 free identifications a day, failed requests count too; use your own account |
+
+Keys are checked when you add them and are only ever shown masked.
+
+**Options** (Plant Garden → *Configure*): warning limit for long irrigation runs;
+which AI to use for photos and for text; monthly AI budget (notice at 80 %,
+optionally stop at 100 %); a fixed US dollar to euro rate; identify new plants
+after a photo upload; weekly garden check; how much garden data the AI may
+receive per feature; a debug log of prompts; how long single AI calls are kept.
+
+## Entities, actions and events
+
+| Device | Entities |
+|---|---|
+| each plant | water received (L, long-term statistics), water today (mm), last watering, soil water deficit (mm), open tasks, *needs water*, *problem*; health (disabled by default) |
+| each irrigation zone | run time today (min), water today (L), recommended run time (min), *irrigation recommended* |
+| the garden | ET₀ today, rain today, rain tomorrow, AI costs this month, AI tokens this month, AI requests today, the to-do list **Garden tasks** |
+
+Actions: `plant_garden.log_watering`, `plant_garden.refresh_weather`,
+`plant_garden.identify_plant`, `plant_garden.ask_assistant` (returns the answer),
+`plant_garden.create_task`, `plant_garden.add_photo` (file in an allowed folder or
+a camera snapshot).
+
+Events: `plant_garden_irrigation_finished`, `plant_garden_task_due`,
+`plant_garden_problem_detected`.
+
+Example – a notification when a garden task is due:
+
+```yaml
+triggers:
+  - trigger: event
+    event_type: plant_garden_task_due
+actions:
+  - action: notify.mobile_app_phone
+    data:
+      message: "Garden: {{ trigger.event.data.title }}"
+```
+
+## Privacy and costs
+
+- Everything stays in Home Assistant: `<config>/plant_garden/` (database, photos
+  in three sizes, plan backgrounds) and `.storage/plant_garden.*`.
+- Nothing is sent anywhere until you add a weather source or an AI provider, and
+  the AI only runs when you start it (or the weekly check, if you switch it on).
+- AI providers receive only what a feature needs: the photos you choose
+  (re-encoded, without metadata), plant details, the month and the hemisphere,
+  and for tips, diagnosis and the chat a compact summary of soil water, weather,
+  irrigation, tasks and problems. Never your location, your plant notes, names of
+  people, entity ids or keys.
+- Aerial imagery is loaded by your browser directly from the survey offices,
+  which therefore see the map area you look at.
+- AI costs are usually a few cents per identification or diagnosis; every call is
+  logged with tokens and costs on the Tech page, and a monthly budget can stop
+  further calls.
 
 ## FAQ
 
-- **Does Plant Garden switch my valves?** No. It only reads their state, records
-  every run and offers recommendations as entities for your own automations.
-- **Do I need an AI provider?** No. Plan, photos, irrigation, water balance and
-  tasks work without one; identification, diagnosis, tips and the chat need one.
-- **What does the AI cost?** Usually a few cents per identification or diagnosis
-  with the default models; the Tech tab shows every call with tokens and costs,
-  and a monthly budget can stop further calls.
-- **Where is my data?** In `<config>/plant_garden/` (database and photos) and
-  `.storage/plant_garden.*`, so it is part of every Home Assistant backup. Photos
-  make backups larger.
+- **Does it work without AI?** Yes. Plan, photos, irrigation, water balance and
+  tasks need no AI provider.
+- **Does it work outside Germany?** Yes. Aerial imagery presets exist for German
+  states; elsewhere add your country's WMS service or upload a site plan. Weather
+  comes from Open-Meteo worldwide.
+- **My valves have no flow meter.** Enter the precipitation rate or the flow of
+  the zone; Plant Garden estimates the litres from the run time.
 - **How do I move my garden to another Home Assistant?** Tech tab → *Export as
-  JSON*, then in the other Home Assistant Tech tab → *Import a file* (into an empty
-  garden). Plan, plants, measurements and open tasks arrive at the same place on
-  the map; photos and history stay behind (they are in your backups).
-- **How do I delete everything?** Remove the integration (the garden is kept so a
-  re-install finds it), stop Home Assistant and delete `<config>/plant_garden/`
-  and `.storage/plant_garden.*`.
-- **Aerial imagery outside Germany?** Add any WMS service of your country, or
-  upload a site plan or sketch and calibrate it with two points.
-
-## Roadmap
-
-| Milestone | Content | State |
-|---|---|---|
-| M0 | Scaffolding, CI, dev environment, sidebar panel | ✅ |
-| M1 | Plants, photos, growth measurements | ✅ |
-| M2 | Garden plan editor: layout, plants by drag and drop, view/edit mode | 🧪 built, in review |
-| M3 | Aerial imagery (WMS), own background image, sensor markers | 🧪 built, in review |
-| M4 | Irrigation zones linked to HA entities (display and tracking) | 🧪 built, in review |
-| M5 | Weather, evapotranspiration, water balance | 🧪 built, in review |
-| M6 | AI: HA AI Task, OpenAI-compatible, Claude, Gemini, Pl@ntNet; token & cost page | 🧪 built, in review |
-| M7 | Assistant: tasks, problems, questions, tips | 🧪 built, in review |
-| M8 | Polish & release | |
+  JSON*, then in the other Home Assistant Tech tab → *Import a file* (into an
+  empty garden). Photos and history stay behind; they are in your backups.
+- **How do I remove everything?** Remove the integration – the garden data is
+  kept, so a re-install finds it. To delete it as well, stop Home Assistant and
+  delete `<config>/plant_garden/` and `.storage/plant_garden.*`.
+- **Where do I report a problem?** In the
+  [issue tracker](https://github.com/Rainking80/ha-plant-maintainance/issues);
+  please attach the diagnostics (integration menu → *Download diagnostics*), which
+  contain no keys, coordinates or entity ids.
 
 ## Development
 
-Home Assistant does not run natively on Windows; use Linux, WSL2 or the devcontainer.
+Home Assistant does not run natively on Windows; use Linux, WSL2 or the
+devcontainer.
 
 ```bash
 bash scripts/setup              # Python venv (outside the repo) + npm packages
 bash scripts/test               # backend tests with coverage
 bash scripts/test-min-version   # backend tests against the oldest supported HA
 bash scripts/lint               # ruff, mypy, eslint, prettier, tsc (--fix to apply fixes)
-bash scripts/develop            # local HA with the demo garden on http://localhost:8123
-bash scripts/smoke              # end-to-end check against a throw-away HA
+bash scripts/develop            # local Home Assistant on http://localhost:8123
+uv run python scripts/demo.py   # onboard it and fill a demo garden
+bash scripts/smoke              # end-to-end check against a throw-away Home Assistant
 cd frontend && npm run dev      # rebuild the panel on every change
 ```
 
-Alternatively `docker compose up` starts Home Assistant with the integration mounted.
-
-Architecture and design decisions: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/DECISIONS.md](docs/DECISIONS.md).
+Alternatively `docker compose up` starts Home Assistant with the integration
+mounted. Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); design
+decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Deutsch
 
-Plant Garden ist ein Gartenplaner und Pflanzentagebuch für Home Assistant: Grundriss zeichnen, Pflanzen und Bewässerungszonen per Drag-and-drop platzieren, Fotos dokumentieren, Wasserbilanz aus Regen, Verdunstung und Bewässerung, Aufgaben (auch in der To-do-Liste von Home Assistant), dazu ein KI-Assistent mit eigenem API-Key für Bestimmung, Diagnose, Tipps und Chat und einer Übersicht über Tokens und Kosten. Installation über HACS als benutzerdefiniertes Repository (siehe oben), mindestens Home Assistant 2026.9.0. Ausführliche Anleitung: [docs/USER_GUIDE.de.md](docs/USER_GUIDE.de.md).
+Plant Garden ist ein Gartenplaner und Pflanzentagebuch für Home Assistant:
+
+- den Garten maßstabsgetreu auf Luftbildern zeichnen,
+- Pflanzen platzieren (auch als Fläche, etwa eine ganze Hecke),
+- Fotos und Wachstum dokumentieren,
+- Bewässerung pro Pflanze erfassen (ohne selbst zu schalten),
+- Bodenwasser aus Regen und Verdunstung berechnen,
+- Pflegeaufgaben in der To-do-Liste von Home Assistant verwalten,
+- optional mit KI: Bestimmung, Diagnose, Tipps und Chat, mit Übersicht über Tokens
+  und Kosten.
+
+Die Oberfläche gibt es auf Deutsch und Englisch. Installation wie oben
+beschrieben (HACS als benutzerdefiniertes Repository oder manuell), mindestens
+Home Assistant 2026.9.0. Ausführliche Anleitung:
+[docs/USER_GUIDE.de.md](docs/USER_GUIDE.de.md).
+
+## Acknowledgements
+
+Aerial imagery © the German state survey offices (attribution on the plan),
+weather data from [Open-Meteo](https://open-meteo.com) (CC BY 4.0) and
+[Bright Sky](https://brightsky.dev) / Deutscher Wetterdienst, species candidates
+from [Pl@ntNet](https://plantnet.org).
 
 ## License
 
