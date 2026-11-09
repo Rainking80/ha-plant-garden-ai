@@ -23,6 +23,7 @@ from ..base import (
     ModelInfo,
     ProviderKind,
     Usage,
+    add_source,
     parse_json,
 )
 from ..http import async_request, async_stream
@@ -30,6 +31,11 @@ from ..http import async_request, async_stream
 BASE_URL = "https://api.anthropic.com/v1"
 API_VERSION = "2026-10-21"
 DEFAULT_MODEL = "claude-opus-5-5"
+# Web research: the basic search tool works on every current model (the newer
+# versions filter results with code execution, which not every model offers).
+WEB_SEARCH_TOOL = "web_search_20250305"
+MAX_SEARCHES = 5
+MAX_CONTINUATIONS = 3  # pause_turn: the server paused a long search turn
 
 
 def map_usage(usage: dict[str, Any], images: int) -> Usage:
@@ -45,6 +51,7 @@ def map_usage(usage: dict[str, Any], images: int) -> Usage:
 
 class AnthropicProvider:
     kind = ProviderKind.ANTHROPIC
+    web_search = True
 
     def __init__(self, session: aiohttp.ClientSession, api_key: str, model: str) -> None:
         self._session = session
@@ -132,6 +139,66 @@ class AnthropicProvider:
             model=payload.get("model") or self.model,
             latency_ms=int((time.monotonic() - start) * 1000),
             request_id=headers.get("request-id"),
+        )
+
+    async def async_research(self, req: AIRequest) -> AIResponse:
+        """An answer researched with Claude's web search; sources from its citations.
+
+        Structured output cannot be combined with citations, so the answer is
+        text. A paused turn (`pause_turn`) is sent back unchanged to resume it.
+        """
+        start = time.monotonic()
+        body = self.body(req)
+        body["tools"] = [{"type": WEB_SEARCH_TOOL, "name": "web_search", "max_uses": MAX_SEARCHES}]
+        usage = Usage()
+        texts: list[str] = []
+        sources: list[dict[str, str]] = []
+        payload: dict[str, Any] = {}
+        headers: dict[str, str] = {}
+        for _ in range(MAX_CONTINUATIONS + 1):
+            payload, headers = await async_request(
+                self._session,
+                "POST",
+                f"{BASE_URL}/messages",
+                headers=self._headers(),
+                json=body,
+                timeout_s=240,
+            )
+            payload = payload or {}
+            raw = payload.get("usage") or {}
+            part = map_usage(raw, 0)
+            usage.input += part.input
+            usage.cached_input += part.cached_input
+            usage.cache_write += part.cache_write
+            usage.output += part.output
+            usage.searches += int(
+                (raw.get("server_tool_use") or {}).get("web_search_requests") or 0
+            )
+            content = payload.get("content") or []
+            for block in content:
+                if block.get("type") == "text":
+                    texts.append(block.get("text", ""))
+                    for citation in block.get("citations") or []:
+                        add_source(sources, citation.get("url"), citation.get("title"))
+            if payload.get("stop_reason") != "pause_turn":
+                break
+            body = {
+                **body,
+                "messages": [*body["messages"], {"role": "assistant", "content": content}],
+            }
+        usage.requests = 1
+        if payload.get("stop_reason") == "refusal":
+            raise AIError("The model declined this request", usage=usage)
+        if payload.get("stop_reason") == "pause_turn":
+            raise AIError("The research did not finish", usage=usage)
+        return AIResponse(
+            text="".join(texts),
+            data=None,
+            usage=usage,
+            model=payload.get("model") or self.model,
+            latency_ms=int((time.monotonic() - start) * 1000),
+            request_id=headers.get("request-id"),
+            sources=sources,
         )
 
     async def async_stream(self, req: AIRequest, on_delta: Callable[[str], None]) -> AIResponse:

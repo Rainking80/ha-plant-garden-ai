@@ -36,7 +36,8 @@
           "context_tokens_diagnose": "Kontextgröße für Diagnosen",
           "context_tokens_tips": "Kontextgröße für Tipps",
           "context_tokens_chat": "Kontextgröße für den Chat",
-          "ai_auto_identify": "Neue Pflanzen nach dem Foto-Upload bestimmen"
+          "ai_auto_identify": "Neue Pflanzen nach dem Foto-Upload bestimmen",
+          "research_schedule": "Pflanzen selbstständig recherchieren"
         },
         "data_description": {
           "max_runtime_hours": "Läuft eine Bewässerungszone länger, erscheint ein Hinweis unter Reparaturen (z. B. ein hängendes Ventil).",
@@ -45,7 +46,8 @@
           "ai_retention_days": "Ältere Aufrufe bleiben als Tagessummen erhalten.",
           "weekly_check": "Jeden Montag um 8 Uhr schaut sich die KI den Garten an und gibt Tipps. Kostet Geld; das Budget gilt.",
           "context_tokens_diagnose": "Ungefähr so viele Tokens Gartendaten darf die KI bekommen (Wetter, Wasserbilanz, Aufgaben, Probleme). Mehr Kontext kostet mehr.",
-          "ai_auto_identify": "Nur für Pflanzen ohne botanischen Namen. Jede Bestimmung ist ein KI-Aufruf mit Kosten; das Budget gilt."
+          "ai_auto_identify": "Nur für Pflanzen ohne botanischen Namen. Jede Bestimmung ist ein KI-Aufruf mit Kosten; das Budget gilt.",
+          "research_schedule": "Der Assistent sucht für jeweils eine Pflanze ohne Wissen Pflege, Schädlinge, Giftigkeit und mehr – im Web mit Claude, Gemini oder OpenRouter, sonst in Wikipedia – und speichert es. Jede Recherche kostet Geld; das Budget gilt. Pflanzen mit Wissen werden nicht erneut recherchiert."
         }
       }
     }
@@ -426,6 +428,15 @@
       "options": {
         "days": "Tage",
         "weeks": "Wochen"
+      }
+    },
+    "research_schedule": {
+      "options": {
+        "off": "Aus (nur auf Wunsch)",
+        "weekly": "Eine Pflanze pro Woche",
+        "daily": "Eine Pflanze pro Tag",
+        "three_daily": "Drei Pflanzen pro Tag",
+        "hourly": "Eine Pflanze pro Stunde"
       }
     }
   }

@@ -16,6 +16,7 @@ class Feature(StrEnum):
     TIPS = "tips"
     CHAT = "chat"
     DIGEST = "digest"
+    RESEARCH = "research"  # collecting knowledge about a plant
 
 
 class ProviderKind(StrEnum):
@@ -91,6 +92,7 @@ class Usage:
     reasoning: int = 0
     images: int = 0
     requests: int = 1
+    searches: int = 0  # web searches run by the provider (billed per search)
 
 
 @dataclass(slots=True)
@@ -102,6 +104,9 @@ class AIResponse:
     latency_ms: int = 0
     provider_cost: float | None = None  # USD, when the provider reports it (OpenRouter)
     request_id: str | None = None
+    # web research: the pages the answer is based on, [{"title", "url"}]
+    sources: list[dict[str, str]] = field(default_factory=list)
+    cost: float | None = None  # USD as logged (set by AIService)
 
 
 @dataclass(slots=True, frozen=True)
@@ -118,6 +123,15 @@ class AIProvider(Protocol):
     async def async_validate(self) -> None: ...
     async def async_list_models(self) -> list[ModelInfo]: ...
     async def async_generate(self, req: AIRequest) -> AIResponse: ...
+
+
+def add_source(sources: list[dict[str, str]], url: Any, title: Any) -> None:
+    """Collect an http(s) source once (the panel only links those)."""
+    if not isinstance(url, str) or not url.startswith(("https://", "http://")):
+        return
+    if any(source["url"] == url for source in sources):
+        return
+    sources.append({"url": url[:500], "title": str(title or url)[:200]})
 
 
 def parse_json(text: str) -> dict[str, Any] | None:

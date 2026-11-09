@@ -92,6 +92,10 @@ sensors and offers recommendations as entities for your own automations.
   what to do and how urgent, warnings.
 - Tips for a plant or the whole garden, with tasks you take over in one click; a
   chat about the garden or one plant; an optional weekly garden check.
+- Plant knowledge: the assistant researches care, pests, toxicity and more for
+  each plant - on the web with Claude, Gemini or OpenRouter (with sources), else
+  from Wikipedia - and keeps it on the plant page. You choose how often it
+  researches on its own (off by default); a plant is researched only once.
 - A **Tech** page for administrators: requests, tokens and costs per day, model,
   feature and plant, a request log with CSV export, editable prices, a monthly
   budget that warns and can stop.
@@ -219,12 +223,14 @@ actions:
 - Everything stays in Home Assistant: `<config>/plant_garden/` (database, photos
   in three sizes, plan backgrounds) and `.storage/plant_garden.*`.
 - Nothing is sent anywhere until you add a weather source or an AI provider, and
-  the AI only runs when you start it (or the weekly check, if you switch it on).
+  the AI only runs when you start it (or the weekly check and the plant research,
+  if you switch them on).
 - AI providers receive only what a feature needs: the photos you choose
   (re-encoded, without metadata), plant details, the month and the hemisphere,
   and for tips, diagnosis and the chat a compact summary of soil water, weather,
   irrigation, tasks and problems. Never your location, your plant notes, names of
-  people, entity ids or keys.
+  people, entity ids or keys. The plant research sends the plant's name and
+  botany; without web search, Wikipedia receives the plant's name.
 - Aerial imagery is loaded by your browser directly from the survey offices,
   which therefore see the map area you look at.
 - AI costs are usually a few cents per identification or diagnosis; every call is

@@ -13,6 +13,7 @@ from homeassistant.loader import async_get_integration
 
 from .ai.assistant import Assistant
 from .ai.pricing import load_defaults as load_pricing
+from .ai.research import Researcher
 from .ai.service import AIService
 from .care import CareManager
 from .const import CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS, DOMAIN
@@ -36,6 +37,7 @@ from .water_balance import load_defaults
 from .websocket_ai import async_register_ai_commands
 from .websocket_api import async_register_websocket_commands
 from .websocket_care import async_register_care_commands
+from .websocket_research import async_register_research_commands
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -57,6 +59,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async_register_websocket_commands(hass)
     async_register_ai_commands(hass)
     async_register_care_commands(hass)
+    async_register_research_commands(hass)
     async_register_services(hass)
     return True
 
@@ -85,6 +88,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) 
     await care.async_setup()
     assistant = Assistant(hass, entry, manager=manager, care=care, ai=ai, water=water)
     await assistant.async_setup()
+    researcher = Researcher(hass, entry, manager=manager, ai=ai)
+    await researcher.async_setup()
     entry.runtime_data = PlantGardenData(
         version=str(integration.version),
         manager=manager,
@@ -93,6 +98,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) 
         ai=ai,
         care=care,
         assistant=assistant,
+        researcher=researcher,
     )
     async_garden_device(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -113,6 +119,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry)
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         async_unregister_panel(hass)
+        entry.runtime_data.researcher.async_stop()
         entry.runtime_data.assistant.async_stop()
         entry.runtime_data.care.async_stop()
         entry.runtime_data.water.async_stop()

@@ -27,6 +27,8 @@ import type {
   UsageSummary,
   UsageTotals,
   WaterSummary,
+  PlantKnowledge,
+  ResearchSummary,
 } from "../src/api/types";
 import type { HomeAssistant } from "../src/types/hass";
 import { reproject, type GeoOrigin } from "../src/util/wms";
@@ -472,6 +474,7 @@ export interface FakeBackend {
   water: WaterSummary;
   ai: FakeAI;
   care: FakeCare;
+  research: ResearchSummary;
   isAdmin: boolean;
 }
 
@@ -512,6 +515,7 @@ export function fakeBackend(
     water?: WaterSummary;
     ai?: Partial<FakeAI>;
     care?: Partial<FakeCare>;
+    research?: Partial<ResearchSummary>;
     isAdmin?: boolean;
     language?: string;
   } = {},
@@ -529,6 +533,7 @@ export function fakeBackend(
     water: options.water ?? { configured: false, updated: null, sources: [], weather: [] },
     ai: fakeAI(options.ai),
     care: fakeCare(options.care),
+    research: fakeResearch(options.research),
     isAdmin: options.isAdmin ?? true,
   } as FakeBackend;
   const layout = () => ({
@@ -718,6 +723,30 @@ export function fakeBackend(
         return { ok: true, error: null };
       case "plant_garden/tech/info":
         return backend.ai.tech;
+      case "plant_garden/research/summary":
+        return backend.research;
+      case "plant_garden/research/schedule":
+        if (!backend.isAdmin) throw { code: "unauthorized", message: "Unauthorized" };
+        backend.research = { ...backend.research, schedule: msg.schedule as never };
+        return backend.research;
+      case "plant_garden/research/run": {
+        const info = makeKnowledge();
+        backend.research = {
+          ...backend.research,
+          plants: { ...backend.research.plants, [msg.plant_id as string]: info },
+          queue: backend.research.queue.filter((id) => id !== msg.plant_id),
+        };
+        return info;
+      }
+      case "plant_garden/research/delete": {
+        const { [msg.plant_id as string]: _gone, ...plants } = backend.research.plants;
+        backend.research = {
+          ...backend.research,
+          plants,
+          queue: [...backend.research.queue, msg.plant_id as string],
+        };
+        return null;
+      }
       default: {
         const handled = careCommand(backend, msg);
         if (handled !== undefined) return handled;
@@ -733,6 +762,7 @@ export function fakeBackend(
     themes: { darkMode: false },
     config: { latitude: 52.4, longitude: 13.06 },
     states: options.states ?? {},
+    user: { id: "u", name: "Test", is_admin: backend.isAdmin },
     connection: {
       subscribeMessage: vi.fn(
         async (callback: (event: unknown) => void, msg?: { type: string; text?: string }) => {
@@ -816,4 +846,41 @@ export function deepGet<T extends Element>(root: Node, selector: string): T {
   const found = deepQuery<T>(root, selector);
   if (!found) throw new Error(`no element matches ${selector}`);
   return found;
+}
+
+/** What the assistant found out about a plant (as the backend sends it). */
+export function makeKnowledge(fields: Partial<PlantKnowledge> = {}): PlantKnowledge {
+  return {
+    summary: "Robuster Strauch mit Duft.",
+    sections: [
+      { topic: "watering", text: "Selten, aber durchdringend gießen." },
+      { topic: "pruning", text: "- im März\n- nach der Blüte" },
+    ],
+    calendar: [{ months: [3, 7], task: "Rückschnitt" }],
+    warnings: ["Stacheln"],
+    sources: [{ url: "https://garten.example/rose", title: "Rosen schneiden" }],
+    method: "web",
+    model: "claude-opus-5-5",
+    language: "de",
+    researched_at: "2026-11-09T10:00:00+00:00",
+    cost: 0.08,
+    ...fields,
+  };
+}
+
+export function fakeResearch(fields: Partial<ResearchSummary> = {}): ResearchSummary {
+  return {
+    schedule: "off",
+    schedules: ["off", "weekly", "daily", "three_daily", "hourly"],
+    available: true,
+    web: true,
+    estimate: 0.12,
+    currency: "EUR",
+    running: null,
+    next_run: null,
+    queue: [],
+    failed: {},
+    plants: {},
+    ...fields,
+  };
 }

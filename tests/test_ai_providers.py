@@ -472,6 +472,7 @@ def test_schemas_stay_within_claude_limits() -> None:
     from custom_components.plant_garden.ai.schemas import (  # noqa: PLC0415
         DIAGNOSE_SCHEMA,
         IDENTIFY_SCHEMA,
+        RESEARCH_SCHEMA,
         TIPS_SCHEMA,
         union_count,
     )
@@ -483,7 +484,7 @@ def test_schemas_stay_within_claude_limits() -> None:
             return []
         return [node, *(found for value in node.values() for found in walk(value))]
 
-    for schema in (IDENTIFY_SCHEMA, DIAGNOSE_SCHEMA, TIPS_SCHEMA):
+    for schema in (IDENTIFY_SCHEMA, DIAGNOSE_SCHEMA, TIPS_SCHEMA, RESEARCH_SCHEMA):
         assert union_count(schema) <= 16
         for node in walk(schema):
             assert not isinstance(node.get("type"), list), node  # no type arrays at all

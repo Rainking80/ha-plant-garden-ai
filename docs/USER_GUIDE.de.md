@@ -131,6 +131,15 @@ wird ein neues Foto einer Pflanze ohne botanischen Namen automatisch bestimmt.
   auf ihrer Seite). Die Antwort erscheint, während sie geschrieben wird.
 - **Wochencheck** (Option, standardmäßig aus): jeden Montag um 8 Uhr schaut die KI
   auf den Garten und hinterlässt Tipps.
+- **Pflanzenwissen** (Tab *Assistent* und auf jeder Pflanzenseite): Der Assistent
+  recherchiert Pflege nach Themen, einen Pflegekalender, Warnungen (z. B.
+  Giftigkeit) und die Quellen zu einer Pflanze – im Web mit Claude, Gemini oder
+  OpenRouter, sonst in Wikipedia. *Wissen recherchieren* auf der Pflanzenseite,
+  *Jetzt recherchieren* in der Liste, oder selbstständig: eine Pflanze pro Woche,
+  pro Tag, drei pro Tag oder eine pro Stunde (standardmäßig aus; im Tab Assistent
+  und Technik, nur Administratoren). Die Kosten für eine Pflanze werden angezeigt,
+  mit Websuche meist um 10 Cent. Eine Pflanze mit Wissen wird nie erneut
+  recherchiert – lösche ihr Wissen auf der Pflanzenseite, um es neu zu holen.
 
 Der Assistent bekommt eine kompakte Zusammenfassung des Gartens (siehe
 *Datenschutz*). Jeder KI-Aufruf wird mit Tokens und Kosten protokolliert.
@@ -180,6 +189,9 @@ actions:
   Assistenten eine Zusammenfassung von Bodenwasser, Wetter, Bewässerung, Aufgaben
   und Problemen. Nie den Standort, deine Pflanzennotizen, Namen von Personen oder
   Entity-IDs. Keys verlassen Home Assistant nicht.
+- Die Recherche zum Pflanzenwissen schickt Name, botanischen Namen, Sorte,
+  Kategorie, Standorttyp, Monat und Halbkugel; der KI-Anbieter sucht dann im Web.
+  Ohne Websuche bekommt Wikipedia den Namen der Pflanze.
 - Wetterdienste bekommen den Standort auf etwa 1 km gerundet. Luftbilder lädt der
   Browser direkt bei den Vermessungsämtern.
 

@@ -16,7 +16,16 @@ from typing import Any
 
 import aiohttp
 
-from ..base import AIError, AIRequest, AIResponse, ModelInfo, ProviderKind, Usage, parse_json
+from ..base import (
+    AIError,
+    AIRequest,
+    AIResponse,
+    ModelInfo,
+    ProviderKind,
+    Usage,
+    add_source,
+    parse_json,
+)
 from ..http import async_request, async_stream
 
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
@@ -38,6 +47,7 @@ def map_usage(usage: dict[str, Any], images: int) -> Usage:
 
 class GeminiProvider:
     kind = ProviderKind.GEMINI
+    web_search = True
 
     def __init__(self, session: aiohttp.ClientSession, api_key: str, model: str) -> None:
         self._session = session
@@ -123,6 +133,45 @@ class GeminiProvider:
             model=payload.get("modelVersion") or self.model,
             latency_ms=int((time.monotonic() - start) * 1000),
             request_id=payload.get("responseId"),
+        )
+
+    async def async_research(self, req: AIRequest) -> AIResponse:
+        """An answer grounded with Google Search; sources from `groundingMetadata`.
+
+        Every search query the model ran is billed (Gemini 3 and newer).
+        """
+        start = time.monotonic()
+        body = {**self.body(req), "tools": [{"googleSearch": {}}]}
+        payload, _ = await async_request(
+            self._session,
+            "POST",
+            f"{BASE_URL}/models/{self.model}:generateContent",
+            headers=self._headers(),
+            json=body,
+            timeout_s=240,
+        )
+        payload = payload or {}
+        usage = map_usage(payload.get("usageMetadata") or {}, 0)
+        candidate = (payload.get("candidates") or [{}])[0]
+        grounding = candidate.get("groundingMetadata") or {}
+        usage.searches = len(grounding.get("webSearchQueries") or [])
+        parts = (candidate.get("content") or {}).get("parts") or []
+        text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
+        reason = candidate.get("finishReason")
+        if reason in ("SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST") or not candidate:
+            raise AIError("The model declined this request", usage=usage)
+        sources: list[dict[str, str]] = []
+        for chunk in grounding.get("groundingChunks") or []:
+            web = chunk.get("web") or {}
+            add_source(sources, web.get("uri"), web.get("title"))
+        return AIResponse(
+            text=text,
+            data=None,
+            usage=usage,
+            model=payload.get("modelVersion") or self.model,
+            latency_ms=int((time.monotonic() - start) * 1000),
+            request_id=payload.get("responseId"),
+            sources=sources,
         )
 
     async def async_stream(self, req: AIRequest, on_delta: Callable[[str], None]) -> AIResponse:

@@ -31,12 +31,14 @@ from .const import (
     CONF_CONTEXT_TOKENS,
     CONF_GARDEN_NAME,
     CONF_MAX_RUNTIME_HOURS,
+    CONF_RESEARCH_SCHEDULE,
     CONF_USD_EUR,
     CONF_WEEKLY_CHECK,
     DEFAULT_AI_RETENTION_DAYS,
     DEFAULT_CONTEXT_TOKENS,
     DEFAULT_MAX_RUNTIME_HOURS,
     DOMAIN,
+    RESEARCH_SCHEDULES,
     SUBENTRY_AI,
 )
 from .water import CONF_SOURCE, SUBENTRY_WEATHER
@@ -106,6 +108,7 @@ class PlantGardenOptionsFlow(OptionsFlow):
                 CONF_USD_EUR: float(user_input.get(CONF_USD_EUR) or 0),
                 CONF_WEEKLY_CHECK: bool(user_input.get(CONF_WEEKLY_CHECK)),
                 CONF_AI_AUTO_IDENTIFY: bool(user_input.get(CONF_AI_AUTO_IDENTIFY)),
+                CONF_RESEARCH_SCHEDULE: user_input.get(CONF_RESEARCH_SCHEDULE) or "off",
             }
             for feature, default in DEFAULT_CONTEXT_TOKENS.items():
                 data[CONF_CONTEXT_TOKENS + feature] = int(
@@ -163,6 +166,15 @@ class PlantGardenOptionsFlow(OptionsFlow):
                 probatio.Required(
                     CONF_AI_AUTO_IDENTIFY, default=options.get(CONF_AI_AUTO_IDENTIFY, False)
                 ): bool,
+                probatio.Required(
+                    CONF_RESEARCH_SCHEDULE, default=options.get(CONF_RESEARCH_SCHEDULE, "off")
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=list(RESEARCH_SCHEDULES),
+                        translation_key=CONF_RESEARCH_SCHEDULE,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
             }
         )
         for feature, default in DEFAULT_CONTEXT_TOKENS.items():

@@ -48,7 +48,15 @@ def price_for(
     return table[max(matches, key=len)] if matches else None
 
 
-def cost_of(usage: Usage, price: dict[str, float] | None) -> float | None:
+# USD per web search, on top of the tokens (as of 2026-11-09): Anthropic $10 per
+# 1,000 searches; Gemini 3 grounding $14 per 1,000 search queries after 5,000
+# free ones a month (counted as paid here). OpenRouter reports its cost itself.
+SEARCH_PRICES: dict[str, float] = {"anthropic": 0.010, "gemini": 0.014}
+
+
+def cost_of(
+    usage: Usage, price: dict[str, float] | None, search_price: float = 0.0
+) -> float | None:
     """USD for one call, or None if the model has no price."""
     if price is None:
         return None
@@ -61,7 +69,8 @@ def cost_of(usage: Usage, price: dict[str, float] | None) -> float | None:
     return round(
         per_million / 1_000_000
         + usage.images * price.get("per_image", 0)
-        + usage.requests * price.get("per_request", 0),
+        + usage.requests * price.get("per_request", 0)
+        + usage.searches * search_price,
         6,
     )
 

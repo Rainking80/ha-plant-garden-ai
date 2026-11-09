@@ -5,6 +5,7 @@ import {
   irrigationSummary,
   waterSummary,
   listPlants,
+  researchSummary,
   subscribeGarden,
 } from "../api/client";
 import type {
@@ -15,6 +16,7 @@ import type {
   Layout,
   Marker,
   Plant,
+  ResearchSummary,
   Shape,
   WaterSummary,
 } from "../api/types";
@@ -44,6 +46,8 @@ export class GardenStore extends EventTarget {
   water: WaterSummary | null = null;
   /** Open tasks, problems and questions per plant (refreshed on care events). */
   care: CareSummary = { plants: {}, garden: {} };
+  /** What the assistant knows about the plants, and its schedule (refreshed on AI events). */
+  research: ResearchSummary | null = null;
   loaded = false;
   error: string | undefined;
   lastRefresh = 0;
@@ -53,6 +57,7 @@ export class GardenStore extends EventTarget {
   private _irrigationTimer?: ReturnType<typeof setTimeout>;
   private _waterTimer?: ReturnType<typeof setTimeout>;
   private _careTimer?: ReturnType<typeof setTimeout>;
+  private _researchTimer?: ReturnType<typeof setTimeout>;
   private _pending?: Promise<void>;
 
   constructor(private readonly _hass: () => HomeAssistant) {
@@ -166,18 +171,21 @@ export class GardenStore extends EventTarget {
   // ------------------------------------------------------------ internals
   private async _load(): Promise<void> {
     try {
-      const [plants, layout, irrigation, water, care] = await Promise.all([
+      const [plants, layout, irrigation, water, care, research] = await Promise.all([
         listPlants(this._hass()),
         getLayout(this._hass()),
         irrigationSummary(this._hass()),
         waterSummary(this._hass()),
         careSummary(this._hass()),
+        // plant knowledge is extra: without it the garden still loads
+        researchSummary(this._hass()).catch(() => this.research),
       ]);
       this.plants = plants;
       this.layout = layout;
       this.irrigation = irrigation;
       this.water = water;
       this.care = care;
+      this.research = research;
       this.error = undefined;
       this.loaded = true;
       this.lastRefresh = Date.now();
@@ -200,6 +208,8 @@ export class GardenStore extends EventTarget {
       clearTimeout(this._careTimer);
       this._careTimer = setTimeout(() => void this._loadCare(), REFRESH_DEBOUNCE_MS);
       if (event.kind === "care") return;
+      clearTimeout(this._researchTimer);
+      this._researchTimer = setTimeout(() => void this._loadResearch(), REFRESH_DEBOUNCE_MS);
     }
     if (event.kind === "water") {
       clearTimeout(this._waterTimer);
@@ -234,6 +244,21 @@ export class GardenStore extends EventTarget {
     } catch {
       return; // the next full refresh brings it
     }
+    this._emit("change");
+  }
+
+  private async _loadResearch(): Promise<void> {
+    try {
+      this.research = await researchSummary(this._hass());
+    } catch {
+      return; // an older backend, or not loaded: the next AI event tries again
+    }
+    this._emit("change");
+  }
+
+  /** Take over a research summary the panel got back (after changing the schedule). */
+  setResearch(research: ResearchSummary): void {
+    this.research = research;
     this._emit("change");
   }
 

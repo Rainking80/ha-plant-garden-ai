@@ -8,6 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .ai.assistant import Assistant
+from .ai.research import Researcher
 from .ai.service import AIService
 from .care import CareManager
 from .const import DOMAIN
@@ -27,6 +28,7 @@ class PlantGardenData:
     ai: AIService
     care: CareManager
     assistant: Assistant
+    researcher: Researcher
 
 
 type PlantGardenConfigEntry = ConfigEntry[PlantGardenData]
@@ -66,3 +68,8 @@ def get_care(hass: HomeAssistant) -> CareManager | None:
 def get_assistant(hass: HomeAssistant) -> Assistant | None:
     entry = get_loaded_entry(hass)
     return entry.runtime_data.assistant if entry else None
+
+
+def get_researcher(hass: HomeAssistant) -> Researcher | None:
+    entry = get_loaded_entry(hass)
+    return entry.runtime_data.researcher if entry else None

@@ -126,6 +126,15 @@ new photo of a plant without botanical name is identified automatically.
   AI" on its page). The answer appears while it is written.
 - **Weekly check** (option, off by default): every Monday at 8:00 the AI looks at
   the garden and leaves tips.
+- **Plant knowledge** (tab *Assistant* and on every plant page): the assistant
+  researches care by topic, a care calendar, warnings (e.g. toxicity) and the
+  sources for a plant - on the web with Claude, Gemini or OpenRouter, else from
+  Wikipedia. Choose *Research knowledge* on a plant page, *Research now* in the
+  list, or let it research on its own: one plant a week, a day, three a day or an
+  hour (off by default; on the Assistant and the Tech tab, administrators only).
+  The cost of one plant is shown, usually around 10 cents with web search. A
+  plant with knowledge is never researched again - delete its knowledge on the
+  plant page to have it researched anew.
 
 The assistant receives a compact summary of the garden (see *Privacy*). Every AI
 call is logged with tokens and costs.
@@ -175,6 +184,9 @@ actions:
   assistant a summary of soil water, weather, irrigation, tasks and problems.
   Never your location, your plant notes, names of people or entity ids. Keys never
   leave Home Assistant.
+- The plant knowledge research sends the plant's name, botanical name, variety,
+  category, where it grows, the month and the hemisphere; the AI provider then
+  searches the web. Without web search, Wikipedia receives the plant's name.
 - Weather services receive your location rounded to about 1 km. Aerial imagery is
   loaded by your browser from the survey offices.
 

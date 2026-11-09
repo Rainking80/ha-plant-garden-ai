@@ -518,3 +518,31 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
 - The Water & weather tab shows a week back and a week ahead with weekday and
   date; the plants of each watering day are circles grouped in a cloud above it,
   all clouds at one scale so a plant has the same size on every day.
+
+## D-038 The assistant researches plant knowledge (2026-11-09)
+
+- **What**: for one plant at a time the assistant collects care by topic (location,
+  soil, watering, fertilising, pruning, winter, propagation, pests, diseases,
+  harvest, companions, toxicity, facts), a care calendar, warnings and the sources,
+  and keeps it in Store `plant_garden.research`. A plant that has its knowledge is
+  never researched again - until the user deletes it on the plant page.
+- **How**: with the text provider's own web search where it has one - Claude's
+  `web_search` tool (basic version `web_search_20250305`, available on every
+  current model, at most 5 searches, `pause_turn` resumed), Gemini's Google Search
+  grounding, OpenRouter's `web` plugin. Structured output cannot carry the
+  citations, so the research answers in text with its sources and a second, short
+  call puts the notes into a JSON schema. Providers without web search (Home
+  Assistant AI Task, OpenAI, local models) get a Wikipedia article as notes (free
+  MediaWiki API, the plant's name only) or, without one, may use general
+  gardening knowledge - the plant page says which.
+- **Cost control**: researching on its own is opt-in (option `research_schedule`:
+  off, one plant a week, a day, three a day, an hour; default off), changeable on
+  the assistant and the tech page by administrators. One check per hour decides;
+  a failed plant waits three days. Every call is budget-checked and logged
+  (feature `research`); web searches are priced per search ($10 per 1,000 at
+  Anthropic, $14 per 1,000 at Gemini; OpenRouter reports its cost).
+- **Privacy**: the research sees the plant's name, botanical name, variety,
+  family, category, where it grows (bed, pot …), the month and the hemisphere -
+  never the location, notes or entity ids. Web content is treated as information,
+  never as instructions; the answer can only fill text fields, shown without
+  HTML, and only http(s) sources are linked.

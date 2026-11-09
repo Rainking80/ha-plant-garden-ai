@@ -30,6 +30,9 @@ import type {
   Task,
   TaskFields,
   TipsRecord,
+  PlantKnowledge,
+  ResearchSchedule,
+  ResearchSummary,
 } from "./types";
 
 export const WS_PREFIX = "plant_garden";
@@ -692,4 +695,27 @@ export async function importGarden(hass: HomeAssistant, file: Blob): Promise<Imp
   const response = await hass.fetchWithAuth(IMPORT_URL, { method: "POST", body: form });
   if (!response.ok) throw await failure(response);
   return (await response.json()) as ImportSummary;
+}
+
+// ------------------------------------------------------------ assistant: plant knowledge
+export function researchSummary(hass: HomeAssistant): Promise<ResearchSummary> {
+  return hass.callWS<ResearchSummary>({ type: `${WS_PREFIX}/research/summary` });
+}
+
+/** Research one plant now (an AI call with costs); answers with what was found. */
+export function researchPlant(hass: HomeAssistant, plantId: string): Promise<PlantKnowledge> {
+  return hass.callWS<PlantKnowledge>({ type: `${WS_PREFIX}/research/run`, plant_id: plantId });
+}
+
+/** Forget a plant's knowledge: it will be researched again. */
+export async function deleteKnowledge(hass: HomeAssistant, plantId: string): Promise<void> {
+  await hass.callWS<null>({ type: `${WS_PREFIX}/research/delete`, plant_id: plantId });
+}
+
+/** How often plants are researched without being asked (admins). */
+export function setResearchSchedule(
+  hass: HomeAssistant,
+  schedule: ResearchSchedule,
+): Promise<ResearchSummary> {
+  return hass.callWS<ResearchSummary>({ type: `${WS_PREFIX}/research/schedule`, schedule });
 }

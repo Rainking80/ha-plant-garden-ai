@@ -698,3 +698,60 @@ export interface CareSummary {
   plants: Record<string, PlantCare>;
   garden: { open_tasks?: number; overdue?: number; problems?: number; questions?: number };
 }
+
+// ------------------------------------------------------------ plant knowledge (research)
+export const RESEARCH_SCHEDULES = ["off", "weekly", "daily", "three_daily", "hourly"] as const;
+export type ResearchSchedule = (typeof RESEARCH_SCHEDULES)[number];
+
+export const KNOWLEDGE_TOPICS = [
+  "location",
+  "soil",
+  "watering",
+  "fertilizing",
+  "pruning",
+  "winter",
+  "propagation",
+  "pests",
+  "diseases",
+  "harvest",
+  "companions",
+  "toxicity",
+  "facts",
+] as const;
+export type KnowledgeTopic = (typeof KNOWLEDGE_TOPICS)[number];
+
+/** What the assistant found out about a plant. */
+export interface PlantKnowledge {
+  summary: string | null;
+  sections: { topic: KnowledgeTopic; text: string }[];
+  calendar: { months: number[]; task: string }[];
+  warnings: string[];
+  /** http(s) pages the knowledge is based on */
+  sources: { url: string; title: string }[];
+  /** web: the provider's web search; wikipedia: an article; model: the AI's own knowledge */
+  method: "web" | "wikipedia" | "model";
+  model: string;
+  language: string;
+  researched_at: string;
+  /** display currency; null: unknown */
+  cost: number | null;
+}
+
+export interface ResearchSummary {
+  schedule: ResearchSchedule;
+  schedules: ResearchSchedule[];
+  /** an AI provider for text is set up */
+  available: boolean;
+  /** it searches the web itself (else Wikipedia is read) */
+  web: boolean;
+  /** rough cost of one plant, display currency */
+  estimate: number | null;
+  currency: string;
+  /** plant being researched right now */
+  running: string | null;
+  next_run: string | null;
+  /** plants still without knowledge, in the order they will be researched */
+  queue: string[];
+  failed: Record<string, { at: string; error: string }>;
+  plants: Record<string, PlantKnowledge>;
+}

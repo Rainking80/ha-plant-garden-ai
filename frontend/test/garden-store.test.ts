@@ -51,6 +51,7 @@ describe("GardenStore", () => {
       "plant_garden/irrigation/summary",
       "plant_garden/water/summary",
       "plant_garden/care/summary",
+      "plant_garden/research/summary",
     ]);
     expect(store.layout?.origin).toEqual({ latitude: 52.4, longitude: 13.06 });
     expect(store.stale).toBe(false);

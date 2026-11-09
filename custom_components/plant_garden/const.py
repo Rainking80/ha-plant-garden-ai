@@ -48,6 +48,9 @@ CONF_AI_RETENTION_DAYS: Final = "ai_retention_days"
 CONF_USD_EUR: Final = "usd_eur"  # fixed rate; 0 = show US dollars
 DEFAULT_AI_RETENTION_DAYS: Final = 90
 CONF_WEEKLY_CHECK: Final = "weekly_check"  # opt-in garden check by the AI every Monday
+# how often the assistant researches the next plant without knowledge (opt-in, D-038)
+CONF_RESEARCH_SCHEDULE: Final = "research_schedule"
+RESEARCH_SCHEDULES: Final = ("off", "weekly", "daily", "three_daily", "hourly")
 # context size (estimated tokens) the assistant may send, per feature: option
 # "context_tokens_<feature>"
 CONF_CONTEXT_TOKENS: Final = "context_tokens_"

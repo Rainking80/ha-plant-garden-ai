@@ -393,3 +393,89 @@ def clean_tips(data: dict[str, Any], refs: dict[str, str]) -> dict[str, Any]:
             }
         )
     return {"tips": tips[:6], "questions": questions[:3]}
+
+
+# ---------------------------------------------------------------- plant knowledge
+RESEARCH_TOPICS = (
+    "location",
+    "soil",
+    "watering",
+    "fertilizing",
+    "pruning",
+    "winter",
+    "propagation",
+    "pests",
+    "diseases",
+    "harvest",
+    "companions",
+    "toxicity",
+    "facts",
+)
+
+RESEARCH_SCHEMA: dict[str, Any] = _object(
+    {
+        "summary": {
+            "type": "string",
+            "description": "Two or three sentences: what the plant is and what matters most.",
+        },
+        "sections": {
+            "type": "array",
+            "description": "One entry per topic the notes say something about.",
+            "items": _object(
+                {
+                    "topic": {"type": "string", "enum": list(RESEARCH_TOPICS)},
+                    "text": {"type": "string"},
+                }
+            ),
+        },
+        "calendar": {
+            "type": "array",
+            "description": "Recurring jobs and the months they are due in.",
+            "items": _object(
+                {
+                    "months": {
+                        "type": "array",
+                        "items": {"type": "integer"},
+                        "description": "1 = January ... 12 = December",
+                    },
+                    "task": {"type": "string"},
+                }
+            ),
+        },
+        "warnings": {
+            "type": "array",
+            "description": "Toxicity for people and pets, thorns, invasiveness, protection.",
+            "items": {"type": "string"},
+        },
+    }
+)
+
+
+def clean_research(data: dict[str, Any]) -> dict[str, Any]:
+    """Plant knowledge: known topics once each (merged), months 1-12, short texts."""
+    sections: dict[str, str] = {}
+    for raw in data.get("sections") or []:
+        item = _dict(raw)
+        topic, text = item.get("topic"), _text(item.get("text"), 2000)
+        if topic in RESEARCH_TOPICS and text:
+            sections[topic] = f"{sections[topic]}\n\n{text}" if topic in sections else text
+    calendar = []
+    for raw in data.get("calendar") or []:
+        item = _dict(raw)
+        months = sorted(
+            {int(m) for m in item.get("months") or [] if _number(m) is not None and 1 <= m <= 12}
+        )
+        task = _text(item.get("task"), 200)
+        if months and task:
+            calendar.append({"months": months, "task": task})
+    warnings = [text for value in data.get("warnings") or [] if (text := _text(value, 300))]
+    return {
+        "summary": _text(data.get("summary"), 1000),
+        "sections": [
+            {"topic": topic, "text": sections[topic]}
+            for topic in RESEARCH_TOPICS
+            if topic in sections
+        ],
+        "calendar": calendar[:24],
+        "warnings": warnings[:8],
+    }

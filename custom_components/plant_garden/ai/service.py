@@ -62,7 +62,7 @@ from .schemas import IDENTIFY_SCHEMA, clean_identification
 _LOGGER = logging.getLogger(__name__)
 
 STORAGE_KEY = "plant_garden.ai"
-TEXT_FEATURES = frozenset({Feature.TIPS, Feature.CHAT, Feature.DIGEST})
+TEXT_FEATURES = frozenset({Feature.TIPS, Feature.CHAT, Feature.DIGEST, Feature.RESEARCH})
 BUDGET_WARN = 0.8
 MAX_PHOTOS = 3
 # care fields an identification can suggest, with where the value lives in the answer
@@ -300,6 +300,10 @@ class AIService:
     def currency(self) -> str:
         return "EUR" if self._entry.options.get(CONF_USD_EUR) else "USD"
 
+    def display_cost(self, usd: float | None) -> float | None:
+        """A cost in US dollars in the display currency."""
+        return None if usd is None else round(usd * self._rate(), 4)
+
     def estimate(self, subentry: ConfigSubentry, request: AIRequest) -> float | None:
         """Rough cost of a request in USD before sending it (None: unknown)."""
         text = request.system + "".join(m.text for m in request.messages)
@@ -390,13 +394,18 @@ class AIService:
         prompt_version: str = "",
         prompt: str | None = None,
         response: str | None = None,
-    ) -> None:
+    ) -> float | None:
+        """Log one call; returns its cost in USD (None: unknown)."""
         kind = subentry.data["kind"]
         if provider_cost is not None:
             cost: float | None = provider_cost
             cost_source = "provider"
         else:
-            cost = pricing.cost_of(usage, pricing.price_for(self.prices(), kind, model))
+            cost = pricing.cost_of(
+                usage,
+                pricing.price_for(self.prices(), kind, model),
+                pricing.SEARCH_PRICES.get(kind, 0.0),
+            )
             cost_source = "pricing" if cost is not None else "unknown"
         debug = bool(self._entry.options.get(CONF_AI_DEBUG))
         now = dt_util.utcnow()
@@ -430,6 +439,34 @@ class AIService:
         await self.async_refresh_stats()
         self._update_budget_issues(self.stats["month_cost"])
         self._manager.notify_ai()
+        return cost
+
+    def can_search_web(self, feature: Feature = Feature.RESEARCH) -> bool:
+        """Does the provider of a feature search the web itself (Claude, Gemini, OpenRouter)?"""
+        subentry = self.subentry_for(feature)
+        return subentry is not None and bool(getattr(self.build(subentry), "web_search", False))
+
+    def estimate_research(self) -> float | None:
+        """Rough cost of researching one plant, display currency (None: unknown).
+
+        A web research reads the pages it found (about 30,000 tokens) and runs up
+        to 5 searches; then a short call puts the notes in order.
+        """
+        subentry = self.subentry_for(Feature.RESEARCH)
+        if subentry is None:
+            return None
+        kind = subentry.data["kind"]
+        price = pricing.price_for(self.prices(), kind, subentry.data.get("model") or "")
+        web = self.can_search_web()
+        research = pricing.cost_of(
+            Usage(input=30000 if web else 6000, output=3000, searches=5 if web else 0),
+            price,
+            pricing.SEARCH_PRICES.get(kind, 0.0),
+        )
+        tidy = pricing.cost_of(Usage(input=5000, output=2500), price)
+        if research is None or tidy is None:
+            return None
+        return round(((research if web else 0) + tidy) * self._rate(), 4)
 
     async def async_generate(
         self,
@@ -438,16 +475,20 @@ class AIService:
         subentry: ConfigSubentry | None = None,
         *,
         on_delta: Callable[[str], None] | None = None,
+        web: bool = False,
     ) -> AIResponse:
         """One AI call with budget check, logging and one JSON repair retry.
 
         With `on_delta`, text answers are streamed where the provider can; other
-        providers deliver the whole answer as one delta.
+        providers deliver the whole answer as one delta. With `web`, the provider
+        researches the answer with its own web search (see `can_search_web`).
         """
         subentry = subentry or self.subentry_for(feature)
         if subentry is None:
             raise AIError("No AI provider is set up")
         provider = self.build(subentry)
+        if web and not getattr(provider, "web_search", False):
+            raise AIError("This AI provider cannot search the web")
         await self._async_check_budget(self.estimate(subentry, request))
         prompt_text = request.system + "\n\n" + "\n\n".join(m.text for m in request.messages)
         stream = (
@@ -458,11 +499,12 @@ class AIService:
         for attempt in range(2):
             start = time.monotonic()
             try:
-                response: AIResponse = await (
-                    provider.async_stream(request, on_delta)
-                    if stream
-                    else provider.async_generate(request)
-                )
+                if web:
+                    response: AIResponse = await provider.async_research(request)
+                elif stream:
+                    response = await provider.async_stream(request, on_delta)
+                else:
+                    response = await provider.async_generate(request)
                 if on_delta is not None and not stream:
                     on_delta(response.text)
             except AIError as err:
@@ -486,7 +528,7 @@ class AIService:
             if not (self._data["status"].get(subentry.subentry_id) or {}).get("ok", True):
                 self._set_status(subentry.subentry_id, ok=True, error=None)
             invalid = request.json_schema is not None and response.data is None
-            await self._async_log(
+            response.cost = await self._async_log(
                 feature=feature,
                 subentry=subentry,
                 model=response.model,

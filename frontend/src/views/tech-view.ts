@@ -22,6 +22,7 @@ import type {
   UsageTotals,
 } from "../api/types";
 import { PgElement, define, icon } from "../components/base";
+import "../components/research-schedule";
 import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
 import { formatBytes, formatDateTime, formatMoney, formatNumber } from "../util/format";
@@ -286,6 +287,10 @@ export class PgTechView extends PgElement {
       ${summary ? this._renderChart(summary) : nothing}
       ${summary ? this._renderBreakdown(summary) : nothing} ${this._renderLog()}
       ${this._info ? this._renderProviders(this._info) : nothing}
+      <section class="card block">
+        <h3>${t("research.title")}</h3>
+        <pg-research-schedule .hass=${this.hass} .store=${this.store}></pg-research-schedule>
+      </section>
       ${this._pricing ? this._renderPricing(this._pricing) : nothing} ${this._renderTransfer()}
       ${this._info ? this._renderSystem(this._info) : nothing}
     `;

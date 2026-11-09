@@ -51,6 +51,7 @@ async def async_get_config_entry_diagnostics(
         for sub in entry.subentries.values()
     ]
     zones = data.irrigation.summary()["zones"]
+    research = data.researcher.summary()
     return {
         "version": data.version,
         "database_schema": SCHEMA_VERSION,
@@ -91,4 +92,10 @@ async def async_get_config_entry_diagnostics(
             "recent_errors": usage_errors,
         },
         "care": data.care.garden_stats,
+        "research": {
+            "schedule": data.researcher.schedule,
+            "plants_with_knowledge": len(research["plants"]),
+            "queued": len(research["queue"]),
+            "failed": [failure["error"] for failure in research["failed"].values()],
+        },
     }

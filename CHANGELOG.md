@@ -8,6 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Assistant: plant knowledge. The assistant researches care, pests, toxicity and
+  more for one plant at a time - on the web with Claude, Gemini or OpenRouter
+  (with sources), else from Wikipedia - and keeps it: on the plant page (by
+  topic, with a care calendar, warnings and sources) and listed on the Assistant
+  tab. How often it researches on its own is set on the Assistant and the Tech
+  page (off by default; one plant a week, a day, three a day or an hour), with
+  the cost of one plant. A plant with knowledge is not researched again until
+  its knowledge is deleted.
+
 - Water & weather: the chart shows a week back and a week ahead with weekday and
   date. Above each coming day, the plants that need water then are grouped as
   circles in a cloud – worked out from the forecast evaporation and the forecast

@@ -16,8 +16,19 @@ from typing import Any
 
 import aiohttp
 
-from ..base import AIError, AIRequest, AIResponse, ModelInfo, ProviderKind, Usage, parse_json
+from ..base import (
+    AIError,
+    AIRequest,
+    AIResponse,
+    ModelInfo,
+    ProviderKind,
+    Usage,
+    add_source,
+    parse_json,
+)
 from ..http import async_request, async_stream
+
+MAX_WEB_RESULTS = 5  # OpenRouter web plugin: results added to the prompt
 
 PRESETS: dict[str, str] = {
     "openai": "https://api.openai.com/v1",
@@ -126,14 +137,30 @@ class OpenAICompatibleProvider:
             }
         return body
 
+    @property
+    def web_search(self) -> bool:
+        """OpenRouter adds web results to any model (its `web` plugin)."""
+        return self.preset == "openrouter"
+
     async def async_generate(self, req: AIRequest) -> AIResponse:
+        return await self._complete(req, self.body(req))
+
+    async def async_research(self, req: AIRequest) -> AIResponse:
+        """OpenRouter's web plugin; the sources come as `url_citation` annotations."""
+        body = {**self.body(req), "plugins": [{"id": "web", "max_results": MAX_WEB_RESULTS}]}
+        return await self._complete(req, body, timeout_s=240)
+
+    async def _complete(
+        self, req: AIRequest, body: dict[str, Any], timeout_s: float = 120
+    ) -> AIResponse:
         start = time.monotonic()
         payload, headers = await async_request(
             self._session,
             "POST",
             f"{self._base}/chat/completions",
             headers=self._headers(),
-            json=self.body(req),
+            json=body,
+            timeout_s=timeout_s,
         )
         payload = payload or {}
         raw_usage = payload.get("usage") or {}
@@ -145,6 +172,10 @@ class OpenAICompatibleProvider:
             raise AIError("The model declined this request", usage=usage)
         if choice.get("finish_reason") == "length":
             raise AIError("The answer was cut off (output limit)", usage=usage)
+        sources: list[dict[str, str]] = []
+        for annotation in message.get("annotations") or []:
+            citation = annotation.get("url_citation") or {}
+            add_source(sources, citation.get("url"), citation.get("title"))
         cost = raw_usage.get("cost")
         return AIResponse(
             text=text,
@@ -154,6 +185,7 @@ class OpenAICompatibleProvider:
             latency_ms=int((time.monotonic() - start) * 1000),
             provider_cost=float(cost) if isinstance(cost, int | float) else None,
             request_id=payload.get("id") or headers.get("x-request-id"),
+            sources=sources,
         )
 
     async def async_stream(self, req: AIRequest, on_delta: Callable[[str], None]) -> AIResponse:
