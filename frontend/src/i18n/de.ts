@@ -650,4 +650,10 @@ export const de: Translations = {
   "field.care_prune": "Schnitt",
   "form.care": "Pflegeprofil (optional)",
   "detail.care": "Pflege",
+  "plan.tool_freehand": "Freihand zeichnen",
+  "plan.freehand_hint":
+    "Maustaste oder Finger gedrückt halten und die Fläche umfahren; loslassen schließt sie.",
+  "plan.draw_area": "{name} als Fläche zeichnen",
+  "plan.area_for_hint":
+    "Zeichne die Fläche von {name} (z. B. die ganze Hecke): freihand, oder wähle Rechteck oder Polygon.",
 };

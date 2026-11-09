@@ -285,6 +285,108 @@ describe("pg-garden-view", () => {
     });
   });
 
+  it("draws an area freehand, smoothed and closed", async () => {
+    const backend = fakeBackend();
+    const { view, store } = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    await clickButton(view, "Freihand zeichnen");
+    expect(deepText(view)).toContain("Fläche umfahren");
+    const svg = deepGet<SVGSVGElement>(canvasOf(view), "svg");
+    // a 4 x 2 m rectangle traced in 2 px steps, slightly shaky
+    const trace: [number, number][] = [];
+    for (let x = 400; x <= 480; x += 2) trace.push([x, 300 + (x % 4 ? 0.4 : 0)]);
+    for (let y = 300; y <= 340; y += 2) trace.push([480, y]);
+    for (let x = 480; x >= 400; x -= 2) trace.push([x, 340]);
+    for (let y = 340; y >= 302; y -= 2) trace.push([400, y]);
+    pointer("pointerdown", svg, 400, 300);
+    for (const [x, y] of trace) pointer("pointermove", svg, x, y);
+    pointer("pointerup", svg, 400, 302);
+    await vi.waitFor(() => expect(store.layout?.shapes).toHaveLength(1));
+    const geometry = store.layout?.shapes[0]?.geometry;
+    expect(geometry?.type).toBe("polygon");
+    const points = geometry?.type === "polygon" ? geometry.points : [];
+    expect(points).toHaveLength(4); // the corners survive the smoothing
+    expect(points.map(([x, y]) => [Math.round(x), Math.round(y)])).toEqual([
+      [0, 0],
+      [4, 0],
+      [4, 2],
+      [0, 2],
+    ]);
+
+    // a short scribble encloses nothing and is dropped
+    await clickButton(view, "Freihand zeichnen");
+    pointer("pointerdown", svg, 300, 200);
+    pointer("pointermove", svg, 306, 200);
+    pointer("pointerup", svg, 306, 200);
+    await view.updateComplete;
+    expect(store.layout?.shapes).toHaveLength(1);
+  });
+
+  it("draws a plant as an area: a whole hedge instead of single plants", async () => {
+    const backend = fakeBackend({
+      plants: [makePlant({ id: "H", name: "Rotbuchenhecke", category: "hedge" })],
+      water: {
+        configured: true,
+        updated: null,
+        sources: [],
+        weather: [],
+        plants: {
+          H: {
+            depletion: 30,
+            taw: 50,
+            raw: 25,
+            needs_water: true,
+            frost: null,
+            soil: "loam",
+            root_depth_m: 0.6,
+            sheltered: false,
+            days: [],
+          },
+        },
+      },
+    });
+    const { view, store } = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    expect(deepText(view)).toContain("Noch nicht im Plan");
+    await clickButton(view, "Rotbuchenhecke als Fläche zeichnen");
+    expect(deepText(view)).toContain("Zeichne die Fläche von Rotbuchenhecke");
+    const svg = deepGet<SVGSVGElement>(canvasOf(view), "svg");
+    pointer("pointerdown", svg, 400, 300);
+    for (const [x, y] of [
+      [440, 300],
+      [480, 300],
+      [480, 310],
+      [440, 310],
+      [400, 310],
+    ]) {
+      pointer("pointermove", svg, x as number, y as number);
+    }
+    pointer("pointerup", svg, 400, 301);
+    await vi.waitFor(() => expect(store.layout?.shapes).toHaveLength(1));
+    const hedge = store.layout?.shapes[0];
+    expect(hedge).toMatchObject({ kind: "hedge", plant_id: "H" });
+    expect(calls(backend, "plant_garden/layout/shapes/save")[0]?.shape).toMatchObject({
+      plant_id: "H",
+    });
+    await view.updateComplete;
+    expect(deepText(view)).not.toContain("Noch nicht im Plan");
+
+    // on the plan the area carries the plant's name and its watering state
+    await clickButton(view, "Ansicht");
+    const canvas = canvasOf(view);
+    await canvas.updateComplete;
+    const area = deepGet<SVGGElement>(canvas, `[data-shape-id="${hedge?.id}"]`);
+    expect([...area.classList]).toEqual(expect.arrayContaining(["planting", "thirsty"]));
+    expect(area.querySelector(".shape-label")?.textContent).toBe("Rotbuchenhecke");
+    // tapping it shows the plant, not the area
+    const body = area.querySelector(".body") as Element;
+    pointer("pointerdown", body, 440, 305, "touch");
+    pointer("pointerup", body, 440, 305, "touch");
+    await vi.waitFor(() => expect(deepQuery(view, ".info.pinned")).not.toBeNull());
+    expect(deepText(deepGet(view, ".info.pinned"))).toContain("Rotbuchenhecke");
+    expect(deepText(deepGet(view, ".info.pinned"))).toContain("Details");
+  });
+
   it("shows an info card with details for a tapped plant", async () => {
     const backend = fakeBackend({
       plants: [makePlant({ id: "A", name: "Rose", age_months_now: 14, position: { x: 0, y: 0 } })],

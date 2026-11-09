@@ -228,6 +228,55 @@ export function removePolygonVertex(g: PolygonGeometry, index: number): PolygonG
   return { ...g, points: g.points.filter((_, i) => i !== index) };
 }
 
+/** Distance of p from the segment a–b. */
+function segmentDistance(p: Point, a: Point, b: Point): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const length = dx * dx + dy * dy;
+  if (length === 0) return distance(p, a);
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / length));
+  return distance(p, { x: a.x + t * dx, y: a.y + t * dy });
+}
+
+/** Ramer–Douglas–Peucker: drop points that stay within `tolerance` of the line. */
+export function simplifyPath(points: Point[], tolerance: number): Point[] {
+  if (points.length < 3) return points;
+  const first = points[0] as Point;
+  const last = points[points.length - 1] as Point;
+  let index = 0;
+  let farthest = 0;
+  for (let i = 1; i < points.length - 1; i++) {
+    const d = segmentDistance(points[i] as Point, first, last);
+    if (d > farthest) {
+      farthest = d;
+      index = i;
+    }
+  }
+  if (farthest <= tolerance) return [first, last];
+  const left = simplifyPath(points.slice(0, index + 1), tolerance);
+  const right = simplifyPath(points.slice(index), tolerance);
+  return [...left.slice(0, -1), ...right];
+}
+
+/** Smallest area (m²) a freehand stroke must enclose to become a shape. */
+export const MIN_STROKE_AREA = 0.05;
+
+/**
+ * A closed polygon from a freehand stroke: smoothed to `tolerance` metres, the
+ * end joined to the start. Null for a stroke that encloses (almost) nothing.
+ */
+export function polygonFromStroke(points: Point[], tolerance: number): PolygonGeometry | null {
+  let simple = simplifyPath(points, tolerance);
+  const [start] = simple;
+  const end = simple[simple.length - 1];
+  if (start && end && simple.length > 3 && distance(start, end) <= tolerance * 4) {
+    simple = simple.slice(0, -1); // the user came back to where they started
+  }
+  if (simple.length < 3) return null;
+  const geometry: PolygonGeometry = { type: "polygon", points: simple.map((p) => [p.x, p.y]) };
+  return area(geometry) >= MIN_STROKE_AREA ? geometry : null;
+}
+
 /** Typical crown diameter in metres when nothing better is known. */
 const DEFAULT_CROWN: Record<PlantCategory, number> = {
   tree: 4,

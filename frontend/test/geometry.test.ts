@@ -17,6 +17,8 @@ import {
   snapPoint,
   toRectLocal,
   fromRectLocal,
+  polygonFromStroke,
+  simplifyPath,
   translate,
   unionBounds,
 } from "../src/util/geometry";
@@ -182,5 +184,40 @@ describe("crownDiameter", () => {
     expect(crownDiameter({ crown_diameter_m: null, width_cm: 80, category: "tree" })).toBe(0.8);
     expect(crownDiameter({ crown_diameter_m: null, width_cm: null, category: "tree" })).toBe(4);
     expect(crownDiameter({ crown_diameter_m: null, width_cm: null, category: "herb" })).toBe(0.3);
+  });
+});
+
+describe("freehand strokes", () => {
+  it("keeps only the points that shape the line", () => {
+    const line = Array.from({ length: 11 }, (_, i) => ({ x: i, y: i % 2 ? 0.01 : 0 }));
+    expect(simplifyPath(line, 0.05)).toEqual([line[0], line[10]]);
+    const corner = [
+      { x: 0, y: 0 },
+      { x: 1, y: 0.01 },
+      { x: 2, y: 0 },
+      { x: 2, y: 1 },
+      { x: 2, y: 2 },
+    ];
+    expect(simplifyPath(corner, 0.05)).toEqual([corner[0], corner[2], corner[4]]);
+    expect(simplifyPath(corner.slice(0, 2), 0.05)).toHaveLength(2);
+  });
+
+  it("closes a stroke into a polygon and drops scribbles", () => {
+    const square = [
+      { x: 0, y: 0 },
+      { x: 2, y: 0 },
+      { x: 2, y: 2 },
+      { x: 0, y: 2 },
+      { x: 0, y: 0.05 },
+    ];
+    expect(polygonFromStroke(square, 0.05)?.points).toEqual([
+      [0, 0],
+      [2, 0],
+      [2, 2],
+      [0, 2],
+    ]);
+    expect(polygonFromStroke(square.slice(0, 2), 0.05)).toBeNull();
+    const tiny = square.map((p) => ({ x: p.x / 20, y: p.y / 20 }));
+    expect(polygonFromStroke(tiny, 0.001)).toBeNull(); // 0.01 m²
   });
 });

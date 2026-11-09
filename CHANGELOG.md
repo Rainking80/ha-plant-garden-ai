@@ -8,6 +8,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Plan: freehand drawing of areas, and every plant can be drawn as an area (a
+  whole hedge or lawn instead of single plants) – it then shows the plant's name
+  and status and opens the plant's card.
 - M8 polish:
   - Diagnostics (integration menu → Download diagnostics): counts, settings,
     weather and AI status, recent AI errors – without keys, coordinates or entity

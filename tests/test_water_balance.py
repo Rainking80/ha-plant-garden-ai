@@ -79,6 +79,20 @@ def test_soil_water_from_bed_pot_and_shelter() -> None:
     assert vegetable.raw == pytest.approx(0.4 * vegetable.taw)
 
 
+def test_soil_water_of_a_plant_drawn_as_an_area() -> None:
+    """A hedge drawn as an area: its own soil, else the bed under its middle."""
+    hedge = _plant(category=PlantCategory.HEDGE)
+    strip = {"type": "polygon", "points": [[0.5, 0.5], [1.5, 0.5], [1.5, 1.5], [0.5, 1.5]]}
+    area = Shape(id="H", kind=ShapeKind.HEDGE, geometry=strip, plant_id="P")
+    sandy = Shape(id="B", kind=ShapeKind.BED, geometry=BED, soil_type=SoilType.SAND)
+    assert soil_water(hedge, [sandy, area], DEFAULTS).soil == "sand"
+    own = Shape(id="H", kind=ShapeKind.HEDGE, geometry=strip, plant_id="P", soil_type=SoilType.CLAY)
+    assert soil_water(hedge, [sandy, own], DEFAULTS).soil == "clay"
+    roof = Shape(id="R", kind=ShapeKind.ROOF, geometry=BED)
+    assert soil_water(hedge, [roof, area], DEFAULTS).sheltered
+    assert not soil_water(hedge, [roof], DEFAULTS).sheltered  # not on the plan at all
+
+
 def test_crop_coefficients() -> None:
     assert crop_coefficient(_plant(category=PlantCategory.LAWN), DAY, DEFAULTS) == 0.8
     assert crop_coefficient(_plant(water_need=WaterNeed.HIGH), DAY, DEFAULTS) == 0.8

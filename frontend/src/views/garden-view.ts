@@ -6,6 +6,7 @@ import {
   mdiClose,
   mdiCommentQuestionOutline,
   mdiCursorDefaultOutline,
+  mdiDraw,
   mdiDeleteOutline,
   mdiEyeOutline,
   mdiFitToScreenOutline,
@@ -120,6 +121,7 @@ import {
   crownDiameter,
   distance,
   insidePlan,
+  labelPoint,
   snapPoint,
 } from "../util/geometry";
 import { History, type Command } from "../util/history";
@@ -136,6 +138,14 @@ const ZONES_KEY = "plant-garden.zones.v1";
 const NO_PLANTS: ReadonlySet<string> = new Set();
 const NO_WATER: Record<string, PlantBalance> = {};
 const NO_CARE: Record<string, PlantCare> = {};
+const DRAWING_TOOLS: readonly Tool[] = ["rect", "circle", "polygon", "freehand"];
+
+/** The kind of area a plant drawn as an area gets. */
+export function areaKind(category: Plant["category"]): ShapeKind {
+  if (category === "hedge") return "hedge";
+  if (category === "lawn") return "lawn";
+  return "bed";
+}
 const LAYER_KEY = "plant-garden.layer.v1";
 const LAYERS: readonly Layer[] = ["plan", "deficit", "coverage"];
 
@@ -274,6 +284,7 @@ export class PgGardenView extends PgElement {
     _mode: { state: true },
     _tool: { state: true },
     _newKind: { state: true },
+    _areaFor: { state: true },
     _snap: { state: true },
     _selection: { state: true },
     _hover: { state: true },
@@ -295,6 +306,8 @@ export class PgGardenView extends PgElement {
   declare _mode: Mode;
   declare _tool: Tool;
   declare _newKind: ShapeKind;
+  /** A plant whose area (hedge, lawn …) is being drawn; the new shape is linked to it. */
+  declare _areaFor: string | null;
   declare _snap: number;
   declare _selection: Selection;
   declare _hover: HoverDetail | null;
@@ -336,6 +349,7 @@ export class PgGardenView extends PgElement {
     this._mode = "view";
     this._tool = "select";
     this._newKind = "bed";
+    this._areaFor = null;
     this._snap = readStorage(SNAP_KEY, isSnap) ?? 0.25;
     this._selection = null;
     this._hover = null;
@@ -661,13 +675,14 @@ export class PgGardenView extends PgElement {
       kind: this._newKind,
       geometry: event.detail.geometry,
       label: null,
-      plant_id: null,
+      plant_id: this._newKind === "zone" ? null : this._areaFor,
       soil_type: null,
       locked: false,
       z: KIND_Z[this._newKind],
       irrigation: this._newKind === "zone" ? defaultIrrigation() : null,
     };
     this._tool = "select";
+    this._areaFor = null;
     this._selection = { type: "shape", id: shape.id };
     void this._execute({
       label: "create-shape",
@@ -799,6 +814,7 @@ export class PgGardenView extends PgElement {
   private _setMode(mode: Mode): void {
     this._mode = mode;
     this._tool = "select";
+    this._areaFor = null;
     this._armed = null;
     this._hover = null;
     this._selection = null;
@@ -807,6 +823,16 @@ export class PgGardenView extends PgElement {
   private _setTool(tool: Tool): void {
     this._tool = tool;
     this._armed = null;
+    if (!DRAWING_TOOLS.includes(tool)) this._areaFor = null;
+  }
+
+  /** Draw a plant as an area instead of placing it as one crown (a hedge, the lawn). */
+  private _drawAreaFor(plant: Plant): void {
+    this._areaFor = plant.id;
+    this._newKind = areaKind(plant.category);
+    this._tool = "freehand";
+    this._armed = null;
+    this._selection = null;
   }
 
   private _setSnap(event: Event): void {
@@ -1052,9 +1078,10 @@ export class PgGardenView extends PgElement {
                 ${this._toolButton("rect", mdiRectangleOutline, "plan.tool_rect")}
                 ${this._toolButton("circle", mdiCircleOutline, "plan.tool_circle")}
                 ${this._toolButton("polygon", mdiVectorPolygon, "plan.tool_polygon")}
+                ${this._toolButton("freehand", mdiDraw, "plan.tool_freehand")}
               </div>
               ${
-                ["rect", "circle", "polygon"].includes(this._tool)
+                DRAWING_TOOLS.includes(this._tool)
                   ? html`<label class="group compact">
                       <span class="sr-only">${t("plan.new_kind")}</span>
                       <select
@@ -1214,6 +1241,10 @@ export class PgGardenView extends PgElement {
     } else if (editing && this._farM > PLAN_EXTENT_M) {
       // drawing here would fail, so this beats the drawing instructions
       return this._renderFarHint();
+    } else if (editing && this._areaFor && DRAWING_TOOLS.includes(this._tool)) {
+      text = t("plan.area_for_hint", { name: this.store.getPlant(this._areaFor)?.name ?? "" });
+    } else if (editing && this._tool === "freehand") {
+      text = t("plan.freehand_hint");
     } else if (editing && this._tool === "polygon") {
       text = t("plan.polygon_hint");
     } else if (editing && (this._tool === "rect" || this._tool === "circle")) {
@@ -1240,7 +1271,11 @@ export class PgGardenView extends PgElement {
           ? html`<button class="button text" @click=${() => (this._armed = null)}>
               ${t("plan.cancel")}
             </button>`
-          : nothing
+          : this._areaFor && editing
+            ? html`<button class="button text" @click=${() => this._setTool("select")}>
+                ${t("plan.cancel")}
+              </button>`
+            : nothing
       }
     </div>`;
   }
@@ -1251,6 +1286,13 @@ export class PgGardenView extends PgElement {
       <span>${this.t("plan.far_hint", { distance })}</span>
       <button class="button text" @click=${this._openOrigin}>${this.t("plan.far_action")}</button>
     </div>`;
+  }
+
+  /** Where a plant is on the plan: its position, else the middle of its area. */
+  private _plantAnchor(plant: Plant): Point | null {
+    if (plant.position) return plant.position;
+    const area = this._shapes.find((s) => s.plant_id === plant.id && s.kind !== "zone");
+    return area ? labelPoint(area.geometry) : null;
   }
 
   /** Screen position of a plan point relative to the stage. */
@@ -1264,7 +1306,8 @@ export class PgGardenView extends PgElement {
   private _infoPlant(): { plant: Plant; x: number; y: number; pinned: boolean } | null {
     if (this._selection?.type === "plant") {
       const plant = this.store.getPlant(this._selection.id);
-      const at = plant?.position ? this._stagePoint(plant.position) : null;
+      const anchor = plant ? this._plantAnchor(plant) : null;
+      const at = anchor ? this._stagePoint(anchor) : null;
       if (plant && at) return { plant, ...at, pinned: true };
     }
     if (this._hover?.plantId) {
@@ -1971,8 +2014,12 @@ export class PgGardenView extends PgElement {
   private _renderTray() {
     const { t } = this;
     const plants = this._plants.filter((plant) => matchesQuery(plant, this._query));
-    const unplaced = plants.filter((plant) => !plant.position);
-    const placed = plants.filter((plant) => plant.position);
+    const areas = new Set(
+      this._shapes.filter((s) => s.plant_id && s.kind !== "zone").map((s) => s.plant_id),
+    );
+    const onPlan = (plant: Plant) => Boolean(plant.position) || areas.has(plant.id);
+    const unplaced = plants.filter((plant) => !onPlan(plant));
+    const placed = plants.filter(onPlan);
     const armed = this._armed;
     const item = (plant: Plant) => {
       const isArmed = armed?.kind === "plant" && armed.plantId === plant.id;
@@ -1994,6 +2041,15 @@ export class PgGardenView extends PgElement {
               : html`<span class="thumb-placeholder">${icon(mdiSprout)}</span>`
           }
           <span class="tray-name">${plant.name}</span>
+        </button>
+        <button
+          class="icon-button small tray-area ${this._areaFor === plant.id ? "active" : ""}"
+          title=${t("plan.draw_area", { name: plant.name })}
+          aria-label=${t("plan.draw_area", { name: plant.name })}
+          aria-pressed=${this._areaFor === plant.id}
+          @click=${() => this._drawAreaFor(plant)}
+        >
+          ${icon(mdiDraw)}
         </button>
       </li>`;
     };
@@ -2451,6 +2507,19 @@ export class PgGardenView extends PgElement {
         font: inherit;
         text-align: left;
         cursor: grab;
+      }
+      .tray li {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .tray li .tray-item {
+        flex: 1;
+        min-width: 0;
+      }
+      .tray-area.active {
+        color: var(--pg-accent);
+        background: color-mix(in srgb, var(--pg-accent) 14%, transparent);
       }
       .tray-item:hover {
         border-color: color-mix(in srgb, var(--pg-accent) 40%, transparent);

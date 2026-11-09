@@ -638,6 +638,12 @@ export const en = {
   "field.care_prune": "Pruning",
   "form.care": "Care profile (optional)",
   "detail.care": "Care",
+  "plan.tool_freehand": "Draw freehand",
+  "plan.freehand_hint":
+    "Hold the mouse button or your finger down and trace the area; letting go closes it.",
+  "plan.draw_area": "Draw {name} as an area",
+  "plan.area_for_hint":
+    "Draw the area of {name} (e.g. the whole hedge): freehand, or choose rectangle or polygon.",
 } as const;
 
 export type TranslationKey = keyof typeof en;

@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .geometry import contains
+from .geometry import bounds, contains
 from .models import LocationType, Plant, PlantCategory, Shape, ShapeKind, SoilType
 
 DEFAULTS_FILE = Path(__file__).parent / "water_defaults.json"
@@ -41,13 +41,39 @@ class SoilWater:
     sheltered: bool  # no rain reaches it
 
 
+def _areas(plant: Plant, shapes: Iterable[Shape]) -> list[Shape]:
+    """The areas a plant is drawn as (a hedge, the lawn), if any."""
+    return [s for s in shapes if s.plant_id == plant.id and s.kind is not ShapeKind.ZONE]
+
+
+def _anchor(plant: Plant, shapes: Iterable[Shape]) -> tuple[float, float] | None:
+    """Where a plant is: its position, else the middle of its (first) area."""
+    if plant.position is not None:
+        return plant.position.x, plant.position.y
+    areas = _areas(plant, shapes)
+    if not areas:
+        return None
+    min_x, min_y, max_x, max_y = bounds(areas[0].geometry)
+    return (min_x + max_x) / 2, (min_y + max_y) / 2
+
+
 def _soil_at(plant: Plant, shapes: Iterable[Shape]) -> SoilType | None:
-    """The soil of the bed the plant stands in (topmost bed wins)."""
-    if plant.position is None:
+    """The soil of the bed the plant stands in (topmost bed wins).
+
+    A plant drawn as an area uses that area's own soil, else the bed under its middle.
+    """
+    shapes = list(shapes)
+    own = next((s.soil_type for s in _areas(plant, shapes) if s.soil_type), None)
+    if own is not None:
+        return own
+    at = _anchor(plant, shapes)
+    if at is None:
         return None
     found = None
     for shape in sorted(shapes, key=lambda s: s.z):
-        if shape.soil_type and contains(shape.geometry, plant.position.x, plant.position.y):
+        if shape.plant_id == plant.id:
+            continue
+        if shape.soil_type and contains(shape.geometry, *at):
             found = shape.soil_type
     return found
 
@@ -55,12 +81,11 @@ def _soil_at(plant: Plant, shapes: Iterable[Shape]) -> SoilType | None:
 def _sheltered(plant: Plant, shapes: Iterable[Shape]) -> bool:
     if plant.location_type in SHELTERED_LOCATIONS:
         return True
-    if plant.position is None:
+    shapes = list(shapes)
+    at = _anchor(plant, shapes)
+    if at is None:
         return False
-    return any(
-        shape.kind in SHELTER_KINDS and contains(shape.geometry, plant.position.x, plant.position.y)
-        for shape in shapes
-    )
+    return any(shape.kind in SHELTER_KINDS and contains(shape.geometry, *at) for shape in shapes)
 
 
 def soil_water(plant: Plant, shapes: list[Shape], defaults: Mapping[str, Any]) -> SoilWater:

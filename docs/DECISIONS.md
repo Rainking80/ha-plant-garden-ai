@@ -433,3 +433,21 @@ minutes), because automations know devices, not internal plant ids.
   starts an identification with that photo only when the plant has no botanical
   name yet - once the species is known, further uploads would only cost money.
   It runs as a background task of the entry; failures are logged, not shown.
+
+## D-033 Freehand areas and plants drawn as an area (2026-11-09)
+
+- **Freehand tool** next to rectangle, circle and polygon: press, trace, let go.
+  The stroke keeps a point every 3 screen pixels, is smoothed with
+  Ramer-Douglas-Peucker to about 2.5 pixels (in metres at the current zoom), the
+  end joins the start; strokes enclosing less than 0.05 m² are dropped. No grid
+  snapping - the point of freehand is to follow what is really there. It is a
+  separate tool so that dragging with the polygon tool still pans.
+- **A plant as an area** (a beech hedge, the lawn, a row of vegetables): every
+  plant in the tray can be drawn as an area; the new shape (kind from the
+  category: hedge, lawn, else bed) is linked to the plant. Such a plant counts as
+  placed, its footprint for irrigation is the area (as before for linked areas),
+  its soil is the area's own soil or the bed under the area's middle, and a roof
+  over that middle shelters it. On the plan the area shows the plant's name and
+  the same status as a crown (needs water, pruning due, problem); in view mode
+  hovering or tapping it opens the plant's card. One plant may have several
+  areas; the individual plants of a hedge need not be drawn.

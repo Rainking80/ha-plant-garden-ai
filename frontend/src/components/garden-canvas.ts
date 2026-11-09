@@ -31,6 +31,7 @@ import {
   insertPolygonVertex,
   labelPoint,
   movePolygonVertex,
+  polygonFromStroke,
   rectCorners,
   rectFromCorners,
   removePolygonVertex,
@@ -64,7 +65,13 @@ import { PgElement, define } from "./base";
 
 export type Mode = "view" | "edit";
 export type Layer = "plan" | "deficit" | "coverage";
-export type Tool = "select" | "rect" | "circle" | "polygon" | "calibrate" | "background";
+export type Tool =
+  "select" | "rect" | "circle" | "polygon" | "freehand" | "calibrate" | "background";
+
+/** A freehand stroke keeps a point every this many screen pixels and is smoothed to
+ * about this many pixels before it becomes a polygon. */
+const STROKE_STEP_PX = 3;
+const STROKE_TOLERANCE_PX = 2.5;
 export type Selection = { type: "plant" | "shape" | "marker"; id: string } | null;
 /** Something waiting to be placed with the next tap on the plan. */
 export type Armed = { kind: "plant"; plantId: string } | { kind: "marker"; entityId: string };
@@ -94,6 +101,7 @@ type Gesture =
   | { kind: "shape-handle"; shapeId: string; handle: Handle; from: Geometry }
   | { kind: "crown"; plantId: string; from: number; centre: Point }
   | { kind: "draw"; tool: "rect" | "circle"; anchor: Point }
+  | { kind: "freehand"; points: Point[]; lastX: number; lastY: number }
   | { kind: "pinch"; distance: number; midX: number; midY: number; viewport: Viewport };
 
 interface Override {
@@ -232,6 +240,7 @@ export class PgGardenCanvas extends PgElement {
     _override: { state: true },
     _draft: { state: true },
     _polygon: { state: true },
+    _stroke: { state: true },
     _cursor: { state: true },
     _settledMpp: { state: true },
     _wms: { state: true },
@@ -261,6 +270,8 @@ export class PgGardenCanvas extends PgElement {
   declare _override: Override | null;
   declare _draft: Geometry | null;
   declare _polygon: Point[] | null;
+  /** The freehand stroke being drawn. */
+  declare _stroke: Point[] | null;
   declare _cursor: Point | null;
   declare _settledMpp: number;
   declare _wms: WmsImage | null;
@@ -301,6 +312,7 @@ export class PgGardenCanvas extends PgElement {
     this._override = null;
     this._draft = null;
     this._polygon = null;
+    this._stroke = null;
     this._cursor = null;
     this._settledMpp = 0.05;
     this._wms = null;
@@ -379,6 +391,7 @@ export class PgGardenCanvas extends PgElement {
 
   cancelDrawing(): void {
     this._polygon = null;
+    this._stroke = null;
     this._cursor = null;
     this._draft = null;
   }
@@ -648,6 +661,18 @@ export class PgGardenCanvas extends PgElement {
       this._draft = this._draftGeometry(this.tool, anchor, anchor);
       return;
     }
+    if (editing && this.tool === "freehand") {
+      // free drawing is free: no snapping to the grid
+      const start = this._point(event, false);
+      this._gesture = {
+        kind: "freehand",
+        points: [start],
+        lastX: event.clientX,
+        lastY: event.clientY,
+      };
+      this._stroke = [start];
+      return;
+    }
     if (editing && this.tool === "background" && this.background?.type === "image") {
       this._gesture = {
         kind: "move-background",
@@ -739,6 +764,18 @@ export class PgGardenCanvas extends PgElement {
         this._draft = this._draftGeometry(gesture.tool, gesture.anchor, this._point(event));
         this._cursor = this._point(event);
         return;
+      case "freehand": {
+        if (
+          Math.hypot(event.clientX - gesture.lastX, event.clientY - gesture.lastY) < STROKE_STEP_PX
+        ) {
+          return;
+        }
+        gesture.points.push(this._point(event, false));
+        gesture.lastX = event.clientX;
+        gesture.lastY = event.clientY;
+        this._stroke = [...gesture.points];
+        return;
+      }
       case "move-marker": {
         const p = this._point(event, false);
         const target = { x: p.x - gesture.offset.x, y: p.y - gesture.offset.y };
@@ -777,12 +814,19 @@ export class PgGardenCanvas extends PgElement {
     if (event.type === "pointercancel") {
       this._override = null;
       this._draft = null;
+      this._stroke = null;
       return;
     }
     switch (gesture.kind) {
       case "pending":
         this._tap(gesture.hit, event);
         return;
+      case "freehand": {
+        this._stroke = null;
+        const geometry = polygonFromStroke(gesture.points, this._mpp() * STROKE_TOLERANCE_PX);
+        if (geometry) this.fire("create-shape", { geometry });
+        return;
+      }
       case "move-plant": {
         const to = this._override?.position;
         this._override = null;
@@ -918,6 +962,7 @@ export class PgGardenCanvas extends PgElement {
     // a pinch cancels whatever the first finger started
     this._override = null;
     this._draft = null;
+    this._stroke = null;
     this._gesture = {
       kind: "pinch",
       distance: Math.hypot(a.x - b.x, a.y - b.y),
@@ -1046,6 +1091,14 @@ export class PgGardenCanvas extends PgElement {
       this._polygon = [...points, p];
       return;
     }
+    const planting = this._plantOfShape(hit);
+    if (planting) {
+      this.fire("select", { selection: { type: "plant", id: planting } });
+      if (event.pointerType !== "mouse") {
+        this.fire<HoverDetail>("hover", { plantId: planting, x: event.clientX, y: event.clientY });
+      }
+      return;
+    }
     if (hit.type === "plant" || hit.type === "shape" || hit.type === "marker") {
       this.fire("select", { selection: { type: hit.type, id: hit.id } });
       if (hit.type === "plant" && event.pointerType !== "mouse") {
@@ -1061,7 +1114,14 @@ export class PgGardenCanvas extends PgElement {
     if (this._polygon) this._cursor = this._point(event);
     if (event.pointerType !== "mouse") return;
     const hit = this._hit(event);
-    this._setHover(hit.type === "plant" ? hit.id : null, event);
+    this._setHover(hit.type === "plant" ? hit.id : this._plantOfShape(hit), event);
+  }
+
+  /** In view mode, a plant drawn as an area stands for the plant. */
+  private _plantOfShape(hit: Hit): string | null {
+    if (this.mode === "edit" || hit.type !== "shape") return null;
+    const shape = this._shape(hit.id);
+    return shape && shape.kind !== "zone" && shape.plant_id ? shape.plant_id : null;
   }
 
   private _setHover(plantId: string | null, event: PointerEvent): void {
@@ -1117,11 +1177,26 @@ export class PgGardenCanvas extends PgElement {
     return svg`<polygon class=${cls} points=${g.points.map(([x, y]) => `${x},${y}`).join(" ")}></polygon>`;
   }
 
+  /** Status classes of a plant drawn as an area (hedge, lawn …), like its crown ring. */
+  private _plantingClasses(plantId: string | null): string {
+    if (!plantId) return "";
+    const care = this.care[plantId];
+    return [
+      "planting",
+      this.water[plantId]?.needs_water ? "thirsty" : "",
+      care?.prune_due ? "prune" : "",
+      care?.problem ? "has-problem" : "",
+      this.highlight.has(plantId) ? "covered" : "",
+    ].join(" ");
+  }
+
   private _renderShape(shape: Shape) {
     const g = this._geometryOf(shape);
     const selected = this.selection?.type === "shape" && this.selection.id === shape.id;
     const label = labelPoint(g);
-    return svg`<g class="shape kind-${shape.kind} ${selected ? "selected" : ""} ${shape.locked ? "locked" : ""}"
+    const plant = shape.plant_id ? this._plant(shape.plant_id) : undefined;
+    const text = shape.label ?? plant?.name;
+    return svg`<g class="shape kind-${shape.kind} ${selected ? "selected" : ""} ${shape.locked ? "locked" : ""} ${this._plantingClasses(plant ? plant.id : null)}"
         data-shape-id=${shape.id}>
       ${this._renderGeometry(g, "body")}
       ${
@@ -1129,9 +1204,12 @@ export class PgGardenCanvas extends PgElement {
         // panning and for what lies on it), so it gets a wide invisible grip.
         shape.kind === "boundary" ? this._renderGeometry(g, "outline-hit") : nothing
       }
+      ${plant ? this._renderGeometry(g, "planting-ring") : nothing}
+      ${text ? svg`<text class="shape-label" x=${label.x} y=${label.y}>${text}</text>` : nothing}
       ${
-        shape.label
-          ? svg`<text class="shape-label" x=${label.x} y=${label.y}>${shape.label}</text>`
+        plant && this.care[plant.id]?.problem
+          ? svg`<circle class="problem-dot" cx=${label.x} cy=${label.y - 6 * this._settledMpp}
+              r=${5 * this._settledMpp}></circle>`
           : nothing
       }
     </g>`;
@@ -1288,6 +1366,10 @@ export class PgGardenCanvas extends PgElement {
   }
 
   private _renderDraft() {
+    if (this._stroke?.length) {
+      return svg`<g class="draft"><polyline class="body stroke"
+        points=${this._stroke.map((p) => `${p.x},${p.y}`).join(" ")}></polyline></g>`;
+    }
     if (this._draft) {
       return svg`<g class="draft">${this._renderGeometry(this._draft, "body")}${this._renderMeasure(this._draft)}</g>`;
     }
@@ -1474,6 +1556,7 @@ export class PgGardenCanvas extends PgElement {
     svg.mode-edit.tool-rect,
     svg.mode-edit.tool-circle,
     svg.mode-edit.tool-polygon,
+    svg.mode-edit.tool-freehand,
     svg.armed {
       cursor: crosshair;
     }
@@ -1694,6 +1777,31 @@ export class PgGardenCanvas extends PgElement {
       stroke-width: 3.5;
       stroke-dasharray: 5 3;
     }
+    /* a plant drawn as an area: its status follows the outline */
+    .planting-ring {
+      fill: none;
+      stroke: none;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .planting.thirsty .planting-ring {
+      stroke: var(--pg-thirsty, #e08a1e);
+      stroke-width: 3.5;
+      stroke-dasharray: 5 3;
+    }
+    .planting.prune .planting-ring {
+      stroke: var(--pg-prune, #8e5bd0);
+      stroke-width: 2.5;
+      stroke-dasharray: 1 3;
+      stroke-linecap: round;
+    }
+    .planting.covered .planting-ring {
+      stroke: var(--pg-water);
+      stroke-width: 3;
+    }
+    .draft .stroke {
+      fill: color-mix(in srgb, var(--pg-accent) 12%, transparent);
+    }
     /* assistant: pruning due (violet dotted ring), open problem (red dot) */
     .plant .prune-ring {
       fill: none;
@@ -1704,7 +1812,7 @@ export class PgGardenCanvas extends PgElement {
       vector-effect: non-scaling-stroke;
       pointer-events: none;
     }
-    .plant .problem-dot {
+    .problem-dot {
       fill: var(--error-color, #db4437);
       stroke: #fff;
       stroke-width: 1.5;
