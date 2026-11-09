@@ -132,6 +132,14 @@
     "budget_exceeded": {
       "title": "Monthly AI budget used up",
       "description": "Plant Garden has spent {spent} of {budget} {currency} on AI this month. With the stop option on, no more AI calls are made until next month."
+    },
+    "ai_auth": {
+      "title": "AI provider {provider}: key rejected",
+      "description": "The provider did not accept the key. Open Plant Garden under Settings → Devices & services, choose the provider and \"New key or model\". The notice disappears after the next successful call or connection test."
+    },
+    "missing_entity": {
+      "title": "Irrigation zone {zone}: entity missing",
+      "description": "The zone is linked to {entities}, which no longer exists. Runs of this zone are not recorded. Open the garden plan in edit mode and link the zone again (or remove it)."
     }
   },
   "exceptions": {

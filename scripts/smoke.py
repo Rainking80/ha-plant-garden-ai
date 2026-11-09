@@ -620,6 +620,14 @@ async def check_ai(
         await check_identification(call, requests, plant_id, photo_id)
         await check_usage(session, base, headers, call)
         await check_assistant(session, base, headers, call, plant_id)
+        async with session.get(
+            f"{base}/api/diagnostics/config_entry/{entry_id}", headers=headers
+        ) as resp:
+            assert resp.status == 200, await resp.text()
+            diagnostics = await resp.text()
+        assert FAKE_KEY not in diagnostics
+        assert '"plants": 1' in diagnostics or '"plants":1' in diagnostics, diagnostics[:500]
+        print(f"  diagnostics: {len(diagnostics)} bytes, no key in them")
     finally:
         await runner.cleanup()
 

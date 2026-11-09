@@ -61,6 +61,34 @@ model, feature and plant, a request log with CSV export, and the price table
 (as of 2026-11-08, editable per model). A monthly budget in the integration
 options warns at 80 % and can stop further calls.
 
+Where to get keys: [Claude](https://platform.claude.com/settings/keys),
+[OpenAI](https://platform.openai.com/api-keys),
+[Gemini](https://aistudio.google.com/apikey),
+[OpenRouter](https://openrouter.ai/settings/keys),
+[Pl@ntNet](https://my.plantnet.org). Local models (Ollama, LM Studio) need no key.
+
+The full guide – plan, irrigation, water balance, AI, tasks, automations,
+privacy – is in [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+([Deutsch](docs/USER_GUIDE.de.md)).
+
+## FAQ
+
+- **Does Plant Garden switch my valves?** No. It only reads their state, records
+  every run and offers recommendations as entities for your own automations.
+- **Do I need an AI provider?** No. Plan, photos, irrigation, water balance and
+  tasks work without one; identification, diagnosis, tips and the chat need one.
+- **What does the AI cost?** Usually a few cents per identification or diagnosis
+  with the default models; the Tech tab shows every call with tokens and costs,
+  and a monthly budget can stop further calls.
+- **Where is my data?** In `<config>/plant_garden/` (database and photos) and
+  `.storage/plant_garden.*`, so it is part of every Home Assistant backup. Photos
+  make backups larger.
+- **How do I delete everything?** Remove the integration (the garden is kept so a
+  re-install finds it), stop Home Assistant and delete `<config>/plant_garden/`
+  and `.storage/plant_garden.*`.
+- **Aerial imagery outside Germany?** Add any WMS service of your country, or
+  upload a site plan or sketch and calibrate it with two points.
+
 ## Roadmap
 
 | Milestone | Content | State |
@@ -95,7 +123,7 @@ Architecture and design decisions: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md),
 
 ## Deutsch
 
-Plant Garden ist ein Gartenplaner und Pflanzentagebuch für Home Assistant: Grundriss zeichnen, Pflanzen und Bewässerungszonen per Drag-and-drop platzieren, Fotos dokumentieren, Wasserbilanz aus Regen, Verdunstung und Bewässerung, dazu ein KI-Assistent mit eigenem API-Key und einer Übersicht über Tokens und Kosten. Installation über HACS als benutzerdefiniertes Repository (siehe oben), mindestens Home Assistant 2026.9.0.
+Plant Garden ist ein Gartenplaner und Pflanzentagebuch für Home Assistant: Grundriss zeichnen, Pflanzen und Bewässerungszonen per Drag-and-drop platzieren, Fotos dokumentieren, Wasserbilanz aus Regen, Verdunstung und Bewässerung, Aufgaben (auch in der To-do-Liste von Home Assistant), dazu ein KI-Assistent mit eigenem API-Key für Bestimmung, Diagnose, Tipps und Chat und einer Übersicht über Tokens und Kosten. Installation über HACS als benutzerdefiniertes Repository (siehe oben), mindestens Home Assistant 2026.9.0. Ausführliche Anleitung: [docs/USER_GUIDE.de.md](docs/USER_GUIDE.de.md).
 
 ## License
 

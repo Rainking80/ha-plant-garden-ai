@@ -203,11 +203,34 @@ class AIService:
             for sub in self.subentries()
         ]
 
-    def _set_status(self, subentry_id: str, *, ok: bool, error: str | None, **extra: Any) -> None:
+    def _set_status(
+        self,
+        subentry_id: str,
+        *,
+        ok: bool,
+        error: str | None,
+        auth_failed: bool = False,
+        **extra: Any,
+    ) -> None:
+        """Remember the last check of a provider; a rejected key becomes a repair issue."""
         status = dict(self._data["status"].get(subentry_id) or {})
         status.update(ok=ok, error=error, checked=dt_util.utcnow().isoformat(), **extra)
         self._data["status"][subentry_id] = status
         self._save()
+        issue = f"ai_auth_{subentry_id}"
+        if auth_failed:
+            subentry = self._entry.subentries.get(subentry_id)
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                issue,
+                is_fixable=False,
+                severity=ir.IssueSeverity.ERROR,
+                translation_key="ai_auth",
+                translation_placeholders={"provider": subentry.title if subentry else subentry_id},
+            )
+        elif ok:
+            ir.async_delete_issue(self.hass, DOMAIN, issue)
 
     async def async_test(self, subentry_id: str) -> dict[str, Any]:
         """'Test connection' on the tech page: a cheap call (model list, key check)."""
@@ -217,7 +240,9 @@ class AIService:
         try:
             await self.build(subentry).async_validate()
         except AIError as err:
-            self._set_status(subentry_id, ok=False, error=str(err))
+            self._set_status(
+                subentry_id, ok=False, error=str(err), auth_failed=isinstance(err, AuthError)
+            )
         else:
             self._set_status(subentry_id, ok=True, error=None)
         status: dict[str, Any] = self._data["status"][subentry_id]
@@ -430,8 +455,12 @@ class AIService:
                     prompt=prompt_text,
                 )
                 if isinstance(err, AuthError):
-                    self._set_status(subentry.subentry_id, ok=False, error=str(err))
+                    self._set_status(
+                        subentry.subentry_id, ok=False, error=str(err), auth_failed=True
+                    )
                 raise
+            if not (self._data["status"].get(subentry.subentry_id) or {}).get("ok", True):
+                self._set_status(subentry.subentry_id, ok=True, error=None)
             invalid = request.json_schema is not None and response.data is None
             await self._async_log(
                 feature=feature,
@@ -513,6 +542,8 @@ class AIService:
                     status="error", error=str(err), usage=Usage(images=len(images)),
                     latency_ms=int((time.monotonic() - start) * 1000),
                 )  # fmt: skip
+                if isinstance(err, AuthError):
+                    self._set_status(net.subentry_id, ok=False, error=str(err), auth_failed=True)
                 if llm is None:
                     raise
             else:

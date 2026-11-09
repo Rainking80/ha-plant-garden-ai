@@ -1,8 +1,8 @@
 # Architecture
 
-Status: **M7** (assistant: tasks, problems with diagnosis, questions, tips,
-chat; M2 to M7 await a hands-on check by the user in a real browser, M6 and M7
-also a live test with real API keys).
+Status: **M8 in progress** (diagnostics, backup platform, repairs and the user
+guide are done; screenshots and the 0.1.0 release wait for the user's review of
+M2 to M7 in a real browser and a live test of M6/M7 with real API keys).
 This document describes what exists today and is updated with every milestone.
 The target picture is in [AGENT_SYSTEM_PROMPT.md](AGENT_SYSTEM_PROMPT.md).
 
@@ -37,7 +37,7 @@ Browser (HA frontend)                              Home Assistant core
 | `websocket_api.py` | Commands below; `garden_command` decorator maps `NotFoundError` → `not_found`, `ValueError` → `invalid_format`, missing entry → `not_loaded`. |
 | `panel.py` | Serves `frontend/` under `/plant_garden_static`, registers the panel with a content-hash cache buster. |
 | `geometry.py` | Point-in-shape, areas, footprints of plants (linked areas or crown circle) and zone coverage on a 16 × 16 sample grid (same as the panel's `util/coverage.ts`). |
-| `irrigation.py` | `IrrigationTracker`: follows the entities linked to zones (`async_track_state_change_event`), persists open runs (Store `plant_garden.irrigation`), fills gaps from the recorder history on start, ignores runs under 5 s, marks runs ended by `unavailable` as uncertain, raises a repair issue for runs longer than the option `max_runtime_hours`, fires `plant_garden_irrigation_finished`. `distribute` turns a run into litres per plant (D-024). Keeps the water summary for the panel and the sensors. |
+| `irrigation.py` | `IrrigationTracker`: follows the entities linked to zones (`async_track_state_change_event`), persists open runs (Store `plant_garden.irrigation`), fills gaps from the recorder history on start, ignores runs under 5 s, marks runs ended by `unavailable` as uncertain, raises a repair issue for runs longer than the option `max_runtime_hours` and one for zones whose linked entities no longer exist (checked once HA has started and on layout changes), fires `plant_garden_irrigation_finished`. `distribute` turns a run into litres per plant (D-024). Keeps the water summary for the panel and the sensors. |
 | `sensor.py` | Sensors per plant (water received in L `total_increasing`, water today, last watering, soil water deficit), per zone (run time and litres today, recommended run time) and for the garden (ET₀ today, rain today, rain tomorrow, AI cost this month, AI tokens this month, AI requests today); per plant also open tasks and health (disabled by default). |
 | `services.py` | Actions `plant_garden.log_watering` (plant devices: litres each; zone devices: minutes), `plant_garden.refresh_weather`, `plant_garden.identify_plant` (newest photos of a plant device, optional response), `plant_garden.ask_assistant` (answer as response), `plant_garden.create_task` and `plant_garden.add_photo` (file in an allowed folder or camera snapshot). |
 | `et0.py` | FAO-56 Penman-Monteith (daily, with FAO fallbacks for missing humidity, wind, radiation) and Hargreaves-Samani; tested against the FAO-56 worked examples. |
@@ -50,7 +50,7 @@ Browser (HA frontend)                              Home Assistant core
 | `ai/providers/` | `anthropic.py` (Messages API, structured output, prompt caching), `openai_compat.py` (OpenAI, OpenRouter, Ollama, LM Studio, any compatible URL; presets), `gemini.py` (generateContent, response schema), `ha_ai_task.py` (`ai_task.generate_data` with photos as media-source attachments; HA reports no tokens), `plantnet.py` (species candidates, no retries because failed calls cost credits). Each maps its usage fields to `Usage` (D-027); the three HTTP language models also stream (`async_stream`, server-sent events via `http.async_stream`). |
 | `ai/pricing.py`, `ai/pricing_defaults.json` | Prices per provider kind and model (USD per million tokens, as of 2026-11-08, with sources), prefix match for dated model ids, user overrides, cost of a call, rough estimate before a call. |
 | `ai/schemas.py`, `ai/prompts/` | Strict JSON schema of an identification and its cleaning; versioned prompts (`identify-1`) in German and English. |
-| `ai/service.py` | `AIService`: builds providers from subentries, budget check before every call, usage log, one JSON repair retry, Pl@ntNet first then the language model with the candidates, suggestions per field (never over user values), accept/reject, usage summary, daily purge of old log rows, status per provider (Store `plant_garden.ai`). |
+| `ai/service.py` | `AIService`: builds providers from subentries, budget check before every call, usage log, one JSON repair retry, Pl@ntNet first then the language model with the candidates, suggestions per field (never over user values), accept/reject, usage summary, daily purge of old log rows, status per provider (Store `plant_garden.ai`); a rejected key raises the repair issue `ai_auth_<subentry>` until the next successful call or test. |
 | `ai/flow.py` | Subentry flow `ai`: Home Assistant AI task entity, OpenAI-compatible (preset, URL), Anthropic, Gemini or Pl@ntNet; the key is tested before saving, then the model is picked from the provider's list. |
 | `media_source.py` | Media source `plant_garden`: plant photos (medium WebP) for `ai_task` attachments and HA's media browser. |
 | `websocket_ai.py` | The `ai/*` and `tech/info` commands below. |
@@ -59,6 +59,8 @@ Browser (HA frontend)                              Home Assistant core
 | `ai/context.py` | Compact, deterministically shortened JSON context per feature budget (D-030). |
 | `ai/assistant.py` | `Assistant`: diagnosis of a problem (photos + context, follow-up photo task), tips with tasks to take over and questions, chat with streaming, opt-in weekly check (Mondays 08:00); tips in Store `plant_garden.assistant`. |
 | `ai/prompts/assistant.py` | Versioned prompts (`diagnose-1`, `tips-1`, `chat-1`, `digest-1`) in German and English with the shared rules of spec 6.4. |
+| `diagnostics.py` | Config entry diagnostics: counts, options, subentries, storage, weather and AI status, recent AI errors; keys, coordinates, URLs, entity ids and prompts redacted. |
+| `backup.py` | Backup platform: `async_pre_backup` checkpoints SQLite and saves the Store. |
 | `websocket_care.py` | The `care/*`, `tasks/*`, `problems/*`, `questions/*` and `assistant/*` commands below; the chat is a subscription. |
 | `runtime.py` | `PlantGardenData` (manager, irrigation tracker, water coordinator, AI service) in `entry.runtime_data`; `get_manager`, `get_irrigation`, `get_water`, `get_ai`. |
 | `brand/` | `icon.png`, `icon@2x.png` (generated by `scripts/generate_brand.py`). |

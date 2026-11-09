@@ -19,12 +19,13 @@ from typing import Any
 from homeassistant.components.recorder import get_instance, history
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN, UnitOfVolume
 from homeassistant.core import CALLBACK_TYPE, Event, EventStateChangedData, HomeAssistant, callback
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import entity_registry as er, issue_registry as ir
 from homeassistant.helpers.event import (
     async_track_state_change_event,
     async_track_time_change,
     async_track_time_interval,
 )
+from homeassistant.helpers.start import async_at_started
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 from homeassistant.util.ulid import ulid_now
@@ -168,6 +169,7 @@ class IrrigationTracker:
         self._unsub_states: CALLBACK_TYPE | None = None
         self._watched: dict[str, str] = {}  # zone id -> entity id currently tracked
         self._summary: dict[str, Any] = {"plants": {}, "zones": {}}
+        self._missing: set[str] = set()  # zones with a repair issue for missing entities
 
     # ------------------------------------------------------------ lifecycle
     async def async_start(self) -> None:
@@ -187,6 +189,43 @@ class IrrigationTracker:
             async_track_time_change(self.hass, self._async_midnight, hour=0, minute=0, second=5)
         )
         await self.async_refresh_summary()
+        # entities appear while Home Assistant starts: check them once it has
+        self._unsubs.append(async_at_started(self.hass, self._check_entities))
+
+    @callback
+    def _check_entities(self, _hass: HomeAssistant | None = None) -> None:
+        """A repair issue for every zone whose linked entities no longer exist."""
+        registry = er.async_get(self.hass)
+        missing: set[str] = set()
+        for zone in self._manager.zones():
+            linked = zone.irrigation
+            if linked is None:
+                continue
+            gone = [
+                entity_id
+                for entity_id in (linked.entity_id, linked.timer_entity_id, linked.meter_entity_id)
+                if entity_id
+                and self.hass.states.get(entity_id) is None
+                and registry.async_get(entity_id) is None
+            ]
+            if not gone:
+                continue
+            missing.add(zone.id)
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                f"missing_entity_{zone.id}",
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key="missing_entity",
+                translation_placeholders={
+                    "zone": zone.label or zone.id,
+                    "entities": ", ".join(gone),
+                },
+            )
+        for zone_id in self._missing - missing:
+            ir.async_delete_issue(self.hass, DOMAIN, f"missing_entity_{zone_id}")
+        self._missing = missing
 
     async def async_stop(self) -> None:
         for unsub in self._unsubs:
@@ -224,6 +263,8 @@ class IrrigationTracker:
     def _on_garden_change(self, change: Any) -> None:
         if change.kind != "layout":
             return
+        if self.hass.is_running:
+            self._check_entities()
         entities = self._zone_entities()
         changed = {
             zone_id

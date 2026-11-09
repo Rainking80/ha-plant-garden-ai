@@ -404,3 +404,19 @@ minutes), because automations know devices, not internal plant ids.
 - All of it goes through `AIService.async_generate`: budget check, usage log,
   costs, one JSON repair retry. Nothing runs without a user action except the
   opt-in weekly check.
+
+## D-031 Diagnostics, backups and repairs (2026-11-09)
+
+- **Diagnostics** contain counts, options, subentries, storage sizes, weather and
+  AI status and the last ten failed AI calls. Redacted: keys (fully, not even
+  masked), coordinates, URLs, entity ids, file paths, prompts and answers - a
+  diagnostics file is often posted publicly.
+- **Backup platform**: `async_pre_backup` checkpoints the SQLite WAL and saves the
+  Store, so a backup taken while the garden is in use restores consistently.
+  Nothing has to be undone afterwards.
+- **Repairs** instead of a reauth flow for AI keys: Home Assistant offers no reauth
+  for config subentries, and a rejected key of one provider must not disable the
+  garden. The issue names the provider, points to "New key or model" and is
+  removed after the next successful call or connection test. A zone whose linked
+  valve, timer or meter is neither a state nor in the entity registry gets an
+  issue once Home Assistant has started (entities appear during start-up).

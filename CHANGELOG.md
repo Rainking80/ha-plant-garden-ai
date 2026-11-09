@@ -8,6 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M8 polish:
+  - Diagnostics (integration menu → Download diagnostics): counts, settings,
+    weather and AI status, recent AI errors – without keys, coordinates or entity
+    ids.
+  - Backups: the database is checkpointed before Home Assistant creates a backup.
+  - Repairs: a rejected AI key and an irrigation zone whose linked entity no
+    longer exists now appear under Settings → Repairs (and disappear when fixed).
+  - User guide in English and German (`docs/USER_GUIDE.md`), FAQ, key links and
+    how to delete all data in the README.
 - M7 garden assistant:
   - Tasks (water, fertilise, prune, repot, check for pests, harvest, take a photo,
     other) with due date, repetition every N days or weeks (from the day it was

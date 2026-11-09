@@ -132,6 +132,14 @@
     "budget_exceeded": {
       "title": "KI-Monatsbudget verbraucht",
       "description": "Plant Garden hat in diesem Monat {spent} von {budget} {currency} für KI ausgegeben. Ist der Stopp eingeschaltet, gibt es bis zum nächsten Monat keine KI-Aufrufe mehr."
+    },
+    "ai_auth": {
+      "title": "KI-Anbieter {provider}: Key abgelehnt",
+      "description": "Der Anbieter hat den Key nicht akzeptiert. Öffne Plant Garden unter Einstellungen → Geräte & Dienste, wähle den Anbieter und „Neuer Key oder Modell“. Der Hinweis verschwindet nach dem nächsten erfolgreichen Aufruf oder Verbindungstest."
+    },
+    "missing_entity": {
+      "title": "Bewässerungszone {zone}: Entität fehlt",
+      "description": "Die Zone ist mit {entities} verknüpft, die es nicht mehr gibt. Läufe dieser Zone werden nicht erfasst. Öffne den Gartenplan im Bearbeitungsmodus und verknüpfe die Zone neu (oder entferne sie)."
     }
   },
   "exceptions": {
