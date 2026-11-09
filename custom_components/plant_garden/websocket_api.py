@@ -79,6 +79,24 @@ GEOMETRY = probatio.Any(
             probatio.Length(min=3, max=500),
         ),
     },
+    {
+        # a sprinkler: compass bearing of the arc's first edge, angle clockwise from it
+        probatio.Required("type"): "sector",
+        probatio.Required("cx"): COORD,
+        probatio.Required("cy"): COORD,
+        probatio.Required("r"): LENGTH_M,
+        probatio.Required("start"): _number(0, 360),
+        probatio.Required("sweep"): _number(1, 360),
+    },
+    {
+        # a drip line and the width of the strip it wets
+        probatio.Required("type"): "line",
+        probatio.Required("points"): probatio.All(
+            [probatio.All([COORD], probatio.Length(min=2, max=2))],
+            probatio.Length(min=2, max=500),
+        ),
+        probatio.Required("width"): _number(0.05, 10),
+    },
 )
 
 PLANT_IDS = probatio.All([str], probatio.Length(max=1000))
@@ -91,6 +109,7 @@ IRRIGATION = {
     probatio.Optional("rate_mm_h"): probatio.Any(None, _number(0.1, 500)),
     probatio.Optional("flow_l_min"): probatio.Any(None, _number(0.01, 1000)),
     probatio.Optional("drip_l_h"): probatio.Any(None, _number(0.1, 500)),
+    probatio.Optional("flow_l_h_m"): probatio.Any(None, _number(0.1, 500)),
     probatio.Optional("efficiency"): probatio.Any(None, _number(0.1, 1)),
     probatio.Optional("include"): PLANT_IDS,
     probatio.Optional("exclude"): PLANT_IDS,

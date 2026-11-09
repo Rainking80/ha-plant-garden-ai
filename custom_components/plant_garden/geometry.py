@@ -3,6 +3,9 @@
 Geometries are the dicts stored on shapes (see models.Shape). The panel has the
 same logic in frontend/src/util/geometry.ts and util/coverage.ts; both sample
 the same grid, so they agree on which plants a zone covers.
+
+Plan coordinates are metres, x east and y south. Angles of a sprinkler's sector
+are compass bearings: degrees clockwise from north (up on the plan).
 """
 
 from __future__ import annotations
@@ -12,7 +15,7 @@ from dataclasses import dataclass
 import math
 from typing import Any
 
-from .models import Plant, PlantCategory, Shape, ShapeKind
+from .models import Emitter, Irrigation, Plant, PlantCategory, Shape, ShapeKind
 
 Geometry = dict[str, Any]
 
@@ -69,21 +72,65 @@ def _point_in_polygon(points: list[list[float]], x: float, y: float) -> bool:
     return inside
 
 
+def bearing(cx: float, cy: float, x: float, y: float) -> float:
+    """Compass bearing (0 to 360, clockwise from north) from (cx, cy) towards (x, y)."""
+    return math.degrees(math.atan2(x - cx, cy - y)) % 360
+
+
+def _in_sweep(g: Geometry, angle: float) -> bool:
+    return bool(g["sweep"] >= 360 or (angle - g["start"]) % 360 <= g["sweep"])
+
+
+def _arc_point(g: Geometry, angle: float) -> tuple[float, float]:
+    rad = math.radians(angle)
+    return g["cx"] + g["r"] * math.sin(rad), g["cy"] - g["r"] * math.cos(rad)
+
+
+def _segment_distance(x: float, y: float, a: list[float], b: list[float]) -> float:
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    length = dx * dx + dy * dy
+    t = 0.0 if length == 0 else max(0.0, min(1.0, ((x - a[0]) * dx + (y - a[1]) * dy) / length))
+    return math.hypot(x - (a[0] + t * dx), y - (a[1] + t * dy))
+
+
+def line_length(g: Geometry) -> float:
+    """Length of a drip line in metres."""
+    points = g["points"]
+    return float(sum(math.dist(points[i], points[i + 1]) for i in range(len(points) - 1)))
+
+
 def contains(g: Geometry, x: float, y: float) -> bool:
-    if g["type"] == "circle":
+    kind = g["type"]
+    if kind == "circle":
         return bool(math.hypot(x - g["cx"], y - g["cy"]) <= g["r"])
-    if g["type"] == "rect":
+    if kind == "rect":
         lx, ly = _to_rect_local(g, x, y)
         return bool(abs(lx) <= g["w"] / 2 and abs(ly) <= g["h"] / 2)
+    if kind == "sector":
+        if math.hypot(x - g["cx"], y - g["cy"]) > g["r"]:
+            return False
+        return _in_sweep(g, bearing(g["cx"], g["cy"], x, y))
+    if kind == "line":
+        points = g["points"]
+        half = g["width"] / 2
+        return any(
+            _segment_distance(x, y, points[i], points[i + 1]) <= half
+            for i in range(len(points) - 1)
+        )
     return _point_in_polygon(g["points"], x, y)
 
 
 def area(g: Geometry) -> float:
-    """Area in m²."""
-    if g["type"] == "circle":
+    """Area in m² (for a drip line: the strip it wets)."""
+    kind = g["type"]
+    if kind == "circle":
         return float(math.pi * g["r"] ** 2)
-    if g["type"] == "rect":
+    if kind == "rect":
         return float(g["w"] * g["h"])
+    if kind == "sector":
+        return float(math.pi * g["r"] ** 2 * min(g["sweep"], 360) / 360)
+    if kind == "line":
+        return line_length(g) * float(g["width"])
     points = g["points"]
     total = 0.0
     for i, (x1, y1) in enumerate(points):
@@ -94,8 +141,19 @@ def area(g: Geometry) -> float:
 
 def bounds(g: Geometry) -> tuple[float, float, float, float]:
     """min x, min y, max x, max y."""
-    if g["type"] == "circle":
+    if g["type"] == "circle" or (g["type"] == "sector" and g["sweep"] >= 360):
         return g["cx"] - g["r"], g["cy"] - g["r"], g["cx"] + g["r"], g["cy"] + g["r"]
+    if g["type"] == "sector":
+        # the sprinkler, both ends of the arc and the compass points the arc passes
+        angles = [g["start"], g["start"] + g["sweep"]]
+        angles += [a for a in (0, 90, 180, 270) if _in_sweep(g, a)]
+        ends = [(g["cx"], g["cy"]), *(_arc_point(g, a) for a in angles)]
+        xs, ys = [p[0] for p in ends], [p[1] for p in ends]
+        return min(xs), min(ys), max(xs), max(ys)
+    if g["type"] == "line":
+        half = g["width"] / 2
+        xs, ys = [p[0] for p in g["points"]], [p[1] for p in g["points"]]
+        return min(xs) - half, min(ys) - half, max(xs) + half, max(ys) + half
     if g["type"] == "rect":
         corners = []
         angle = math.radians(float(g.get("rotation", 0)))
@@ -192,3 +250,23 @@ def zone_coverage(zone: Shape, prints: dict[str, Footprint]) -> dict[str, float]
         if share > 0:
             result[plant_id] = share
     return result
+
+
+def precipitation_rate(settings: Irrigation, geometry: Geometry) -> float | None:
+    """Water over the zone in mm/h before efficiency (the panel computes the same).
+
+    The rate itself; for a drip line its flow per metre over the wetted strip
+    (L/h per m ÷ width in m = mm/h); else the total flow spread over the area,
+    PR = Q · 60 / A. None for drippers (they water plants, not an area) and
+    when nothing is set.
+    """
+    if settings.emitter is Emitter.DRIP:
+        return None
+    if settings.rate_mm_h is not None:
+        return settings.rate_mm_h
+    if settings.flow_l_h_m is not None and geometry["type"] == "line":
+        return float(settings.flow_l_h_m / geometry["width"])
+    zone_area = area(geometry)
+    if settings.flow_l_min is not None and zone_area > 0:
+        return settings.flow_l_min * 60 / zone_area
+    return None

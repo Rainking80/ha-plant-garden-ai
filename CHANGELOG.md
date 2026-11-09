@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Plan: sprinklers, circular sprinklers and drip lines (edit tool bar →
+  Irrigation). A sprinkler shows its symbol and the area it waters in transparent
+  blue; drag the ends of the arc for the angle (45° to start) and its middle for
+  reach and direction. A circular sprinkler has only a reach. A drip line is a blue
+  pipe laid point by point; its points can be moved, added and removed, and its
+  water can be given in L/h per metre. Each is an irrigation zone; several on one
+  valve share a water meter in proportion to their flow.
 - Move a garden to another Home Assistant: the Tech tab exports plan, plants,
   measurements and open tasks as JSON and imports such a file into an empty
   garden – at the same place on the map (no photos, history or keys).

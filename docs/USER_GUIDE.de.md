@@ -39,10 +39,25 @@ fällig; ein roter Punkt zeigt ein offenes Problem.
 
 ## 3. Bewässerung
 
-Im Bearbeitungsmodus in der Werkzeugleiste **Bewässerungszone** wählen, die Fläche
-zeichnen und rechts mit dem Ventil, Schalter oder Input-Boolean
-verknüpfen, der sie bewässert. Optional: ein Timer (Restlaufzeit im Plan) und ein
-Wasserzähler (echte Liter statt Schätzung). Regner, Versenkregner, Tropfschlauch,
+Im Bearbeitungsmodus bietet die Gruppe **Bewässerung** in der Werkzeugleiste:
+
+- **Rasensprenger**: dort tippen, wo er steht – er bewässert 45° nach Norden –
+  oder von dort in die Richtung ziehen, in die er wirft. Die beiden Punkte an den
+  Enden des Bogens ändern den Winkel, der blaue Punkt in der Mitte Reichweite und
+  Richtung, der Regner selbst lässt sich verschieben.
+- **Kreisregner**: tippen oder bis zur Reichweite ziehen; der blaue Punkt ändert
+  die Reichweite.
+- **Tropfschlauch**: Punkt für Punkt entlang des Schlauchs tippen und zum Beenden
+  den letzten Punkt noch einmal antippen (oder Doppelklick, Enter). Punkte lassen
+  sich verschieben, der kleine Punkt zwischen zweien fügt einen ein, Doppelklick
+  entfernt einen. Die Wassermenge geht in L/h je Meter Schlauch; die benetzte
+  Breite ist anfangs 0,4 m.
+- **Bewässerungsfläche**: eine beliebige Fläche zeichnen, die ein Ventil bewässert.
+
+Danach rechts das Ventil, den Schalter oder Input-Boolean verknüpfen. Mehrere
+Regner an einem Ventil verknüpfen jeweils denselben Schalter. Optional: ein Timer
+(Restlaufzeit im Plan) und ein Wasserzähler (echte Liter statt Schätzung; Regner
+an einem Zähler teilen sich seine Liter). Regner, Versenkregner, Tropfschlauch,
 Tropfer pro Pflanze oder „von Hand“ und die Niederschlagsrate oder Durchflussmenge
 wählen.
 

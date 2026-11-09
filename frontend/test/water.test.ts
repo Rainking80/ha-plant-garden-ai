@@ -56,6 +56,7 @@ const ZONE: Shape = {
     rate_mm_h: 15,
     flow_l_min: null,
     drip_l_h: null,
+    flow_l_h_m: null,
     efficiency: null,
     include: [],
     exclude: [],

@@ -479,3 +479,25 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
 - **HTTP, not WebSocket**, administrators only: the file can be several MB with a
   background picture; uploads stream with a 64 MB limit. Entity links that do not
   exist in the new Home Assistant show up as repair issues (D-031).
+
+## D-036 Sprinklers and drip lines are zones with their own shapes (2026-11-09)
+
+- **Sprinkler**: a zone whose geometry is a sector, `{"type": "sector", cx, cy, r,
+  start, sweep}` – the sprinkler's position, its reach, the compass bearing of the
+  arc's first edge (clockwise from north) and the arc's angle clockwise from there.
+  360° is a circular sprinkler. A new one starts with 45° pointing north, or aimed
+  where the user dragged. The plan shows the wedge in transparent blue with a symbol
+  at the sprinkler; the ends of the arc set the angle, its middle the reach and
+  direction; the zone settings offer the same as numbers (keyboard).
+- **Drip line**: a zone whose geometry is a line laid from point to point,
+  `{"type": "line", points, width}`, with the width of the strip it wets (0.4 m to
+  start). Its water can be given per metre of hose: rate in mm/h = L/h per metre ÷
+  width, so the estimate follows the hose when it gets longer.
+- **One shape per sprinkler**: several sprinklers on one valve are several zones
+  linked to the same entity – the tracker already follows one entity for several
+  zones. A water meter they share splits each reading in proportion to their
+  estimated flow (area × rate, the area when a rate is missing) instead of giving
+  every zone the whole amount. Grouping sprinklers under one valve with shared
+  sensors can follow if it is needed.
+- Coverage, areas and water per plant use the same point-in-shape, area and bounds
+  functions as for areas, in the backend and the panel alike.

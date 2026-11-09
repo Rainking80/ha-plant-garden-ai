@@ -36,8 +36,8 @@ Browser (HA frontend)                              Home Assistant core
 | `serialize.py` | JSON shapes for the panel; signs photo URLs (`async_sign_path`, 24 h). |
 | `websocket_api.py` | Commands below; `garden_command` decorator maps `NotFoundError` → `not_found`, `ValueError` → `invalid_format`, missing entry → `not_loaded`. |
 | `panel.py` | Serves `frontend/` under `/plant_garden_static`, registers the panel with a content-hash cache buster. |
-| `geometry.py` | Point-in-shape, areas, footprints of plants (linked areas or crown circle) and zone coverage on a 16 × 16 sample grid (same as the panel's `util/coverage.ts`). |
-| `irrigation.py` | `IrrigationTracker`: follows the entities linked to zones (`async_track_state_change_event`), persists open runs (Store `plant_garden.irrigation`), fills gaps from the recorder history on start, ignores runs under 5 s, marks runs ended by `unavailable` as uncertain, raises a repair issue for runs longer than the option `max_runtime_hours` and one for zones whose linked entities no longer exist (checked once HA has started and on layout changes), fires `plant_garden_irrigation_finished`. `distribute` turns a run into litres per plant (D-024). Keeps the water summary for the panel and the sensors. |
+| `geometry.py` | Point-in-shape, areas and bounds of all geometry types (also sprinkler sectors and drip lines), footprints of plants (linked areas or crown circle), zone coverage on a 16 × 16 sample grid (same as the panel's `util/coverage.ts`) and `precipitation_rate` of a zone (rate, flow per metre of a drip line, or flow over the area). |
+| `irrigation.py` | `IrrigationTracker`: follows the entities linked to zones (`async_track_state_change_event`), persists open runs (Store `plant_garden.irrigation`), fills gaps from the recorder history on start, ignores runs under 5 s, marks runs ended by `unavailable` as uncertain, raises a repair issue for runs longer than the option `max_runtime_hours` and one for zones whose linked entities no longer exist (checked once HA has started and on layout changes), fires `plant_garden_irrigation_finished`. `distribute` turns a run into litres per plant (D-024). Zones on one valve that share a water meter split its reading by their estimated flow (D-036). Keeps the water summary for the panel and the sensors. |
 | `sensor.py` | Sensors per plant (water received in L `total_increasing`, water today, last watering, soil water deficit), per zone (run time and litres today, recommended run time) and for the garden (ET₀ today, rain today, rain tomorrow, AI cost this month, AI tokens this month, AI requests today); per plant also open tasks and health (disabled by default). |
 | `services.py` | Actions `plant_garden.log_watering` (plant devices: litres each; zone devices: minutes), `plant_garden.refresh_weather`, `plant_garden.identify_plant` (newest photos of a plant device, optional response), `plant_garden.ask_assistant` (answer as response), `plant_garden.create_task` and `plant_garden.add_photo` (file in an allowed folder or camera snapshot). |
 | `et0.py` | FAO-56 Penman-Monteith (daily, with FAO fallbacks for missing humidity, wind, radiation) and Hargreaves-Samani; tested against the FAO-56 worked examples. |
@@ -134,8 +134,10 @@ Plan coordinates are metres east (x) and south (y) of the origin (D-017, D-022),
 at most 10 km (`const.PLAN_EXTENT_M`); `geo.py` mirrors the panel's projection
 helpers in `util/wms.ts`. Shape
 geometry is one of `rect` (centre, width, height, rotation in degrees clockwise),
-`circle` (centre, radius) or `polygon` (3–500 points), validated in
-`websocket_api.GEOMETRY`. Deleting a plant unlinks shapes that referenced it.
+`circle` (centre, radius), `polygon` (3–500 points), `sector` (a sprinkler:
+position, reach, compass bearing of the arc's first edge and its angle, 360 for a
+full circle) or `line` (a drip line: 2–500 points and the width of the wetted
+strip), validated in `websocket_api.GEOMETRY` (D-036). Deleting a plant unlinks shapes that referenced it.
 
 ### Photo flow
 
@@ -149,7 +151,7 @@ geometry is one of `rect` (centre, width, height, rotation in degrees clockwise)
 - Routing: HA passes `route.path`; `""` → garden plan, `/plan/<id>` → plan centred on a plant, `/plants` → plant list, `/plants/<id>` → detail, `/water` → water and weather (`views/water-view.ts`: rain/ET₀ chart with forecast, soil water of every plant, zone advice, source status, refresh; a setup hint without sources), `/tech` → tech page (admins). Tabs switch between the views; "back" from a plant returns to whichever was used last. Navigation uses `history.pushState` + `location-changed`, so the browser back button and deep links work.
 - Garden plan (`views/garden-view.ts` + `components/garden-canvas.ts`):
   - The canvas is one SVG whose user units are metres. **Pan and zoom never re-render Lit**: they set the `viewBox`, a `--mpp` (metres per pixel) CSS variable used for constant-size strokes, labels and handles, and redraw the grid path directly. Zoom-dependent minimum sizes re-render once zooming pauses.
-  - Pointer Events for mouse, pen and touch (`touch-action: none`), two-finger pinch, wheel zoom around the cursor. View mode: drag pans, tap/hover shows the info card. Edit mode: drag moves plants and shapes, handles resize rectangles (also rotated), circles, polygon vertices (midpoints insert, double click removes) and crowns; tools draw rectangles, circles and polygons; snapping to a selectable grid (Alt disables).
+  - Pointer Events for mouse, pen and touch (`touch-action: none`), two-finger pinch, wheel zoom around the cursor. View mode: drag pans, tap/hover shows the info card. Edit mode: drag moves plants and shapes, handles resize rectangles (also rotated), circles, polygon and drip line vertices (midpoints insert, double click removes), sprinkler arcs (ends: angle, middle: reach and direction) and crowns; tools draw rectangles, circles, polygons and freehand areas, place sprinklers (tap, or drag to aim) and lay drip lines point by point; snapping to a selectable grid (Alt disables).
   - Placing plants: tray in edit mode; mouse/pen drag a plant onto the plan, touch taps the plant and then its spot.
   - Every change is a `Command` in `util/history.ts` (undo/redo, Ctrl+Z/Y) that updates the store optimistically, calls the backend and rolls back with a message on failure.
   - The viewport and grid choice are stored per device in `localStorage` (`plant-garden.viewport.v1`, `plant-garden.snap.v1`); the first visit fits the whole garden.

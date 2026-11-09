@@ -656,10 +656,11 @@ export const de: Translations = {
   "plan.draw_area": "{name} als Fläche zeichnen",
   "plan.area_for_hint":
     "Zeichne die Fläche von {name} (z. B. die ganze Hecke): freihand, oder wähle Rechteck oder Polygon.",
-  "plan.tool_zone": "Bewässerungszone",
-  "plan.tool_zone_hint": "Fläche zeichnen, die ein Ventil oder Schalter bewässert",
+  "plan.tool_zone": "Bewässerungsfläche",
+  "plan.tool_zone_hint":
+    "Bewässerungsfläche: die Fläche zeichnen, die ein Ventil oder Schalter bewässert",
   "plan.zone_draw_hint":
-    "Bewässerungszone: Ziehe ein Rechteck über die Fläche, die ein Ventil bewässert – oder wähle Kreis, Polygon oder Freihand. Danach rechts das Ventil oder den Schalter verknüpfen.",
+    "Bewässerungsfläche: Ziehe ein Rechteck über die Fläche, die ein Ventil bewässert – oder wähle Kreis, Polygon oder Freihand. Danach rechts das Ventil oder den Schalter verknüpfen.",
   "transfer.title": "Garten übertragen",
   "transfer.hint":
     "Plan, Pflanzen, Messungen und offene Aufgaben als JSON-Datei exportieren und in ein anderes Home Assistant importieren – an derselben Stelle auf der Karte. Fotos, Verlauf, KI-Keys und Einstellungen sind nicht enthalten. Die Datei enthält den Standort des Gartens.",
@@ -677,4 +678,26 @@ export const de: Translations = {
   "transfer.done":
     "Importiert: {plants} Pflanzen, {areas} Flächen, {zones} Bewässerungszonen, {tasks} Aufgaben. Ventile und Sensoren neu verknüpfen, falls sie hier anders heißen.",
   "transfer.not_export": "Das ist kein Plant-Garden-Export.",
+  "plan.irrigation": "Bewässerung",
+  "plan.tool_sprinkler": "Rasensprenger (mit Winkel)",
+  "plan.tool_sprinkler_full": "Kreisregner",
+  "plan.tool_drip_line": "Tropfschlauch",
+  "plan.sprinkler_hint":
+    "Tippe, wo der Rasensprenger steht – oder ziehe von dort in die Richtung, in die er wirft. Danach änderst du Winkel und Reichweite an den Griffpunkten.",
+  "plan.sprinkler_full_hint":
+    "Tippe, wo der Kreisregner steht – oder ziehe von dort bis zum Rand seiner Reichweite.",
+  "plan.drip_line_hint":
+    "Tippe Punkt für Punkt entlang des Schlauchs. Zum Beenden den letzten Punkt noch einmal antippen, doppelklicken oder Enter drücken.",
+  "plan.sprinkler_edit_hint":
+    "Ziehe die beiden Punkte an den Enden des Bogens für den Winkel, den blauen Punkt für Reichweite und Richtung, den Regner selbst zum Verschieben.",
+  "plan.sprinkler_full_edit_hint":
+    "Ziehe den blauen Punkt für die Reichweite, den Regner selbst zum Verschieben.",
+  "plan.drip_line_edit_hint":
+    "Ziehe einen Punkt, um ihn zu verschieben, den kleinen Punkt zwischen zweien, um einen einzufügen; Doppelklick entfernt einen Punkt. Den ganzen Schlauch verschiebst du am Schlauch.",
+  "zone.reach": "Reichweite (m)",
+  "zone.sweep": "Winkel (°)",
+  "zone.heading": "Richtung (0° = N)",
+  "zone.width": "Benetzte Breite (m)",
+  "zone.flow_l_h_m": "L/h je Meter",
+  "zone.length": "Länge {length} m",
 };

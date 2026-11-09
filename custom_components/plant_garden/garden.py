@@ -82,7 +82,7 @@ def _shift_geometry(
     geometry: dict[str, Any], shift: Callable[[float, float], tuple[float, float]]
 ) -> dict[str, Any]:
     """Move a shape's reference points; sizes in metres stay the same."""
-    if geometry["type"] == "polygon":
+    if "points" in geometry:  # polygon, line
         return {**geometry, "points": [list(shift(x, y)) for x, y in geometry["points"]]}
     cx, cy = shift(geometry["cx"], geometry["cy"])
     return {**geometry, "cx": cx, "cy": cy}
@@ -495,7 +495,7 @@ class GardenManager:
         points = [(p.position.x, p.position.y) for p in self._plants.values() if p.position]
         for shape in self._layout.shapes.values():
             geometry = shape.geometry
-            if geometry["type"] == "polygon":
+            if "points" in geometry:  # polygon, line
                 points.extend((x, y) for x, y in geometry["points"])
             else:
                 points.append((geometry["cx"], geometry["cy"]))

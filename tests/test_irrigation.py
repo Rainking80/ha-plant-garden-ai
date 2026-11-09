@@ -29,6 +29,8 @@ from custom_components.plant_garden.geometry import (
     contains,
     crown_diameter,
     footprints,
+    line_length,
+    precipitation_rate,
     share_inside,
     zone_coverage,
 )
@@ -85,6 +87,47 @@ def test_point_in_shapes_and_areas() -> None:
     assert not contains(triangle, 3, 3)
     assert area(triangle) == 8
     assert bounds(triangle) == (0, 0, 4, 4)
+
+
+def test_sprinkler_sectors_and_drip_lines() -> None:
+    # a quarter circle throwing east to south (bearings 90 to 180, y points south)
+    quarter = {"type": "sector", "cx": 0, "cy": 0, "r": 2, "start": 90, "sweep": 90}
+    assert contains(quarter, 1, 1)
+    assert not contains(quarter, 1, -1)  # north-east is outside the arc
+    assert not contains(quarter, 2, 2)  # beyond the reach
+    assert area(quarter) == pytest.approx(math.pi)
+    assert bounds(quarter) == pytest.approx((0, 0, 2, 2))
+    # across north: 315° to 45°
+    north = {"type": "sector", "cx": 0, "cy": 0, "r": 1, "start": 315, "sweep": 90}
+    assert contains(north, 0, -0.5)
+    assert not contains(north, 0, 0.5)
+    assert bounds(north) == pytest.approx((-math.sqrt(0.5), -1, math.sqrt(0.5), 0))
+    full = {**north, "sweep": 360}
+    assert contains(full, 0, 0.9)
+    assert area(full) == pytest.approx(math.pi)
+    assert bounds(full) == (-1, -1, 1, 1)
+
+    hose = {"type": "line", "points": [[0, 0], [4, 0], [4, 3]], "width": 0.5}
+    assert line_length(hose) == 7
+    assert area(hose) == 3.5
+    assert contains(hose, 2, 0.2)
+    assert contains(hose, 4.2, 2)
+    assert not contains(hose, 2, 0.3)
+    assert bounds(hose) == (-0.25, -0.25, 4.25, 3.25)
+
+
+def test_drip_line_flow_per_metre() -> None:
+    hose = {"type": "line", "points": [[-2, 0], [2, 0]], "width": 0.5}
+    zone = _zone(hose, emitter=Emitter.DRIP_LINE, flow_l_h_m=5, efficiency=1)
+    assert zone.irrigation is not None
+    assert precipitation_rate(zone.irrigation, hose) == 10  # 5 L/h per m over 0.5 m
+    prints = footprints([_plant("A", 0, 0, crown=0.5), _plant("far", 0, 3)], [])
+    source, liters, depth, plants = distribute(zone, 1, prints)
+    assert (source, liters, depth) == (WaterSource.ESTIMATE, 20, 10)  # 5 L/h x 4 m
+    assert [p.plant_id for p in plants] == ["A"]
+    # flow per metre only means something for a line
+    assert precipitation_rate(Irrigation(flow_l_h_m=5), SQUARE) is None
+    assert precipitation_rate(Irrigation(emitter=Emitter.DRIP, rate_mm_h=5), SQUARE) is None
 
 
 def test_crown_diameter_falls_back_to_width_and_category() -> None:
@@ -288,6 +331,71 @@ async def test_meter_counts_real_litres(
     [event] = await manager.async_recent_events()
     assert event.source is source
     assert event.liters == pytest.approx(liters, abs=0.001)
+
+
+async def test_sprinklers_on_one_valve_share_the_meter(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory, loaded_entry: MockConfigEntry
+) -> None:
+    freezer.move_to(START)
+    manager: GardenManager = loaded_entry.runtime_data.manager
+    hass.states.async_set(VALVE, "off")
+    hass.states.async_set("sensor.meter", "100", {"unit_of_measurement": "L"})
+    settings = {**ZONE_DATA["irrigation"], "meter_entity_id": "sensor.meter"}  # type: ignore[dict-item]
+    big = {"type": "sector", "cx": 0, "cy": 0, "r": 4, "start": 0, "sweep": 90}
+    small = {"type": "sector", "cx": 10, "cy": 0, "r": 4, "start": 0, "sweep": 30}
+    first = await manager.async_save_shape({**ZONE_DATA, "geometry": big, "irrigation": settings})
+    second = await manager.async_save_shape(
+        {**ZONE_DATA, "geometry": small, "irrigation": settings}
+    )
+    await hass.async_block_till_done()
+    hass.states.async_set(VALVE, "on")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=5))
+    hass.states.async_set("sensor.meter", "140", {"unit_of_measurement": "L"})
+    hass.states.async_set(VALVE, "off")
+    await hass.async_block_till_done()
+    liters = {event.zone_id: event.liters for event in await manager.async_recent_events()}
+    # 40 litres in all, shared 3 : 1 like the sprinklers' areas at the same rate
+    assert liters == {first.id: pytest.approx(30), second.id: pytest.approx(10)}
+
+
+async def test_sprinkler_and_drip_line_shapes_are_validated(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, loaded_entry: MockConfigEntry
+) -> None:
+    client = await hass_ws_client(hass)
+    good = [
+        {"type": "sector", "cx": 1, "cy": 2, "r": 5, "start": 337.5, "sweep": 45},
+        {"type": "sector", "cx": 1, "cy": 2, "r": 5, "start": 0, "sweep": 360},
+        {"type": "line", "points": [[0, 0], [3, 0]], "width": 0.4},
+    ]
+    bad = [
+        {"type": "sector", "cx": 1, "cy": 2, "r": 5, "start": 0, "sweep": 0},
+        {"type": "sector", "cx": 1, "cy": 2, "r": 5, "start": 400, "sweep": 45},
+        {"type": "line", "points": [[0, 0]], "width": 0.4},
+        {"type": "line", "points": [[0, 0], [3, 0]], "width": 0},
+    ]
+    for geometry in good + bad:
+        await client.send_json_auto_id(
+            {
+                "type": "plant_garden/layout/shapes/save",
+                "shape": {
+                    "kind": "zone",
+                    "geometry": geometry,
+                    "irrigation": {"emitter": "drip_line", "flow_l_h_m": 4},
+                },
+            }
+        )
+        reply = await client.receive_json()
+        assert reply["success"] is (geometry in good), geometry
+    manager: GardenManager = loaded_entry.runtime_data.manager
+    assert manager.layout.origin is not None
+    origin = manager.layout.origin
+    # moving the garden's location keeps the hose where it is on the map
+    await manager.async_set_origin(origin.latitude + 0.00001, origin.longitude)
+    [hose] = [shape for shape in manager.shapes() if shape.geometry["type"] == "line"]
+    assert hose.geometry["points"][0][1] == pytest.approx(1.11, abs=0.01)
+    assert hose.irrigation is not None
+    assert hose.irrigation.flow_l_h_m == 4
 
 
 async def test_open_run_survives_a_restart(

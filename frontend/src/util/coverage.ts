@@ -98,16 +98,20 @@ export function efficiencyOf(irrigation: Pick<Irrigation, "efficiency" | "emitte
 
 /**
  * Precipitation rate over the zone in mm/h (what reaches the ground before
- * efficiency): the rate itself, or the flow spread over the area,
+ * efficiency): the rate itself; for a drip line its flow per metre over the
+ * wetted strip (L/h per m ÷ width = mm/h); or the flow spread over the area,
  * PR = Q · 60 / A. Null for drippers (they water plants, not the area) and
- * when nothing is set.
+ * when nothing is set. Same as precipitation_rate in the backend.
  */
 export function precipitationRate(
-  irrigation: Pick<Irrigation, "rate_mm_h" | "flow_l_min" | "emitter">,
+  irrigation: Pick<Irrigation, "rate_mm_h" | "flow_l_min" | "emitter"> &
+    Partial<Pick<Irrigation, "flow_l_h_m">>,
   geometry: Geometry,
 ): number | null {
   if (irrigation.emitter === "drip") return null;
   if (irrigation.rate_mm_h !== null) return irrigation.rate_mm_h;
+  const perMetre = irrigation.flow_l_h_m ?? null;
+  if (perMetre !== null && geometry.type === "line") return perMetre / geometry.width;
   const a = area(geometry);
   if (irrigation.flow_l_min !== null && a > 0) return (irrigation.flow_l_min * 60) / a;
   return null;

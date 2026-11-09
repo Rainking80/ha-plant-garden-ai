@@ -1,16 +1,18 @@
-import { mdiSprout } from "@mdi/js";
+import { mdiSprinkler, mdiSprinklerVariant, mdiSprout } from "@mdi/js";
 import type { HassEntity } from "home-assistant-js-websocket";
 import { css, html, nothing, svg, type PropertyValues } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 
 import type {
   Geometry,
+  LineGeometry,
   Marker,
   Plant,
   PlantBalance,
   PlantCare,
   Point,
   PolygonGeometry,
+  SectorGeometry,
   Shape,
 } from "../api/types";
 import type { HomeAssistant } from "../types/hass";
@@ -23,20 +25,30 @@ import {
   type ImageBackground,
 } from "../util/wms";
 import {
+  aimSector,
+  arcPoint,
   area,
   crownDiameter,
+  DEFAULT_DRIP_WIDTH,
+  DEFAULT_SWEEP,
   distance,
   fromRectLocal,
   geometryBounds,
   insertPolygonVertex,
   labelPoint,
+  lineLength,
+  lineMiddle,
+  minPoints,
   movePolygonVertex,
+  moveSectorEdge,
+  newSprinkler,
   polygonFromStroke,
   rectCorners,
   rectFromCorners,
   removePolygonVertex,
   resizeRect,
   rotationTowards,
+  sectorPath,
   snap,
   snapPoint,
   translate,
@@ -66,7 +78,23 @@ import { PgElement, define } from "./base";
 export type Mode = "view" | "edit";
 export type Layer = "plan" | "deficit" | "coverage";
 export type Tool =
-  "select" | "rect" | "circle" | "polygon" | "freehand" | "calibrate" | "background";
+  | "select"
+  | "rect"
+  | "circle"
+  | "polygon"
+  | "freehand"
+  | "calibrate"
+  | "background"
+  | "sprinkler"
+  | "sprinkler_full"
+  | "drip_line";
+
+/** Tools that place irrigation: a sprinkler with an arc, a circular sprinkler, a drip line. */
+export const IRRIGATION_TOOLS: readonly Tool[] = ["sprinkler", "sprinkler_full", "drip_line"];
+/** Tools that set points one tap at a time. */
+const POINT_TOOLS: readonly Tool[] = ["polygon", "drip_line"];
+/** Snap steps for a sprinkler's angles (degrees). */
+const ANGLE_STEP = 5;
 
 /** A freehand stroke keeps a point every this many screen pixels and is smoothed to
  * about this many pixels before it becomes a polygon. */
@@ -82,7 +110,11 @@ export type Handle =
   | { kind: "radius" }
   | { kind: "vertex"; index: number }
   | { kind: "midpoint"; index: number }
-  | { kind: "crown" };
+  | { kind: "crown" }
+  /** an edge of a sprinkler's arc (its angle) */
+  | { kind: "arc"; edge: "start" | "end" }
+  /** the middle of a sprinkler's arc (its reach and direction) */
+  | { kind: "reach" };
 
 type Hit =
   | { type: "plant"; id: string }
@@ -90,6 +122,9 @@ type Hit =
   | { type: "marker"; id: string }
   | { type: "handle"; handle: Handle }
   | { type: "empty" };
+
+/** Tools that draw with one drag (a tap places a sprinkler with its defaults). */
+type DrawTool = "rect" | "circle" | "sprinkler" | "sprinkler_full";
 
 type Gesture =
   | { kind: "pending"; startX: number; startY: number; hit: Hit; pointerType: string }
@@ -100,7 +135,7 @@ type Gesture =
   | { kind: "move-background"; from: Point; start: Point }
   | { kind: "shape-handle"; shapeId: string; handle: Handle; from: Geometry }
   | { kind: "crown"; plantId: string; from: number; centre: Point }
-  | { kind: "draw"; tool: "rect" | "circle"; anchor: Point }
+  | { kind: "draw"; tool: DrawTool; anchor: Point; startX: number; startY: number }
   | { kind: "freehand"; points: Point[]; lastX: number; lastY: number }
   | { kind: "pinch"; distance: number; midX: number; midY: number; viewport: Viewport };
 
@@ -178,6 +213,10 @@ const ROTATE_STEP = 15;
 const CLOSE_POLYGON_PX = 14;
 const CLOCK_MS = 15000; // zone timers show whole minutes
 
+function pointList(points: readonly (readonly [number, number])[] | Point[]): string {
+  return points.map((p) => ("x" in p ? `${p.x},${p.y}` : `${p[0]},${p[1]}`)).join(" ");
+}
+
 function parseHandle(value: string): Handle | null {
   const [kind, arg] = value.split(":");
   switch (kind) {
@@ -189,7 +228,10 @@ function parseHandle(value: string): Handle | null {
     case "rotate":
     case "radius":
     case "crown":
+    case "reach":
       return { kind };
+    case "arc":
+      return arg === "start" || arg === "end" ? { kind, edge: arg } : null;
     default:
       return null;
   }
@@ -289,6 +331,9 @@ export class PgGardenCanvas extends PgElement {
   private _wmsRequest = "";
   private _resizeObserver?: ResizeObserver;
   private _clockTimer?: ReturnType<typeof setInterval>;
+  /** When the last polygon or drip line was finished: the double click that did it
+   * must not also remove a vertex of the new shape. */
+  private _finishedAt = 0;
 
   constructor() {
     super();
@@ -374,7 +419,10 @@ export class PgGardenCanvas extends PgElement {
     return planToScreen(this._vp, this._rect(), p);
   }
 
-  /** Finish a polygon that is being drawn (also bound to Enter / double click). */
+  /**
+   * Finish a polygon or drip line that is being drawn (also bound to Enter and
+   * double click; a drip line also to a tap on its last point).
+   */
   finishPolygon(): void {
     // a double click also produced taps: drop vertices that land on the previous one
     const tolerance = Math.max(this._mpp() * 4, 1e-6);
@@ -383,8 +431,21 @@ export class PgGardenCanvas extends PgElement {
     );
     this._polygon = null;
     this._cursor = null;
+    this._finishedAt = Date.now();
+    const coordinates = points.map((p): [number, number] => [p.x, p.y]);
+    if (this.tool === "drip_line") {
+      if (points.length >= 2) {
+        const geometry: LineGeometry = {
+          type: "line",
+          points: coordinates,
+          width: DEFAULT_DRIP_WIDTH,
+        };
+        this.fire("create-shape", { geometry });
+      }
+      return;
+    }
     if (points.length >= 3) {
-      const geometry: PolygonGeometry = { type: "polygon", points: points.map((p) => [p.x, p.y]) };
+      const geometry: PolygonGeometry = { type: "polygon", points: coordinates };
       this.fire("create-shape", { geometry });
     }
   }
@@ -425,7 +486,8 @@ export class PgGardenCanvas extends PgElement {
 
   protected override updated(changed: PropertyValues): void {
     if (changed.has("mode") || changed.has("tool")) {
-      if (this.mode !== "edit" || this.tool !== "polygon") this.cancelDrawing();
+      // switching tools drops a half-drawn shape (also from polygon to drip line)
+      this.cancelDrawing();
       if (this.tool !== "calibrate") this._calibration = [];
     }
     if (changed.has("states") || changed.has("shapes")) {
@@ -655,10 +717,20 @@ export class PgGardenCanvas extends PgElement {
     if (this._pointers.size > 2) return;
 
     const editing = this.mode === "edit" && !this.armed;
-    if (editing && (this.tool === "rect" || this.tool === "circle")) {
+    const tool = this.tool;
+    if (
+      editing &&
+      (tool === "rect" || tool === "circle" || tool === "sprinkler" || tool === "sprinkler_full")
+    ) {
       const anchor = this._point(event);
-      this._gesture = { kind: "draw", tool: this.tool, anchor };
-      this._draft = this._draftGeometry(this.tool, anchor, anchor);
+      this._gesture = {
+        kind: "draw",
+        tool,
+        anchor,
+        startX: event.clientX,
+        startY: event.clientY,
+      };
+      this._draft = this._draftGeometry(tool, anchor, anchor, false);
       return;
     }
     if (editing && this.tool === "freehand") {
@@ -760,10 +832,17 @@ export class PgGardenCanvas extends PgElement {
         this._override = { plantId: gesture.plantId, crown: diameter };
         return;
       }
-      case "draw":
-        this._draft = this._draftGeometry(gesture.tool, gesture.anchor, this._point(event));
-        this._cursor = this._point(event);
+      case "draw": {
+        const dragged =
+          Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY) >=
+          (DRAG_THRESHOLD[event.pointerType] ?? 6);
+        // a sprinkler aims freely; only its position sits on the grid
+        const sprinkler = gesture.tool === "sprinkler" || gesture.tool === "sprinkler_full";
+        const p = this._point(event, !sprinkler);
+        this._draft = this._draftGeometry(gesture.tool, gesture.anchor, p, dragged);
+        this._cursor = p;
         return;
+      }
       case "freehand": {
         if (
           Math.hypot(event.clientX - gesture.lastX, event.clientY - gesture.lastY) < STROKE_STEP_PX
@@ -901,13 +980,20 @@ export class PgGardenCanvas extends PgElement {
       this.finishPolygon();
       return;
     }
-    if (this.mode !== "edit") return;
+    // the second tap of this double click already finished a drip line
+    if (this.mode !== "edit" || Date.now() - this._finishedAt < 700) return;
     const hit = this._hit(event);
-    // double click on a polygon vertex removes it
+    // double click on a vertex of a polygon or drip line removes it
     if (hit.type === "handle" && hit.handle.kind === "vertex" && this.selection?.type === "shape") {
       const shape = this._shape(this.selection.id);
-      if (shape?.geometry.type === "polygon" && shape.geometry.points.length > 3) {
-        const to = removePolygonVertex(shape.geometry, hit.handle.index);
+      const g = shape?.geometry;
+      if (
+        shape &&
+        g &&
+        (g.type === "polygon" || g.type === "line") &&
+        g.points.length > minPoints(g)
+      ) {
+        const to = removePolygonVertex(g, hit.handle.index);
         this.fire<ShapeChangeDetail>("change-shape", {
           shapeId: shape.id,
           from: shape.geometry,
@@ -1022,7 +1108,7 @@ export class PgGardenCanvas extends PgElement {
         if (shape && !shape.locked) {
           let from = shape.geometry;
           let handle = hit.handle;
-          if (handle.kind === "midpoint" && from.type === "polygon") {
+          if (handle.kind === "midpoint" && (from.type === "polygon" || from.type === "line")) {
             // dragging a midpoint inserts a new vertex there
             from = insertPolygonVertex(from, handle.index, start);
             handle = { kind: "vertex", index: handle.index + 1 };
@@ -1074,15 +1160,16 @@ export class PgGardenCanvas extends PgElement {
       }
       return;
     }
-    if (this.mode === "edit" && this.tool === "polygon") {
+    if (this.mode === "edit" && POINT_TOOLS.includes(this.tool)) {
       const p = this._point(event);
       const points = this._polygon ?? [];
-      const first = points[0];
-      if (first && points.length >= 3) {
-        const firstScreen = this.screenPoint(first);
+      // a polygon closes on its first point, a drip line ends on its last one
+      const line = this.tool === "drip_line";
+      const end = line ? points[points.length - 1] : points[0];
+      if (end && points.length >= (line ? 2 : 3)) {
+        const endScreen = this.screenPoint(end);
         if (
-          Math.hypot(firstScreen.x - event.clientX, firstScreen.y - event.clientY) <
-          CLOSE_POLYGON_PX
+          Math.hypot(endScreen.x - event.clientX, endScreen.y - event.clientY) < CLOSE_POLYGON_PX
         ) {
           this.finishPolygon();
           return;
@@ -1143,20 +1230,44 @@ export class PgGardenCanvas extends PgElement {
       const step = event.altKey ? 0 : Math.max(0.05, this.snapStep / 2);
       return { ...from, r: Math.max(0.05, snap(distance({ x: from.cx, y: from.cy }, raw), step)) };
     }
-    if (from.type === "polygon" && handle.kind === "vertex") {
+    if ((from.type === "polygon" || from.type === "line") && handle.kind === "vertex") {
       return movePolygonVertex(from, handle.index, p);
+    }
+    if (from.type === "sector") {
+      const angleStep = event.altKey ? 0 : ANGLE_STEP;
+      if (handle.kind === "arc") {
+        // the current arc decides whether edges that meet make a full circle
+        const current = this._override?.geometry;
+        const previous = current?.type === "sector" ? current.sweep : from.sweep;
+        return moveSectorEdge(from, handle.edge, raw, angleStep, previous);
+      }
+      if (handle.kind === "reach") {
+        const step = event.altKey ? 0 : Math.max(0.05, this.snapStep / 2);
+        return aimSector(from, raw, step, angleStep);
+      }
     }
     return from;
   }
 
-  private _draftGeometry(tool: "rect" | "circle", anchor: Point, current: Point): Geometry {
+  /** The shape being drawn; a sprinkler that was tapped, not dragged, gets its defaults. */
+  private _draftGeometry(
+    tool: DrawTool,
+    anchor: Point,
+    current: Point,
+    dragged: boolean,
+  ): Geometry {
     if (tool === "rect") return rectFromCorners(anchor, current);
-    return { type: "circle", cx: anchor.x, cy: anchor.y, r: distance(anchor, current) };
+    if (tool === "circle") {
+      return { type: "circle", cx: anchor.x, cy: anchor.y, r: distance(anchor, current) };
+    }
+    const sweep = tool === "sprinkler_full" ? 360 : DEFAULT_SWEEP;
+    const g = newSprinkler(anchor, sweep, dragged ? current : null);
+    return { ...g, r: Math.max(0.1, Math.round(g.r * 10) / 10) };
   }
 
   private _bigEnough(g: Geometry): boolean {
     if (g.type === "rect") return g.w >= 0.1 && g.h >= 0.1;
-    if (g.type === "circle") return g.r >= 0.05;
+    if (g.type === "circle" || g.type === "sector") return g.r >= 0.05;
     return true;
   }
 
@@ -1174,7 +1285,24 @@ export class PgGardenCanvas extends PgElement {
     if (g.type === "circle") {
       return svg`<circle class=${cls} cx=${g.cx} cy=${g.cy} r=${g.r}></circle>`;
     }
-    return svg`<polygon class=${cls} points=${g.points.map(([x, y]) => `${x},${y}`).join(" ")}></polygon>`;
+    if (g.type === "sector") return svg`<path class=${cls} d=${sectorPath(g)}></path>`;
+    if (g.type === "line") {
+      // the wetted strip: a stroke as wide as the strip, in plan metres
+      return svg`<polyline class="${cls} strip" points=${pointList(g.points)}
+        style="stroke-width: ${g.width}"></polyline>`;
+    }
+    return svg`<polygon class=${cls} points=${pointList(g.points)}></polygon>`;
+  }
+
+  /** The sprinkler symbol at its position, at a constant size on screen. */
+  private _renderHead(g: SectorGeometry) {
+    return svg`<g class="head" transform="translate(${g.cx} ${g.cy})">
+      <g class="head-scale">
+        <circle class="head-bg" r="12"></circle>
+        <path class="head-icon" d=${g.sweep >= 360 ? mdiSprinkler : mdiSprinklerVariant}
+          transform="translate(-9 -9) scale(0.75)"></path>
+      </g>
+    </g>`;
   }
 
   /** Status classes of a plant drawn as an area (hedge, lawn …), like its crown ring. */
@@ -1241,9 +1369,9 @@ export class PgGardenCanvas extends PgElement {
       .filter(Boolean)
       .join(" · ");
     const label = labelPoint(g);
-    return svg`<g class="shape zone ${running ? "running" : ""} ${selected ? "selected" : ""} ${
-      shape.locked ? "locked" : ""
-    }" data-shape-id=${shape.id}>
+    return svg`<g class="shape zone ${g.type === "sector" ? "sprinkler" : ""} ${running ? "running" : ""} ${
+      selected ? "selected" : ""
+    } ${shape.locked ? "locked" : ""}" data-shape-id=${shape.id}>
       ${this._renderGeometry(g, "body")}
       ${
         // coverage heatmap: more water per hour = stronger blue; overlaps add up
@@ -1251,6 +1379,14 @@ export class PgGardenCanvas extends PgElement {
           ? svg`<g class="coverage" style="opacity: ${Math.min(pr / 30, 1) * 0.7}">${this._renderGeometry(g, "")}</g>`
           : nothing
       }
+      ${
+        // a drip line is a blue pipe, with a wide invisible grip
+        g.type === "line"
+          ? svg`<polyline class="pipe" points=${pointList(g.points)}></polyline>
+              <polyline class="outline-hit" points=${pointList(g.points)}></polyline>`
+          : nothing
+      }
+      ${g.type === "sector" ? this._renderHead(g) : nothing}
       ${text ? svg`<text class="shape-label zone-label" x=${label.x} y=${label.y}>${text}</text>` : nothing}
     </g>`;
   }
@@ -1343,9 +1479,25 @@ export class PgGardenCanvas extends PgElement {
     if (g.type === "circle") {
       return svg`${this._handle("radius", { x: g.cx + g.r, y: g.cy })}${this._renderMeasure(g)}`;
     }
+    if (g.type === "sector") {
+      // the edges of the arc set the angle, its middle the reach and direction;
+      // a circular sprinkler only has a reach
+      const full = g.sweep >= 360;
+      return svg`
+        ${
+          full
+            ? nothing
+            : svg`${this._handle("arc:start", arcPoint(g, g.start), "arc")}
+                ${this._handle("arc:end", arcPoint(g, g.start + g.sweep), "arc")}`
+        }
+        ${this._handle("reach", arcPoint(g, full ? 90 : g.start + g.sweep / 2), "reach")}
+        ${this._renderMeasure(g)}`;
+    }
     const points = g.points;
+    // a polygon's last edge closes it, a line ends at its last point
+    const edges = g.type === "line" ? points.length - 1 : points.length;
     return svg`
-      ${points.map(([x, y], i) => {
+      ${points.slice(0, edges).map(([x, y], i) => {
         const [nx, ny] = points[(i + 1) % points.length] ?? [x, y];
         return this._handle(`midpoint:${i}`, { x: (x + nx) / 2, y: (y + ny) / 2 }, "midpoint");
       })}
@@ -1353,16 +1505,27 @@ export class PgGardenCanvas extends PgElement {
       ${this._renderMeasure(g)}`;
   }
 
+  private _measureText(g: Geometry): string {
+    switch (g.type) {
+      case "rect":
+        return `${this._fmt(g.w)} × ${this._fmt(g.h)} m`;
+      case "circle":
+        return `Ø ${this._fmt(g.r * 2)} m`;
+      case "sector":
+        return g.sweep >= 360
+          ? `Ø ${this._fmt(g.r * 2)} m`
+          : `${this._fmt(g.r)} m · ${formatNumber(g.sweep, this.language, 0)}°`;
+      case "line":
+        return `${this._fmt(lineLength(g))} m`;
+      default:
+        return `${this._fmt(area(g))} m²`;
+    }
+  }
+
   private _renderMeasure(g: Geometry) {
     if (!this._override?.geometry && !this._draft) return nothing;
     const p = labelPoint(g);
-    const text =
-      g.type === "rect"
-        ? `${this._fmt(g.w)} × ${this._fmt(g.h)} m`
-        : g.type === "circle"
-          ? `Ø ${this._fmt(g.r * 2)} m`
-          : `${this._fmt(area(g))} m²`;
-    return svg`<text class="measure" x=${p.x} y=${p.y}>${text}</text>`;
+    return svg`<text class="measure" x=${p.x} y=${p.y}>${this._measureText(g)}</text>`;
   }
 
   private _renderDraft() {
@@ -1371,13 +1534,31 @@ export class PgGardenCanvas extends PgElement {
         points=${this._stroke.map((p) => `${p.x},${p.y}`).join(" ")}></polyline></g>`;
     }
     if (this._draft) {
-      return svg`<g class="draft">${this._renderGeometry(this._draft, "body")}${this._renderMeasure(this._draft)}</g>`;
+      const draft = this._draft;
+      return svg`<g class="draft">${this._renderGeometry(draft, "body")}
+        ${draft.type === "sector" ? this._renderHead(draft) : nothing}
+        ${this._renderMeasure(draft)}</g>`;
     }
     if (this._polygon?.length) {
       const points = this._cursor ? [...this._polygon, this._cursor] : this._polygon;
+      if (this.tool === "drip_line") {
+        // the hose so far; tapping its last point again ends it
+        const last = this._polygon[this._polygon.length - 1];
+        const line: LineGeometry = {
+          type: "line",
+          points: points.map((p) => [p.x, p.y]),
+          width: DEFAULT_DRIP_WIDTH,
+        };
+        return svg`<g class="draft zone">
+          ${this._renderGeometry(line, "body")}
+          <polyline class="pipe" points=${pointList(points)}></polyline>
+          ${last && this._polygon.length >= 2 ? this._handle("close", last, "close") : nothing}
+          ${points.length >= 2 ? svg`<text class="measure" x=${lineMiddle(line).x} y=${lineMiddle(line).y}>${this._measureText(line)}</text>` : nothing}
+        </g>`;
+      }
       const [first] = this._polygon;
       return svg`<g class="draft">
-        <polyline class="body" points=${points.map((p) => `${p.x},${p.y}`).join(" ")}></polyline>
+        <polyline class="body" points=${pointList(points)}></polyline>
         ${first ? this._handle("close", first, "close") : nothing}
       </g>`;
     }
@@ -1834,6 +2015,80 @@ export class PgGardenCanvas extends PgElement {
     .zone .coverage {
       fill: var(--pg-water);
       pointer-events: none;
+    }
+
+    /* ---------------------------------------------- sprinklers and drip lines */
+    /* a sprinkler's throw: clearly blue, also over a green lawn */
+    .zone.sprinkler .body,
+    svg.with-backdrop .zone.sprinkler .body {
+      fill: color-mix(in srgb, var(--pg-water) 30%, transparent);
+    }
+    .zone.sprinkler.running .body {
+      fill: color-mix(in srgb, var(--pg-water) 45%, transparent);
+    }
+    /* a drip line's wetted strip: a stroke as wide as the strip, in plan metres */
+    .shape .body.strip {
+      fill: none;
+      stroke: var(--kind-fill, #c8c8c8);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: none;
+      pointer-events: stroke;
+    }
+    .zone .body.strip,
+    svg.with-backdrop .zone .body.strip,
+    .zone.running .body.strip {
+      fill: none;
+      stroke: color-mix(in srgb, var(--pg-water) 24%, transparent);
+      stroke-dasharray: none;
+      animation: none;
+    }
+    .zone.running .body.strip {
+      stroke: color-mix(in srgb, var(--pg-water) 42%, transparent);
+    }
+    .zone.selected .body.strip,
+    .draft .body.strip {
+      stroke: color-mix(in srgb, var(--pg-accent) 28%, transparent);
+      stroke-dasharray: none;
+    }
+    .coverage .strip {
+      fill: none;
+      stroke: var(--pg-water);
+    }
+    .pipe {
+      fill: none;
+      stroke: var(--pg-water);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+    .zone.selected .pipe {
+      stroke: color-mix(in srgb, var(--pg-water) 70%, var(--pg-accent));
+    }
+    .head-scale {
+      /* the symbol keeps its size on screen while zooming */
+      transform: scale(var(--mpp));
+    }
+    .head-bg {
+      fill: var(--pg-surface);
+      stroke: var(--pg-water);
+      stroke-width: 2;
+    }
+    .head-icon {
+      fill: var(--pg-water);
+    }
+    .zone.running .head-bg {
+      fill: var(--pg-water);
+    }
+    .zone.running .head-icon {
+      fill: #fff;
+    }
+    .zone.selected .head-bg {
+      stroke: var(--pg-accent);
+    }
+    .handle-group.reach .handle {
+      fill: var(--pg-water);
     }
     .plant-label {
       display: none;

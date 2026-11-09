@@ -485,7 +485,7 @@ function moveOrigin(backend: FakeBackend, to: GeoOrigin): void {
   backend.markers = backend.markers.map((marker) => ({ ...marker, ...shift(marker) }));
   backend.shapes = backend.shapes.map((shape) => {
     const g = shape.geometry;
-    if (g.type === "polygon") {
+    if (g.type === "polygon" || g.type === "line") {
       const points = g.points.map(([x, y]) => {
         const p = shift({ x, y });
         return [p.x, p.y] as [number, number];

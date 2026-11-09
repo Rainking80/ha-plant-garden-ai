@@ -34,6 +34,7 @@ function zone(irrigation: Partial<Shape["irrigation"]> = {}): Shape {
       rate_mm_h: null,
       flow_l_min: null,
       drip_l_h: null,
+      flow_l_h_m: null,
       efficiency: null,
       include: [],
       exclude: [],
@@ -89,6 +90,17 @@ describe("coverage (same numbers as the backend's geometry.py)", () => {
     // 8 L/min over 16 m² = 30 mm/h
     expect(precipitationRate({ ...settings, flow_l_min: 8 }, SQUARE)).toBe(30);
     expect(precipitationRate({ ...settings, emitter: "drip", rate_mm_h: 12 }, SQUARE)).toBeNull();
+    // a drip line: 5 L/h per metre over a 0.4 m strip = 12.5 mm/h, whatever its length
+    const hose = {
+      type: "line" as const,
+      points: [
+        [0, 0],
+        [7, 0],
+      ] as [number, number][],
+      width: 0.4,
+    };
+    expect(precipitationRate({ ...settings, flow_l_h_m: 5 }, hose)).toBe(12.5);
+    expect(precipitationRate({ ...settings, flow_l_h_m: 5 }, SQUARE)).toBeNull();
     expect(efficiencyOf(settings)).toBe(0.65);
     expect(efficiencyOf({ ...settings, efficiency: 0.5 })).toBe(0.5);
     expect(rateField("drip")).toBe("drip_l_h");

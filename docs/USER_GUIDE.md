@@ -39,11 +39,25 @@ open problem.
 
 ## 3. Irrigation
 
-In edit mode, choose **Irrigation zone** in the tool bar, draw the area and link
-the valve, switch or input boolean that waters it (on the right). Optional: a
-timer (remaining time on the plan) and a water meter (real
-litres instead of an estimate). Choose the emitter (spray, rotor, drip line,
-drippers per plant, by hand) and its rate or flow.
+In edit mode, the tool bar group **Irrigation** offers:
+
+- **Sprinkler**: tap where it stands – it waters 45° to the north – or drag from
+  there in the direction it throws. Drag the two points at the ends of the arc to
+  change the angle, the blue point in its middle for reach and direction, the
+  sprinkler itself to move it.
+- **Circular sprinkler**: tap or drag to its reach; the blue point changes the
+  reach.
+- **Drip line**: tap point by point along the hose and tap the last point again
+  (or double-click, Enter) to finish. Drag points to move them, the small point
+  between two to add one; double-click removes one. Its water can be given in L/h
+  per metre of hose; the wetted width is 0.4 m to start.
+- **Irrigation area**: draw any area that one valve waters.
+
+Then link the valve, switch or input boolean (on the right). Several sprinklers
+on one valve each link the same switch. Optional: a timer (remaining time on the
+plan) and a water meter (real litres instead of an estimate; sprinklers sharing it
+share its litres). Choose the emitter (spray, rotor, drip line, drippers per plant,
+by hand) and its rate or flow.
 
 Plant Garden **never switches anything**. It records every run, works out how much
 water each plant in the zone received and offers sensors and the binary sensor

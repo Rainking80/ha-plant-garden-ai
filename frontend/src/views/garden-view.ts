@@ -18,10 +18,12 @@ import {
   mdiMapMarkerRemoveOutline,
   mdiOpenInNew,
   mdiPencilOutline,
+  mdiPipe,
   mdiPlus,
   mdiRectangleOutline,
   mdiRedo,
   mdiRulerSquareCompass,
+  mdiSprinkler,
   mdiSprinklerVariant,
   mdiSprout,
   mdiUndo,
@@ -68,7 +70,7 @@ import type { PgBackgroundDialog } from "../components/background-dialog";
 import { PgElement, define, icon } from "../components/base";
 import "../components/entity-picker";
 import type { PgEntityPicker } from "../components/entity-picker";
-import "../components/garden-canvas";
+import { IRRIGATION_TOOLS } from "../components/garden-canvas";
 import type {
   Armed,
   CalibrateDetail,
@@ -123,6 +125,10 @@ import {
   distance,
   insidePlan,
   labelPoint,
+  lineLength,
+  MIN_SWEEP,
+  normaliseAngle,
+  tidyAngle,
   snapPoint,
 } from "../util/geometry";
 import { History, type Command } from "../util/history";
@@ -150,15 +156,19 @@ export function areaKind(category: Plant["category"]): ShapeKind {
 const LAYER_KEY = "plant-garden.layer.v1";
 const LAYERS: readonly Layer[] = ["plan", "deficit", "coverage"];
 
-function defaultIrrigation(): Irrigation {
+/** Settings of a new zone; sprinklers start as rotors, drip lines as drip hoses. */
+function defaultIrrigation(geometry?: Geometry): Irrigation {
+  const emitter: Emitter =
+    geometry?.type === "sector" ? "rotor" : geometry?.type === "line" ? "drip_line" : "spray";
   return {
     entity_id: null,
     timer_entity_id: null,
     meter_entity_id: null,
-    emitter: "spray",
+    emitter,
     rate_mm_h: null,
     flow_l_min: null,
     drip_l_h: null,
+    flow_l_h_m: null,
     efficiency: null,
     include: [],
     exclude: [],
@@ -671,17 +681,21 @@ export class PgGardenView extends PgElement {
   }
 
   private _onCreateShape(event: CustomEvent<{ geometry: Geometry }>): void {
+    // sprinklers and drip lines are always irrigation zones
+    const kind = IRRIGATION_TOOLS.includes(this._tool) ? "zone" : this._newKind;
     const shape: Shape = {
       id: ulid(),
-      kind: this._newKind,
+      kind,
       geometry: event.detail.geometry,
       label: null,
-      plant_id: this._newKind === "zone" ? null : this._areaFor,
+      plant_id: kind === "zone" ? null : this._areaFor,
       soil_type: null,
       locked: false,
-      z: KIND_Z[this._newKind],
-      irrigation: this._newKind === "zone" ? defaultIrrigation() : null,
+      z: KIND_Z[kind],
+      irrigation: kind === "zone" ? defaultIrrigation(event.detail.geometry) : null,
     };
+    // after a sprinkler or drip line, the next area is a bed again
+    if (IRRIGATION_TOOLS.includes(this._tool)) this._newKind = "bed";
     this._tool = "select";
     this._areaFor = null;
     this._selection = { type: "shape", id: shape.id };
@@ -825,6 +839,11 @@ export class PgGardenView extends PgElement {
     this._tool = tool;
     this._armed = null;
     if (!DRAWING_TOOLS.includes(tool)) this._areaFor = null;
+    if (IRRIGATION_TOOLS.includes(tool)) {
+      // place a new one: nothing selected, the zones visible
+      this._selection = null;
+      this._showZonesLayer();
+    }
   }
 
   /** Is an irrigation zone about to be drawn? */
@@ -1102,14 +1121,19 @@ export class PgGardenView extends PgElement {
                 ${this._toolButton("polygon", mdiVectorPolygon, "plan.tool_polygon")}
                 ${this._toolButton("freehand", mdiDraw, "plan.tool_freehand")}
               </div>
-              <div class="group" role="group">
+              <div class="group irrigation" role="group" aria-label=${t("plan.irrigation")}>
+                <span class="label-text group-label">${t("plan.irrigation")}</span>
+                ${this._toolButton("sprinkler", mdiSprinklerVariant, "plan.tool_sprinkler")}
+                ${this._toolButton("sprinkler_full", mdiSprinkler, "plan.tool_sprinkler_full")}
+                ${this._toolButton("drip_line", mdiPipe, "plan.tool_drip_line")}
                 <button
-                  class="seg zone-tool"
+                  class="tool zone-tool"
                   aria-pressed=${this._drawingZone}
                   @click=${this._drawZone}
+                  aria-label=${t("plan.tool_zone")}
                   title=${t("plan.tool_zone_hint")}
                 >
-                  ${icon(mdiSprinklerVariant)}<span>${t("plan.tool_zone")}</span>
+                  ${icon(mdiWaterOutline)}
                 </button>
               </div>
               ${
@@ -1261,10 +1285,21 @@ export class PgGardenView extends PgElement {
     }
   }
 
+  /** The geometry of the selected area or zone, while it can be edited. */
+  private _selectedGeometry(): Geometry | null {
+    const selection = this._selection;
+    if (this._mode !== "edit" || this._tool !== "select" || selection?.type !== "shape") {
+      return null;
+    }
+    const shape = this.store.getShape(selection.id);
+    return shape && !shape.locked ? shape.geometry : null;
+  }
+
   private _renderHint() {
     const { t } = this;
     const armed = this._armed;
     const editing = this._mode === "edit";
+    const selected = this._selectedGeometry();
     let text = "";
     if (armed?.kind === "plant") {
       text = t("plan.place_hint", { name: this.store.getPlant(armed.plantId)?.name ?? "" });
@@ -1275,6 +1310,12 @@ export class PgGardenView extends PgElement {
     } else if (editing && this._farM > PLAN_EXTENT_M) {
       // drawing here would fail, so this beats the drawing instructions
       return this._renderFarHint();
+    } else if (editing && this._tool === "sprinkler") {
+      text = t("plan.sprinkler_hint");
+    } else if (editing && this._tool === "sprinkler_full") {
+      text = t("plan.sprinkler_full_hint");
+    } else if (editing && this._tool === "drip_line") {
+      text = t("plan.drip_line_hint");
     } else if (editing && this._drawingZone) {
       text = t("plan.zone_draw_hint");
     } else if (editing && this._areaFor && DRAWING_TOOLS.includes(this._tool)) {
@@ -1289,6 +1330,12 @@ export class PgGardenView extends PgElement {
       text = t("plan.calibrate_hint");
     } else if (editing && this._tool === "background") {
       text = t("plan.background_hint");
+    } else if (selected?.type === "sector") {
+      text = t(
+        selected.sweep >= 360 ? "plan.sprinkler_full_edit_hint" : "plan.sprinkler_edit_hint",
+      );
+    } else if (selected?.type === "line") {
+      text = t("plan.drip_line_edit_hint");
     } else if (editing && this._farM > 0) {
       return this._renderFarHint();
     } else if (
@@ -1778,6 +1825,108 @@ export class PgGardenView extends PgElement {
     return markerName(this.hass?.states[entityId], entityId);
   }
 
+  /**
+   * A sprinkler's reach, angle and direction, or a drip line's strip and flow,
+   * as numbers (the same as dragging on the plan, and reachable by keyboard).
+   */
+  private _renderEmitterShape(shape: Shape) {
+    const { t, language } = this;
+    const g = shape.geometry;
+    const zone = shape.irrigation;
+    /** A number field; sizes ignore an empty field, a `clearable` one (the flow) is removed. */
+    const number = (
+      label: TranslationKey,
+      value: number | null,
+      step: string,
+      apply: (value: number | null) => void,
+      max: number,
+      clearable = false,
+    ) =>
+      html`<label class="field">
+        <span>${t(label)}</span>
+        <input
+          type="number"
+          min="0"
+          max=${max}
+          step=${step}
+          inputmode="decimal"
+          .value=${value === null ? "" : String(value)}
+          @change=${(e: Event) => {
+            const raw = (e.target as HTMLInputElement).value;
+            // a direction may be 0° (north); everything else must be positive
+            const north = label === "zone.heading" && raw.trim() !== "" && Number(raw) === 0;
+            const parsed = north ? 0 : positive(raw, max);
+            if (parsed !== null || (clearable && raw.trim() === "")) apply(parsed);
+          }}
+        />
+      </label>`;
+    if (g.type === "sector") {
+      const setGeometry = (changes: Partial<typeof g>) =>
+        void this._replaceShape(shape, { ...shape, geometry: { ...g, ...changes } });
+      const full = g.sweep >= 360;
+      const heading = normaliseAngle(g.start + g.sweep / 2);
+      return html`<div class="field-row">
+        ${number("zone.reach", g.r, "0.1", (r) => r && setGeometry({ r }), 5000)}
+        ${number(
+          "zone.sweep",
+          g.sweep,
+          "5",
+          (value) => {
+            if (!value) return;
+            // the direction stays, the arc opens or closes around it
+            const sweep = Math.min(360, Math.max(MIN_SWEEP, Math.round(value)));
+            setGeometry({
+              sweep,
+              start: sweep >= 360 ? 0 : tidyAngle(normaliseAngle(heading - sweep / 2)),
+            });
+          },
+          360,
+        )}
+        ${
+          full
+            ? nothing
+            : number(
+                "zone.heading",
+                Math.round(heading),
+                "5",
+                (value) =>
+                  value !== null &&
+                  setGeometry({ start: tidyAngle(normaliseAngle(value - g.sweep / 2)) }),
+                360,
+              )
+        }
+      </div>`;
+    }
+    if (g.type === "line" && zone) {
+      return html`<div class="field-row">
+          ${number(
+            "zone.width",
+            g.width,
+            "0.05",
+            (width) =>
+              width && void this._replaceShape(shape, { ...shape, geometry: { ...g, width } }),
+            10,
+          )}
+          ${number(
+            "zone.flow_l_h_m",
+            zone.flow_l_h_m,
+            "0.1",
+            (flow) =>
+              void this._replaceShape(shape, {
+                ...shape,
+                irrigation: { ...zone, flow_l_h_m: flow },
+              }),
+            500,
+            true,
+          )}
+        </div>
+        <p class="muted small">
+          ${t("zone.length", { length: formatNumber(lineLength(g), language, 1) })}
+        </p>`;
+    }
+    return nothing;
+  }
+
   private _renderZoneSettings(shape: Shape, zone: Irrigation) {
     const { t, language } = this;
     const set = (changes: Partial<Irrigation>) =>
@@ -1813,7 +1962,7 @@ export class PgGardenView extends PgElement {
     );
     const others = this._plants.filter((plant) => !listed.includes(plant));
     return html`
-      ${pick("entity_id")}
+      ${pick("entity_id")} ${this._renderEmitterShape(shape)}
       <label class="field">
         <span>${t("zone.emitter")}</span>
         <select
@@ -2198,6 +2347,10 @@ export class PgGardenView extends PgElement {
       }
       .label-text {
         color: var(--pg-text-muted);
+      }
+      .group-label {
+        padding: 0 6px 0 8px;
+        font-size: 13px;
       }
       .fit {
         margin-left: auto;
@@ -2607,7 +2760,8 @@ export class PgGardenView extends PgElement {
           border-left: none;
           border-top: 1px solid var(--pg-divider);
         }
-        .seg span {
+        .seg span,
+        .group-label {
           display: none;
         }
         .info {

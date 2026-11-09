@@ -14,7 +14,7 @@ record.
 Plant Garden never switches anything. It reads the state of your valves and
 sensors and offers recommendations as entities for your own automations.
 
-![The garden plan: lawn, terrace, buildings, a beech hedge drawn as one plant, plants with their names and irrigation zones (dashed blue); dashed amber outlines mark plants that need water](docs/images/plan.png)
+![The garden plan: lawn, terrace, buildings, a beech hedge drawn as one plant, plants with their names and irrigation areas (dashed blue); dashed amber outlines mark plants that need water](docs/images/plan.png)
 
 <sub>The demo garden in view mode, shown here without its aerial background.</sub>
 
@@ -49,9 +49,12 @@ sensors and offers recommendations as entities for your own automations.
 - One-time import of plant names from an existing to-do list.
 
 **Irrigation (tracking, not switching)**
-- Draw irrigation zones and link the `valve`, `switch`, `input_boolean` or
-  `binary_sensor` that waters them, optionally a `timer` (remaining time on the
-  plan) and a water meter (real litres instead of an estimate).
+- Place sprinklers with their symbol and the area they water – drag the arc for
+  angle and reach –, circular sprinklers, drip lines laid point by point as blue
+  pipes, or draw any irrigation area.
+- Link each to the `valve`, `switch`, `input_boolean` or `binary_sensor` that
+  waters it, optionally a `timer` (remaining time on the plan) and a water meter
+  (real litres instead of an estimate).
 - Spray heads, rotors, drip lines, drippers per plant or by hand, with typical
   efficiencies.
 - Every run becomes an event with litres per plant – also across restarts, with
@@ -140,8 +143,8 @@ To update, replace the folder and restart again.
    - draw the beds, lawn, hedges and buildings,
    - drag the plants from the list on the right onto the plan, or draw a plant as
      an area (✎ next to it).
-3. For irrigation: **Irrigation zone** in the edit tool bar, draw the area a valve
-   waters, then link the valve.
+3. For irrigation: in the edit tool bar under **Irrigation**, place sprinklers or
+   drip lines (or draw an irrigation area), then link the valve that waters them.
 4. For the water balance: **Settings → Devices & services → Plant Garden → Add
    weather source**.
 5. Optional, for the AI: **Add AI provider** in the same place.

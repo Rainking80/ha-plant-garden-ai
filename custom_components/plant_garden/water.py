@@ -23,7 +23,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .et0 import DayInput, reference_et0
-from .geometry import area, footprints, zone_coverage
+from .geometry import footprints, precipitation_rate, zone_coverage
 from .models import Emitter, Plant, Shape
 from .water_balance import (
     BalanceDay,
@@ -191,10 +191,7 @@ def zone_advice(
             if rate:
                 hours.append(need * areas[pid] / (rate * efficiency))
         else:
-            zone_area = area(zone.geometry)
-            pr = settings.rate_mm_h
-            if pr is None and settings.flow_l_min is not None and zone_area > 0:
-                pr = settings.flow_l_min * 60 / zone_area
+            pr = precipitation_rate(settings, zone.geometry)
             if pr:
                 hours.append(need / (pr * efficiency * coverage[pid]))
     if not hours:

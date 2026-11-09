@@ -187,7 +187,26 @@ export interface PolygonGeometry {
   type: "polygon";
   points: [number, number][];
 }
-export type Geometry = RectGeometry | CircleGeometry | PolygonGeometry;
+/** A sprinkler at (cx, cy) and the part of a circle it waters. */
+export interface SectorGeometry {
+  type: "sector";
+  cx: number;
+  cy: number;
+  r: number;
+  /** compass bearing of the arc's first edge: degrees clockwise from north (up) */
+  start: number;
+  /** angle of the arc, clockwise from `start`; 360 is a full circle */
+  sweep: number;
+}
+/** A drip line laid from point to point, and the strip it wets. */
+export interface LineGeometry {
+  type: "line";
+  points: [number, number][];
+  /** metres */
+  width: number;
+}
+export type Geometry =
+  RectGeometry | CircleGeometry | PolygonGeometry | SectorGeometry | LineGeometry;
 
 export interface Shape {
   id: string;
@@ -277,6 +296,8 @@ export interface Irrigation {
   flow_l_min: number | null;
   /** drippers: litres per hour per plant */
   drip_l_h: number | null;
+  /** a drip line: litres per hour per metre of hose */
+  flow_l_h_m: number | null;
   /** null: DEFAULT_EFFICIENCY of the emitter */
   efficiency: number | null;
   include: string[];

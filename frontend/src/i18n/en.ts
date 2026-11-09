@@ -644,10 +644,10 @@ export const en = {
   "plan.draw_area": "Draw {name} as an area",
   "plan.area_for_hint":
     "Draw the area of {name} (e.g. the whole hedge): freehand, or choose rectangle or polygon.",
-  "plan.tool_zone": "Irrigation zone",
-  "plan.tool_zone_hint": "Draw the area a valve or switch waters",
+  "plan.tool_zone": "Irrigation area",
+  "plan.tool_zone_hint": "Irrigation area: draw the area a valve or switch waters",
   "plan.zone_draw_hint":
-    "Irrigation zone: drag a rectangle over the area that one valve waters – or choose circle, polygon or freehand. Then link the valve or switch on the right.",
+    "Irrigation area: drag a rectangle over the area that one valve waters – or choose circle, polygon or freehand. Then link the valve or switch on the right.",
   "transfer.title": "Move the garden",
   "transfer.hint":
     "Export plan, plants, measurements and open tasks as a JSON file and import them into another Home Assistant – at the same place on the map. Photos, history, AI keys and settings are not included. The file contains the garden's location.",
@@ -664,6 +664,28 @@ export const en = {
   "transfer.done":
     "Imported: {plants} plants, {areas} areas, {zones} irrigation zones, {tasks} tasks. Link valves and sensors again if their names differ here.",
   "transfer.not_export": "This is not a Plant Garden export.",
+  "plan.irrigation": "Irrigation",
+  "plan.tool_sprinkler": "Sprinkler (with an arc)",
+  "plan.tool_sprinkler_full": "Circular sprinkler",
+  "plan.tool_drip_line": "Drip line",
+  "plan.sprinkler_hint":
+    "Tap where the sprinkler stands – or drag from there in the direction it throws. Then drag the handles to change its angle and reach.",
+  "plan.sprinkler_full_hint":
+    "Tap where the circular sprinkler stands – or drag from there to the edge of its reach.",
+  "plan.drip_line_hint":
+    "Tap point by point along the hose. Tap the last point again, double-click or press Enter to finish.",
+  "plan.sprinkler_edit_hint":
+    "Drag the two points at the ends of the arc to change the angle, the blue point for reach and direction, the sprinkler to move it.",
+  "plan.sprinkler_full_edit_hint":
+    "Drag the blue point to change the reach, the sprinkler to move it.",
+  "plan.drip_line_edit_hint":
+    "Drag a point to move it, the small point between two to add one; double-click a point to remove it. Drag the hose to move all of it.",
+  "zone.reach": "Reach (m)",
+  "zone.sweep": "Angle (°)",
+  "zone.heading": "Direction (0° = N)",
+  "zone.width": "Wetted width (m)",
+  "zone.flow_l_h_m": "L/h per metre",
+  "zone.length": "Length {length} m",
 } as const;
 
 export type TranslationKey = keyof typeof en;

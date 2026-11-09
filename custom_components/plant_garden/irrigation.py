@@ -32,7 +32,14 @@ from homeassistant.util.ulid import ulid_now
 from homeassistant.util.unit_conversion import VolumeConverter
 
 from .const import DOMAIN, EVENT_IRRIGATION_FINISHED
-from .geometry import Footprint, area, crown_diameter, footprints, zone_coverage
+from .geometry import (
+    Footprint,
+    area,
+    crown_diameter,
+    footprints,
+    precipitation_rate,
+    zone_coverage,
+)
 from .models import Emitter, IrrigationEvent, PlantWater, Shape, WaterSource
 
 _LOGGER = logging.getLogger(__name__)
@@ -102,12 +109,11 @@ def distribute(
         ]
         return source, round(delivered, 3), None, plants
 
+    rate = precipitation_rate(settings, zone.geometry)
     if meter_liters is not None:
         source, delivered = WaterSource.METER, meter_liters
-    elif settings.rate_mm_h is not None:
-        source, delivered = WaterSource.ESTIMATE, settings.rate_mm_h * hours * zone_area
-    elif settings.flow_l_min is not None:
-        source, delivered = WaterSource.ESTIMATE, settings.flow_l_min * 60 * hours
+    elif rate is not None:
+        source, delivered = WaterSource.ESTIMATE, rate * hours * zone_area
     else:
         return WaterSource.UNKNOWN, None, None, []
     depth = delivered * efficiency / zone_area if zone_area > 0 else 0.0
@@ -341,12 +347,43 @@ class IrrigationTracker:
         )
         if meter_liters is not None and meter_liters < 0:
             meter_liters = None  # the meter was reset during the run
+        if meter_liters is not None:
+            meter_liters *= self._meter_share(zone_id)
         self.hass.async_create_task(
             self._async_store_run(
                 run, end, uncertain, reconstructed or run.reconstructed, meter_liters
             ),
             eager_start=True,
         )
+
+    def _meter_share(self, zone_id: str) -> float:
+        """The part of a meter reading that belongs to this zone.
+
+        Several sprinklers on one valve are separate zones that run together; with
+        one meter they share its litres in proportion to their estimated flow
+        (their area when a rate is missing).
+        """
+        zones = self._zones()
+        settings = zones[zone_id].irrigation if zone_id in zones else None
+        if settings is None or not settings.meter_entity_id:
+            return 1.0
+        group = [
+            (zone, zone.irrigation)
+            for zone in zones.values()
+            if zone.irrigation
+            and zone.irrigation.meter_entity_id == settings.meter_entity_id
+            and zone.irrigation.entity_id == settings.entity_id
+        ]
+        if len(group) < 2:
+            return 1.0
+        flows = {
+            zone.id: area(zone.geometry) * (precipitation_rate(other, zone.geometry) or 0.0)
+            for zone, other in group
+        }
+        if not all(flows.values()):
+            flows = {zone.id: area(zone.geometry) for zone, _ in group}
+        total = sum(flows.values())
+        return flows.get(zone_id, 0.0) / total if total > 0 else 1 / len(group)
 
     def _meter(self, zone_id: str) -> float | None:
         zone = self._zones().get(zone_id)

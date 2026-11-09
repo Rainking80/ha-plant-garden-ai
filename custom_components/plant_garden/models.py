@@ -327,9 +327,10 @@ class Irrigation:
     """Settings of an irrigation zone (a Shape of kind ZONE).
 
     The water rate is one of: `rate_mm_h` (precipitation rate over the zone),
-    `flow_l_min` (converted over the zone area) or, for DRIP, `drip_l_h` per
-    plant. With a `meter_entity_id` (a litre or m³ counter) measured litres
-    replace the estimate for sessions seen live.
+    `flow_l_min` (converted over the zone area), for a drip line `flow_l_h_m`
+    per metre of hose or, for DRIP, `drip_l_h` per plant. With a `meter_entity_id`
+    (a litre or m³ counter) measured litres replace the estimate for sessions
+    seen live.
     """
 
     entity_id: str | None = None
@@ -339,6 +340,7 @@ class Irrigation:
     rate_mm_h: float | None = None
     flow_l_min: float | None = None
     drip_l_h: float | None = None
+    flow_l_h_m: float | None = None  # a drip line's flow per metre of hose
     efficiency: float | None = None  # None: DEFAULT_EFFICIENCY of the emitter
     include: list[str] = field(default_factory=list)  # plant ids watered regardless of position
     exclude: list[str] = field(default_factory=list)  # plant ids never counted
@@ -356,6 +358,7 @@ class Irrigation:
             "rate_mm_h": self.rate_mm_h,
             "flow_l_min": self.flow_l_min,
             "drip_l_h": self.drip_l_h,
+            "flow_l_h_m": self.flow_l_h_m,
             "efficiency": self.efficiency,
             "include": list(self.include),
             "exclude": list(self.exclude),
@@ -375,6 +378,7 @@ class Irrigation:
             rate_mm_h=number("rate_mm_h"),
             flow_l_min=number("flow_l_min"),
             drip_l_h=number("drip_l_h"),
+            flow_l_h_m=number("flow_l_h_m"),
             efficiency=number("efficiency"),
             include=list(data.get("include") or []),
             exclude=list(data.get("exclude") or []),
@@ -389,6 +393,11 @@ class Shape:
       {"type": "rect", "cx", "cy", "w", "h", "rotation"}   rotation in degrees, clockwise
       {"type": "circle", "cx", "cy", "r"}
       {"type": "polygon", "points": [[x, y], ...]}
+      {"type": "sector", "cx", "cy", "r", "start", "sweep"}   a sprinkler at (cx, cy);
+          `start` is the compass bearing of the arc's first edge, `sweep` the
+          angle clockwise from there (360: a full circle)
+      {"type": "line", "points": [[x, y], ...], "width"}   a drip line; `width` of
+          the strip it wets
     It is validated by the WebSocket schema and stored as is.
     """
 
