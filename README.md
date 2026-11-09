@@ -14,7 +14,7 @@ record.
 Plant Garden never switches anything. It reads the state of your valves and
 sensors and offers recommendations as entities for your own automations.
 
-![The garden plan: lawn, terrace, buildings, a beech hedge drawn as one plant, plants with their names and irrigation areas (dashed blue); dashed amber outlines mark plants that need water](docs/images/plan.png)
+![The garden plan: lawn, terrace, beds, buildings, a beech hedge drawn as one plant, plants with their names, sprinklers watering the lawn and drip lines along the hedge and the beds; dashed amber outlines mark plants that need water](https://raw.githubusercontent.com/Rainking80/ha-plant-maintainance/main/docs/images/plan.png)
 
 <sub>The demo garden in view mode, shown here without its aerial background.</sub>
 
@@ -61,6 +61,8 @@ sensors and offers recommendations as entities for your own automations.
   gaps filled from the recorder. Stuck valves raise a repair notice.
 - Watering with a can is logged on the plant page or with an action.
 
+![Edit mode: a sprinkler with a 165° arc over the lawn, its handles at both ends of the arc and in its middle, the plants it reaches ringed in blue, a drip line around a bed; on the right the sprinkler's reach, angle, direction, emitter and rate](https://raw.githubusercontent.com/Rainking80/ha-plant-maintainance/main/docs/images/irrigation.png)
+
 **Weather and water balance**
 - Weather from your own sensors, [Open-Meteo](https://open-meteo.com) (worldwide)
   or [Bright Sky](https://brightsky.dev) / German Weather Service (Germany).
@@ -102,7 +104,7 @@ The interface is available in English and German.
 
 | Plants | A plant's page | Water & weather |
 |---|---|---|
-| [![The plant list with photos, botanical names, age and status filters](docs/images/plants.png)](docs/images/plants.png) | [![A plant's page with its photo, details, growth and soil water](docs/images/plant.png)](docs/images/plant.png) | [![Rain and evaporation of the last two weeks with the forecast, and the soil water of every plant](docs/images/water.png)](docs/images/water.png) |
+| [![The plant list with photos, botanical names, age and status filters](https://raw.githubusercontent.com/Rainking80/ha-plant-maintainance/main/docs/images/plants.png)](https://raw.githubusercontent.com/Rainking80/ha-plant-maintainance/main/docs/images/plants.png) | [![A plant's page with its photo, details, growth and soil water](https://raw.githubusercontent.com/Rainking80/ha-plant-maintainance/main/docs/images/plant.png)](https://raw.githubusercontent.com/Rainking80/ha-plant-maintainance/main/docs/images/plant.png) | [![Rain and evaporation of the last two weeks with the forecast, and the soil water of every plant](https://raw.githubusercontent.com/Rainking80/ha-plant-maintainance/main/docs/images/water.png)](https://raw.githubusercontent.com/Rainking80/ha-plant-maintainance/main/docs/images/water.png) |
 
 ## Requirements
 
