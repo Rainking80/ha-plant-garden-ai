@@ -39,7 +39,8 @@ fällig; ein roter Punkt zeigt ein offenes Problem.
 
 ## 3. Bewässerung
 
-Eine **Bewässerungszone** zeichnen und mit dem Ventil, Schalter oder Input-Boolean
+Im Bearbeitungsmodus in der Werkzeugleiste **Bewässerungszone** wählen, die Fläche
+zeichnen und rechts mit dem Ventil, Schalter oder Input-Boolean
 verknüpfen, der sie bewässert. Optional: ein Timer (Restlaufzeit im Plan) und ein
 Wasserzähler (echte Liter statt Schätzung). Regner, Versenkregner, Tropfschlauch,
 Tropfer pro Pflanze oder „von Hand“ und die Niederschlagsrate oder Durchflussmenge

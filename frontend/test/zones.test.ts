@@ -153,6 +153,45 @@ describe("irrigation zones on the plan", () => {
     expect(deepText(deepGet(view, ".water-facts"))).toContain("heute 2,9 L");
   });
 
+  it("has its own button for drawing a zone, which shows the zone layer", async () => {
+    localStorage.setItem("plant-garden.zones.v1", "false"); // zones hidden before
+    const backend = fakeBackend({ plants: [ROSE] });
+    const view = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    await clickButton(view, "Bewässerungszone");
+    expect(deepText(view)).toContain(
+      "Ziehe ein Rechteck über die Fläche, die ein Ventil bewässert",
+    );
+    const kinds = deepGet<HTMLSelectElement>(view, ".toolbar select");
+    expect(kinds.querySelector("option[selected]")?.getAttribute("value")).toBe("zone");
+    expect(localStorage.getItem("plant-garden.zones.v1")).toBe("true");
+    const svg = deepGet<SVGSVGElement>(canvasOf(view), "svg");
+    for (const [type, x, y] of [
+      ["pointerdown", 380, 280],
+      ["pointermove", 440, 340],
+      ["pointerup", 440, 340],
+    ] as const) {
+      svg.dispatchEvent(
+        new PointerEvent(type, {
+          clientX: x,
+          clientY: y,
+          pointerId: 1,
+          pointerType: "mouse",
+          button: 0,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
+    await vi.waitFor(() => expect(savedShapes(backend)).toHaveLength(1));
+    expect(savedShapes(backend)[0]).toMatchObject({ kind: "zone", plant_id: null });
+    await canvasOf(view).updateComplete;
+    expect(deepQuery(canvasOf(view), ".zones .zone")).not.toBeNull();
+    // the zone settings open right away, to link the valve
+    await view.updateComplete;
+    expect(deepText(view)).toContain("Auswählen …");
+  });
+
   it("creates zones and edits their settings", async () => {
     const backend = fakeBackend({ plants: [ROSE, FAR] });
     const view = await mount(backend);

@@ -644,6 +644,10 @@ export const en = {
   "plan.draw_area": "Draw {name} as an area",
   "plan.area_for_hint":
     "Draw the area of {name} (e.g. the whole hedge): freehand, or choose rectangle or polygon.",
+  "plan.tool_zone": "Irrigation zone",
+  "plan.tool_zone_hint": "Draw the area a valve or switch waters",
+  "plan.zone_draw_hint":
+    "Irrigation zone: drag a rectangle over the area that one valve waters – or choose circle, polygon or freehand. Then link the valve or switch on the right.",
 } as const;
 
 export type TranslationKey = keyof typeof en;

@@ -22,6 +22,7 @@ import {
   mdiRectangleOutline,
   mdiRedo,
   mdiRulerSquareCompass,
+  mdiSprinklerVariant,
   mdiSprout,
   mdiUndo,
   mdiVectorPolygon,
@@ -826,6 +827,27 @@ export class PgGardenView extends PgElement {
     if (!DRAWING_TOOLS.includes(tool)) this._areaFor = null;
   }
 
+  /** Is an irrigation zone about to be drawn? */
+  private get _drawingZone(): boolean {
+    return DRAWING_TOOLS.includes(this._tool) && this._newKind === "zone";
+  }
+
+  /** Start drawing an irrigation zone: rectangle by default, the zone layer visible. */
+  private _drawZone(): void {
+    this._newKind = "zone";
+    this._areaFor = null;
+    this._armed = null;
+    this._selection = null;
+    if (!DRAWING_TOOLS.includes(this._tool)) this._tool = "rect";
+    this._showZonesLayer();
+  }
+
+  private _showZonesLayer(): void {
+    if (this._showZones) return;
+    this._showZones = true;
+    writeStorage(ZONES_KEY, true);
+  }
+
   /** Draw a plant as an area instead of placing it as one crown (a hedge, the lawn). */
   private _drawAreaFor(plant: Plant): void {
     this._areaFor = plant.id;
@@ -1080,13 +1102,25 @@ export class PgGardenView extends PgElement {
                 ${this._toolButton("polygon", mdiVectorPolygon, "plan.tool_polygon")}
                 ${this._toolButton("freehand", mdiDraw, "plan.tool_freehand")}
               </div>
+              <div class="group" role="group">
+                <button
+                  class="seg zone-tool"
+                  aria-pressed=${this._drawingZone}
+                  @click=${this._drawZone}
+                  title=${t("plan.tool_zone_hint")}
+                >
+                  ${icon(mdiSprinklerVariant)}<span>${t("plan.tool_zone")}</span>
+                </button>
+              </div>
               ${
                 DRAWING_TOOLS.includes(this._tool)
                   ? html`<label class="group compact">
                       <span class="sr-only">${t("plan.new_kind")}</span>
                       <select
-                        @change=${(e: Event) =>
-                          (this._newKind = (e.target as HTMLSelectElement).value as ShapeKind)}
+                        @change=${(e: Event) => {
+                          this._newKind = (e.target as HTMLSelectElement).value as ShapeKind;
+                          if (this._newKind === "zone") this._showZonesLayer();
+                        }}
                       >
                         ${SHAPE_KINDS.map(
                           (kind) =>
@@ -1241,6 +1275,8 @@ export class PgGardenView extends PgElement {
     } else if (editing && this._farM > PLAN_EXTENT_M) {
       // drawing here would fail, so this beats the drawing instructions
       return this._renderFarHint();
+    } else if (editing && this._drawingZone) {
+      text = t("plan.zone_draw_hint");
     } else if (editing && this._areaFor && DRAWING_TOOLS.includes(this._tool)) {
       text = t("plan.area_for_hint", { name: this.store.getPlant(this._areaFor)?.name ?? "" });
     } else if (editing && this._tool === "freehand") {

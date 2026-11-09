@@ -656,4 +656,8 @@ export const de: Translations = {
   "plan.draw_area": "{name} als Fläche zeichnen",
   "plan.area_for_hint":
     "Zeichne die Fläche von {name} (z. B. die ganze Hecke): freihand, oder wähle Rechteck oder Polygon.",
+  "plan.tool_zone": "Bewässerungszone",
+  "plan.tool_zone_hint": "Fläche zeichnen, die ein Ventil oder Schalter bewässert",
+  "plan.zone_draw_hint":
+    "Bewässerungszone: Ziehe ein Rechteck über die Fläche, die ein Ventil bewässert – oder wähle Kreis, Polygon oder Freihand. Danach rechts das Ventil oder den Schalter verknüpfen.",
 };

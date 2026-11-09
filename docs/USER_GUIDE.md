@@ -39,8 +39,9 @@ open problem.
 
 ## 3. Irrigation
 
-Draw an **irrigation zone** and link the valve, switch or input boolean that
-waters it. Optional: a timer (remaining time on the plan) and a water meter (real
+In edit mode, choose **Irrigation zone** in the tool bar, draw the area and link
+the valve, switch or input boolean that waters it (on the right). Optional: a
+timer (remaining time on the plan) and a water meter (real
 litres instead of an estimate). Choose the emitter (spray, rotor, drip line,
 drippers per plant, by hand) and its rate or flow.
 

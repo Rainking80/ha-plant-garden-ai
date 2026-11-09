@@ -1,39 +1,39 @@
 // node_modules/@mdi/js/mdi.js
-var e = "M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z", t = "M16.67,4H15V2H9V4H7.33A1.33,1.33 0 0,0 6,5.33V20.67C6,21.4 6.6,22 7.33,22H16.67A1.33,1.33 0 0,0 18,20.67V5.33C18,4.6 17.4,4 16.67,4Z", n = "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z", r = "M20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4C12.76,4 13.5,4.11 14.2,4.31L15.77,2.74C14.61,2.26 13.34,2 12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12M7.91,10.08L6.5,11.5L11,16L21,6L19.59,4.58L11,13.17L7.91,10.08Z", i = "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z", a = "M9 4L11.5 9.5L17 12L11.5 14.5L9 20L6.5 14.5L1 12L6.5 9.5L9 4M9 8.83L8 11L5.83 12L8 13L9 15.17L10 13L12.17 12L10 11L9 8.83M19 9L17.74 6.26L15 5L17.74 3.75L19 1L20.25 3.75L23 5L20.25 6.26L19 9M19 23L17.74 20.26L15 19L17.74 17.75L19 15L20.25 17.75L23 19L20.25 20.26L19 23Z", o = "M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19M8,9H16V19H8V9M15.5,4L14.5,3H9.5L8.5,4H5V6H19V4H15.5Z", s = "M9.75 20.85C11.53 20.15 11.14 18.22 10.24 17C9.35 15.75 8.12 14.89 6.88 14.06C6 13.5 5.19 12.8 4.54 12C4.26 11.67 3.69 11.06 4.27 10.94C4.86 10.82 5.88 11.4 6.4 11.62C7.31 12 8.21 12.44 9.05 12.96L10.06 11.26C8.5 10.23 6.5 9.32 4.64 9.05C3.58 8.89 2.46 9.11 2.1 10.26C1.78 11.25 2.29 12.25 2.87 13.03C4.24 14.86 6.37 15.74 7.96 17.32C8.3 17.65 8.71 18.04 8.91 18.5C9.12 18.94 9.07 18.97 8.6 18.97C7.36 18.97 5.81 18 4.8 17.36L3.79 19.06C5.32 20 7.88 21.47 9.75 20.85M20.84 5.25C21.06 5.03 21.06 4.67 20.84 4.46L19.54 3.16C19.33 2.95 18.97 2.95 18.76 3.16L17.74 4.18L19.82 6.26M11 10.92V13H13.08L19.23 6.85L17.15 4.77L11 10.92Z", c = "M13 19C13 19.7 13.13 20.37 13.35 21H5C3.9 21 3 20.11 3 19V5C3 3.9 3.9 3 5 3H19C20.11 3 21 3.9 21 5V13.35C20.37 13.13 19.7 13 19 13V5H5V19H13M13.96 12.29L11.21 15.83L9.25 13.47L6.5 17H13.35C13.75 15.88 14.47 14.91 15.4 14.21L13.96 12.29M20 18V15H18V18H15V20H18V23H20V20H23V18H20Z", l = "M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z", u = "M12 4C14.2 4 16 5.8 16 8C16 10.1 13.9 13.5 12 15.9C10.1 13.4 8 10.1 8 8C8 5.8 9.8 4 12 4M12 2C8.7 2 6 4.7 6 8C6 12.5 12 19 12 19S18 12.4 18 8C18 4.7 15.3 2 12 2M12 6C10.9 6 10 6.9 10 8S10.9 10 12 10 14 9.1 14 8 13.1 6 12 6M20 19C20 21.2 16.4 23 12 23S4 21.2 4 19C4 17.7 5.2 16.6 7.1 15.8L7.7 16.7C6.7 17.2 6 17.8 6 18.5C6 19.9 8.7 21 12 21S18 19.9 18 18.5C18 17.8 17.3 17.2 16.2 16.7L16.8 15.8C18.8 16.6 20 17.7 20 19Z", d = "M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z", f = "M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z", p = "M3 16H10V14H3M18 14V10H16V14H12V16H16V20H18V16H22V14M14 6H3V8H14M14 10H3V12H14V10Z", m = "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z", ee = "M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z", te = "M1 14V5H13C18.5 5 23 9.5 23 15V17H20.83C20.42 18.17 19.31 19 18 19C16.69 19 15.58 18.17 15.17 17H10C9.09 18.21 7.64 19 6 19C3.24 19 1 16.76 1 14M6 11C4.34 11 3 12.34 3 14C3 15.66 4.34 17 6 17C7.66 17 9 15.66 9 14C9 12.34 7.66 11 6 11M15 10V12H20.25C19.92 11.27 19.5 10.6 19 10H15Z", h = "M2,22V20C2,20 7,18 12,18C17,18 22,20 22,20V22H2M11.3,9.1C10.1,5.2 4,6.1 4,6.1C4,6.1 4.2,13.9 9.9,12.7C9.5,9.8 8,9 8,9C10.8,9 11,12.4 11,12.4V17C11.3,17 11.7,17 12,17C12.3,17 12.7,17 13,17V12.8C13,12.8 13,8.9 16,7.9C16,7.9 14,10.9 14,12.9C21,13.6 21,4 21,4C21,4 12.1,3 11.3,9.1Z", ne = "M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z", re = "M17 6H16V5C16 3.9 15.1 3 14 3H10C8.9 3 8 3.9 8 5V6H7C3.69 6 1 8.69 1 12S3.69 18 7 18V21H9V18H15V21H17V18C20.31 18 23 15.31 23 12S20.31 6 17 6M10 5H14V6H10V5M17 16H7C4.79 16 3 14.21 3 12S4.79 8 7 8H17C19.21 8 21 9.79 21 12S19.21 16 17 16Z", ie = "M15 13V5A3 3 0 0 0 9 5V13A5 5 0 1 0 15 13M12 4A1 1 0 0 1 13 5V8H11V5A1 1 0 0 1 12 4Z", ae = "M17 6H7C3.69 6 1 8.69 1 12S3.69 18 7 18H17C20.31 18 23 15.31 23 12S20.31 6 17 6M17 16H7C4.79 16 3 14.21 3 12S4.79 8 7 8H17C19.21 8 21 9.79 21 12S19.21 16 17 16M17 9C15.34 9 14 10.34 14 12S15.34 15 17 15 20 13.66 20 12 18.66 9 17 9Z", oe = "M4 22H2V2H4M22 2H20V22H22M17.24 5.34L13.24 9.34A3 3 0 0 0 9.24 13.34L5.24 17.34L6.66 18.76L10.66 14.76A3 3 0 0 0 14.66 10.76L18.66 6.76Z", se = "M12,20A6,6 0 0,1 6,14C6,10 12,3.25 12,3.25C12,3.25 18,10 18,14A6,6 0 0,1 12,20Z", ce = "M22.11 21.46L2.39 1.73L1.11 3L7.65 9.54C6.74 11.03 6 12.65 6 14.23C6 17.54 8.69 20.23 12 20.23C13.74 20.23 15.3 19.5 16.4 18.29L20.84 22.73L22.11 21.46M12 18.23C9.78 18.23 8 16.45 8 14.23C8 13.5 8.5 12.27 9.14 11.03L15 16.88C14.26 17.71 13.2 18.23 12 18.23M11.14 7.94L9.71 6.5C10.57 5.38 11.25 4.61 11.25 4.61L12 3.77L12.75 4.61C12.75 4.61 14.03 6.06 15.32 7.94S18 12.07 18 14.23C18 14.41 18 14.59 17.97 14.77L15.46 12.26C15 11.23 14.37 10.07 13.68 9.07C12.84 7.85 12.44 7.42 12 6.9C11.73 7.21 11.5 7.5 11.14 7.94Z", le = "M12,3.25C12,3.25 6,10 6,14C6,17.32 8.69,20 12,20A6,6 0 0,0 18,14C18,10 12,3.25 12,3.25M14.47,9.97L15.53,11.03L9.53,17.03L8.47,15.97M9.75,10A1.25,1.25 0 0,1 11,11.25A1.25,1.25 0 0,1 9.75,12.5A1.25,1.25 0 0,1 8.5,11.25A1.25,1.25 0 0,1 9.75,10M14.25,14.5A1.25,1.25 0 0,1 15.5,15.75A1.25,1.25 0 0,1 14.25,17A1.25,1.25 0 0,1 13,15.75A1.25,1.25 0 0,1 14.25,14.5Z", ue = "M12.74,5.47C15.1,6.5 16.35,9.03 15.92,11.46C17.19,12.56 18,14.19 18,16V16.17C18.31,16.06 18.65,16 19,16A3,3 0 0,1 22,19A3,3 0 0,1 19,22H6A4,4 0 0,1 2,18A4,4 0 0,1 6,14H6.27C5,12.45 4.6,10.24 5.5,8.26C6.72,5.5 9.97,4.24 12.74,5.47M11.93,7.3C10.16,6.5 8.09,7.31 7.31,9.07C6.85,10.09 6.93,11.22 7.41,12.13C8.5,10.83 10.16,10 12,10C12.7,10 13.38,10.12 14,10.34C13.94,9.06 13.18,7.86 11.93,7.3M13.55,3.64C13,3.4 12.45,3.23 11.88,3.12L14.37,1.82L15.27,4.71C14.76,4.29 14.19,3.93 13.55,3.64M6.09,4.44C5.6,4.79 5.17,5.19 4.8,5.63L4.91,2.82L7.87,3.5C7.25,3.71 6.65,4.03 6.09,4.44M18,9.71C17.91,9.12 17.78,8.55 17.59,8L19.97,9.5L17.92,11.73C18.03,11.08 18.05,10.4 18,9.71M3.04,11.3C3.11,11.9 3.24,12.47 3.43,13L1.06,11.5L3.1,9.28C3,9.93 2.97,10.61 3.04,11.3M19,18H16V16A4,4 0 0,0 12,12A4,4 0 0,0 8,16H6A2,2 0 0,0 4,18A2,2 0 0,0 6,20H19A1,1 0 0,0 20,19A1,1 0 0,0 19,18Z", de = "M6,14.03A1,1 0 0,1 7,15.03C7,15.58 6.55,16.03 6,16.03C3.24,16.03 1,13.79 1,11.03C1,8.27 3.24,6.03 6,6.03C7,3.68 9.3,2.03 12,2.03C15.43,2.03 18.24,4.69 18.5,8.06L19,8.03A4,4 0 0,1 23,12.03C23,14.23 21.21,16.03 19,16.03H18C17.45,16.03 17,15.58 17,15.03C17,14.47 17.45,14.03 18,14.03H19A2,2 0 0,0 21,12.03A2,2 0 0,0 19,10.03H17V9.03C17,6.27 14.76,4.03 12,4.03C9.5,4.03 7.45,5.84 7.06,8.21C6.73,8.09 6.37,8.03 6,8.03A3,3 0 0,0 3,11.03A3,3 0 0,0 6,14.03M12,14.15C12.18,14.39 12.37,14.66 12.56,14.94C13,15.56 14,17.03 14,18C14,19.11 13.1,20 12,20A2,2 0 0,1 10,18C10,17.03 11,15.56 11.44,14.94C11.63,14.66 11.82,14.4 12,14.15M12,11.03L11.5,11.59C11.5,11.59 10.65,12.55 9.79,13.81C8.93,15.06 8,16.56 8,18A4,4 0 0,0 12,22A4,4 0 0,0 16,18C16,16.56 15.07,15.06 14.21,13.81C13.35,12.55 12.5,11.59 12.5,11.59", fe = "M3.55 19.09L4.96 20.5L6.76 18.71L5.34 17.29M12 6C8.69 6 6 8.69 6 12S8.69 18 12 18 18 15.31 18 12C18 8.68 15.31 6 12 6M20 13H23V11H20M17.24 18.71L19.04 20.5L20.45 19.09L18.66 17.29M20.45 5L19.04 3.6L17.24 5.39L18.66 6.81M13 1H11V4H13M6.76 5.39L4.96 3.6L3.55 5L5.34 6.81L6.76 5.39M1 13H4V11H1M13 20H11V23H13", pe = globalThis, me = pe.ShadowRoot && (pe.ShadyCSS === void 0 || pe.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, he = Symbol(), ge = /* @__PURE__ */ new WeakMap(), _e = class {
+var e = "M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z", t = "M16.67,4H15V2H9V4H7.33A1.33,1.33 0 0,0 6,5.33V20.67C6,21.4 6.6,22 7.33,22H16.67A1.33,1.33 0 0,0 18,20.67V5.33C18,4.6 17.4,4 16.67,4Z", n = "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z", r = "M20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4C12.76,4 13.5,4.11 14.2,4.31L15.77,2.74C14.61,2.26 13.34,2 12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12M7.91,10.08L6.5,11.5L11,16L21,6L19.59,4.58L11,13.17L7.91,10.08Z", i = "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z", a = "M9 4L11.5 9.5L17 12L11.5 14.5L9 20L6.5 14.5L1 12L6.5 9.5L9 4M9 8.83L8 11L5.83 12L8 13L9 15.17L10 13L12.17 12L10 11L9 8.83M19 9L17.74 6.26L15 5L17.74 3.75L19 1L20.25 3.75L23 5L20.25 6.26L19 9M19 23L17.74 20.26L15 19L17.74 17.75L19 15L20.25 17.75L23 19L20.25 20.26L19 23Z", o = "M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19M8,9H16V19H8V9M15.5,4L14.5,3H9.5L8.5,4H5V6H19V4H15.5Z", s = "M9.75 20.85C11.53 20.15 11.14 18.22 10.24 17C9.35 15.75 8.12 14.89 6.88 14.06C6 13.5 5.19 12.8 4.54 12C4.26 11.67 3.69 11.06 4.27 10.94C4.86 10.82 5.88 11.4 6.4 11.62C7.31 12 8.21 12.44 9.05 12.96L10.06 11.26C8.5 10.23 6.5 9.32 4.64 9.05C3.58 8.89 2.46 9.11 2.1 10.26C1.78 11.25 2.29 12.25 2.87 13.03C4.24 14.86 6.37 15.74 7.96 17.32C8.3 17.65 8.71 18.04 8.91 18.5C9.12 18.94 9.07 18.97 8.6 18.97C7.36 18.97 5.81 18 4.8 17.36L3.79 19.06C5.32 20 7.88 21.47 9.75 20.85M20.84 5.25C21.06 5.03 21.06 4.67 20.84 4.46L19.54 3.16C19.33 2.95 18.97 2.95 18.76 3.16L17.74 4.18L19.82 6.26M11 10.92V13H13.08L19.23 6.85L17.15 4.77L11 10.92Z", c = "M13 19C13 19.7 13.13 20.37 13.35 21H5C3.9 21 3 20.11 3 19V5C3 3.9 3.9 3 5 3H19C20.11 3 21 3.9 21 5V13.35C20.37 13.13 19.7 13 19 13V5H5V19H13M13.96 12.29L11.21 15.83L9.25 13.47L6.5 17H13.35C13.75 15.88 14.47 14.91 15.4 14.21L13.96 12.29M20 18V15H18V18H15V20H18V23H20V20H23V18H20Z", l = "M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z", u = "M12 4C14.2 4 16 5.8 16 8C16 10.1 13.9 13.5 12 15.9C10.1 13.4 8 10.1 8 8C8 5.8 9.8 4 12 4M12 2C8.7 2 6 4.7 6 8C6 12.5 12 19 12 19S18 12.4 18 8C18 4.7 15.3 2 12 2M12 6C10.9 6 10 6.9 10 8S10.9 10 12 10 14 9.1 14 8 13.1 6 12 6M20 19C20 21.2 16.4 23 12 23S4 21.2 4 19C4 17.7 5.2 16.6 7.1 15.8L7.7 16.7C6.7 17.2 6 17.8 6 18.5C6 19.9 8.7 21 12 21S18 19.9 18 18.5C18 17.8 17.3 17.2 16.2 16.7L16.8 15.8C18.8 16.6 20 17.7 20 19Z", d = "M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z", f = "M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z", p = "M3 16H10V14H3M18 14V10H16V14H12V16H16V20H18V16H22V14M14 6H3V8H14M14 10H3V12H14V10Z", m = "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z", ee = "M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z", te = "M1 14V5H13C18.5 5 23 9.5 23 15V17H20.83C20.42 18.17 19.31 19 18 19C16.69 19 15.58 18.17 15.17 17H10C9.09 18.21 7.64 19 6 19C3.24 19 1 16.76 1 14M6 11C4.34 11 3 12.34 3 14C3 15.66 4.34 17 6 17C7.66 17 9 15.66 9 14C9 12.34 7.66 11 6 11M15 10V12H20.25C19.92 11.27 19.5 10.6 19 10H15Z", ne = "M10 10H14V22H10V10M7 9H9V7H7V9M4 8H6V6H4V8M4 11H6V9H4V11M1 13H3V11H1V13M1 7H3V5H1V7M1 10H3V8H1V10M18 11H20V9H18V11M21 10H23V8H21V10M21 5V7H23V5H21M21 13H23V11H21V13M15 9H17V7H15V9M18 8H20V6H18V8M10 7H10.33L11 9H13L13.67 7H14V6H10V7Z", h = "M2,22V20C2,20 7,18 12,18C17,18 22,20 22,20V22H2M11.3,9.1C10.1,5.2 4,6.1 4,6.1C4,6.1 4.2,13.9 9.9,12.7C9.5,9.8 8,9 8,9C10.8,9 11,12.4 11,12.4V17C11.3,17 11.7,17 12,17C12.3,17 12.7,17 13,17V12.8C13,12.8 13,8.9 16,7.9C16,7.9 14,10.9 14,12.9C21,13.6 21,4 21,4C21,4 12.1,3 11.3,9.1Z", re = "M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z", ie = "M17 6H16V5C16 3.9 15.1 3 14 3H10C8.9 3 8 3.9 8 5V6H7C3.69 6 1 8.69 1 12S3.69 18 7 18V21H9V18H15V21H17V18C20.31 18 23 15.31 23 12S20.31 6 17 6M10 5H14V6H10V5M17 16H7C4.79 16 3 14.21 3 12S4.79 8 7 8H17C19.21 8 21 9.79 21 12S19.21 16 17 16Z", ae = "M15 13V5A3 3 0 0 0 9 5V13A5 5 0 1 0 15 13M12 4A1 1 0 0 1 13 5V8H11V5A1 1 0 0 1 12 4Z", oe = "M17 6H7C3.69 6 1 8.69 1 12S3.69 18 7 18H17C20.31 18 23 15.31 23 12S20.31 6 17 6M17 16H7C4.79 16 3 14.21 3 12S4.79 8 7 8H17C19.21 8 21 9.79 21 12S19.21 16 17 16M17 9C15.34 9 14 10.34 14 12S15.34 15 17 15 20 13.66 20 12 18.66 9 17 9Z", se = "M4 22H2V2H4M22 2H20V22H22M17.24 5.34L13.24 9.34A3 3 0 0 0 9.24 13.34L5.24 17.34L6.66 18.76L10.66 14.76A3 3 0 0 0 14.66 10.76L18.66 6.76Z", ce = "M12,20A6,6 0 0,1 6,14C6,10 12,3.25 12,3.25C12,3.25 18,10 18,14A6,6 0 0,1 12,20Z", le = "M22.11 21.46L2.39 1.73L1.11 3L7.65 9.54C6.74 11.03 6 12.65 6 14.23C6 17.54 8.69 20.23 12 20.23C13.74 20.23 15.3 19.5 16.4 18.29L20.84 22.73L22.11 21.46M12 18.23C9.78 18.23 8 16.45 8 14.23C8 13.5 8.5 12.27 9.14 11.03L15 16.88C14.26 17.71 13.2 18.23 12 18.23M11.14 7.94L9.71 6.5C10.57 5.38 11.25 4.61 11.25 4.61L12 3.77L12.75 4.61C12.75 4.61 14.03 6.06 15.32 7.94S18 12.07 18 14.23C18 14.41 18 14.59 17.97 14.77L15.46 12.26C15 11.23 14.37 10.07 13.68 9.07C12.84 7.85 12.44 7.42 12 6.9C11.73 7.21 11.5 7.5 11.14 7.94Z", ue = "M12,3.25C12,3.25 6,10 6,14C6,17.32 8.69,20 12,20A6,6 0 0,0 18,14C18,10 12,3.25 12,3.25M14.47,9.97L15.53,11.03L9.53,17.03L8.47,15.97M9.75,10A1.25,1.25 0 0,1 11,11.25A1.25,1.25 0 0,1 9.75,12.5A1.25,1.25 0 0,1 8.5,11.25A1.25,1.25 0 0,1 9.75,10M14.25,14.5A1.25,1.25 0 0,1 15.5,15.75A1.25,1.25 0 0,1 14.25,17A1.25,1.25 0 0,1 13,15.75A1.25,1.25 0 0,1 14.25,14.5Z", de = "M12.74,5.47C15.1,6.5 16.35,9.03 15.92,11.46C17.19,12.56 18,14.19 18,16V16.17C18.31,16.06 18.65,16 19,16A3,3 0 0,1 22,19A3,3 0 0,1 19,22H6A4,4 0 0,1 2,18A4,4 0 0,1 6,14H6.27C5,12.45 4.6,10.24 5.5,8.26C6.72,5.5 9.97,4.24 12.74,5.47M11.93,7.3C10.16,6.5 8.09,7.31 7.31,9.07C6.85,10.09 6.93,11.22 7.41,12.13C8.5,10.83 10.16,10 12,10C12.7,10 13.38,10.12 14,10.34C13.94,9.06 13.18,7.86 11.93,7.3M13.55,3.64C13,3.4 12.45,3.23 11.88,3.12L14.37,1.82L15.27,4.71C14.76,4.29 14.19,3.93 13.55,3.64M6.09,4.44C5.6,4.79 5.17,5.19 4.8,5.63L4.91,2.82L7.87,3.5C7.25,3.71 6.65,4.03 6.09,4.44M18,9.71C17.91,9.12 17.78,8.55 17.59,8L19.97,9.5L17.92,11.73C18.03,11.08 18.05,10.4 18,9.71M3.04,11.3C3.11,11.9 3.24,12.47 3.43,13L1.06,11.5L3.1,9.28C3,9.93 2.97,10.61 3.04,11.3M19,18H16V16A4,4 0 0,0 12,12A4,4 0 0,0 8,16H6A2,2 0 0,0 4,18A2,2 0 0,0 6,20H19A1,1 0 0,0 20,19A1,1 0 0,0 19,18Z", fe = "M6,14.03A1,1 0 0,1 7,15.03C7,15.58 6.55,16.03 6,16.03C3.24,16.03 1,13.79 1,11.03C1,8.27 3.24,6.03 6,6.03C7,3.68 9.3,2.03 12,2.03C15.43,2.03 18.24,4.69 18.5,8.06L19,8.03A4,4 0 0,1 23,12.03C23,14.23 21.21,16.03 19,16.03H18C17.45,16.03 17,15.58 17,15.03C17,14.47 17.45,14.03 18,14.03H19A2,2 0 0,0 21,12.03A2,2 0 0,0 19,10.03H17V9.03C17,6.27 14.76,4.03 12,4.03C9.5,4.03 7.45,5.84 7.06,8.21C6.73,8.09 6.37,8.03 6,8.03A3,3 0 0,0 3,11.03A3,3 0 0,0 6,14.03M12,14.15C12.18,14.39 12.37,14.66 12.56,14.94C13,15.56 14,17.03 14,18C14,19.11 13.1,20 12,20A2,2 0 0,1 10,18C10,17.03 11,15.56 11.44,14.94C11.63,14.66 11.82,14.4 12,14.15M12,11.03L11.5,11.59C11.5,11.59 10.65,12.55 9.79,13.81C8.93,15.06 8,16.56 8,18A4,4 0 0,0 12,22A4,4 0 0,0 16,18C16,16.56 15.07,15.06 14.21,13.81C13.35,12.55 12.5,11.59 12.5,11.59", pe = "M3.55 19.09L4.96 20.5L6.76 18.71L5.34 17.29M12 6C8.69 6 6 8.69 6 12S8.69 18 12 18 18 15.31 18 12C18 8.68 15.31 6 12 6M20 13H23V11H20M17.24 18.71L19.04 20.5L20.45 19.09L18.66 17.29M20.45 5L19.04 3.6L17.24 5.39L18.66 6.81M13 1H11V4H13M6.76 5.39L4.96 3.6L3.55 5L5.34 6.81L6.76 5.39M1 13H4V11H1M13 20H11V23H13", me = globalThis, he = me.ShadowRoot && (me.ShadyCSS === void 0 || me.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, ge = Symbol(), _e = /* @__PURE__ */ new WeakMap(), ve = class {
 	constructor(e, t, n) {
-		if (this._$cssResult$ = !0, n !== he) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+		if (this._$cssResult$ = !0, n !== ge) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
 		this.cssText = e, this.t = t;
 	}
 	get styleSheet() {
 		let e = this.o, t = this.t;
-		if (me && e === void 0) {
+		if (he && e === void 0) {
 			let n = t !== void 0 && t.length === 1;
-			n && (e = ge.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), n && ge.set(t, e));
+			n && (e = _e.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), n && _e.set(t, e));
 		}
 		return e;
 	}
 	toString() {
 		return this.cssText;
 	}
-}, ve = (e) => new _e(typeof e == "string" ? e : e + "", void 0, he), g = (e, ...t) => new _e(e.length === 1 ? e[0] : t.reduce((t, n, r) => t + ((e) => {
+}, ye = (e) => new ve(typeof e == "string" ? e : e + "", void 0, ge), g = (e, ...t) => new ve(e.length === 1 ? e[0] : t.reduce((t, n, r) => t + ((e) => {
 	if (!0 === e._$cssResult$) return e.cssText;
 	if (typeof e == "number") return e;
 	throw Error("Value passed to 'css' function must be a 'css' function result: " + e + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
-})(n) + e[r + 1], e[0]), e, he), ye = (e, t) => {
-	if (me) e.adoptedStyleSheets = t.map((e) => e instanceof CSSStyleSheet ? e : e.styleSheet);
+})(n) + e[r + 1], e[0]), e, ge), be = (e, t) => {
+	if (he) e.adoptedStyleSheets = t.map((e) => e instanceof CSSStyleSheet ? e : e.styleSheet);
 	else for (let n of t) {
-		let t = document.createElement("style"), r = pe.litNonce;
+		let t = document.createElement("style"), r = me.litNonce;
 		r !== void 0 && t.setAttribute("nonce", r), t.textContent = n.cssText, e.appendChild(t);
 	}
-}, be = me ? (e) => e : (e) => e instanceof CSSStyleSheet ? ((e) => {
+}, xe = he ? (e) => e : (e) => e instanceof CSSStyleSheet ? ((e) => {
 	let t = "";
 	for (let n of e.cssRules) t += n.cssText;
-	return ve(t);
-})(e) : e, { is: xe, defineProperty: Se, getOwnPropertyDescriptor: Ce, getOwnPropertyNames: we, getOwnPropertySymbols: Te, getPrototypeOf: Ee } = Object, De = globalThis, Oe = De.trustedTypes, ke = Oe ? Oe.emptyScript : "", Ae = De.reactiveElementPolyfillSupport, je = (e, t) => e, Me = {
+	return ye(t);
+})(e) : e, { is: Se, defineProperty: Ce, getOwnPropertyDescriptor: we, getOwnPropertyNames: Te, getOwnPropertySymbols: Ee, getPrototypeOf: De } = Object, Oe = globalThis, ke = Oe.trustedTypes, Ae = ke ? ke.emptyScript : "", je = Oe.reactiveElementPolyfillSupport, Me = (e, t) => e, Ne = {
 	toAttribute(e, t) {
 		switch (t) {
 			case Boolean:
-				e = e ? ke : null;
+				e = e ? Ae : null;
 				break;
 			case Object:
 			case Array: e = e == null ? e : JSON.stringify(e);
@@ -58,15 +58,15 @@ var e = "M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 1
 		}
 		return n;
 	}
-}, Ne = (e, t) => !xe(e, t), Pe = {
+}, Pe = (e, t) => !Se(e, t), Fe = {
 	attribute: !0,
 	type: String,
-	converter: Me,
+	converter: Ne,
 	reflect: !1,
 	useDefault: !1,
-	hasChanged: Ne
+	hasChanged: Pe
 };
-Symbol.metadata ??= Symbol("metadata"), De.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
+Symbol.metadata ??= Symbol("metadata"), Oe.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
 var _ = class extends HTMLElement {
 	static addInitializer(e) {
 		this._$Ei(), (this.l ??= []).push(e);
@@ -74,14 +74,14 @@ var _ = class extends HTMLElement {
 	static get observedAttributes() {
 		return this.finalize(), this._$Eh && [...this._$Eh.keys()];
 	}
-	static createProperty(e, t = Pe) {
+	static createProperty(e, t = Fe) {
 		if (t.state && (t.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(e) && ((t = Object.create(t)).wrapped = !0), this.elementProperties.set(e, t), !t.noAccessor) {
 			let n = Symbol(), r = this.getPropertyDescriptor(e, n, t);
-			r !== void 0 && Se(this.prototype, e, r);
+			r !== void 0 && Ce(this.prototype, e, r);
 		}
 	}
 	static getPropertyDescriptor(e, t, n) {
-		let { get: r, set: i } = Ce(this.prototype, e) ?? {
+		let { get: r, set: i } = we(this.prototype, e) ?? {
 			get() {
 				return this[t];
 			},
@@ -100,17 +100,17 @@ var _ = class extends HTMLElement {
 		};
 	}
 	static getPropertyOptions(e) {
-		return this.elementProperties.get(e) ?? Pe;
+		return this.elementProperties.get(e) ?? Fe;
 	}
 	static _$Ei() {
-		if (this.hasOwnProperty(je("elementProperties"))) return;
-		let e = Ee(this);
+		if (this.hasOwnProperty(Me("elementProperties"))) return;
+		let e = De(this);
 		e.finalize(), e.l !== void 0 && (this.l = [...e.l]), this.elementProperties = new Map(e.elementProperties);
 	}
 	static finalize() {
-		if (this.hasOwnProperty(je("finalized"))) return;
-		if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(je("properties"))) {
-			let e = this.properties, t = [...we(e), ...Te(e)];
+		if (this.hasOwnProperty(Me("finalized"))) return;
+		if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(Me("properties"))) {
+			let e = this.properties, t = [...Te(e), ...Ee(e)];
 			for (let n of t) this.createProperty(n, e[n]);
 		}
 		let e = this[Symbol.metadata];
@@ -129,8 +129,8 @@ var _ = class extends HTMLElement {
 		let t = [];
 		if (Array.isArray(e)) {
 			let n = new Set(e.flat(1 / 0).reverse());
-			for (let e of n) t.unshift(be(e));
-		} else e !== void 0 && t.push(be(e));
+			for (let e of n) t.unshift(xe(e));
+		} else e !== void 0 && t.push(xe(e));
 		return t;
 	}
 	static _$Eu(e, t) {
@@ -156,7 +156,7 @@ var _ = class extends HTMLElement {
 	}
 	createRenderRoot() {
 		let e = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-		return ye(e, this.constructor.elementStyles), e;
+		return be(e, this.constructor.elementStyles), e;
 	}
 	connectedCallback() {
 		this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(!0), this._$EO?.forEach((e) => e.hostConnected?.());
@@ -171,14 +171,14 @@ var _ = class extends HTMLElement {
 	_$ET(e, t) {
 		let n = this.constructor.elementProperties.get(e), r = this.constructor._$Eu(e, n);
 		if (r !== void 0 && !0 === n.reflect) {
-			let i = (n.converter?.toAttribute === void 0 ? Me : n.converter).toAttribute(t, n.type);
+			let i = (n.converter?.toAttribute === void 0 ? Ne : n.converter).toAttribute(t, n.type);
 			this._$Em = e, i == null ? this.removeAttribute(r) : this.setAttribute(r, i), this._$Em = null;
 		}
 	}
 	_$AK(e, t) {
 		let n = this.constructor, r = n._$Eh.get(e);
 		if (r !== void 0 && this._$Em !== r) {
-			let e = n.getPropertyOptions(r), i = typeof e.converter == "function" ? { fromAttribute: e.converter } : e.converter?.fromAttribute === void 0 ? Me : e.converter;
+			let e = n.getPropertyOptions(r), i = typeof e.converter == "function" ? { fromAttribute: e.converter } : e.converter?.fromAttribute === void 0 ? Ne : e.converter;
 			this._$Em = r;
 			let a = i.fromAttribute(t, e.type);
 			this[r] = a ?? this._$Ej?.get(r) ?? a, this._$Em = null;
@@ -187,7 +187,7 @@ var _ = class extends HTMLElement {
 	requestUpdate(e, t, n, r = !1, i) {
 		if (e !== void 0) {
 			let a = this.constructor;
-			if (!1 === r && (i = this[e]), n ??= a.getPropertyOptions(e), !((n.hasChanged ?? Ne)(i, t) || n.useDefault && n.reflect && i === this._$Ej?.get(e) && !this.hasAttribute(a._$Eu(e, n)))) return;
+			if (!1 === r && (i = this[e]), n ??= a.getPropertyOptions(e), !((n.hasChanged ?? Pe)(i, t) || n.useDefault && n.reflect && i === this._$Ej?.get(e) && !this.hasAttribute(a._$Eu(e, n)))) return;
 			this.C(e, t, n);
 		}
 		!1 === this.isUpdatePending && (this._$ES = this._$EP());
@@ -251,63 +251,63 @@ var _ = class extends HTMLElement {
 	updated(e) {}
 	firstUpdated(e) {}
 };
-_.elementStyles = [], _.shadowRootOptions = { mode: "open" }, _[je("elementProperties")] = /* @__PURE__ */ new Map(), _[je("finalized")] = /* @__PURE__ */ new Map(), Ae?.({ ReactiveElement: _ }), (De.reactiveElementVersions ??= []).push("2.1.2");
+_.elementStyles = [], _.shadowRootOptions = { mode: "open" }, _[Me("elementProperties")] = /* @__PURE__ */ new Map(), _[Me("finalized")] = /* @__PURE__ */ new Map(), je?.({ ReactiveElement: _ }), (Oe.reactiveElementVersions ??= []).push("2.1.2");
 // node_modules/lit-html/lit-html.js
-var Fe = globalThis, Ie = (e) => e, Le = Fe.trustedTypes, Re = Le ? Le.createPolicy("lit-html", { createHTML: (e) => e }) : void 0, ze = "$lit$", v = `lit$${Math.random().toFixed(9).slice(2)}$`, Be = "?" + v, Ve = `<${Be}>`, y = document, He = () => y.createComment(""), Ue = (e) => e === null || typeof e != "object" && typeof e != "function", We = Array.isArray, Ge = (e) => We(e) || typeof e?.[Symbol.iterator] == "function", Ke = "[ 	\n\f\r]", qe = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Je = /-->/g, Ye = />/g, b = RegExp(`>|${Ke}(?:([^\\s"'>=/]+)(${Ke}*=${Ke}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`, "g"), Xe = /'/g, Ze = /"/g, Qe = /^(?:script|style|textarea|title)$/i, $e = (e) => (t, ...n) => ({
+var Ie = globalThis, Le = (e) => e, Re = Ie.trustedTypes, ze = Re ? Re.createPolicy("lit-html", { createHTML: (e) => e }) : void 0, Be = "$lit$", v = `lit$${Math.random().toFixed(9).slice(2)}$`, Ve = "?" + v, He = `<${Ve}>`, y = document, Ue = () => y.createComment(""), We = (e) => e === null || typeof e != "object" && typeof e != "function", Ge = Array.isArray, Ke = (e) => Ge(e) || typeof e?.[Symbol.iterator] == "function", qe = "[ 	\n\f\r]", Je = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Ye = /-->/g, Xe = />/g, b = RegExp(`>|${qe}(?:([^\\s"'>=/]+)(${qe}*=${qe}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`, "g"), Ze = /'/g, Qe = /"/g, $e = /^(?:script|style|textarea|title)$/i, et = (e) => (t, ...n) => ({
 	_$litType$: e,
 	strings: t,
 	values: n
-}), x = $e(1), S = $e(2), C = Symbol.for("lit-noChange"), w = Symbol.for("lit-nothing"), et = /* @__PURE__ */ new WeakMap(), T = y.createTreeWalker(y, 129);
-function tt(e, t) {
-	if (!We(e) || !e.hasOwnProperty("raw")) throw Error("invalid template strings array");
-	return Re === void 0 ? t : Re.createHTML(t);
+}), x = et(1), S = et(2), C = Symbol.for("lit-noChange"), w = Symbol.for("lit-nothing"), tt = /* @__PURE__ */ new WeakMap(), T = y.createTreeWalker(y, 129);
+function nt(e, t) {
+	if (!Ge(e) || !e.hasOwnProperty("raw")) throw Error("invalid template strings array");
+	return ze === void 0 ? t : ze.createHTML(t);
 }
-var nt = (e, t) => {
-	let n = e.length - 1, r = [], i, a = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", o = qe;
+var rt = (e, t) => {
+	let n = e.length - 1, r = [], i, a = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", o = Je;
 	for (let t = 0; t < n; t++) {
 		let n = e[t], s, c, l = -1, u = 0;
-		for (; u < n.length && (o.lastIndex = u, c = o.exec(n), c !== null);) u = o.lastIndex, o === qe ? c[1] === "!--" ? o = Je : c[1] === void 0 ? c[2] === void 0 ? c[3] !== void 0 && (o = b) : (Qe.test(c[2]) && (i = RegExp("</" + c[2], "g")), o = b) : o = Ye : o === b ? c[0] === ">" ? (o = i ?? qe, l = -1) : c[1] === void 0 ? l = -2 : (l = o.lastIndex - c[2].length, s = c[1], o = c[3] === void 0 ? b : c[3] === "\"" ? Ze : Xe) : o === Ze || o === Xe ? o = b : o === Je || o === Ye ? o = qe : (o = b, i = void 0);
+		for (; u < n.length && (o.lastIndex = u, c = o.exec(n), c !== null);) u = o.lastIndex, o === Je ? c[1] === "!--" ? o = Ye : c[1] === void 0 ? c[2] === void 0 ? c[3] !== void 0 && (o = b) : ($e.test(c[2]) && (i = RegExp("</" + c[2], "g")), o = b) : o = Xe : o === b ? c[0] === ">" ? (o = i ?? Je, l = -1) : c[1] === void 0 ? l = -2 : (l = o.lastIndex - c[2].length, s = c[1], o = c[3] === void 0 ? b : c[3] === "\"" ? Qe : Ze) : o === Qe || o === Ze ? o = b : o === Ye || o === Xe ? o = Je : (o = b, i = void 0);
 		let d = o === b && e[t + 1].startsWith("/>") ? " " : "";
-		a += o === qe ? n + Ve : l >= 0 ? (r.push(s), n.slice(0, l) + ze + n.slice(l) + v + d) : n + v + (l === -2 ? t : d);
+		a += o === Je ? n + He : l >= 0 ? (r.push(s), n.slice(0, l) + Be + n.slice(l) + v + d) : n + v + (l === -2 ? t : d);
 	}
-	return [tt(e, a + (e[n] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), r];
-}, rt = class e {
+	return [nt(e, a + (e[n] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), r];
+}, it = class e {
 	constructor({ strings: t, _$litType$: n }, r) {
 		let i;
 		this.parts = [];
-		let a = 0, o = 0, s = t.length - 1, c = this.parts, [l, u] = nt(t, n);
+		let a = 0, o = 0, s = t.length - 1, c = this.parts, [l, u] = rt(t, n);
 		if (this.el = e.createElement(l, r), T.currentNode = this.el.content, n === 2 || n === 3) {
 			let e = this.el.content.firstChild;
 			e.replaceWith(...e.childNodes);
 		}
 		for (; (i = T.nextNode()) !== null && c.length < s;) {
 			if (i.nodeType === 1) {
-				if (i.hasAttributes()) for (let e of i.getAttributeNames()) if (e.endsWith(ze)) {
+				if (i.hasAttributes()) for (let e of i.getAttributeNames()) if (e.endsWith(Be)) {
 					let t = u[o++], n = i.getAttribute(e).split(v), r = /([.?@])?(.*)/.exec(t);
 					c.push({
 						type: 1,
 						index: a,
 						name: r[2],
 						strings: n,
-						ctor: r[1] === "." ? st : r[1] === "?" ? ct : r[1] === "@" ? lt : ot
+						ctor: r[1] === "." ? ct : r[1] === "?" ? lt : r[1] === "@" ? ut : st
 					}), i.removeAttribute(e);
 				} else e.startsWith(v) && (c.push({
 					type: 6,
 					index: a
 				}), i.removeAttribute(e));
-				if (Qe.test(i.tagName)) {
+				if ($e.test(i.tagName)) {
 					let e = i.textContent.split(v), t = e.length - 1;
 					if (t > 0) {
-						i.textContent = Le ? Le.emptyScript : "";
-						for (let n = 0; n < t; n++) i.append(e[n], He()), T.nextNode(), c.push({
+						i.textContent = Re ? Re.emptyScript : "";
+						for (let n = 0; n < t; n++) i.append(e[n], Ue()), T.nextNode(), c.push({
 							type: 2,
 							index: ++a
 						});
-						i.append(e[t], He());
+						i.append(e[t], Ue());
 					}
 				}
 			} else if (i.nodeType === 8) {
-				if (i.data === Be) c.push({
+				if (i.data === Ve) c.push({
 					type: 2,
 					index: a
 				});
@@ -329,10 +329,10 @@ var nt = (e, t) => {
 };
 function E(e, t, n = e, r) {
 	if (t === C) return t;
-	let i = r === void 0 ? n._$Cl : n._$Co?.[r], a = Ue(t) ? void 0 : t._$litDirective$;
+	let i = r === void 0 ? n._$Cl : n._$Co?.[r], a = We(t) ? void 0 : t._$litDirective$;
 	return i?.constructor !== a && (i?._$AO?.(!1), a === void 0 ? i = void 0 : (i = new a(e), i._$AT(e, n, r)), r === void 0 ? n._$Cl = i : (n._$Co ??= [])[r] = i), i !== void 0 && (t = E(e, i._$AS(e, t.values), i, r)), t;
 }
-var it = class {
+var at = class {
 	constructor(e, t) {
 		this._$AV = [], this._$AN = void 0, this._$AD = e, this._$AM = t;
 	}
@@ -349,7 +349,7 @@ var it = class {
 		for (; s !== void 0;) {
 			if (a === s.index) {
 				let t;
-				s.type === 2 ? t = new at(i, i.nextSibling, this, e) : s.type === 1 ? t = new s.ctor(i, s.name, s.strings, this, e) : s.type === 6 && (t = new ut(i, this, e)), this._$AV.push(t), s = n[++o];
+				s.type === 2 ? t = new ot(i, i.nextSibling, this, e) : s.type === 1 ? t = new s.ctor(i, s.name, s.strings, this, e) : s.type === 6 && (t = new dt(i, this, e)), this._$AV.push(t), s = n[++o];
 			}
 			a !== s?.index && (i = T.nextNode(), a++);
 		}
@@ -359,7 +359,7 @@ var it = class {
 		let t = 0;
 		for (let n of this._$AV) n !== void 0 && (n.strings === void 0 ? n._$AI(e[t]) : (n._$AI(e, n, t), t += n.strings.length - 2)), t++;
 	}
-}, at = class e {
+}, ot = class e {
 	get _$AU() {
 		return this._$AM?._$AU ?? this._$Cv;
 	}
@@ -377,7 +377,7 @@ var it = class {
 		return this._$AB;
 	}
 	_$AI(e, t = this) {
-		e = E(this, e, t), Ue(e) ? e === w || e == null || e === "" ? (this._$AH !== w && this._$AR(), this._$AH = w) : e !== this._$AH && e !== C && this._(e) : e._$litType$ === void 0 ? e.nodeType === void 0 ? Ge(e) ? this.k(e) : this._(e) : this.T(e) : this.$(e);
+		e = E(this, e, t), We(e) ? e === w || e == null || e === "" ? (this._$AH !== w && this._$AR(), this._$AH = w) : e !== this._$AH && e !== C && this._(e) : e._$litType$ === void 0 ? e.nodeType === void 0 ? Ke(e) ? this.k(e) : this._(e) : this.T(e) : this.$(e);
 	}
 	O(e) {
 		return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -386,36 +386,36 @@ var it = class {
 		this._$AH !== e && (this._$AR(), this._$AH = this.O(e));
 	}
 	_(e) {
-		this._$AH !== w && Ue(this._$AH) ? this._$AA.nextSibling.data = e : this.T(y.createTextNode(e)), this._$AH = e;
+		this._$AH !== w && We(this._$AH) ? this._$AA.nextSibling.data = e : this.T(y.createTextNode(e)), this._$AH = e;
 	}
 	$(e) {
-		let { values: t, _$litType$: n } = e, r = typeof n == "number" ? this._$AC(e) : (n.el === void 0 && (n.el = rt.createElement(tt(n.h, n.h[0]), this.options)), n);
+		let { values: t, _$litType$: n } = e, r = typeof n == "number" ? this._$AC(e) : (n.el === void 0 && (n.el = it.createElement(nt(n.h, n.h[0]), this.options)), n);
 		if (this._$AH?._$AD === r) this._$AH.p(t);
 		else {
-			let e = new it(r, this), n = e.u(this.options);
+			let e = new at(r, this), n = e.u(this.options);
 			e.p(t), this.T(n), this._$AH = e;
 		}
 	}
 	_$AC(e) {
-		let t = et.get(e.strings);
-		return t === void 0 && et.set(e.strings, t = new rt(e)), t;
+		let t = tt.get(e.strings);
+		return t === void 0 && tt.set(e.strings, t = new it(e)), t;
 	}
 	k(t) {
-		We(this._$AH) || (this._$AH = [], this._$AR());
+		Ge(this._$AH) || (this._$AH = [], this._$AR());
 		let n = this._$AH, r, i = 0;
-		for (let a of t) i === n.length ? n.push(r = new e(this.O(He()), this.O(He()), this, this.options)) : r = n[i], r._$AI(a), i++;
+		for (let a of t) i === n.length ? n.push(r = new e(this.O(Ue()), this.O(Ue()), this, this.options)) : r = n[i], r._$AI(a), i++;
 		i < n.length && (this._$AR(r && r._$AB.nextSibling, i), n.length = i);
 	}
 	_$AR(e = this._$AA.nextSibling, t) {
 		for (this._$AP?.(!1, !0, t); e !== this._$AB;) {
-			let t = Ie(e).nextSibling;
-			Ie(e).remove(), e = t;
+			let t = Le(e).nextSibling;
+			Le(e).remove(), e = t;
 		}
 	}
 	setConnected(e) {
 		this._$AM === void 0 && (this._$Cv = e, this._$AP?.(e));
 	}
-}, ot = class {
+}, st = class {
 	get tagName() {
 		return this.element.tagName;
 	}
@@ -427,31 +427,31 @@ var it = class {
 	}
 	_$AI(e, t = this, n, r) {
 		let i = this.strings, a = !1;
-		if (i === void 0) e = E(this, e, t, 0), a = !Ue(e) || e !== this._$AH && e !== C, a && (this._$AH = e);
+		if (i === void 0) e = E(this, e, t, 0), a = !We(e) || e !== this._$AH && e !== C, a && (this._$AH = e);
 		else {
 			let r = e, o, s;
-			for (e = i[0], o = 0; o < i.length - 1; o++) s = E(this, r[n + o], t, o), s === C && (s = this._$AH[o]), a ||= !Ue(s) || s !== this._$AH[o], s === w ? e = w : e !== w && (e += (s ?? "") + i[o + 1]), this._$AH[o] = s;
+			for (e = i[0], o = 0; o < i.length - 1; o++) s = E(this, r[n + o], t, o), s === C && (s = this._$AH[o]), a ||= !We(s) || s !== this._$AH[o], s === w ? e = w : e !== w && (e += (s ?? "") + i[o + 1]), this._$AH[o] = s;
 		}
 		a && !r && this.j(e);
 	}
 	j(e) {
 		e === w ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
 	}
-}, st = class extends ot {
+}, ct = class extends st {
 	constructor() {
 		super(...arguments), this.type = 3;
 	}
 	j(e) {
 		this.element[this.name] = e === w ? void 0 : e;
 	}
-}, ct = class extends ot {
+}, lt = class extends st {
 	constructor() {
 		super(...arguments), this.type = 4;
 	}
 	j(e) {
 		this.element.toggleAttribute(this.name, !!e && e !== w);
 	}
-}, lt = class extends ot {
+}, ut = class extends st {
 	constructor(e, t, n, r, i) {
 		super(e, t, n, r, i), this.type = 5;
 	}
@@ -463,7 +463,7 @@ var it = class {
 	handleEvent(e) {
 		typeof this._$AH == "function" ? this._$AH.call(this.options?.host ?? this.element, e) : this._$AH.handleEvent(e);
 	}
-}, ut = class {
+}, dt = class {
 	constructor(e, t, n) {
 		this.element = e, this.type = 6, this._$AN = void 0, this._$AM = t, this.options = n;
 	}
@@ -473,31 +473,31 @@ var it = class {
 	_$AI(e) {
 		E(this, e);
 	}
-}, dt = {
-	M: ze,
+}, ft = {
+	M: Be,
 	P: v,
-	A: Be,
+	A: Ve,
 	C: 1,
-	L: nt,
-	R: it,
-	D: Ge,
+	L: rt,
+	R: at,
+	D: Ke,
 	V: E,
-	I: at,
-	H: ot,
-	N: ct,
-	U: lt,
-	B: st,
-	F: ut
-}, ft = Fe.litHtmlPolyfillSupport;
-ft?.(rt, at), (Fe.litHtmlVersions ??= []).push("3.3.3");
-var pt = (e, t, n) => {
+	I: ot,
+	H: st,
+	N: lt,
+	U: ut,
+	B: ct,
+	F: dt
+}, pt = Ie.litHtmlPolyfillSupport;
+pt?.(it, ot), (Ie.litHtmlVersions ??= []).push("3.3.3");
+var mt = (e, t, n) => {
 	let r = n?.renderBefore ?? t, i = r._$litPart$;
 	if (i === void 0) {
 		let e = n?.renderBefore ?? null;
-		r._$litPart$ = i = new at(t.insertBefore(He(), e), e, void 0, n ?? {});
+		r._$litPart$ = i = new ot(t.insertBefore(Ue(), e), e, void 0, n ?? {});
 	}
 	return i._$AI(e), i;
-}, mt = globalThis, D = class extends _ {
+}, ht = globalThis, gt = class extends _ {
 	constructor() {
 		super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
 	}
@@ -507,7 +507,7 @@ var pt = (e, t, n) => {
 	}
 	update(e) {
 		let t = this.render();
-		this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = pt(t, this.renderRoot, this.renderOptions);
+		this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = mt(t, this.renderRoot, this.renderOptions);
 	}
 	connectedCallback() {
 		super.connectedCallback(), this._$Do?.setConnected(!0);
@@ -519,96 +519,96 @@ var pt = (e, t, n) => {
 		return C;
 	}
 };
-D._$litElement$ = !0, D.finalized = !0, mt.litElementHydrateSupport?.({ LitElement: D });
-var ht = mt.litElementPolyfillSupport;
-ht?.({ LitElement: D }), (mt.litElementVersions ??= []).push("4.2.2");
+gt._$litElement$ = !0, gt.finalized = !0, ht.litElementHydrateSupport?.({ LitElement: gt });
+var _t = ht.litElementPolyfillSupport;
+_t?.({ LitElement: gt }), (ht.litElementVersions ??= []).push("4.2.2");
 // src/api/client.ts
-var O = "plant_garden", gt = "/api/plant_garden/photos", _t = "/api/plant_garden/backgrounds";
-function vt(e) {
-	return e.callWS({ type: `${O}/info` });
+var D = "plant_garden", vt = "/api/plant_garden/photos", yt = "/api/plant_garden/backgrounds";
+function bt(e) {
+	return e.callWS({ type: `${D}/info` });
 }
-function k(e) {
+function O(e) {
 	return e instanceof Error ? e.message : typeof e == "object" && e && "message" in e ? String(e.message) : String(e);
 }
-async function yt(e) {
-	return (await e.callWS({ type: `${O}/plants/list` })).plants;
+async function xt(e) {
+	return (await e.callWS({ type: `${D}/plants/list` })).plants;
 }
-function bt(e, t) {
+function St(e, t) {
 	return e.callWS({
-		type: `${O}/plants/get`,
+		type: `${D}/plants/get`,
 		plant_id: t
 	});
 }
-function xt(e, t) {
+function Ct(e, t) {
 	return e.callWS({
-		type: `${O}/plants/create`,
+		type: `${D}/plants/create`,
 		...t
-	});
-}
-function St(e, t, n) {
-	return e.callWS({
-		type: `${O}/plants/update`,
-		plant_id: t,
-		...n
-	});
-}
-async function Ct(e, t) {
-	await e.callWS({
-		type: `${O}/plants/delete`,
-		plant_id: t
 	});
 }
 function wt(e, t, n) {
 	return e.callWS({
-		type: `${O}/plants/set_cover`,
+		type: `${D}/plants/update`,
 		plant_id: t,
-		photo_id: n
+		...n
 	});
 }
 async function Tt(e, t) {
 	await e.callWS({
-		type: `${O}/plants/move`,
+		type: `${D}/plants/delete`,
+		plant_id: t
+	});
+}
+function Et(e, t, n) {
+	return e.callWS({
+		type: `${D}/plants/set_cover`,
+		plant_id: t,
+		photo_id: n
+	});
+}
+async function Dt(e, t) {
+	await e.callWS({
+		type: `${D}/plants/move`,
 		moves: t
 	});
 }
-function Et(e) {
-	return e.callWS({ type: `${O}/layout/get` });
+function Ot(e) {
+	return e.callWS({ type: `${D}/layout/get` });
 }
-function Dt(e, t) {
+function kt(e, t) {
 	return e.callWS({
-		type: `${O}/layout/shapes/save`,
+		type: `${D}/layout/shapes/save`,
 		shape: t
 	});
 }
-async function Ot(e, t) {
+async function At(e, t) {
 	await e.callWS({
-		type: `${O}/layout/shapes/delete`,
+		type: `${D}/layout/shapes/delete`,
 		shape_id: t
 	});
 }
-function kt(e, t) {
+function jt(e, t) {
 	let n = { type: "none" };
 	if (t?.type === "image") {
 		let { url: e, ...r } = t;
 		n = r;
 	} else t && (n = t);
 	return e.callWS({
-		type: `${O}/layout/set_background`,
+		type: `${D}/layout/set_background`,
 		background: n
 	});
 }
-function At(e, t, n, r) {
+function Mt(e, t, n, r) {
 	return e.callWS({
-		type: `${O}/layout/set_origin`,
+		type: `${D}/layout/set_origin`,
 		latitude: t,
 		longitude: n,
 		move_content: r
 	});
 }
-async function jt(e, t) {
+async function Nt(e, t) {
 	let n = new FormData();
 	n.append("file", t, "background.jpg");
-	let r = await e.fetchWithAuth(_t, {
+	let r = await e.fetchWithAuth(yt, {
 		method: "POST",
 		body: n
 	});
@@ -618,29 +618,29 @@ async function jt(e, t) {
 			let n = await r.json();
 			e = n.code ?? null, t = n.message ?? t;
 		} catch {}
-		throw new Lt(t, e, r.status);
+		throw new zt(t, e, r.status);
 	}
 	return await r.json();
 }
-function Mt(e, t) {
+function Pt(e, t) {
 	return e.callWS({
-		type: `${O}/layout/markers/save`,
+		type: `${D}/layout/markers/save`,
 		marker: t
 	});
 }
-async function Nt(e, t) {
+async function Ft(e, t) {
 	await e.callWS({
-		type: `${O}/layout/markers/delete`,
+		type: `${D}/layout/markers/delete`,
 		marker_id: t
 	});
 }
-async function Pt(e, t) {
+async function It(e, t) {
 	return (await e.callWS({
 		type: "todo/item/list",
 		entity_id: t
 	})).items;
 }
-async function Ft(e, t, n = 24) {
+async function Lt(e, t, n = 24) {
 	let r = (/* @__PURE__ */ new Date(Date.now() - n * 3600 * 1e3)).toISOString();
 	return ((await e.callWS({
 		type: "history/history_during_period",
@@ -653,18 +653,18 @@ async function Ft(e, t, n = 24) {
 		return e.s.trim() !== "" && Number.isFinite(t) ? [[e.lu * 1e3, t]] : [];
 	});
 }
-function It(e, t) {
-	return e.connection.subscribeMessage(t, { type: `${O}/subscribe` });
+function Rt(e, t) {
+	return e.connection.subscribeMessage(t, { type: `${D}/subscribe` });
 }
-var Lt = class extends Error {
+var zt = class extends Error {
 	constructor(e, t, n) {
 		super(e), this.code = t, this.status = n;
 	}
 };
-async function Rt(e, t) {
+async function Bt(e, t) {
 	let n = new FormData();
 	n.append("plant_id", t.plantId), t.takenAt && n.append("taken_at", t.takenAt), t.tags?.length && n.append("tags", t.tags.join(",")), t.note && n.append("note", t.note), n.append("file", t.file, t.filename);
-	let r = await e.fetchWithAuth(gt, {
+	let r = await e.fetchWithAuth(vt, {
 		method: "POST",
 		body: n
 	});
@@ -674,264 +674,264 @@ async function Rt(e, t) {
 			let n = await r.json();
 			e = n.code ?? null, t = n.message ?? t;
 		} catch {}
-		throw new Lt(t, e, r.status);
+		throw new zt(t, e, r.status);
 	}
 	return await r.json();
 }
-function zt(e, t, n) {
-	return e.callWS({
-		type: `${O}/photos/update`,
-		photo_id: t,
-		...n
-	});
-}
-async function Bt(e, t) {
-	await e.callWS({
-		type: `${O}/photos/delete`,
-		photo_id: t
-	});
-}
 function Vt(e, t, n) {
 	return e.callWS({
-		type: `${O}/measurements/add`,
-		plant_id: t,
+		type: `${D}/photos/update`,
+		photo_id: t,
 		...n
 	});
 }
 async function Ht(e, t) {
 	await e.callWS({
-		type: `${O}/measurements/delete`,
+		type: `${D}/photos/delete`,
+		photo_id: t
+	});
+}
+function Ut(e, t, n) {
+	return e.callWS({
+		type: `${D}/measurements/add`,
+		plant_id: t,
+		...n
+	});
+}
+async function Wt(e, t) {
+	await e.callWS({
+		type: `${D}/measurements/delete`,
 		measurement_id: t
 	});
 }
-function Ut(e) {
-	return e.callWS({ type: `${O}/irrigation/summary` });
+function Gt(e) {
+	return e.callWS({ type: `${D}/irrigation/summary` });
 }
-async function Wt(e, t = {}) {
+async function Kt(e, t = {}) {
 	return (await e.callWS({
-		type: `${O}/irrigation/events`,
+		type: `${D}/irrigation/events`,
 		...t
 	})).events;
 }
-function Gt(e, t, n = "") {
+function qt(e, t, n = "") {
 	return e.callWS({
-		type: `${O}/irrigation/log`,
+		type: `${D}/irrigation/log`,
 		plants: t,
 		note: n
 	});
 }
-async function Kt(e, t) {
+async function Jt(e, t) {
 	await e.callWS({
-		type: `${O}/irrigation/delete`,
+		type: `${D}/irrigation/delete`,
 		event_id: t
 	});
 }
-function qt(e) {
-	return e.callWS({ type: `${O}/water/summary` });
-}
-function Jt(e) {
-	return e.callWS({ type: `${O}/water/refresh` });
-}
 function Yt(e) {
-	return e.callWS({ type: `${O}/ai/status` });
+	return e.callWS({ type: `${D}/water/summary` });
 }
-function Xt(e, t, n) {
+function Xt(e) {
+	return e.callWS({ type: `${D}/water/refresh` });
+}
+function Zt(e) {
+	return e.callWS({ type: `${D}/ai/status` });
+}
+function Qt(e, t, n) {
 	return e.callWS({
-		type: `${O}/ai/identify`,
+		type: `${D}/ai/identify`,
 		plant_id: t,
 		photos: n
 	});
 }
-function Zt(e, t) {
+function $t(e, t) {
 	return e.callWS({
-		type: `${O}/ai/identification`,
+		type: `${D}/ai/identification`,
 		plant_id: t
 	});
 }
-function Qt(e, t, n, r) {
+function en(e, t, n, r) {
 	return e.callWS({
-		type: `${O}/ai/decide`,
+		type: `${D}/ai/decide`,
 		plant_id: t,
 		key: n,
 		accept: r
 	});
 }
-function $t(e, t) {
+function tn(e, t) {
 	return e.callWS({
-		type: `${O}/ai/estimate`,
+		type: `${D}/ai/estimate`,
 		photos: t
 	});
 }
-function en(e) {
-	return e.callWS({ type: `${O}/ai/usage/summary` });
+function nn(e) {
+	return e.callWS({ type: `${D}/ai/usage/summary` });
 }
-async function tn(e, t = {}) {
+async function rn(e, t = {}) {
 	return (await e.callWS({
-		type: `${O}/ai/usage/log`,
+		type: `${D}/ai/usage/log`,
 		...t
 	})).rows;
 }
-function nn(e) {
-	return e.callWS({ type: `${O}/ai/pricing/get` });
+function an(e) {
+	return e.callWS({ type: `${D}/ai/pricing/get` });
 }
-function rn(e, t, n, r) {
+function on(e, t, n, r) {
 	return e.callWS({
-		type: `${O}/ai/pricing/set`,
+		type: `${D}/ai/pricing/set`,
 		kind: t,
 		model: n,
 		prices: r
 	});
 }
-function an(e, t) {
+function sn(e, t) {
 	return e.callWS({
-		type: `${O}/ai/test`,
+		type: `${D}/ai/test`,
 		provider_id: t
 	});
 }
-function on(e) {
-	return e.callWS({ type: `${O}/tech/info` });
+function cn(e) {
+	return e.callWS({ type: `${D}/tech/info` });
 }
-function sn(e) {
-	return e.callWS({ type: `${O}/care/summary` });
+function ln(e) {
+	return e.callWS({ type: `${D}/care/summary` });
 }
-async function cn(e, t) {
+async function un(e, t) {
 	return (await e.callWS({
-		type: `${O}/tasks/list`,
+		type: `${D}/tasks/list`,
 		...t ? { plant_id: t } : {}
 	})).tasks;
 }
-function ln(e, t) {
+function dn(e, t) {
 	return e.callWS({
-		type: `${O}/tasks/create`,
+		type: `${D}/tasks/create`,
 		...t
 	});
 }
-function un(e, t, n) {
+function fn(e, t, n) {
 	return e.callWS({
-		type: `${O}/tasks/update`,
+		type: `${D}/tasks/update`,
 		task_id: t,
 		...n
 	});
 }
-function dn(e, t) {
+function pn(e, t) {
 	return e.callWS({
-		type: `${O}/tasks/complete`,
+		type: `${D}/tasks/complete`,
 		task_id: t
 	});
 }
-function fn(e, t) {
+function mn(e, t) {
 	return e.callWS({
-		type: `${O}/tasks/reopen`,
+		type: `${D}/tasks/reopen`,
 		task_id: t
 	});
 }
-async function pn(e, t) {
+async function hn(e, t) {
 	await e.callWS({
-		type: `${O}/tasks/delete`,
+		type: `${D}/tasks/delete`,
 		task_id: t
 	});
 }
-async function mn(e, t = {}) {
+async function gn(e, t = {}) {
 	return (await e.callWS({
-		type: `${O}/problems/list`,
+		type: `${D}/problems/list`,
 		...t.plantId ? { plant_id: t.plantId } : {},
 		active_only: t.activeOnly ?? !1
 	})).problems;
 }
-function hn(e, t) {
+function _n(e, t) {
 	return e.callWS({
-		type: `${O}/problems/get`,
+		type: `${D}/problems/get`,
 		problem_id: t
 	});
 }
-function gn(e, t) {
+function vn(e, t) {
 	return e.callWS({
-		type: `${O}/problems/create`,
+		type: `${D}/problems/create`,
 		...t
 	});
 }
-function _n(e, t, n) {
+function yn(e, t, n) {
 	return e.callWS({
-		type: `${O}/problems/update`,
+		type: `${D}/problems/update`,
 		problem_id: t,
 		...n
 	});
 }
-function vn(e, t, n, r) {
+function bn(e, t, n, r) {
 	return e.callWS({
-		type: `${O}/problems/log`,
+		type: `${D}/problems/log`,
 		problem_id: t,
 		kind: n,
 		text: r
 	});
 }
-async function yn(e, t) {
-	await e.callWS({
-		type: `${O}/problems/delete`,
-		problem_id: t
-	});
-}
-function bn(e, t) {
-	return e.callWS({
-		type: `${O}/problems/diagnose`,
-		problem_id: t
-	});
-}
 async function xn(e, t) {
+	await e.callWS({
+		type: `${D}/problems/delete`,
+		problem_id: t
+	});
+}
+function Sn(e, t) {
+	return e.callWS({
+		type: `${D}/problems/diagnose`,
+		problem_id: t
+	});
+}
+async function Cn(e, t) {
 	return (await e.callWS({
-		type: `${O}/questions/list`,
+		type: `${D}/questions/list`,
 		...t ? { plant_id: t } : {}
 	})).questions;
 }
-function Sn(e, t, n) {
+function wn(e, t, n) {
 	return e.callWS({
-		type: `${O}/questions/answer`,
+		type: `${D}/questions/answer`,
 		question_id: t,
 		...n
 	});
 }
-var A = (e) => e ? { plant_id: e } : {};
-function Cn(e, t) {
+var k = (e) => e ? { plant_id: e } : {};
+function Tn(e, t) {
 	return e.callWS({
-		type: `${O}/assistant/tips`,
-		...A(t)
+		type: `${D}/assistant/tips`,
+		...k(t)
 	});
 }
-function wn(e, t) {
+function En(e, t) {
 	return e.callWS({
-		type: `${O}/assistant/tips/create`,
-		...A(t)
+		type: `${D}/assistant/tips/create`,
+		...k(t)
 	});
 }
-function Tn(e, t, n, r) {
+function Dn(e, t, n, r) {
 	return e.callWS({
-		type: `${O}/assistant/tips/decide`,
-		...A(t),
+		type: `${D}/assistant/tips/decide`,
+		...k(t),
 		tip_id: n,
 		accept: r
 	});
 }
-async function En(e, t) {
+async function On(e, t) {
 	return (await e.callWS({
-		type: `${O}/assistant/chat/history`,
-		...A(t)
+		type: `${D}/assistant/chat/history`,
+		...k(t)
 	})).messages;
 }
-async function Dn(e, t) {
+async function kn(e, t) {
 	await e.callWS({
-		type: `${O}/assistant/chat/clear`,
-		...A(t)
+		type: `${D}/assistant/chat/clear`,
+		...k(t)
 	});
 }
-async function On(e, t, n, r) {
+async function An(e, t, n, r) {
 	let i;
 	try {
 		return await new Promise((a, o) => {
 			e.connection.subscribeMessage((e) => {
 				"delta" in e ? r(e.delta) : "done" in e ? a(e.message) : o(Object.assign(Error(e.error), { code: e.code }));
 			}, {
-				type: `${O}/assistant/chat`,
-				...A(t),
+				type: `${D}/assistant/chat`,
+				...k(t),
 				text: n
 			}).then((e) => {
 				i = e;
@@ -942,7 +942,7 @@ async function On(e, t, n, r) {
 	}
 }
 // src/i18n/de.ts
-var kn = {
+var jn = {
 	"common.cancel": "Abbrechen",
 	"common.save": "Speichern",
 	"common.delete": "Löschen",
@@ -1534,8 +1534,11 @@ var kn = {
 	"plan.tool_freehand": "Freihand zeichnen",
 	"plan.freehand_hint": "Maustaste oder Finger gedrückt halten und die Fläche umfahren; loslassen schließt sie.",
 	"plan.draw_area": "{name} als Fläche zeichnen",
-	"plan.area_for_hint": "Zeichne die Fläche von {name} (z. B. die ganze Hecke): freihand, oder wähle Rechteck oder Polygon."
-}, An = {
+	"plan.area_for_hint": "Zeichne die Fläche von {name} (z. B. die ganze Hecke): freihand, oder wähle Rechteck oder Polygon.",
+	"plan.tool_zone": "Bewässerungszone",
+	"plan.tool_zone_hint": "Fläche zeichnen, die ein Ventil oder Schalter bewässert",
+	"plan.zone_draw_hint": "Bewässerungszone: Ziehe ein Rechteck über die Fläche, die ein Ventil bewässert – oder wähle Kreis, Polygon oder Freihand. Danach rechts das Ventil oder den Schalter verknüpfen."
+}, Mn = {
 	"common.cancel": "Cancel",
 	"common.save": "Save",
 	"common.delete": "Delete",
@@ -2127,23 +2130,26 @@ var kn = {
 	"plan.tool_freehand": "Draw freehand",
 	"plan.freehand_hint": "Hold the mouse button or your finger down and trace the area; letting go closes it.",
 	"plan.draw_area": "Draw {name} as an area",
-	"plan.area_for_hint": "Draw the area of {name} (e.g. the whole hedge): freehand, or choose rectangle or polygon."
-}, jn = {
-	de: kn,
-	en: An
+	"plan.area_for_hint": "Draw the area of {name} (e.g. the whole hedge): freehand, or choose rectangle or polygon.",
+	"plan.tool_zone": "Irrigation zone",
+	"plan.tool_zone_hint": "Draw the area a valve or switch waters",
+	"plan.zone_draw_hint": "Irrigation zone: drag a rectangle over the area that one valve waters – or choose circle, polygon or freehand. Then link the valve or switch on the right."
+}, Nn = {
+	de: jn,
+	en: Mn
 };
-function Mn(e) {
-	return jn[(e ?? "en").toLowerCase().split("-")[0] ?? "en"] ?? An;
+function Pn(e) {
+	return Nn[(e ?? "en").toLowerCase().split("-")[0] ?? "en"] ?? Mn;
 }
-function Nn(e) {
-	let t = Mn(e);
+function Fn(e) {
+	let t = Pn(e);
 	return (e, n) => {
-		let r = t[e] ?? An[e] ?? e;
+		let r = t[e] ?? Mn[e] ?? e;
 		return n ? r.replace(/\{(\w+)\}/g, (e, t) => t in n ? String(n[t]) : e) : r;
 	};
 }
 // src/components/base.ts
-var j = class extends D {
+var A = class extends gt {
 	static {
 		this.properties = { hass: { attribute: !1 } };
 	}
@@ -2152,7 +2158,7 @@ var j = class extends D {
 	}
 	get t() {
 		let e = this.language;
-		return this._localize && e === this._language || (this._language = e, this._localize = Nn(e)), this._localize;
+		return this._localize && e === this._language || (this._language = e, this._localize = Fn(e)), this._localize;
 	}
 	fire(e, t) {
 		this.dispatchEvent(new CustomEvent(e, {
@@ -2161,14 +2167,14 @@ var j = class extends D {
 			composed: !0
 		}));
 	}
-}, M = (e, t) => t ? x`<svg class="icon" viewBox="0 0 24 24" role="img" aria-label=${t}>
+}, j = (e, t) => t ? x`<svg class="icon" viewBox="0 0 24 24" role="img" aria-label=${t}>
         <path d=${e}></path>
       </svg>` : x`<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d=${e}></path></svg>`;
-function N(e, t) {
+function M(e, t) {
 	customElements.get(e) || customElements.define(e, t);
 }
 // src/state/garden-store.ts
-var Pn = 36e5, Fn = 150, In = class extends EventTarget {
+var In = 36e5, Ln = 150, Rn = class extends EventTarget {
 	constructor(e) {
 		super(), this._hass = e, this.plants = [], this.layout = null, this.irrigation = {
 			plants: {},
@@ -2181,9 +2187,9 @@ var Pn = 36e5, Fn = 150, In = class extends EventTarget {
 	async connect() {
 		if (!this._unsubscribe) {
 			try {
-				this._unsubscribe = await It(this._hass(), (e) => this._onChange(e));
+				this._unsubscribe = await Rt(this._hass(), (e) => this._onChange(e));
 			} catch (e) {
-				this.error = k(e), this._emit("change");
+				this.error = O(e), this._emit("change");
 				return;
 			}
 			await this.refresh();
@@ -2198,7 +2204,7 @@ var Pn = 36e5, Fn = 150, In = class extends EventTarget {
 		} catch {}
 	}
 	get stale() {
-		return Date.now() - this.lastRefresh > Pn;
+		return Date.now() - this.lastRefresh > In;
 	}
 	getPlant(e) {
 		return this.plants.find((t) => t.id === e);
@@ -2257,31 +2263,31 @@ var Pn = 36e5, Fn = 150, In = class extends EventTarget {
 	async applyLayout(e) {
 		this.layout = e;
 		try {
-			this.plants = await yt(this._hass());
+			this.plants = await xt(this._hass());
 		} catch {}
 		this._emit("change");
 	}
 	async _load() {
 		try {
 			let [e, t, n, r, i] = await Promise.all([
-				yt(this._hass()),
-				Et(this._hass()),
-				Ut(this._hass()),
-				qt(this._hass()),
-				sn(this._hass())
+				xt(this._hass()),
+				Ot(this._hass()),
+				Gt(this._hass()),
+				Yt(this._hass()),
+				ln(this._hass())
 			]);
 			this.plants = e, this.layout = t, this.irrigation = n, this.water = r, this.care = i, this.error = void 0, this.loaded = !0, this.lastRefresh = Date.now();
 		} catch (e) {
-			this.error = k(e);
+			this.error = O(e);
 		}
 		this._emit("change");
 	}
 	_onChange(e) {
-		this.dispatchEvent(new CustomEvent("plant-changed", { detail: e })), e.kind === "irrigation" ? (clearTimeout(this._irrigationTimer), this._irrigationTimer = setTimeout(() => void this._loadIrrigation(), Fn)) : (e.kind === "care" || e.kind === "ai") && (clearTimeout(this._careTimer), this._careTimer = setTimeout(() => void this._loadCare(), Fn), e.kind === "care") || (e.kind === "water" ? (clearTimeout(this._waterTimer), this._waterTimer = setTimeout(() => void this._loadWater(), Fn)) : (clearTimeout(this._refreshTimer), this._refreshTimer = setTimeout(() => void this.refresh(), Fn)));
+		this.dispatchEvent(new CustomEvent("plant-changed", { detail: e })), e.kind === "irrigation" ? (clearTimeout(this._irrigationTimer), this._irrigationTimer = setTimeout(() => void this._loadIrrigation(), Ln)) : (e.kind === "care" || e.kind === "ai") && (clearTimeout(this._careTimer), this._careTimer = setTimeout(() => void this._loadCare(), Ln), e.kind === "care") || (e.kind === "water" ? (clearTimeout(this._waterTimer), this._waterTimer = setTimeout(() => void this._loadWater(), Ln)) : (clearTimeout(this._refreshTimer), this._refreshTimer = setTimeout(() => void this.refresh(), Ln)));
 	}
 	async _loadIrrigation() {
 		try {
-			this.irrigation = await Ut(this._hass());
+			this.irrigation = await Gt(this._hass());
 		} catch {
 			return;
 		}
@@ -2289,7 +2295,7 @@ var Pn = 36e5, Fn = 150, In = class extends EventTarget {
 	}
 	async _loadWater() {
 		try {
-			this.water = await qt(this._hass());
+			this.water = await Yt(this._hass());
 		} catch {
 			return;
 		}
@@ -2297,7 +2303,7 @@ var Pn = 36e5, Fn = 150, In = class extends EventTarget {
 	}
 	async _loadCare() {
 		try {
-			this.care = await sn(this._hass());
+			this.care = await ln(this._hass());
 		} catch {
 			return;
 		}
@@ -2309,7 +2315,7 @@ var Pn = 36e5, Fn = 150, In = class extends EventTarget {
 	_emit(e) {
 		this.dispatchEvent(new Event(e));
 	}
-}, P = g`
+}, N = g`
   * {
     box-sizing: border-box;
   }
@@ -2558,7 +2564,7 @@ var Pn = 36e5, Fn = 150, In = class extends EventTarget {
     padding: 12px 20px 16px;
     border-top: 1px solid var(--pg-divider);
   }
-`, Ln = g`
+`, zn = g`
   :host {
     --pg-bg: var(--primary-background-color, #f6f5f1);
     --pg-surface: var(--card-background-color, #ffffff);
@@ -2595,11 +2601,11 @@ var Pn = 36e5, Fn = 150, In = class extends EventTarget {
   }
 `;
 // src/util/navigate.ts
-function F(e, t = {}) {
+function P(e, t = {}) {
 	t.replace ? history.replaceState(history.state, "", e) : history.pushState(null, "", e), window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: !!t.replace } }));
 }
 // src/api/types.ts
-var Rn = [
+var Bn = [
 	"perennial",
 	"shrub",
 	"tree",
@@ -2615,23 +2621,23 @@ var Rn = [
 	"succulent",
 	"potted",
 	"other"
-], zn = [
+], Vn = [
 	"bed",
 	"raised_bed",
 	"pot",
 	"lawn",
 	"greenhouse",
 	"covered"
-], Bn = [
+], Hn = [
 	"full_sun",
 	"partial_shade",
 	"shade"
-], Vn = [
+], Un = [
 	"very_low",
 	"low",
 	"moderate",
 	"high"
-], Hn = [
+], Wn = [
 	"sand",
 	"loamy_sand",
 	"sandy_loam",
@@ -2640,13 +2646,13 @@ var Rn = [
 	"clay_loam",
 	"clay",
 	"potting_mix"
-], Un = [
+], Gn = [
 	"healthy",
 	"watch",
 	"problem",
 	"dead",
 	"removed"
-], Wn = [
+], Kn = [
 	"bed",
 	"raised_bed",
 	"lawn",
@@ -2660,30 +2666,30 @@ var Rn = [
 	"boundary",
 	"other",
 	"zone"
-], Gn = [
+], qn = [
 	"spray",
 	"rotor",
 	"drip_line",
 	"drip",
 	"manual"
-], Kn = {
+], Jn = {
 	rotor: .75,
 	spray: .65,
 	drip: .9,
 	drip_line: .85,
 	manual: .8
-}, qn = [
+}, Yn = [
 	"valve",
 	"switch",
 	"input_boolean",
 	"binary_sensor"
-], Jn = [
+], Xn = [
 	"leaf",
 	"flower",
 	"fruit",
 	"bark",
 	"auto"
-], Yn = [
+], Zn = [
 	"water",
 	"fertilize",
 	"prune",
@@ -2692,59 +2698,59 @@ var Rn = [
 	"harvest",
 	"photo",
 	"other"
-], Xn = [
+], Qn = [
 	"open",
 	"treating",
 	"watching",
 	"resolved"
 ];
 // src/util/format.ts
-function Zn(e) {
+function $n(e) {
 	let [t, n, r] = e.split("-").map(Number);
 	return new Date(t ?? 1970, (n ?? 1) - 1, r ?? 1);
 }
-function I(e = /* @__PURE__ */ new Date()) {
+function F(e = /* @__PURE__ */ new Date()) {
 	let t = (e) => String(e).padStart(2, "0");
 	return `${e.getFullYear()}-${t(e.getMonth() + 1)}-${t(e.getDate())}`;
 }
-function L(e, t) {
+function I(e, t) {
 	if (!e) return "";
-	let n = e.length === 10 ? Zn(e) : new Date(e);
+	let n = e.length === 10 ? $n(e) : new Date(e);
 	return new Intl.DateTimeFormat(t, { dateStyle: "medium" }).format(n);
 }
-function Qn(e, t) {
+function er(e, t) {
 	return new Intl.DateTimeFormat(t, {
 		month: "long",
 		year: "numeric"
 	}).format(new Date(e));
 }
-function $n(e) {
+function tr(e) {
 	let t = new Date(e);
 	return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}`;
 }
-function R(e, t, n = 1) {
+function L(e, t, n = 1) {
 	return new Intl.NumberFormat(t, { maximumFractionDigits: n }).format(e);
 }
-function er(e, t, n) {
+function nr(e, t, n) {
 	let r = e !== 0 && Math.abs(e) < .1 ? 3 : 2;
 	return `${new Intl.NumberFormat(n, {
 		minimumFractionDigits: r,
 		maximumFractionDigits: r
 	}).format(e)} ${t}`;
 }
-function z(e, t) {
-	return e == null ? "" : e >= 100 ? `${R(e / 100, t, 2)} m` : `${R(e, t)} cm`;
+function R(e, t) {
+	return e == null ? "" : e >= 100 ? `${L(e / 100, t, 2)} m` : `${L(e, t)} cm`;
 }
-function tr(e, t) {
+function rr(e, t) {
 	if (e == null) return "";
 	if (e < 1) return t("age.under_month");
 	let n = Math.floor(e / 12), r = e % 12, i = [];
 	return n && i.push(t(n === 1 ? "age.year_one" : "age.year_other", { n })), r && i.push(t(r === 1 ? "age.month_one" : "age.month_other", { n: r })), i.join(", ");
 }
-function nr(e, t) {
-	return e < 1048576 ? `${R(e / 1024, t, 0)} KB` : `${R(e / 1024 / 1024, t, 1)} MB`;
+function ir(e, t) {
+	return e < 1048576 ? `${L(e / 1024, t, 0)} KB` : `${L(e / 1024 / 1024, t, 1)} MB`;
 }
-function B(e, t, n = /* @__PURE__ */ new Date()) {
+function z(e, t, n = /* @__PURE__ */ new Date()) {
 	let r = new Date(e);
 	if (Number.isNaN(r.getTime())) return "";
 	let i = r.toLocaleTimeString(t, {
@@ -2756,14 +2762,14 @@ function B(e, t, n = /* @__PURE__ */ new Date()) {
 		month: "short"
 	})}, ${i}`;
 }
-function rr(e, t) {
-	return `${R(e, t, e < 1 ? 2 : +(e < 10))} L`;
+function ar(e, t) {
+	return `${L(e, t, e < 1 ? 2 : +(e < 10))} L`;
 }
 // src/util/exif.ts
-var ir = 34665, ar = 34853, or = 306, sr = 36867, cr = 36881, lr = 1, ur = 2, dr = 3, fr = 4, pr = 2, mr = 5;
-function hr(e, t) {
+var or = 34665, sr = 34853, cr = 306, lr = 36867, ur = 36881, dr = 1, fr = 2, pr = 3, mr = 4, hr = 2, gr = 5;
+function _r(e, t) {
 	let { view: n, start: r, little: i } = e;
-	if (n.getUint16(t + 2, i) !== pr) return null;
+	if (n.getUint16(t + 2, i) !== hr) return null;
 	let a = n.getUint32(t + 4, i), o = a <= 4 ? t + 8 : r + n.getUint32(t + 8, i);
 	if (o + a > n.byteLength) return null;
 	let s = "";
@@ -2774,9 +2780,9 @@ function hr(e, t) {
 	}
 	return s;
 }
-function gr(e, t) {
+function vr(e, t) {
 	let { view: n, start: r, little: i } = e;
-	if (n.getUint16(t + 2, i) !== mr || n.getUint32(t + 4, i) !== 3) return null;
+	if (n.getUint16(t + 2, i) !== gr || n.getUint32(t + 4, i) !== 3) return null;
 	let a = r + n.getUint32(t + 8, i);
 	if (a + 24 > n.byteLength) return null;
 	let [o = 0, s = 0, c = 0] = [
@@ -2789,7 +2795,7 @@ function gr(e, t) {
 	});
 	return o + s / 60 + c / 3600;
 }
-function _r(e, t) {
+function yr(e, t) {
 	let { view: n, start: r, little: i } = e, a = /* @__PURE__ */ new Map(), o = r + t;
 	if (o + 2 > n.byteLength) return a;
 	let s = n.getUint16(o, i);
@@ -2800,37 +2806,37 @@ function _r(e, t) {
 	}
 	return a;
 }
-function vr(e, t) {
-	let { view: n, little: r } = e, i = null, a = null, o = t.get(ir);
+function br(e, t) {
+	let { view: n, little: r } = e, i = null, a = null, o = t.get(or);
 	if (o !== void 0) {
-		let t = _r(e, n.getUint32(o + 8, r)), s = t.get(sr);
-		s !== void 0 && (i = hr(e, s));
-		let c = t.get(cr);
-		c !== void 0 && (a = hr(e, c));
+		let t = yr(e, n.getUint32(o + 8, r)), s = t.get(lr);
+		s !== void 0 && (i = _r(e, s));
+		let c = t.get(ur);
+		c !== void 0 && (a = _r(e, c));
 	}
 	if (!i) {
-		let n = t.get(or);
-		n !== void 0 && (i = hr(e, n));
+		let n = t.get(cr);
+		n !== void 0 && (i = _r(e, n));
 	}
 	let s = i?.trim().match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
 	if (!s) return null;
 	let [, c, l, u, d, f, p] = s;
 	return `${c}-${l}-${u}T${d}:${f}:${p}${a && /^[+-]\d{2}:\d{2}$/.test(a) ? a : ""}`;
 }
-function yr(e, t) {
-	let n = t.get(ar);
+function xr(e, t) {
+	let n = t.get(sr);
 	if (n === void 0) return null;
-	let r = _r(e, e.view.getUint32(n + 8, e.little)), i = (e) => r.get(e), a = i(ur), o = i(fr);
+	let r = yr(e, e.view.getUint32(n + 8, e.little)), i = (e) => r.get(e), a = i(fr), o = i(mr);
 	if (a === void 0 || o === void 0) return null;
-	let s = gr(e, a), c = gr(e, o);
+	let s = vr(e, a), c = vr(e, o);
 	if (s === null || c === null || s === 0 && c === 0) return null;
-	let l = i(lr), u = i(dr), d = l === void 0 ? "N" : hr(e, l), f = u === void 0 ? "E" : hr(e, u);
+	let l = i(dr), u = i(pr), d = l === void 0 ? "N" : _r(e, l), f = u === void 0 ? "E" : _r(e, u);
 	return {
 		latitude: d === "S" ? -s : s,
 		longitude: f === "W" ? -c : c
 	};
 }
-function br(e) {
+function Sr(e) {
 	let t = {
 		takenAt: null,
 		gps: null
@@ -2851,10 +2857,10 @@ function br(e) {
 					little: i === 18761
 				};
 				if (n.getUint16(e + 2, a.little) !== 42) return t;
-				let o = _r(a, n.getUint32(e + 4, a.little));
+				let o = yr(a, n.getUint32(e + 4, a.little));
 				return {
-					takenAt: vr(a, o),
-					gps: yr(a, o)
+					takenAt: br(a, o),
+					gps: xr(a, o)
 				};
 			}
 			r += 2 + i;
@@ -2865,18 +2871,18 @@ function br(e) {
 	return t;
 }
 // src/util/image.ts
-var xr = 2560, Sr = 4194304;
-function Cr(e, t, n = xr) {
+var Cr = 2560, wr = 4194304;
+function Tr(e, t, n = Cr) {
 	let r = Math.min(1, n / Math.max(e, t));
 	return {
 		width: Math.round(e * r),
 		height: Math.round(t * r)
 	};
 }
-function wr(e) {
+function Er(e) {
 	return `${e.replace(/\.[^.]+$/, "") || "photo"}.jpg`;
 }
-async function Tr(e, t, n) {
+async function Dr(e, t, n) {
 	if (typeof OffscreenCanvas < "u") {
 		let r = new OffscreenCanvas(t, n);
 		return r.getContext("2d")?.drawImage(e, 0, 0, t, n), r.convertToBlob({
@@ -2887,8 +2893,8 @@ async function Tr(e, t, n) {
 	let r = document.createElement("canvas");
 	return r.width = t, r.height = n, r.getContext("2d")?.drawImage(e, 0, 0, t, n), new Promise((e, t) => r.toBlob((n) => n ? e(n) : t(/* @__PURE__ */ Error("encoding failed")), "image/jpeg", .9));
 }
-async function Er(e) {
-	let t = e.type === "image/jpeg" ? br(await e.arrayBuffer()) : null, n = t?.takenAt ?? null, r = t?.gps ?? null, i = n ?? (e.lastModified ? new Date(e.lastModified).toISOString() : null), a;
+async function Or(e) {
+	let t = e.type === "image/jpeg" ? Sr(await e.arrayBuffer()) : null, n = t?.takenAt ?? null, r = t?.gps ?? null, i = n ?? (e.lastModified ? new Date(e.lastModified).toISOString() : null), a;
 	try {
 		a = await createImageBitmap(e, { imageOrientation: "from-image" });
 	} catch {
@@ -2900,15 +2906,15 @@ async function Er(e) {
 		};
 	}
 	try {
-		let t = Cr(a.width, a.height);
-		return e.type === "image/jpeg" && e.size <= Sr && t.width === a.width ? {
+		let t = Tr(a.width, a.height);
+		return e.type === "image/jpeg" && e.size <= wr && t.width === a.width ? {
 			blob: e,
 			filename: e.name,
 			takenAt: i,
 			gps: r
 		} : {
-			blob: await Tr(a, t.width, t.height),
-			filename: wr(e.name),
+			blob: await Dr(a, t.width, t.height),
+			filename: Er(e.name),
 			takenAt: i,
 			gps: r
 		};
@@ -2917,7 +2923,7 @@ async function Er(e) {
 	}
 }
 // src/util/wms.ts
-var Dr = [
+var kr = [
 	{
 		key: "bb",
 		name: "Berlin/Brandenburg (DOP20)",
@@ -3075,59 +3081,59 @@ var Dr = [
 		]
 	}
 ];
-function Or(e) {
+function Ar(e) {
 	if (!e) return;
 	let t = (e) => (e.bbox[2] - e.bbox[0]) * (e.bbox[3] - e.bbox[1]);
-	return [...Dr].sort((e, n) => t(e) - t(n)).find(({ bbox: [t, n, r, i] }) => e.longitude >= t && e.longitude <= r && e.latitude >= n && e.latitude <= i);
+	return [...kr].sort((e, n) => t(e) - t(n)).find(({ bbox: [t, n, r, i] }) => e.longitude >= t && e.longitude <= r && e.latitude >= n && e.latitude <= i);
 }
-function kr(e, t = (/* @__PURE__ */ new Date()).getFullYear()) {
-	let n = Dr.find((t) => t.key === e.preset), r = n?.url ?? e.url, i = n?.layers ?? e.layers;
+function jr(e, t = (/* @__PURE__ */ new Date()).getFullYear()) {
+	let n = kr.find((t) => t.key === e.preset), r = n?.url ?? e.url, i = n?.layers ?? e.layers;
 	return !r || !i ? null : {
 		url: r,
 		layers: i,
 		attribution: (n?.attribution ?? e.attribution ?? "").replace("{year}", String(t))
 	};
 }
-var Ar = 6378137, V = Math.PI / 180;
-function jr(e, t) {
+var Mr = 6378137, B = Math.PI / 180;
+function Nr(e, t) {
 	return {
-		mx: Ar * t * V,
-		my: Ar * Math.log(Math.tan(Math.PI / 4 + e * V / 2))
+		mx: Mr * t * B,
+		my: Mr * Math.log(Math.tan(Math.PI / 4 + e * B / 2))
 	};
 }
-function Mr(e, t) {
-	let n = jr(e.latitude, e.longitude), r = 1 / Math.cos(e.latitude * V);
+function Pr(e, t) {
+	let n = Nr(e.latitude, e.longitude), r = 1 / Math.cos(e.latitude * B);
 	return {
 		mx: n.mx + t.x * r,
 		my: n.my - t.y * r
 	};
 }
-function Nr(e, t, n) {
-	let r = jr(e.latitude, e.longitude), i = jr(t, n), a = 1 / Math.cos(e.latitude * V);
+function Fr(e, t, n) {
+	let r = Nr(e.latitude, e.longitude), i = Nr(t, n), a = 1 / Math.cos(e.latitude * B);
 	return {
 		x: (i.mx - r.mx) / a,
 		y: -(i.my - r.my) / a
 	};
 }
-function Pr(e, t) {
-	let { mx: n, my: r } = Mr(e, t);
+function Ir(e, t) {
+	let { mx: n, my: r } = Pr(e, t);
 	return {
-		latitude: (2 * Math.atan(Math.exp(r / Ar)) - Math.PI / 2) / V,
-		longitude: n / Ar / V
+		latitude: (2 * Math.atan(Math.exp(r / Mr)) - Math.PI / 2) / B,
+		longitude: n / Mr / B
 	};
 }
-function Fr(e, t, n) {
-	let r = Pr(e, n);
-	return Nr(t, r.latitude, r.longitude);
+function Lr(e, t, n) {
+	let r = Ir(e, n);
+	return Fr(t, r.latitude, r.longitude);
 }
-var Ir = 2048, Lr = .1;
-function Rr(e, t, n, r) {
-	let i = n.maxX - n.minX, a = n.maxY - n.minY, o = Math.min(Ir, Math.ceil(r), Math.ceil(i / Lr)), s = Math.round(o * a / i);
-	s > 2048 && (s = Ir, o = Math.round(s * i / a));
-	let c = Mr(t, {
+var Rr = 2048, zr = .1;
+function Br(e, t, n, r) {
+	let i = n.maxX - n.minX, a = n.maxY - n.minY, o = Math.min(Rr, Math.ceil(r), Math.ceil(i / zr)), s = Math.round(o * a / i);
+	s > 2048 && (s = Rr, o = Math.round(s * i / a));
+	let c = Pr(t, {
 		x: n.minX,
 		y: n.maxY
-	}), l = Mr(t, {
+	}), l = Pr(t, {
 		x: n.maxX,
 		y: n.minY
 	}), u = new URLSearchParams({
@@ -3154,35 +3160,35 @@ function Rr(e, t, n, r) {
 	};
 }
 // src/util/upload.ts
-var zr = /* @__PURE__ */ new Set([
+var Vr = /* @__PURE__ */ new Set([
 	"invalid_image",
 	"unsupported_format",
 	"image_too_large"
-]), Br = 1e3;
-function Vr(e, t) {
-	if (e instanceof Lt) {
+]), Hr = 1e3;
+function Ur(e, t) {
+	if (e instanceof zt) {
 		if (e.status === 413) return t("upload.too_large");
-		if (e.code && zr.has(e.code)) return t(`upload.${e.code}`);
+		if (e.code && Vr.has(e.code)) return t(`upload.${e.code}`);
 	}
 	return t("upload.failed");
 }
-function Hr(e, t) {
+function Wr(e, t) {
 	if (!e || !t) return null;
-	let n = Nr(t, e.latitude, e.longitude);
+	let n = Fr(t, e.latitude, e.longitude);
 	return Math.hypot(n.x, n.y) > 1e3 ? null : {
 		x: Math.round(n.x * 10) / 10,
 		y: Math.round(n.y * 10) / 10
 	};
 }
-async function Ur(e, t) {
+async function Gr(e, t) {
 	for (let n of e) {
 		if (n.type !== "image/jpeg") continue;
-		let e = Hr(br(await n.arrayBuffer()).gps, t);
+		let e = Wr(Sr(await n.arrayBuffer()).gps, t);
 		if (e) return e;
 	}
 	return null;
 }
-async function Wr(e, t, n, r, i) {
+async function Kr(e, t, n, r, i) {
 	let a = {
 		photos: [],
 		errors: [],
@@ -3191,22 +3197,22 @@ async function Wr(e, t, n, r, i) {
 	for (let [o, s] of n.entries()) {
 		i?.(o + 1, n.length);
 		try {
-			let n = await Er(s);
-			a.photos.push(await Rt(e, {
+			let n = await Or(s);
+			a.photos.push(await Bt(e, {
 				plantId: t,
 				file: n.blob,
 				filename: n.filename,
 				takenAt: n.takenAt
 			})), a.gps ??= n.gps;
 		} catch (e) {
-			a.errors.push(`${s.name}: ${Vr(e, r)}`);
+			a.errors.push(`${s.name}: ${Ur(e, r)}`);
 		}
 	}
 	return a;
 }
 // src/components/background-dialog.ts
-var H = "custom";
-N("pg-background-dialog", class extends j {
+var V = "custom";
+M("pg-background-dialog", class extends A {
 	static {
 		this.properties = {
 			background: { attribute: !1 },
@@ -3234,8 +3240,8 @@ N("pg-background-dialog", class extends j {
 		this._viewport = e;
 		let t = this.background;
 		this._choice = t?.type ?? "none", this._error = "", this._busy = !1;
-		let n = Or(this.origin)?.key ?? Dr[0]?.key ?? "";
-		t?.type === "wms" ? (this._preset = t.preset ?? H, this._url = t.url ?? "", this._layers = t.layers ?? "", this._attribution = t.attribution ?? "", this._opacity = t.opacity) : (this._preset = n, this._url = this._layers = this._attribution = "", this._opacity = t?.type === "image" ? t.opacity : 1), this._image = t?.type === "image" ? t : null, this._rotation = t?.type === "image" ? String(t.rotation) : "0", t?.type === "image" && (this._opacity = t.opacity), this.updateComplete.then(() => this.renderRoot.querySelector("dialog")?.showModal());
+		let n = Ar(this.origin)?.key ?? kr[0]?.key ?? "";
+		t?.type === "wms" ? (this._preset = t.preset ?? V, this._url = t.url ?? "", this._layers = t.layers ?? "", this._attribution = t.attribution ?? "", this._opacity = t.opacity) : (this._preset = n, this._url = this._layers = this._attribution = "", this._opacity = t?.type === "image" ? t.opacity : 1), this._image = t?.type === "image" ? t : null, this._rotation = t?.type === "image" ? String(t.rotation) : "0", t?.type === "image" && (this._opacity = t.opacity), this.updateComplete.then(() => this.renderRoot.querySelector("dialog")?.showModal());
 	}
 	close() {
 		this.renderRoot.querySelector("dialog")?.close();
@@ -3245,7 +3251,7 @@ N("pg-background-dialog", class extends j {
 		if (t.value = "", n) {
 			this._busy = !0, this._error = "";
 			try {
-				let e = await Er(n), t = await jt(this.hass, e.blob), r = this._viewport.width * .7, i = r * t.height_px / t.width_px;
+				let e = await Or(n), t = await Nt(this.hass, e.blob), r = this._viewport.width * .7, i = r * t.height_px / t.width_px;
 				this._image = {
 					type: "image",
 					image_id: t.image_id,
@@ -3259,7 +3265,7 @@ N("pg-background-dialog", class extends j {
 					url: t.url
 				}, this._opacity = .8, this._rotation = "0";
 			} catch (e) {
-				this._error = Vr(e, this.t) || k(e);
+				this._error = Ur(e, this.t) || O(e);
 			} finally {
 				this._busy = !1;
 			}
@@ -3268,7 +3274,7 @@ N("pg-background-dialog", class extends j {
 	_result() {
 		if (this._choice === "none") return null;
 		if (this._choice === "wms") {
-			if (this._preset !== H) return {
+			if (this._preset !== V) return {
 				type: "wms",
 				preset: this._preset,
 				opacity: this._opacity
@@ -3304,16 +3310,16 @@ N("pg-background-dialog", class extends j {
 			this._choice = e, this._error = "";
 		}}
     >
-      ${t ? M(t) : w}<span>${n}</span>
+      ${t ? j(t) : w}<span>${n}</span>
     </button>`;
 	}
 	render() {
-		let { t: e } = this, t = Or(this.origin);
+		let { t: e } = this, t = Ar(this.origin);
 		return x`<dialog aria-labelledby="title">
       <div class="dialog-header">
         <h2 id="title">${e("background.title")}</h2>
         <button class="icon-button" @click=${this.close} aria-label=${e("common.close")}>
-          ${M(i)}
+          ${j(i)}
         </button>
       </div>
       <div class="dialog-body">
@@ -3328,7 +3334,7 @@ N("pg-background-dialog", class extends j {
         ${this._choice === "none" ? w : x`<label class="field">
                 <span
                   >${e("background.opacity")}:
-                  ${R(this._opacity * 100, this.language, 0)} %</span
+                  ${L(this._opacity * 100, this.language, 0)} %</span
                 >
                 <input
                   type="range"
@@ -3350,7 +3356,7 @@ N("pg-background-dialog", class extends j {
     </dialog>`;
 	}
 	_renderWms(e) {
-		let { t } = this, n = this._preset === H ? null : kr({
+		let { t } = this, n = this._preset === V ? null : jr({
 			type: "wms",
 			preset: this._preset,
 			opacity: 1
@@ -3358,15 +3364,15 @@ N("pg-background-dialog", class extends j {
 		return x`<label class="field">
         <span>${t("background.service")}</span>
         <select @change=${(e) => this._preset = e.target.value}>
-          ${Dr.map((n) => x`<option value=${n.key} ?selected=${n.key === this._preset}>
+          ${kr.map((n) => x`<option value=${n.key} ?selected=${n.key === this._preset}>
                 ${n.name}${n.key === e ? ` – ${t("background.suggested")}` : ""}
               </option>`)}
-          <option value=${H} ?selected=${this._preset === H}>
+          <option value=${V} ?selected=${this._preset === V}>
             ${t("background.custom")}
           </option>
         </select>
       </label>
-      ${this._preset === H ? x`<label class="field">
+      ${this._preset === V ? x`<label class="field">
                 <span>${t("background.url")}</span>
                 <input
                   type="url"
@@ -3398,7 +3404,7 @@ N("pg-background-dialog", class extends j {
 		return x`${this._image?.url ? x`<img class="preview" src=${this._image.url} alt="" />` : w}
       <label class="upload">
         <span class="button secondary">
-          ${M("M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z")} ${this._image ? e("background.replace") : e("background.upload")}
+          ${j("M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z")} ${this._image ? e("background.replace") : e("background.upload")}
         </span>
         <input
           class="sr-only"
@@ -3421,7 +3427,7 @@ N("pg-background-dialog", class extends j {
       <p class="muted small">${e("background.image_hint")}</p>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       dialog {
         width: min(560px, calc(100vw - 24px));
       }
@@ -3485,33 +3491,33 @@ N("pg-background-dialog", class extends j {
 	}
 });
 // src/util/markers.ts
-var Gr = {
-	moisture: le,
-	humidity: le,
-	temperature: ie,
+var qr = {
+	moisture: ue,
+	humidity: ue,
+	temperature: ae,
 	battery: t,
-	illuminance: fe,
-	irradiance: fe,
-	precipitation: de,
-	precipitation_intensity: de,
-	volume: re,
-	volume_storage: re,
-	water: se
-}, Kr = {
+	illuminance: pe,
+	irradiance: pe,
+	precipitation: fe,
+	precipitation_intensity: fe,
+	volume: ie,
+	volume_storage: ie,
+	water: ce
+}, Jr = {
 	lawn_mower: te,
-	weather: ue,
-	valve: oe,
-	switch: ae,
-	input_boolean: ae,
+	weather: de,
+	valve: se,
+	switch: oe,
+	input_boolean: oe,
 	binary_sensor: r
 };
-function qr(e, t) {
+function Yr(e, t) {
 	let n = t?.attributes.device_class;
-	if (n && Gr[n]) return Gr[n];
+	if (n && qr[n]) return qr[n];
 	let r = e.split(".")[0] ?? "";
-	return /sprinkler|bewaesserung|bewässerung|irrigation/i.test(e) ? "M10 10H14V22H10V10M7 9H9V7H7V9M4 8H6V6H4V8M4 11H6V9H4V11M1 13H3V11H1V13M1 7H3V5H1V7M1 10H3V8H1V10M18 11H20V9H18V11M21 10H23V8H21V10M21 5V7H23V5H21M21 13H23V11H21V13M15 9H17V7H15V9M18 8H20V6H18V8M10 7H10.33L11 9H13L13.67 7H14V6H10V7Z" : /zisterne|cistern|tank/i.test(e) ? re : Kr[r] ?? "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.4 19,16.5 17.3,18C15.9,16.7 14,16 12,16C10,16 8.2,16.7 6.7,18C5,16.5 4,14.4 4,12A8,8 0 0,1 12,4M14,5.89C13.62,5.9 13.26,6.15 13.1,6.54L11.81,9.77L11.71,10C11,10.13 10.41,10.6 10.14,11.26C9.73,12.29 10.23,13.45 11.26,13.86C12.29,14.27 13.45,13.77 13.86,12.74C14.12,12.08 14,11.32 13.57,10.76L13.67,10.5L14.96,7.29L14.97,7.26C15.17,6.75 14.92,6.17 14.41,5.96C14.28,5.91 14.15,5.89 14,5.89M10,6A1,1 0 0,0 9,7A1,1 0 0,0 10,8A1,1 0 0,0 11,7A1,1 0 0,0 10,6M7,9A1,1 0 0,0 6,10A1,1 0 0,0 7,11A1,1 0 0,0 8,10A1,1 0 0,0 7,9M17,9A1,1 0 0,0 16,10A1,1 0 0,0 17,11A1,1 0 0,0 18,10A1,1 0 0,0 17,9Z";
+	return /sprinkler|bewaesserung|bewässerung|irrigation/i.test(e) ? ne : /zisterne|cistern|tank/i.test(e) ? ie : Jr[r] ?? "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.4 19,16.5 17.3,18C15.9,16.7 14,16 12,16C10,16 8.2,16.7 6.7,18C5,16.5 4,14.4 4,12A8,8 0 0,1 12,4M14,5.89C13.62,5.9 13.26,6.15 13.1,6.54L11.81,9.77L11.71,10C11,10.13 10.41,10.6 10.14,11.26C9.73,12.29 10.23,13.45 11.26,13.86C12.29,14.27 13.45,13.77 13.86,12.74C14.12,12.08 14,11.32 13.57,10.76L13.67,10.5L14.96,7.29L14.97,7.26C15.17,6.75 14.92,6.17 14.41,5.96C14.28,5.91 14.15,5.89 14,5.89M10,6A1,1 0 0,0 9,7A1,1 0 0,0 10,8A1,1 0 0,0 11,7A1,1 0 0,0 10,6M7,9A1,1 0 0,0 6,10A1,1 0 0,0 7,11A1,1 0 0,0 8,10A1,1 0 0,0 7,9M17,9A1,1 0 0,0 16,10A1,1 0 0,0 17,11A1,1 0 0,0 18,10A1,1 0 0,0 17,9Z";
 }
-var Jr = {
+var Xr = {
 	on: "marker.on",
 	off: "marker.off",
 	open: "marker.open",
@@ -3522,36 +3528,36 @@ var Jr = {
 	returning: "marker.returning",
 	error: "marker.error"
 };
-function Yr(e, t, n) {
+function Zr(e, t, n) {
 	if (!e || e.state === "unavailable" || e.state === "unknown") return "–";
 	let r = e.attributes.unit_of_measurement, i = Number(e.state);
 	if (e.state.trim() !== "" && Number.isFinite(i)) {
-		let e = R(i, t, 1);
+		let e = L(i, t, 1);
 		return r ? `${e} ${r}` : e;
 	}
-	let a = Jr[e.state];
+	let a = Xr[e.state];
 	return a ? n(a) : e.state;
 }
-function U(e, t) {
+function H(e, t) {
 	return e?.attributes.friendly_name ?? t;
 }
 // src/components/entity-picker.ts
-var Xr = [
+var Qr = [
 	"sensor",
 	"binary_sensor",
 	"lawn_mower",
 	"valve",
 	"switch",
 	"weather"
-], Zr = 150;
-function Qr(e, t, n) {
+], $r = 150;
+function ei(e, t, n) {
 	let r = t.trim().toLocaleLowerCase(), i = (e) => {
-		let t = Xr.indexOf(e.entity_id.split(".")[0] ?? "");
-		return t === -1 ? Xr.length : t;
+		let t = Qr.indexOf(e.entity_id.split(".")[0] ?? "");
+		return t === -1 ? Qr.length : t;
 	};
-	return Object.values(e).filter((e) => !n || n.includes(e.entity_id.split(".")[0] ?? "")).filter((e) => !r || e.entity_id.toLocaleLowerCase().includes(r) || U(e, e.entity_id).toLocaleLowerCase().includes(r)).sort((e, t) => i(e) - i(t) || U(e, e.entity_id).localeCompare(U(t, t.entity_id))).slice(0, Zr);
+	return Object.values(e).filter((e) => !n || n.includes(e.entity_id.split(".")[0] ?? "")).filter((e) => !r || e.entity_id.toLocaleLowerCase().includes(r) || H(e, e.entity_id).toLocaleLowerCase().includes(r)).sort((e, t) => i(e) - i(t) || H(e, e.entity_id).localeCompare(H(t, t.entity_id))).slice(0, $r);
 }
-N("pg-entity-picker", class extends j {
+M("pg-entity-picker", class extends A {
 	static {
 		this.properties = {
 			domains: { attribute: !1 },
@@ -3574,17 +3580,17 @@ N("pg-entity-picker", class extends j {
 		this.close(), this.fire("entity-picked", { entityId: e });
 	}
 	render() {
-		let { t: e } = this, t = this.hass ? Qr(this.hass.states, this._query, this.domains) : [];
+		let { t: e } = this, t = this.hass ? ei(this.hass.states, this._query, this.domains) : [];
 		return x`<dialog aria-labelledby="title">
       <div class="dialog-header">
         <h2 id="title">${this.heading || e("picker.title")}</h2>
         <button class="icon-button" @click=${this.close} aria-label=${e("common.close")}>
-          ${M(i)}
+          ${j(i)}
         </button>
       </div>
       <div class="dialog-body">
         <label class="search">
-          ${M(l)}
+          ${j(l)}
           <span class="sr-only">${e("picker.search")}</span>
           <input
             type="search"
@@ -3596,21 +3602,21 @@ N("pg-entity-picker", class extends j {
         ${t.length ? x`<ul>
                 ${t.map((t) => x`<li>
                       <button class="entity" @click=${() => this._pick(t.entity_id)}>
-                        ${M(qr(t.entity_id, t))}
+                        ${j(Yr(t.entity_id, t))}
                         <span class="names">
-                          <span class="name">${U(t, t.entity_id)}</span>
+                          <span class="name">${H(t, t.entity_id)}</span>
                           <span class="id">${t.entity_id}</span>
                         </span>
-                        <span class="value">${Yr(t, this.language, e)}</span>
+                        <span class="value">${Zr(t, this.language, e)}</span>
                       </button>
                     </li>`)}
               </ul>` : x`<p class="muted">${e("picker.none")}</p>`}
-        ${t.length === Zr ? x`<p class="muted small">${e("picker.more")}</p>` : w}
+        ${t.length === $r ? x`<p class="muted small">${e("picker.more")}</p>` : w}
       </div>
     </dialog>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       dialog {
         width: min(520px, calc(100vw - 24px));
         height: min(640px, calc(100vh - 24px));
@@ -3692,17 +3698,17 @@ N("pg-entity-picker", class extends j {
 	}
 });
 // node_modules/lit-html/directive.js
-var $r = {
+var ti = {
 	ATTRIBUTE: 1,
 	CHILD: 2,
 	PROPERTY: 3,
 	BOOLEAN_ATTRIBUTE: 4,
 	EVENT: 5,
 	ELEMENT: 6
-}, ei = (e) => (...t) => ({
+}, ni = (e) => (...t) => ({
 	_$litDirective$: e,
 	values: t
-}), ti = class {
+}), ri = class {
 	constructor(e) {}
 	get _$AU() {
 		return this._$AM._$AU;
@@ -3716,9 +3722,9 @@ var $r = {
 	update(e, t) {
 		return this.render(...t);
 	}
-}, { I: ni } = dt, ri = (e) => e, ii = () => document.createComment(""), ai = (e, t, n) => {
+}, { I: ii } = ft, ai = (e) => e, oi = () => document.createComment(""), si = (e, t, n) => {
 	let r = e._$AA.parentNode, i = t === void 0 ? e._$AB : t._$AA;
-	if (n === void 0) n = new ni(r.insertBefore(ii(), i), r.insertBefore(ii(), i), e, e.options);
+	if (n === void 0) n = new ii(r.insertBefore(oi(), i), r.insertBefore(oi(), i), e, e.options);
 	else {
 		let t = n._$AB.nextSibling, a = n._$AM, o = a !== e;
 		if (o) {
@@ -3728,21 +3734,21 @@ var $r = {
 		if (t !== i || o) {
 			let e = n._$AA;
 			for (; e !== t;) {
-				let t = ri(e).nextSibling;
-				ri(r).insertBefore(e, i), e = t;
+				let t = ai(e).nextSibling;
+				ai(r).insertBefore(e, i), e = t;
 			}
 		}
 	}
 	return n;
-}, W = (e, t, n = e) => (e._$AI(t, n), e), oi = {}, si = (e, t = oi) => e._$AH = t, ci = (e) => e._$AH, li = (e) => {
+}, U = (e, t, n = e) => (e._$AI(t, n), e), ci = {}, li = (e, t = ci) => e._$AH = t, ui = (e) => e._$AH, di = (e) => {
 	e._$AR(), e._$AA.remove();
-}, ui = (e, t, n) => {
+}, fi = (e, t, n) => {
 	let r = /* @__PURE__ */ new Map();
 	for (let i = t; i <= n; i++) r.set(e[i], i);
 	return r;
-}, di = ei(class extends ti {
+}, pi = ni(class extends ri {
 	constructor(e) {
-		if (super(e), e.type !== $r.CHILD) throw Error("repeat() can only be used in text expressions");
+		if (super(e), e.type !== ti.CHILD) throw Error("repeat() can only be used in text expressions");
 	}
 	dt(e, t, n) {
 		let r;
@@ -3758,47 +3764,47 @@ var $r = {
 		return this.dt(e, t, n).values;
 	}
 	update(e, [t, n, r]) {
-		let i = ci(e), { values: a, keys: o } = this.dt(t, n, r);
+		let i = ui(e), { values: a, keys: o } = this.dt(t, n, r);
 		if (!Array.isArray(i)) return this.ut = o, a;
 		let s = this.ut ??= [], c = [], l, u, d = 0, f = i.length - 1, p = 0, m = a.length - 1;
 		for (; d <= f && p <= m;) if (i[d] === null) d++;
 		else if (i[f] === null) f--;
-		else if (s[d] === o[p]) c[p] = W(i[d], a[p]), d++, p++;
-		else if (s[f] === o[m]) c[m] = W(i[f], a[m]), f--, m--;
-		else if (s[d] === o[m]) c[m] = W(i[d], a[m]), ai(e, c[m + 1], i[d]), d++, m--;
-		else if (s[f] === o[p]) c[p] = W(i[f], a[p]), ai(e, i[d], i[f]), f--, p++;
-		else if (l === void 0 && (l = ui(o, p, m), u = ui(s, d, f)), l.has(s[d])) {
+		else if (s[d] === o[p]) c[p] = U(i[d], a[p]), d++, p++;
+		else if (s[f] === o[m]) c[m] = U(i[f], a[m]), f--, m--;
+		else if (s[d] === o[m]) c[m] = U(i[d], a[m]), si(e, c[m + 1], i[d]), d++, m--;
+		else if (s[f] === o[p]) c[p] = U(i[f], a[p]), si(e, i[d], i[f]), f--, p++;
+		else if (l === void 0 && (l = fi(o, p, m), u = fi(s, d, f)), l.has(s[d])) {
 			if (l.has(s[f])) {
 				let t = u.get(o[p]), n = t === void 0 ? null : i[t];
 				if (n === null) {
-					let t = ai(e, i[d]);
-					W(t, a[p]), c[p] = t;
-				} else c[p] = W(n, a[p]), ai(e, i[d], n), i[t] = null;
+					let t = si(e, i[d]);
+					U(t, a[p]), c[p] = t;
+				} else c[p] = U(n, a[p]), si(e, i[d], n), i[t] = null;
 				p++;
-			} else li(i[f]), f--;
-		} else li(i[d]), d++;
+			} else di(i[f]), f--;
+		} else di(i[d]), d++;
 		for (; p <= m;) {
-			let t = ai(e, c[m + 1]);
-			W(t, a[p]), c[p++] = t;
+			let t = si(e, c[m + 1]);
+			U(t, a[p]), c[p++] = t;
 		}
 		for (; d <= f;) {
 			let e = i[d++];
-			e !== null && li(e);
+			e !== null && di(e);
 		}
-		return this.ut = o, si(e, c), C;
+		return this.ut = o, li(e, c), C;
 	}
-}), fi = Math.PI / 180;
-function pi(e, t) {
-	let n = t * fi, r = Math.cos(n), i = Math.sin(n);
+}), mi = Math.PI / 180;
+function hi(e, t) {
+	let n = t * mi, r = Math.cos(n), i = Math.sin(n);
 	return {
 		x: e.x * r - e.y * i,
 		y: e.x * i + e.y * r
 	};
 }
-function G(e, t) {
+function W(e, t) {
 	return Math.hypot(e.x - t.x, e.y - t.y);
 }
-function mi(e) {
+function gi(e) {
 	let t = e.w / 2, n = e.h / 2;
 	return [
 		{
@@ -3818,54 +3824,54 @@ function mi(e) {
 			y: n
 		}
 	].map((t) => {
-		let n = pi(t, e.rotation);
+		let n = hi(t, e.rotation);
 		return {
 			x: e.cx + n.x,
 			y: e.cy + n.y
 		};
 	});
 }
-function hi(e, t) {
-	return pi({
+function _i(e, t) {
+	return hi({
 		x: t.x - e.cx,
 		y: t.y - e.cy
 	}, -e.rotation);
 }
-function gi(e, t) {
-	let n = pi(t, e.rotation);
+function vi(e, t) {
+	let n = hi(t, e.rotation);
 	return {
 		x: e.cx + n.x,
 		y: e.cy + n.y
 	};
 }
-function _i(e) {
+function yi(e) {
 	return e.points.map(([e, t]) => ({
 		x: e,
 		y: t
 	}));
 }
-function vi(e) {
-	return e.type === "rect" ? mi(e) : e.type === "polygon" ? _i(e) : [];
-}
-var yi = 1e4;
 function bi(e) {
-	return e.type === "polygon" ? _i(e) : [{
+	return e.type === "rect" ? gi(e) : e.type === "polygon" ? yi(e) : [];
+}
+var xi = 1e4;
+function Si(e) {
+	return e.type === "polygon" ? yi(e) : [{
 		x: e.cx,
 		y: e.cy
 	}];
 }
-function xi(e) {
+function Ci(e) {
 	return Math.abs(e.x) <= 1e4 && Math.abs(e.y) <= 1e4;
 }
-function Si(e) {
+function wi(e) {
 	return e.type === "circle" ? {
 		minX: e.cx - e.r,
 		minY: e.cy - e.r,
 		maxX: e.cx + e.r,
 		maxY: e.cy + e.r
-	} : Ci(vi(e));
+	} : Ti(bi(e));
 }
-function Ci(e) {
+function Ti(e) {
 	return {
 		minX: Math.min(...e.map((e) => e.x)),
 		minY: Math.min(...e.map((e) => e.y)),
@@ -3873,7 +3879,7 @@ function Ci(e) {
 		maxY: Math.max(...e.map((e) => e.y))
 	};
 }
-function wi(e) {
+function Ei(e) {
 	return e.length ? {
 		minX: Math.min(...e.map((e) => e.minX)),
 		minY: Math.min(...e.map((e) => e.minY)),
@@ -3881,7 +3887,7 @@ function wi(e) {
 		maxY: Math.max(...e.map((e) => e.maxY))
 	} : null;
 }
-function Ti(e, t) {
+function Di(e, t) {
 	let n = !1;
 	for (let r = 0, i = e.length - 1; r < e.length; i = r++) {
 		let a = e[r], o = e[i];
@@ -3889,18 +3895,18 @@ function Ti(e, t) {
 	}
 	return n;
 }
-function Ei(e, t) {
-	if (e.type === "circle") return G({
+function Oi(e, t) {
+	if (e.type === "circle") return W({
 		x: e.cx,
 		y: e.cy
 	}, t) <= e.r;
 	if (e.type === "rect") {
-		let n = hi(e, t);
+		let n = _i(e, t);
 		return Math.abs(n.x) <= e.w / 2 && Math.abs(n.y) <= e.h / 2;
 	}
-	return Ti(_i(e), t);
+	return Di(yi(e), t);
 }
-function K(e) {
+function G(e) {
 	if (e.type === "circle") return Math.PI * e.r * e.r;
 	if (e.type === "rect") return e.w * e.h;
 	let t = 0, n = e.points;
@@ -3910,7 +3916,7 @@ function K(e) {
 	}
 	return Math.abs(t) / 2;
 }
-function Di(e) {
+function ki(e) {
 	if (e.type !== "polygon") return {
 		x: e.cx,
 		y: e.cy
@@ -3921,7 +3927,7 @@ function Di(e) {
 		y: e.points.reduce((e, [, t]) => e + t, 0) / t
 	};
 }
-function Oi(e, t, n) {
+function Ai(e, t, n) {
 	return e.type === "polygon" ? {
 		...e,
 		points: e.points.map(([e, r]) => [e + t, r + n])
@@ -3931,26 +3937,26 @@ function Oi(e, t, n) {
 		cy: e.cy + n
 	};
 }
-function ki(e, t) {
+function K(e, t) {
 	return t > 0 ? Math.round(e / t) * t : e;
 }
-function Ai(e, t) {
+function ji(e, t) {
 	return {
-		x: ki(e.x, t),
-		y: ki(e.y, t)
+		x: K(e.x, t),
+		y: K(e.y, t)
 	};
 }
-var ji = {
+var Mi = {
 	nw: [-1, -1],
 	ne: [1, -1],
 	se: [1, 1],
 	sw: [-1, 1]
-}, Mi = .1;
-function Ni(e, t, n) {
-	let [r, i] = ji[t], a = {
+}, Ni = .1;
+function Pi(e, t, n) {
+	let [r, i] = Mi[t], a = {
 		x: -r * e.w / 2,
 		y: -i * e.h / 2
-	}, o = hi(e, n), s = r > 0 ? Math.max(o.x, a.x + Mi) : Math.min(o.x, a.x - Mi), c = i > 0 ? Math.max(o.y, a.y + Mi) : Math.min(o.y, a.y - Mi), l = gi(e, {
+	}, o = _i(e, n), s = r > 0 ? Math.max(o.x, a.x + Ni) : Math.min(o.x, a.x - Ni), c = i > 0 ? Math.max(o.y, a.y + Ni) : Math.min(o.y, a.y - Ni), l = vi(e, {
 		x: (a.x + s) / 2,
 		y: (a.y + c) / 2
 	});
@@ -3962,11 +3968,11 @@ function Ni(e, t, n) {
 		h: Math.abs(c - a.y)
 	};
 }
-function Pi(e, t, n = 0) {
-	let r = ((Math.atan2(t.y - e.cy, t.x - e.cx) / fi + 90) % 360 + 540) % 360 - 180;
+function Fi(e, t, n = 0) {
+	let r = ((Math.atan2(t.y - e.cy, t.x - e.cx) / mi + 90) % 360 + 540) % 360 - 180;
 	return n > 0 ? Math.round(r / n) * n : r;
 }
-function Fi(e, t) {
+function Ii(e, t) {
 	return {
 		type: "rect",
 		cx: (e.x + t.x) / 2,
@@ -3976,55 +3982,55 @@ function Fi(e, t) {
 		rotation: 0
 	};
 }
-function Ii(e, t, n) {
+function Li(e, t, n) {
 	return {
 		...e,
 		points: e.points.map((e, r) => r === t ? [n.x, n.y] : e)
 	};
 }
-function Li(e, t, n) {
+function Ri(e, t, n) {
 	let r = [...e.points];
 	return r.splice(t + 1, 0, [n.x, n.y]), {
 		...e,
 		points: r
 	};
 }
-function Ri(e, t) {
+function zi(e, t) {
 	return e.points.length <= 3 ? e : {
 		...e,
 		points: e.points.filter((e, n) => n !== t)
 	};
 }
-function zi(e, t, n) {
+function Bi(e, t, n) {
 	let r = n.x - t.x, i = n.y - t.y, a = r * r + i * i;
-	if (a === 0) return G(e, t);
+	if (a === 0) return W(e, t);
 	let o = Math.max(0, Math.min(1, ((e.x - t.x) * r + (e.y - t.y) * i) / a));
-	return G(e, {
+	return W(e, {
 		x: t.x + o * r,
 		y: t.y + o * i
 	});
 }
-function Bi(e, t) {
+function Vi(e, t) {
 	if (e.length < 3) return e;
 	let n = e[0], r = e[e.length - 1], i = 0, a = 0;
 	for (let t = 1; t < e.length - 1; t++) {
-		let o = zi(e[t], n, r);
+		let o = Bi(e[t], n, r);
 		o > a && (a = o, i = t);
 	}
 	if (a <= t) return [n, r];
-	let o = Bi(e.slice(0, i + 1), t), s = Bi(e.slice(i), t);
+	let o = Vi(e.slice(0, i + 1), t), s = Vi(e.slice(i), t);
 	return [...o.slice(0, -1), ...s];
 }
-function Vi(e, t) {
-	let n = Bi(e, t), [r] = n, i = n[n.length - 1];
-	if (r && i && n.length > 3 && G(r, i) <= t * 4 && (n = n.slice(0, -1)), n.length < 3) return null;
+function Hi(e, t) {
+	let n = Vi(e, t), [r] = n, i = n[n.length - 1];
+	if (r && i && n.length > 3 && W(r, i) <= t * 4 && (n = n.slice(0, -1)), n.length < 3) return null;
 	let a = {
 		type: "polygon",
 		points: n.map((e) => [e.x, e.y])
 	};
-	return K(a) >= .05 ? a : null;
+	return G(a) >= .05 ? a : null;
 }
-var Hi = {
+var Ui = {
 	tree: 4,
 	shrub: 1.2,
 	hedge: 1,
@@ -4042,21 +4048,21 @@ var Hi = {
 	other: .5
 };
 function q(e) {
-	return e.crown_diameter_m ? e.crown_diameter_m : e.width_cm ? e.width_cm / 100 : Hi[e.category] ?? .5;
+	return e.crown_diameter_m ? e.crown_diameter_m : e.width_cm ? e.width_cm / 100 : Ui[e.category] ?? .5;
 }
-var Ui = .01;
-function Wi(e) {
-	let t = Si(e), n = (t.maxX - t.minX) / 16, r = (t.maxY - t.minY) / 16, i = [];
+var Wi = .01;
+function Gi(e) {
+	let t = wi(e), n = (t.maxX - t.minX) / 16, r = (t.maxY - t.minY) / 16, i = [];
 	for (let a = 0; a < 16; a++) for (let o = 0; o < 16; o++) {
 		let s = {
 			x: t.minX + (a + .5) * n,
 			y: t.minY + (o + .5) * r
 		};
-		Ei(e, s) && i.push(s);
+		Oi(e, s) && i.push(s);
 	}
 	return i;
 }
-function Gi(e, t) {
+function Ki(e, t) {
 	let n = /* @__PURE__ */ new Map();
 	for (let e of t) e.plant_id && e.kind !== "zone" && n.set(e.plant_id, [...n.get(e.plant_id) ?? [], e.geometry]);
 	let r = /* @__PURE__ */ new Map();
@@ -4075,53 +4081,53 @@ function Gi(e, t) {
 		e && r.set(t.id, {
 			plantId: t.id,
 			geometries: e,
-			area: e.reduce((e, t) => e + K(t), 0)
+			area: e.reduce((e, t) => e + G(t), 0)
 		});
 	}
 	return r;
 }
-function Ki(e, t) {
+function qi(e, t) {
 	if (t.area <= 0) return 0;
 	let n = 0;
 	for (let r of t.geometries) {
-		let t = Wi(r);
+		let t = Gi(r);
 		if (!t.length) continue;
-		let i = t.filter((t) => Ei(e, t)).length;
-		n += K(r) * i / t.length;
+		let i = t.filter((t) => Oi(e, t)).length;
+		n += G(r) * i / t.length;
 	}
 	let r = n / t.area;
-	return r >= Ui ? Math.round(r * 1e4) / 1e4 : 0;
+	return r >= Wi ? Math.round(r * 1e4) / 1e4 : 0;
 }
-function qi(e, t) {
+function Ji(e, t) {
 	let n = new Set(e.irrigation?.include ?? []), r = new Set(e.irrigation?.exclude ?? []), i = /* @__PURE__ */ new Map();
 	for (let [a, o] of t) {
 		if (r.has(a)) continue;
-		let t = n.has(a) ? 1 : Ki(e.geometry, o);
+		let t = n.has(a) ? 1 : qi(e.geometry, o);
 		t > 0 && i.set(a, t);
 	}
 	return i;
 }
-function Ji(e, t) {
+function Yi(e, t) {
 	if (e.emitter === "drip") return null;
 	if (e.rate_mm_h !== null) return e.rate_mm_h;
-	let n = K(t);
+	let n = G(t);
 	return e.flow_l_min !== null && n > 0 ? e.flow_l_min * 60 / n : null;
 }
-function Yi(e) {
+function Xi(e) {
 	return e === "drip" ? "drip_l_h" : "rate_mm_h";
 }
-function Xi(e) {
+function Zi(e) {
 	return e === "on" || e === "open" || e === "opening";
 }
 // src/util/water.ts
-function Zi(e) {
+function Qi(e) {
 	return e.taw > 0 ? Math.min(1, Math.max(0, e.depletion / e.taw)) : 0;
 }
-function Qi(e) {
-	let t = Zi(e), n = e.taw > 0 ? e.raw / e.taw : .5, r = t <= n ? 130 - 80 * t / Math.max(n, .01) : 50 - 50 * (t - n) / Math.max(1 - n, .01);
+function $i(e) {
+	let t = Qi(e), n = e.taw > 0 ? e.raw / e.taw : .5, r = t <= n ? 130 - 80 * t / Math.max(n, .01) : 50 - 50 * (t - n) / Math.max(1 - n, .01);
 	return `hsl(${Math.round(r)} 70% 45%)`;
 }
-function $i(e, t, n) {
+function ea(e, t, n) {
 	let r = e.flatMap((e) => [e.precip_mm ?? 0, e.et0_mm ?? 0]), i = Math.max(5, Math.ceil(Math.max(0, ...r))), a = e.length ? t / e.length : t, o = (e) => n - e / i * n, s = e.map((e, t) => {
 		let r = (e.precip_mm ?? 0) / i * n;
 		return {
@@ -4139,15 +4145,15 @@ function $i(e, t, n) {
 		top: i
 	};
 }
-var ea = 5e3, ta = {
+var ta = 5e3, na = {
 	cx: 0,
 	cy: 0,
 	width: 40
-}, na = (e) => Math.min(ea, Math.max(1, e));
-function ra(e, t) {
+}, ra = (e) => Math.min(ta, Math.max(1, e));
+function ia(e, t) {
 	return e.width / Math.max(1, t.width);
 }
-function ia(e, t) {
+function aa(e, t) {
 	let n = e.width * (Math.max(1, t.height) / Math.max(1, t.width));
 	return {
 		x: e.cx - e.width / 2,
@@ -4156,46 +4162,46 @@ function ia(e, t) {
 		h: n
 	};
 }
-function aa(e, t, n, r) {
-	let i = ia(e, t), a = ra(e, t);
+function oa(e, t, n, r) {
+	let i = aa(e, t), a = ia(e, t);
 	return {
 		x: i.x + (n - t.left) * a,
 		y: i.y + (r - t.top) * a
 	};
 }
-function oa(e, t, n) {
-	let r = ia(e, t), i = ra(e, t);
+function sa(e, t, n) {
+	let r = aa(e, t), i = ia(e, t);
 	return {
 		x: t.left + (n.x - r.x) / i,
 		y: t.top + (n.y - r.y) / i
 	};
 }
-function sa(e, t, n, r, i) {
-	let a = aa(e, t, n, r), o = na(e.width / i), s = o / e.width;
+function ca(e, t, n, r, i) {
+	let a = oa(e, t, n, r), o = ra(e.width / i), s = o / e.width;
 	return {
 		width: o,
 		cx: a.x + (e.cx - a.x) * s,
 		cy: a.y + (e.cy - a.y) * s
 	};
 }
-function ca(e, t, n, r) {
-	let i = ra(e, t);
+function la(e, t, n, r) {
+	let i = ia(e, t);
 	return {
 		...e,
 		cx: e.cx - n * i,
 		cy: e.cy - r * i
 	};
 }
-function la(e, t, n = .12) {
-	if (!e) return ta;
-	let r = Math.max(e.maxX - e.minX, 2), i = Math.max(e.maxY - e.minY, 2), a = Math.max(1, t.width) / Math.max(1, t.height), o = na(Math.max(r, i * a) * (1 + 2 * n));
+function ua(e, t, n = .12) {
+	if (!e) return na;
+	let r = Math.max(e.maxX - e.minX, 2), i = Math.max(e.maxY - e.minY, 2), a = Math.max(1, t.width) / Math.max(1, t.height), o = ra(Math.max(r, i * a) * (1 + 2 * n));
 	return {
 		cx: (e.minX + e.maxX) / 2,
 		cy: (e.minY + e.maxY) / 2,
 		width: o
 	};
 }
-var ua = [
+var da = [
 	.1,
 	.25,
 	.5,
@@ -4209,12 +4215,12 @@ var ua = [
 	250,
 	500
 ];
-function da(e, t = 14) {
-	return ua.find((n) => n / e >= t) ?? ua[ua.length - 1] ?? 500;
+function fa(e, t = 14) {
+	return da.find((n) => n / e >= t) ?? da[da.length - 1] ?? 500;
 }
-function fa(e, t = 120) {
+function pa(e, t = 120) {
 	let n = [
-		...ua,
+		...da,
 		1e3,
 		2e3
 	].filter((n) => n / e <= t), r = n[n.length - 1] ?? .1;
@@ -4223,7 +4229,7 @@ function fa(e, t = 120) {
 		px: r / e
 	};
 }
-function pa(e) {
+function ma(e) {
 	let t = e;
 	return typeof t == "object" && !!t && [
 		t.cx,
@@ -4232,16 +4238,16 @@ function pa(e) {
 	].every((e) => typeof e == "number" && Number.isFinite(e)) && t.width >= 1 && t.width <= 5e3;
 }
 // src/components/garden-canvas.ts
-var ma = 3, ha = 2.5;
-function ga(e) {
+var ha = 3, ga = 2.5;
+function _a(e) {
 	return e.width_m * e.height_px / e.width_px;
 }
-var _a = .3, va = 250, ya = {
+var va = .3, ya = 250, ba = {
 	mouse: 4,
 	pen: 6,
 	touch: 10
-}, ba = 9, xa = .06, Sa = 28, Ca = 15, wa = 14, Ta = 15e3;
-function Ea(e) {
+}, xa = 9, Sa = .06, Ca = 28, wa = 15, Ta = 14, Ea = 15e3;
+function Da(e) {
 	let [t, n] = e.split(":");
 	switch (t) {
 		case "corner": return {
@@ -4259,7 +4265,7 @@ function Ea(e) {
 		default: return null;
 	}
 }
-N("pg-garden-canvas", class extends j {
+M("pg-garden-canvas", class extends A {
 	static {
 		this.properties = {
 			hass: {
@@ -4295,7 +4301,7 @@ N("pg-garden-canvas", class extends j {
 		};
 	}
 	constructor() {
-		super(), this._vp = { ...ta }, this._hasViewport = !1, this._gesture = null, this._pointers = /* @__PURE__ */ new Map(), this._hoverId = null, this._wmsRequest = "", this._onKeyDown = (e) => {
+		super(), this._vp = { ...na }, this._hasViewport = !1, this._gesture = null, this._pointers = /* @__PURE__ */ new Map(), this._hoverId = null, this._wmsRequest = "", this._onKeyDown = (e) => {
 			e.key === "Escape" ? this._polygon || this._draft ? this.cancelDrawing() : this.fire("cancel") : this._polygon ? e.key === "Enter" ? (e.preventDefault(), this.finishPolygon()) : e.key === "Backspace" && (e.preventDefault(), this._polygon = this._polygon.length > 1 ? this._polygon.slice(0, -1) : null) : (e.key === "Delete" || e.key === "Backspace") && this.mode === "edit" && this.selection && (e.preventDefault(), this.fire("delete-selection", { selection: this.selection }));
 		}, this.plants = [], this.shapes = [], this.markers = [], this.states = {}, this.background = null, this.origin = null, this.mode = "view", this.tool = "select", this.selection = null, this.snapStep = .5, this.armed = null, this.highlight = /* @__PURE__ */ new Set(), this.care = {}, this.showZones = !0, this.water = {}, this.layer = "plan", this._clock = Date.now(), this._override = null, this._draft = null, this._polygon = null, this._stroke = null, this._cursor = null, this._settledMpp = .05, this._wms = null, this._wmsError = !1, this._calibration = [];
 	}
@@ -4309,7 +4315,7 @@ N("pg-garden-canvas", class extends j {
 		this._vp = { ...e }, this._hasViewport = !0, this._applyViewport();
 	}
 	fit(e = this.contentBounds()) {
-		this.viewport = la(e, this._rect()), this._emitViewport();
+		this.viewport = ua(e, this._rect()), this._emitViewport();
 	}
 	centerOn(e, t = Math.min(this._vp.width, 12)) {
 		this.viewport = {
@@ -4319,7 +4325,7 @@ N("pg-garden-canvas", class extends j {
 		}, this._emitViewport();
 	}
 	contentBounds() {
-		let e = this.shapes.map((e) => Si(e.geometry));
+		let e = this.shapes.map((e) => wi(e.geometry));
 		for (let t of this.plants) {
 			if (!t.position) continue;
 			let n = q(t) / 2;
@@ -4336,16 +4342,16 @@ N("pg-garden-canvas", class extends j {
 			maxX: t.x,
 			maxY: t.y
 		});
-		return wi(e);
+		return Ei(e);
 	}
 	planPoint(e, t) {
-		return aa(this._vp, this._rect(), e, t);
+		return oa(this._vp, this._rect(), e, t);
 	}
 	screenPoint(e) {
-		return oa(this._vp, this._rect(), e);
+		return sa(this._vp, this._rect(), e);
 	}
 	finishPolygon() {
-		let e = Math.max(this._mpp() * 4, 1e-6), t = (this._polygon ?? []).filter((t, n, r) => n === 0 || G(t, r[n - 1] ?? t) > e);
+		let e = Math.max(this._mpp() * 4, 1e-6), t = (this._polygon ?? []).filter((t, n, r) => n === 0 || W(t, r[n - 1] ?? t) > e);
 		if (this._polygon = null, this._cursor = null, t.length >= 3) {
 			let e = {
 				type: "polygon",
@@ -4369,26 +4375,26 @@ N("pg-garden-canvas", class extends j {
 	updated(e) {
 		if ((e.has("mode") || e.has("tool")) && ((this.mode !== "edit" || this.tool !== "polygon") && this.cancelDrawing(), this.tool !== "calibrate" && (this._calibration = [])), e.has("states") || e.has("shapes")) {
 			let e = this.shapes.some((e) => this._timerEnd(e) !== null);
-			e && this._clockTimer === void 0 ? this._clockTimer = setInterval(() => this._clock = Date.now(), Ta) : !e && this._clockTimer !== void 0 && (clearInterval(this._clockTimer), this._clockTimer = void 0);
+			e && this._clockTimer === void 0 ? this._clockTimer = setInterval(() => this._clock = Date.now(), Ea) : !e && this._clockTimer !== void 0 && (clearInterval(this._clockTimer), this._clockTimer = void 0);
 		}
 		(e.has("background") || e.has("origin")) && (this._wmsRequest = "", this._wmsError = !1, this.background?.type !== "wms" && (this._wms = null), this._scheduleWms(0));
 	}
-	_scheduleWms(e = va) {
+	_scheduleWms(e = ya) {
 		clearTimeout(this._wmsTimer), this.background?.type === "wms" && (this._wmsTimer = setTimeout(() => this._loadWms(), e));
 	}
 	_loadWms() {
 		let e = this.background;
 		if (e?.type !== "wms" || !this.origin) return;
-		let t = kr(e);
+		let t = jr(e);
 		if (!t) return;
-		let n = this._rect(), r = ia(this._vp, n), i = {
-			minX: r.x - r.w * _a,
-			minY: r.y - r.h * _a,
+		let n = this._rect(), r = aa(this._vp, n), i = {
+			minX: r.x - r.w * va,
+			minY: r.y - r.h * va,
 			maxX: r.x + r.w * 1.3,
 			maxY: r.y + r.h * 1.3
 		}, a = this._wms;
-		if (a && i.minX + r.w * _a >= a.x && i.minY + r.h * _a >= a.y && i.maxX - r.w * _a <= a.x + a.w && i.maxY - r.h * _a <= a.y + a.h && a.w < (i.maxX - i.minX) * 1.6) return;
-		let o = typeof devicePixelRatio == "number" ? devicePixelRatio : 1, s = Rr(t, this.origin, i, n.width * o * 1.6);
+		if (a && i.minX + r.w * va >= a.x && i.minY + r.h * va >= a.y && i.maxX - r.w * va <= a.x + a.w && i.maxY - r.h * va <= a.y + a.h && a.w < (i.maxX - i.minX) * 1.6) return;
+		let o = typeof devicePixelRatio == "number" ? devicePixelRatio : 1, s = Br(t, this.origin, i, n.width * o * 1.6);
 		if (s.href === this._wmsRequest) return;
 		this._wmsRequest = s.href;
 		let c = new Image();
@@ -4417,25 +4423,25 @@ N("pg-garden-canvas", class extends j {
 		};
 	}
 	_mpp() {
-		return ra(this._vp, this._rect());
+		return ia(this._vp, this._rect());
 	}
 	_fmt(e) {
-		return R(e, this.language, 1);
+		return L(e, this.language, 1);
 	}
 	_applyViewport() {
 		let e = this._svg;
 		if (!e) return;
-		let t = this._rect(), n = ia(this._vp, t);
+		let t = this._rect(), n = aa(this._vp, t);
 		e.setAttribute("viewBox", `${n.x} ${n.y} ${n.w} ${n.h}`);
-		let r = ra(this._vp, t);
-		e.style.setProperty("--mpp", String(r)), e.toggleAttribute("data-labels", r <= xa), this._drawGrid(n, r), this._drawScale(r), this._scheduleWms(), this.dispatchEvent(new Event("view-moved")), clearTimeout(this._settleTimer), this._settleTimer = setTimeout(() => {
+		let r = ia(this._vp, t);
+		e.style.setProperty("--mpp", String(r)), e.toggleAttribute("data-labels", r <= Sa), this._drawGrid(n, r), this._drawScale(r), this._scheduleWms(), this.dispatchEvent(new Event("view-moved")), clearTimeout(this._settleTimer), this._settleTimer = setTimeout(() => {
 			Math.abs(this._settledMpp - r) / r > .05 && (this._settledMpp = r);
 		}, 120);
 	}
 	_drawGrid(e, t) {
 		let n = this.renderRoot.querySelector(".grid-minor"), r = this.renderRoot.querySelector(".grid-major");
 		if (!n || !r) return;
-		let i = da(t), a = da(t, 70), o = (t) => {
+		let i = fa(t), a = fa(t, 70), o = (t) => {
 			let n = [], r = Math.floor(e.x / t) * t, i = Math.floor(e.y / t) * t;
 			for (let i = r; i <= e.x + e.w; i += t) n.push(`M${i.toFixed(3)} ${e.y}V${e.y + e.h}`);
 			for (let r = i; r <= e.y + e.h; r += t) n.push(`M${e.x} ${r.toFixed(3)}H${e.x + e.w}`);
@@ -4446,7 +4452,7 @@ N("pg-garden-canvas", class extends j {
 	_drawScale(e) {
 		let t = this.renderRoot.querySelector(".scale-bar"), n = this.renderRoot.querySelector(".scale-label");
 		if (!t || !n) return;
-		let { metres: r, px: i } = fa(e);
+		let { metres: r, px: i } = pa(e);
 		t.style.width = `${i}px`, n.textContent = r >= 1e3 ? `${this._fmt(r / 1e3)} km` : r >= 1 ? `${this._fmt(r)} m` : `${Math.round(r * 100)} cm`;
 	}
 	_setViewport(e) {
@@ -4458,7 +4464,7 @@ N("pg-garden-canvas", class extends j {
 	_hit(e) {
 		let t = e.composedPath()[0], n = t?.closest?.("[data-handle]")?.getAttribute("data-handle");
 		if (n) {
-			let e = Ea(n);
+			let e = Da(n);
 			if (e) return {
 				type: "handle",
 				handle: e
@@ -4484,8 +4490,8 @@ N("pg-garden-canvas", class extends j {
 		return this.markers.find((t) => t.id === e);
 	}
 	_point(e, t = !0) {
-		let n = aa(this._vp, this._rect(), e.clientX, e.clientY);
-		return t && !e.altKey ? Ai(n, this.snapStep) : n;
+		let n = oa(this._vp, this._rect(), e.clientX, e.clientY);
+		return t && !e.altKey ? ji(n, this.snapStep) : n;
 	}
 	_plant(e) {
 		return this.plants.find((t) => t.id === e);
@@ -4548,13 +4554,13 @@ N("pg-garden-canvas", class extends j {
 		if (!t) this._trackHover(e);
 		else switch (t.kind) {
 			case "pending": {
-				let n = ya[t.pointerType] ?? 6;
+				let n = ba[t.pointerType] ?? 6;
 				if (Math.hypot(e.clientX - t.startX, e.clientY - t.startY) < n) return;
 				this._startDrag(t, e), this._onPointerMove(e);
 				return;
 			}
 			case "pan":
-				this._setViewport(ca(this._vp, this._rect(), e.clientX - t.lastX, e.clientY - t.lastY)), t.lastX = e.clientX, t.lastY = e.clientY;
+				this._setViewport(la(this._vp, this._rect(), e.clientX - t.lastX, e.clientY - t.lastY)), t.lastX = e.clientX, t.lastY = e.clientY;
 				return;
 			case "pinch":
 				this._movePinch();
@@ -4566,7 +4572,7 @@ N("pg-garden-canvas", class extends j {
 				};
 				this._override = {
 					plantId: t.plantId,
-					position: e.altKey ? r : Ai(r, this.snapStep)
+					position: e.altKey ? r : ji(r, this.snapStep)
 				};
 				return;
 			}
@@ -4574,7 +4580,7 @@ N("pg-garden-canvas", class extends j {
 				let n = this._point(e, !1), r = n.x - t.start.x, i = n.y - t.start.y, a = e.altKey ? 0 : this.snapStep;
 				this._override = {
 					shapeId: t.shapeId,
-					geometry: Oi(t.from, ki(r, a), ki(i, a))
+					geometry: Ai(t.from, K(r, a), K(i, a))
 				};
 				return;
 			}
@@ -4585,7 +4591,7 @@ N("pg-garden-canvas", class extends j {
 				};
 				return;
 			case "crown": {
-				let n = this._point(e, !1), r = e.altKey ? 0 : Math.max(.05, this.snapStep / 2), i = Math.max(.05, ki(G(t.centre, n) * 2, r));
+				let n = this._point(e, !1), r = e.altKey ? 0 : Math.max(.05, this.snapStep / 2), i = Math.max(.05, K(W(t.centre, n) * 2, r));
 				this._override = {
 					plantId: t.plantId,
 					crown: i
@@ -4596,7 +4602,7 @@ N("pg-garden-canvas", class extends j {
 				this._draft = this._draftGeometry(t.tool, t.anchor, this._point(e)), this._cursor = this._point(e);
 				return;
 			case "freehand":
-				if (Math.hypot(e.clientX - t.lastX, e.clientY - t.lastY) < ma) return;
+				if (Math.hypot(e.clientX - t.lastX, e.clientY - t.lastY) < ha) return;
 				t.points.push(this._point(e, !1)), t.lastX = e.clientX, t.lastY = e.clientY, this._stroke = [...t.points];
 				return;
 			case "move-marker": {
@@ -4606,7 +4612,7 @@ N("pg-garden-canvas", class extends j {
 				};
 				this._override = {
 					markerId: t.markerId,
-					markerPosition: e.altKey ? r : Ai(r, this.snapStep)
+					markerPosition: e.altKey ? r : ji(r, this.snapStep)
 				};
 				return;
 			}
@@ -4638,7 +4644,7 @@ N("pg-garden-canvas", class extends j {
 					return;
 				case "freehand": {
 					this._stroke = null;
-					let e = Vi(t.points, this._mpp() * ha);
+					let e = Hi(t.points, this._mpp() * ga);
 					e && this.fire("create-shape", { geometry: e });
 					return;
 				}
@@ -4708,7 +4714,7 @@ N("pg-garden-canvas", class extends j {
 		if (t.type === "handle" && t.handle.kind === "vertex" && this.selection?.type === "shape") {
 			let e = this._shape(this.selection.id);
 			if (e?.geometry.type === "polygon" && e.geometry.points.length > 3) {
-				let n = Ri(e.geometry, t.handle.index);
+				let n = zi(e.geometry, t.handle.index);
 				this.fire("change-shape", {
 					shapeId: e.id,
 					from: e.geometry,
@@ -4720,7 +4726,7 @@ N("pg-garden-canvas", class extends j {
 	_onWheel(e) {
 		e.preventDefault();
 		let t = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY, n = Math.exp(-t * (e.ctrlKey ? .01 : .0015));
-		this._setViewport(sa(this._vp, this._rect(), e.clientX, e.clientY, n));
+		this._setViewport(ca(this._vp, this._rect(), e.clientX, e.clientY, n));
 	}
 	_onPointerLeave(e) {
 		this._gesture || this._setHover(null, e), this._polygon && (this._cursor = null);
@@ -4738,11 +4744,11 @@ N("pg-garden-canvas", class extends j {
 	_movePinch() {
 		let e = this._gesture, [t, n] = [...this._pointers.values()];
 		if (e?.kind !== "pinch" || !t || !n) return;
-		let r = this._rect(), i = Math.hypot(t.x - n.x, t.y - n.y) / Math.max(1, e.distance), a = sa(e.viewport, r, e.midX, e.midY, i), o = (t.x + n.x) / 2, s = (t.y + n.y) / 2;
-		this._setViewport(ca(a, r, o - e.midX, s - e.midY));
+		let r = this._rect(), i = Math.hypot(t.x - n.x, t.y - n.y) / Math.max(1, e.distance), a = ca(e.viewport, r, e.midX, e.midY, i), o = (t.x + n.x) / 2, s = (t.y + n.y) / 2;
+		this._setViewport(la(a, r, o - e.midX, s - e.midY));
 	}
 	_startDrag(e, t) {
-		let { hit: n } = e, r = this.mode === "edit" && !this.armed, i = aa(this._vp, this._rect(), e.startX, e.startY);
+		let { hit: n } = e, r = this.mode === "edit" && !this.armed, i = oa(this._vp, this._rect(), e.startX, e.startY);
 		if (r && n.type === "marker" && this.tool === "select") {
 			let e = this._marker(n.id);
 			if (e) {
@@ -4782,7 +4788,7 @@ N("pg-garden-canvas", class extends j {
 				let t = this._shape(e.id);
 				if (t && !t.locked) {
 					let e = t.geometry, r = n.handle;
-					r.kind === "midpoint" && e.type === "polygon" && (e = Li(e, r.index, i), r = {
+					r.kind === "midpoint" && e.type === "polygon" && (e = Ri(e, r.index, i), r = {
 						kind: "vertex",
 						index: r.index + 1
 					}), this._gesture = {
@@ -4847,7 +4853,7 @@ N("pg-garden-canvas", class extends j {
 		}
 		if (this.mode === "edit" && this.tool === "calibrate") {
 			let e = this._point(t, !1), [n] = this._calibration;
-			n ? (this._calibration = [], G(n, e) > 0 && this.fire("calibrate", {
+			n ? (this._calibration = [], W(n, e) > 0 && this.fire("calibrate", {
 				a: n,
 				b: e
 			})) : this._calibration = [e];
@@ -4857,7 +4863,7 @@ N("pg-garden-canvas", class extends j {
 			let e = this._point(t), n = this._polygon ?? [], r = n[0];
 			if (r && n.length >= 3) {
 				let e = this.screenPoint(r);
-				if (Math.hypot(e.x - t.clientX, e.y - t.clientY) < wa) {
+				if (Math.hypot(e.x - t.clientX, e.y - t.clientY) < Ta) {
 					this.finishPolygon();
 					return;
 				}
@@ -4902,30 +4908,30 @@ N("pg-garden-canvas", class extends j {
 	_applyHandle(e, t, n) {
 		let r = this._point(n), i = this._point(n, !1);
 		if (e.type === "rect") {
-			if (t.kind === "corner") return Ni(e, t.corner, r);
+			if (t.kind === "corner") return Pi(e, t.corner, r);
 			if (t.kind === "rotate") return {
 				...e,
-				rotation: Pi(e, i, n.altKey ? 0 : Ca)
+				rotation: Fi(e, i, n.altKey ? 0 : wa)
 			};
 		}
 		if (e.type === "circle" && t.kind === "radius") {
 			let t = n.altKey ? 0 : Math.max(.05, this.snapStep / 2);
 			return {
 				...e,
-				r: Math.max(.05, ki(G({
+				r: Math.max(.05, K(W({
 					x: e.cx,
 					y: e.cy
 				}, i), t))
 			};
 		}
-		return e.type === "polygon" && t.kind === "vertex" ? Ii(e, t.index, r) : e;
+		return e.type === "polygon" && t.kind === "vertex" ? Li(e, t.index, r) : e;
 	}
 	_draftGeometry(e, t, n) {
-		return e === "rect" ? Fi(t, n) : {
+		return e === "rect" ? Ii(t, n) : {
 			type: "circle",
 			cx: t.x,
 			cy: t.y,
-			r: G(t, n)
+			r: W(t, n)
 		};
 	}
 	_bigEnough(e) {
@@ -4951,7 +4957,7 @@ N("pg-garden-canvas", class extends j {
 		].join(" ");
 	}
 	_renderShape(e) {
-		let t = this._geometryOf(e), n = this.selection?.type === "shape" && this.selection.id === e.id, r = Di(t), i = e.plant_id ? this._plant(e.plant_id) : void 0, a = e.label ?? i?.name;
+		let t = this._geometryOf(e), n = this.selection?.type === "shape" && this.selection.id === e.id, r = ki(t), i = e.plant_id ? this._plant(e.plant_id) : void 0, a = e.label ?? i?.name;
 		return S`<g class="shape kind-${e.kind} ${n ? "selected" : ""} ${e.locked ? "locked" : ""} ${this._plantingClasses(i ? i.id : null)}"
         data-shape-id=${e.id}>
       ${this._renderGeometry(t, "body")}
@@ -4967,11 +4973,11 @@ N("pg-garden-canvas", class extends j {
 		return Number.isFinite(i) ? i : null;
 	}
 	_renderZone(e) {
-		let t = this._geometryOf(e), n = this.selection?.type === "shape" && this.selection.id === e.id, r = e.irrigation?.entity_id, i = Xi(r ? this.states[r]?.state : void 0), a = this._timerEnd(e), o = a === null ? null : Math.max(0, Math.ceil((a - this._clock) / 6e4)), s = e.irrigation ? Ji(e.irrigation, t) : null, c = this.layer === "coverage" && s !== null, l = [
+		let t = this._geometryOf(e), n = this.selection?.type === "shape" && this.selection.id === e.id, r = e.irrigation?.entity_id, i = Zi(r ? this.states[r]?.state : void 0), a = this._timerEnd(e), o = a === null ? null : Math.max(0, Math.ceil((a - this._clock) / 6e4)), s = e.irrigation ? Yi(e.irrigation, t) : null, c = this.layer === "coverage" && s !== null, l = [
 			e.label,
 			o === null ? "" : this.t("zone.remaining", { minutes: o }),
-			c ? `${R(s, this.language, 0)} mm/h` : ""
-		].filter(Boolean).join(" · "), u = Di(t);
+			c ? `${L(s, this.language, 0)} mm/h` : ""
+		].filter(Boolean).join(" · "), u = ki(t);
 		return S`<g class="shape zone ${i ? "running" : ""} ${n ? "selected" : ""} ${e.locked ? "locked" : ""}" data-shape-id=${e.id}>
       ${this._renderGeometry(t, "body")}
       ${c ? S`<g class="coverage" style="opacity: ${Math.min(s / 30, 1) * .7}">${this._renderGeometry(t, "")}</g>` : w}
@@ -4981,10 +4987,10 @@ N("pg-garden-canvas", class extends j {
 	_renderPlant(e, t) {
 		let n = this._override, r = n?.plantId === e.id, i = r && n?.position || e.position;
 		if (!i) return w;
-		let a = r && n?.crown || q(e), o = Math.max(a / 2, ba * t), s = this.selection?.type === "plant" && this.selection.id === e.id, c = this.highlight.has(e.id), l = this.water[e.id], u = l?.needs_water ?? !1, d = l?.frost !== null && l?.frost !== void 0, f = this.care[e.id];
+		let a = r && n?.crown || q(e), o = Math.max(a / 2, xa * t), s = this.selection?.type === "plant" && this.selection.id === e.id, c = this.highlight.has(e.id), l = this.water[e.id], u = l?.needs_water ?? !1, d = l?.frost !== null && l?.frost !== void 0, f = this.care[e.id];
 		return S`<g class="plant status-${e.status} ${s ? "selected" : ""} ${c ? "covered" : ""} ${u ? "thirsty" : ""} ${d ? "frost" : ""} ${f?.prune_due ? "prune" : ""} ${f?.problem ? "has-problem" : ""}"
         data-plant-id=${e.id} transform="translate(${i.x} ${i.y})">
-      ${this.layer === "deficit" && l ? S`<circle class="deficit" r=${o * 1.35} style="fill: ${Qi(l)}"></circle>` : w}
+      ${this.layer === "deficit" && l ? S`<circle class="deficit" r=${o * 1.35} style="fill: ${$i(l)}"></circle>` : w}
       <circle class="shadow" r=${o} cy=${o * .08}></circle>
       <circle class="crown" r=${o}></circle>
       ${e.cover ? S`<image href=${e.cover.urls.thumb} x=${-o} y=${-o} width=${2 * o} height=${2 * o}
@@ -5008,7 +5014,7 @@ N("pg-garden-canvas", class extends j {
 		if (this.selection.type === "plant") {
 			let t = this._plant(this.selection.id), n = this._override, r = n?.plantId === t?.id && n?.position || t?.position;
 			if (!t || !r) return w;
-			let i = n?.plantId === t.id && n?.crown || q(t), a = Math.max(i / 2, ba * e);
+			let i = n?.plantId === t.id && n?.crown || q(t), a = Math.max(i / 2, xa * e);
 			return S`
         ${this._handle("crown", {
 				x: r.x + a,
@@ -5020,17 +5026,17 @@ N("pg-garden-canvas", class extends j {
 		if (!t || t.locked) return w;
 		let n = this._geometryOf(t);
 		if (n.type === "rect") {
-			let t = mi(n), r = [
+			let t = gi(n), r = [
 				"nw",
 				"ne",
 				"se",
 				"sw"
-			], i = gi(n, {
+			], i = vi(n, {
 				x: 0,
 				y: -n.h / 2
-			}), a = gi(n, {
+			}), a = vi(n, {
 				x: 0,
-				y: -n.h / 2 - Sa * e
+				y: -n.h / 2 - Ca * e
 			});
 			return S`
         <line class="rotate-arm" x1=${i.x} y1=${i.y} x2=${a.x} y2=${a.y}></line>
@@ -5059,7 +5065,7 @@ N("pg-garden-canvas", class extends j {
 	}
 	_renderMeasure(e) {
 		if (!this._override?.geometry && !this._draft) return w;
-		let t = Di(e), n = e.type === "rect" ? `${this._fmt(e.w)} × ${this._fmt(e.h)} m` : e.type === "circle" ? `Ø ${this._fmt(e.r * 2)} m` : `${this._fmt(K(e))} m²`;
+		let t = ki(e), n = e.type === "rect" ? `${this._fmt(e.w)} × ${this._fmt(e.h)} m` : e.type === "circle" ? `Ø ${this._fmt(e.r * 2)} m` : `${this._fmt(G(e))} m²`;
 		return S`<text class="measure" x=${t.x} y=${t.y}>${n}</text>`;
 	}
 	_renderDraft() {
@@ -5087,7 +5093,7 @@ N("pg-garden-canvas", class extends j {
 			let t = this._override?.backgroundPosition ?? {
 				x: e.x,
 				y: e.y
-			}, n = ga(e), r = t.x + e.width_m / 2, i = t.y + n / 2;
+			}, n = _a(e), r = t.x + e.width_m / 2, i = t.y + n / 2;
 			return S`<image class="backdrop" href=${e.url} x=${t.x} y=${t.y}
           width=${e.width_m} height=${n} preserveAspectRatio="none"
           transform="rotate(${e.rotation} ${r} ${i})" style="opacity: ${e.opacity}"></image>`;
@@ -5098,12 +5104,12 @@ N("pg-garden-canvas", class extends j {
 		let n = this._override, r = n?.markerId === e.id && n.markerPosition ? n.markerPosition : {
 			x: e.x,
 			y: e.y
-		}, i = this.states[e.entity_id], a = Yr(i, this.language, this.t), o = 36 + a.length * 7.2;
+		}, i = this.states[e.entity_id], a = Zr(i, this.language, this.t), o = 36 + a.length * 7.2;
 		return S`<g class="marker ${this.selection?.type === "marker" && this.selection.id === e.id ? "selected" : ""} ${i ? "" : "missing"}"
         data-marker-id=${e.id} transform="translate(${r.x} ${r.y}) scale(${t})">
       <rect class="pill" x="-14" y="-14" rx="14" width=${o} height="28"></rect>
       <circle class="marker-dot" r="11"></circle>
-      <path class="marker-icon" d=${qr(e.entity_id, i)}
+      <path class="marker-icon" d=${Yr(e.entity_id, i)}
         transform="translate(-8 -8) scale(0.6667)"></path>
       <text class="marker-value" x="4" y="1">${a}</text>
     </g>`;
@@ -5118,7 +5124,7 @@ N("pg-garden-canvas", class extends j {
     </g>`;
 	}
 	render() {
-		let e = this._settledMpp, t = this.plants.filter((e) => e.position).sort((e, t) => q(t) - q(e)), n = this.background?.type === "wms" ? kr(this.background) : null;
+		let e = this._settledMpp, t = this.plants.filter((e) => e.position).sort((e, t) => q(t) - q(e)), n = this.background?.type === "wms" ? jr(this.background) : null;
 		return x`
       <svg
         class="mode-${this.mode} tool-${this.tool} ${this.armed ? "armed" : ""} ${this.background ? "with-backdrop" : ""}"
@@ -5158,16 +5164,16 @@ N("pg-garden-canvas", class extends j {
         <path class="grid-minor"></path>
         <path class="grid-major"></path>
         <g class="shapes">
-          ${di(this.shapes.filter((e) => e.kind !== "zone"), (e) => e.id, (e) => this._renderShape(e))}
+          ${pi(this.shapes.filter((e) => e.kind !== "zone"), (e) => e.id, (e) => this._renderShape(e))}
         </g>
         <g class="zones">
-          ${this.showZones ? di(this.shapes.filter((e) => e.kind === "zone"), (e) => e.id, (e) => this._renderZone(e)) : w}
+          ${this.showZones ? pi(this.shapes.filter((e) => e.kind === "zone"), (e) => e.id, (e) => this._renderZone(e)) : w}
         </g>
         <g class="plants">
-          ${di(t, (e) => e.id, (t) => this._renderPlant(t, e))}
+          ${pi(t, (e) => e.id, (t) => this._renderPlant(t, e))}
         </g>
         <g class="markers">
-          ${di(this.markers, (e) => e.id, (t) => this._renderMarker(t, e))}
+          ${pi(this.markers, (e) => e.id, (t) => this._renderMarker(t, e))}
         </g>
         <g class="selection">${this._renderSelection(e)}</g>
         ${this._renderDraft()} ${this._renderCalibration(e)}
@@ -5654,7 +5660,7 @@ N("pg-garden-canvas", class extends j {
 });
 // src/util/plant-form.ts
 var J = (e) => e == null ? "" : String(e);
-function Da(e = I()) {
+function Oa(e = F()) {
 	return {
 		name: "",
 		scientific_name: "",
@@ -5679,7 +5685,7 @@ function Da(e = I()) {
 		tags: ""
 	};
 }
-function Oa(e, t = I()) {
+function ka(e, t = F()) {
 	return {
 		name: e.name,
 		scientific_name: J(e.scientific_name),
@@ -5711,11 +5717,11 @@ function X(e) {
 	let n = Number(t);
 	return Number.isFinite(n) ? n : null;
 }
-function ka(e) {
+function Aa(e) {
 	let t = X(e);
 	return t === null ? 0 : Math.max(0, Math.round(t));
 }
-function Aa(e) {
+function ja(e) {
 	let t = e.age_years.trim() !== "" || e.age_months.trim() !== "";
 	return {
 		name: e.name.trim(),
@@ -5736,25 +5742,25 @@ function Aa(e) {
 		root_depth_cm: X(e.root_depth_cm),
 		planted_on: Y(e.planted_on),
 		age: t ? {
-			age_months: ka(e.age_years) * 12 + ka(e.age_months),
-			on: e.age_on || I()
+			age_months: Aa(e.age_years) * 12 + Aa(e.age_months),
+			on: e.age_on || F()
 		} : null,
 		tags: e.tags.split(",").map((e) => e.trim()).filter(Boolean)
 	};
 }
-function ja(e, t) {
+function Ma(e, t) {
 	return JSON.stringify(e) === JSON.stringify(t);
 }
-function Ma(e, t) {
+function Na(e, t) {
 	let n = {};
 	for (let r of Object.keys(e)) {
 		let i = e[r];
-		t ? ja(i, t[r]) || Object.assign(n, { [r]: i }) : i !== null && !(Array.isArray(i) && i.length === 0) && Object.assign(n, { [r]: i });
+		t ? Ma(i, t[r]) || Object.assign(n, { [r]: i }) : i !== null && !(Array.isArray(i) && i.length === 0) && Object.assign(n, { [r]: i });
 	}
 	return n;
 }
-function Na(e) {
-	let { name: t, scientific_name: n, variety: r, family: i, notes: a, care_water: o, care_fertilize: s, care_prune: c, category: l, location_type: u, light: d, water_need: f, soil_type: p, status: m, min_temperature_c: ee, root_depth_cm: te, planted_on: h, age: ne, tags: re } = e;
+function Pa(e) {
+	let { name: t, scientific_name: n, variety: r, family: i, notes: a, care_water: o, care_fertilize: s, care_prune: c, category: l, location_type: u, light: d, water_need: f, soil_type: p, status: m, min_temperature_c: ee, root_depth_cm: te, planted_on: ne, age: h, tags: re } = e;
 	return {
 		name: t,
 		scientific_name: n,
@@ -5772,12 +5778,12 @@ function Na(e) {
 		status: m,
 		min_temperature_c: ee,
 		root_depth_cm: te,
-		planted_on: h,
-		age: ne,
+		planted_on: ne,
+		age: h,
 		tags: re
 	};
 }
-N("pg-number-dialog", class extends j {
+M("pg-number-dialog", class extends A {
 	static {
 		this.properties = {
 			_request: { state: !0 },
@@ -5840,7 +5846,7 @@ N("pg-number-dialog", class extends j {
     </dialog>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       dialog {
         width: min(400px, calc(100vw - 24px));
       }
@@ -5848,11 +5854,11 @@ N("pg-number-dialog", class extends j {
 	}
 });
 // src/components/origin-dialog.ts
-var Pa = /^\s*(-?\d{1,3}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*$/;
-function Fa(e, t) {
-	return e < 1e3 ? `${R(e, t, 0)} m` : `${R(e / 1e3, t, 1)} km`;
+var Fa = /^\s*(-?\d{1,3}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*$/;
+function Ia(e, t) {
+	return e < 1e3 ? `${L(e, t, 0)} m` : `${L(e / 1e3, t, 1)} km`;
 }
-N("pg-origin-dialog", class extends j {
+M("pg-origin-dialog", class extends A {
 	static {
 		this.properties = {
 			origin: { attribute: !1 },
@@ -5882,7 +5888,7 @@ N("pg-origin-dialog", class extends j {
 		} : null;
 	}
 	_onLatInput(e) {
-		let t = e.target.value, n = Pa.exec(t);
+		let t = e.target.value, n = Fa.exec(t);
 		n ? (this._lat = n[1] ?? "", this._lon = n[2] ?? "") : this._lat = t, this._error = "";
 	}
 	_parsed() {
@@ -5901,7 +5907,7 @@ N("pg-origin-dialog", class extends j {
 		})) : this._error = this.t("origin.invalid");
 	}
 	render() {
-		let { t: e } = this, t = this._parsed(), n = this.origin, r = t && n ? Nr(n, t.latitude, t.longitude) : null, a = r ? Math.hypot(r.x, r.y) : 0;
+		let { t: e } = this, t = this._parsed(), n = this.origin, r = t && n ? Fr(n, t.latitude, t.longitude) : null, a = r ? Math.hypot(r.x, r.y) : 0;
 		return x`<dialog aria-labelledby="title">
       <form @submit=${this._apply}>
         <div class="dialog-header">
@@ -5912,12 +5918,12 @@ N("pg-origin-dialog", class extends j {
             @click=${this.close}
             aria-label=${e("common.close")}
           >
-            ${M(i)}
+            ${j(i)}
           </button>
         </div>
         <div class="dialog-body">
           <p class="muted small">
-            ${e("origin.intro", { extent: Fa(yi, this.language) })}
+            ${e("origin.intro", { extent: Ia(xi, this.language) })}
           </p>
           <div class="quick" role="group">
             ${this._center ? x`<button
@@ -5925,14 +5931,14 @@ N("pg-origin-dialog", class extends j {
                     class="button secondary"
                     @click=${() => this._setFields(this._center)}
                   >
-                    ${M("M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M3.05,13H1V11H3.05C3.5,6.83 6.83,3.5 11,3.05V1H13V3.05C17.17,3.5 20.5,6.83 20.95,11H23V13H20.95C20.5,17.17 17.17,20.5 13,20.95V23H11V20.95C6.83,20.5 3.5,17.17 3.05,13M12,5A7,7 0 0,0 5,12A7,7 0 0,0 12,19A7,7 0 0,0 19,12A7,7 0 0,0 12,5Z")} ${e("origin.use_center")}
+                    ${j("M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M3.05,13H1V11H3.05C3.5,6.83 6.83,3.5 11,3.05V1H13V3.05C17.17,3.5 20.5,6.83 20.95,11H23V13H20.95C20.5,17.17 17.17,20.5 13,20.95V23H11V20.95C6.83,20.5 3.5,17.17 3.05,13M12,5A7,7 0 0,0 5,12A7,7 0 0,0 12,19A7,7 0 0,0 19,12A7,7 0 0,0 12,5Z")} ${e("origin.use_center")}
                   </button>` : w}
             ${this._home ? x`<button
                     type="button"
                     class="button secondary"
                     @click=${() => this._setFields(this._home)}
                   >
-                    ${M("M12 5.69L17 10.19V18H15V12H9V18H7V10.19L12 5.69M12 3L2 12H5V20H11V14H13V20H19V12H22")} ${e("origin.use_home")}
+                    ${j("M12 5.69L17 10.19V18H15V12H9V18H7V10.19L12 5.69M12 3L2 12H5V20H11V14H13V20H19V12H22")} ${e("origin.use_home")}
                   </button>` : w}
           </div>
           <div class="coords">
@@ -5953,7 +5959,7 @@ N("pg-origin-dialog", class extends j {
           </div>
           <p class="muted small">${e("origin.paste_hint")}</p>
           <p class="muted small">
-            ${a >= .5 ? e("origin.distance", { distance: Fa(a, this.language) }) : e("origin.same")}
+            ${a >= .5 ? e("origin.distance", { distance: Ia(a, this.language) }) : e("origin.same")}
           </p>
           <fieldset>
             <legend>${e("origin.content")}</legend>
@@ -5988,7 +5994,7 @@ N("pg-origin-dialog", class extends j {
     </dialog>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       dialog {
         width: min(480px, calc(100vw - 24px));
       }
@@ -6047,7 +6053,7 @@ N("pg-origin-dialog", class extends j {
 function Z(e, t = "/plant-garden") {
 	return `${t}/plants/${e.id}`;
 }
-N("pg-plant-card", class extends j {
+M("pg-plant-card", class extends A {
 	static {
 		this.properties = {
 			plant: { attribute: !1 },
@@ -6058,10 +6064,10 @@ N("pg-plant-card", class extends j {
 		super(), this.prefix = "/plant-garden";
 	}
 	_open(e) {
-		e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || (e.preventDefault(), F(Z(this.plant, this.prefix)));
+		e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || (e.preventDefault(), P(Z(this.plant, this.prefix)));
 	}
 	render() {
-		let { plant: e, t } = this, n = tr(e.age_months_now, t), r = z(e.height_cm, this.language), i = [e.scientific_name, e.variety && `'${e.variety}'`].filter(Boolean).join(" ");
+		let { plant: e, t } = this, n = rr(e.age_months_now, t), r = R(e.height_cm, this.language), i = [e.scientific_name, e.variety && `'${e.variety}'`].filter(Boolean).join(" ");
 		return x`
       <a class="card" href=${Z(e, this.prefix)} @click=${this._open}>
         <div class="cover">
@@ -6072,7 +6078,7 @@ N("pg-plant-card", class extends j {
                   alt=""
                   loading="lazy"
                   decoding="async"
-                />` : x`<div class="placeholder">${M(h)}</div>`}
+                />` : x`<div class="placeholder">${j(h)}</div>`}
           ${e.status === "healthy" ? w : x`<span class="badge status status-${e.status}"
                   >${t(`status.${e.status}`)}</span
                 >`}
@@ -6083,9 +6089,9 @@ N("pg-plant-card", class extends j {
           <p class="meta">
             <span>${t(`category.${e.category}`)}</span>
             ${n ? x`<span>${n}</span>` : w}
-            ${r ? x`<span>${M("M3,5V21H9V19.5H7V18H9V16.5H5V15H9V13.5H7V12H9V10.5H5V9H9V5H10.5V9H12V7H13.5V9H15V5H16.5V9H18V7H19.5V9H21V3H5A2,2 0 0,0 3,5M6,7A1,1 0 0,1 5,6A1,1 0 0,1 6,5A1,1 0 0,1 7,6A1,1 0 0,1 6,7Z")}${r}</span>` : w}
+            ${r ? x`<span>${j("M3,5V21H9V19.5H7V18H9V16.5H5V15H9V13.5H7V12H9V10.5H5V9H9V5H10.5V9H12V7H13.5V9H15V5H16.5V9H18V7H19.5V9H21V3H5A2,2 0 0,0 3,5M6,7A1,1 0 0,1 5,6A1,1 0 0,1 6,5A1,1 0 0,1 7,6A1,1 0 0,1 6,7Z")}${r}</span>` : w}
             ${e.photo_count ? x`<span
-                    >${M("M20,4H16.83L15,2H9L7.17,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4M20,18H4V6H8.05L9.88,4H14.12L15.95,6H20V18M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15Z")}${t(e.photo_count === 1 ? "plants.photos_one" : "plants.photos_other", { n: e.photo_count })}</span
+                    >${j("M20,4H16.83L15,2H9L7.17,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4M20,18H4V6H8.05L9.88,4H14.12L15.95,6H20V18M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15Z")}${t(e.photo_count === 1 ? "plants.photos_one" : "plants.photos_other", { n: e.photo_count })}</span
                   >` : w}
           </p>
         </div>
@@ -6093,7 +6099,7 @@ N("pg-plant-card", class extends j {
     `;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: block;
       }
@@ -6198,7 +6204,7 @@ N("pg-plant-card", class extends j {
       }
     `];
 	}
-}), N("pg-plant-form", class extends j {
+}), M("pg-plant-form", class extends A {
 	static {
 		this.properties = {
 			_plant: { state: !0 },
@@ -6218,10 +6224,10 @@ N("pg-plant-card", class extends j {
 		super(), this._reset();
 	}
 	_reset(e) {
-		this._plant = e, this._state = e ? Oa(e) : Da(), this._files = [], this._height = "", this._width = "", this._busy = !1, this._progress = "", this._errors = [], this._created = void 0, this._gpsPosition = null, this._useGps = !0;
+		this._plant = e, this._state = e ? ka(e) : Oa(), this._files = [], this._height = "", this._width = "", this._busy = !1, this._progress = "", this._errors = [], this._created = void 0, this._gpsPosition = null, this._useGps = !0;
 	}
 	async _onFiles(e) {
-		this._files = [...e.target.files ?? []], this._gpsPosition = await Ur(this._files, this.origin);
+		this._files = [...e.target.files ?? []], this._gpsPosition = await Gr(this._files, this.origin);
 	}
 	open(e) {
 		this._reset(e), this.updateComplete.then(() => {
@@ -6249,39 +6255,39 @@ N("pg-plant-card", class extends j {
 			this._finish(this._created, !0);
 			return;
 		}
-		let t = Aa(this._state);
+		let t = ja(this._state);
 		if (!t.name) this._errors = [this.t("form.name_required")];
 		else {
 			this._busy = !0, this._errors = [];
 			try {
 				if (this._plant) {
-					let e = Ma(t, Na(this._plant)), n = Object.keys(e).length ? await St(this.hass, this._plant.id, e) : this._plant;
+					let e = Na(t, Pa(this._plant)), n = Object.keys(e).length ? await wt(this.hass, this._plant.id, e) : this._plant;
 					this._finish(n, !1);
 				} else await this._create(t);
 			} catch (e) {
-				this._errors = [k(e)];
+				this._errors = [O(e)];
 			} finally {
 				this._busy = !1, this._progress = "";
 			}
 		}
 	}
 	async _create(e) {
-		let t = await xt(this.hass, {
-			...Ma(e, null),
+		let t = await Ct(this.hass, {
+			...Na(e, null),
 			name: e.name,
 			...this._gpsPosition && this._useGps ? { position: this._gpsPosition } : {}
 		}), n = X(this._height), r = X(this._width), i = [];
 		if (n !== null || r !== null) try {
-			await Vt(this.hass, t.id, {
-				measured_on: I(),
+			await Ut(this.hass, t.id, {
+				measured_on: F(),
 				height_cm: n,
 				width_cm: r
 			});
 		} catch (e) {
-			i.push(k(e));
+			i.push(O(e));
 		}
 		if (this._files.length) {
-			let e = await Wr(this.hass, t.id, this._files, this.t, (e, t) => {
+			let e = await Kr(this.hass, t.id, this._files, this.t, (e, t) => {
 				this._progress = this.t("detail.uploading", {
 					current: e,
 					total: t
@@ -6325,7 +6331,7 @@ N("pg-plant-card", class extends j {
               @click=${this.close}
               aria-label=${e("common.close")}
             >
-              ${M(i)}
+              ${j(i)}
             </button>
           </div>
           <div class="dialog-body">
@@ -6363,27 +6369,27 @@ N("pg-plant-card", class extends j {
               <div class="grid">
                 <label class="field"
                   ><span>${e("field.category")}</span>
-                  ${this._select("category", Rn, "category", !1)}</label
+                  ${this._select("category", Bn, "category", !1)}</label
                 >
                 <label class="field"
                   ><span>${e("field.location_type")}</span>
-                  ${this._select("location_type", zn, "location", !1)}</label
+                  ${this._select("location_type", Vn, "location", !1)}</label
                 >
                 <label class="field"
                   ><span>${e("field.light")}</span>
-                  ${this._select("light", Bn, "light", !0)}</label
+                  ${this._select("light", Hn, "light", !0)}</label
                 >
                 <label class="field"
                   ><span>${e("field.water_need")}</span>
-                  ${this._select("water_need", Vn, "water", !0)}</label
+                  ${this._select("water_need", Un, "water", !0)}</label
                 >
                 <label class="field"
                   ><span>${e("field.soil_type")}</span>
-                  ${this._select("soil_type", Hn, "soil", !0)}</label
+                  ${this._select("soil_type", Wn, "soil", !0)}</label
                 >
                 ${t ? x`<label class="field"
                         ><span>${e("field.status")}</span>
-                        ${this._select("status", Un, "status", !1)}</label
+                        ${this._select("status", Gn, "status", !1)}</label
                       >` : w}
               </div>
             </fieldset>
@@ -6484,7 +6490,7 @@ N("pg-plant-card", class extends j {
         <label class="field wide files">
           <span>${e("form.photos")}</span>
           <span class="file-button button secondary">
-            ${M(c)} ${e("detail.add_photos")}
+            ${j(c)} ${e("detail.add_photos")}
             ${this._files.length ? x`<b>· ${e("form.photos_selected", { n: this._files.length })}</b>` : w}
           </span>
           <input class="sr-only" type="file" accept="image/*" multiple @change=${this._onFiles} />
@@ -6522,7 +6528,7 @@ N("pg-plant-card", class extends j {
     </fieldset>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       dialog {
         width: min(720px, calc(100vw - 24px));
       }
@@ -6614,7 +6620,7 @@ var Q = {
 	bottom: 28,
 	left: 48
 };
-function Ia(e, t = 4) {
+function La(e, t = 4) {
 	if (e <= 0) return 1;
 	let n = e / t, r = 10 ** Math.floor(Math.log10(n));
 	for (let e of [
@@ -6625,8 +6631,8 @@ function Ia(e, t = 4) {
 	]) if (n <= e * r) return e * r;
 	return 10 * r;
 }
-function La(e, t, n) {
-	let r = [...e].sort((e, t) => e.measured_on.localeCompare(t.measured_on)), i = r.flatMap((e) => [e.height_cm ?? 0, e.width_cm ?? 0]), a = Ia(Math.max(0, ...i)), o = a * 4, s = Math.max(1, t - Q.left - Q.right), c = Math.max(1, n - Q.top - Q.bottom), l = r.map((e) => Zn(e.measured_on).getTime()), u = l[0] ?? 0, d = (l[l.length - 1] ?? 0) - u, f = (e) => Q.left + (d === 0 ? s / 2 : (e - u) / d * s), p = (e) => Q.top + c - e / o * c, m = (e) => r.flatMap((t, n) => {
+function Ra(e, t, n) {
+	let r = [...e].sort((e, t) => e.measured_on.localeCompare(t.measured_on)), i = r.flatMap((e) => [e.height_cm ?? 0, e.width_cm ?? 0]), a = La(Math.max(0, ...i)), o = a * 4, s = Math.max(1, t - Q.left - Q.right), c = Math.max(1, n - Q.top - Q.bottom), l = r.map((e) => $n(e.measured_on).getTime()), u = l[0] ?? 0, d = (l[l.length - 1] ?? 0) - u, f = (e) => Q.left + (d === 0 ? s / 2 : (e - u) / d * s), p = (e) => Q.top + c - e / o * c, m = (e) => r.flatMap((t, n) => {
 		let r = t[e];
 		return r === null ? [] : [{
 			x: f(l[n] ?? u),
@@ -6652,16 +6658,16 @@ function La(e, t, n) {
 		last: r.length > 1 ? r[r.length - 1]?.measured_on ?? null : null
 	};
 }
-function Ra(e, t, n) {
+function za(e, t, n) {
 	if (e.length < 2) return "";
 	let r = e.map(([e]) => e), i = e.map(([, e]) => e), a = Math.min(...r), o = Math.max(...r), s = Math.min(...i), c = Math.max(...i), l = (e) => o === a ? t / 2 : (e - a) / (o - a) * t, u = (e) => c === s ? n / 2 : n - 2 - (e - s) / (c - s) * (n - 4);
 	return e.map(([e, t], n) => `${n ? "L" : "M"}${l(e).toFixed(1)},${u(t).toFixed(1)}`).join(" ");
 }
-function za(e) {
+function Ba(e) {
 	return e.map((e, t) => `${t ? "L" : "M"}${e.x.toFixed(1)},${e.y.toFixed(1)}`).join(" ");
 }
 // src/util/history.ts
-var Ba = class extends EventTarget {
+var Va = class extends EventTarget {
 	constructor(e = 100) {
 		super(), this._limit = e, this._done = [], this._undone = [], this._busy = !1;
 	}
@@ -6699,18 +6705,18 @@ var Ba = class extends EventTarget {
 			this._busy = !1, this.dispatchEvent(new Event("change"));
 		}
 	}
-}, Va = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-function Ha(e = Date.now()) {
+}, Ha = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+function Ua(e = Date.now()) {
 	let t = "", n = e;
-	for (let e = 0; e < 10; e++) t = (Va[n % 32] ?? "0") + t, n = Math.floor(n / 32);
+	for (let e = 0; e < 10; e++) t = (Ha[n % 32] ?? "0") + t, n = Math.floor(n / 32);
 	let r = /* @__PURE__ */ new Uint8Array(16);
 	crypto.getRandomValues(r);
 	let i = "";
-	for (let e of r) i += Va[e % 32];
+	for (let e of r) i += Ha[e % 32];
 	return t + i;
 }
 // src/components/hero.ts
-var Ua = x`
+var Wa = x`
   <svg viewBox="0 0 800 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <defs>
       <linearGradient id="pg-sky" x1="0" y1="0" x2="0" y2="1">
@@ -6738,7 +6744,7 @@ var Ua = x`
       <path d="M356 112 c 0 0 -6 8 -6 12 a 6 6 0 0 0 12 0 c 0 -4 -6 -12 -6 -12 z" />
     </g>
   </svg>
-`, Wa = g`
+`, Ga = g`
   .hero .sky-top {
     stop-color: var(--pg-sky-top);
   }
@@ -6770,7 +6776,7 @@ var Ua = x`
     fill: var(--pg-water);
     opacity: 0.7;
   }
-`, Ga = [
+`, Ka = [
 	[/rasen|wiese|lawn|grass?plot/, "lawn"],
 	[/hecke|hedge/, "hedge"],
 	[/bonsai|kübel|kuebel|topf|potted/, "potted"],
@@ -6783,15 +6789,15 @@ var Ua = x`
 	[/efeu|clematis|kletter|wein|climber|ivy/, "climber"],
 	[/gras/, "grass"]
 ];
-function Ka(e) {
-	let t = e.toLocaleLowerCase();
-	return Ga.find(([e]) => e.test(t))?.[1] ?? "other";
-}
 function qa(e) {
+	let t = e.toLocaleLowerCase();
+	return Ka.find(([e]) => e.test(t))?.[1] ?? "other";
+}
+function Ja(e) {
 	if (e === "lawn") return "lawn";
 	if (e === "potted") return "pot";
 }
-N("pg-todo-import", class extends j {
+M("pg-todo-import", class extends A {
 	static {
 		this.properties = {
 			existingNames: { attribute: !1 },
@@ -6819,18 +6825,18 @@ N("pg-todo-import", class extends j {
 	async _load() {
 		this._busy = !0, this._error = "";
 		try {
-			let e = await Pt(this.hass, this._entityId), t = new Set(this.existingNames.map((e) => e.trim().toLocaleLowerCase()));
+			let e = await It(this.hass, this._entityId), t = new Set(this.existingNames.map((e) => e.trim().toLocaleLowerCase()));
 			this._rows = e.filter((e) => e.summary.trim()).map((e) => {
 				let n = t.has(e.summary.trim().toLocaleLowerCase());
 				return {
 					item: e,
 					exists: n,
 					selected: !n,
-					category: Ka(e.summary)
+					category: qa(e.summary)
 				};
 			});
 		} catch (e) {
-			this._rows = [], this._error = k(e);
+			this._rows = [], this._error = O(e);
 		} finally {
 			this._busy = !1;
 		}
@@ -6845,8 +6851,8 @@ N("pg-todo-import", class extends j {
 					current: t + 1,
 					total: e.length
 				});
-				let r = qa(n.category);
-				await xt(this.hass, {
+				let r = Ja(n.category);
+				await Ct(this.hass, {
 					name: n.item.summary.trim().slice(0, 100),
 					category: n.category,
 					...r ? { location_type: r } : {},
@@ -6855,7 +6861,7 @@ N("pg-todo-import", class extends j {
 			}
 			this.close(), this.fire("imported", { count: t });
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		} finally {
 			this._busy = !1, this._progress = "";
 		}
@@ -6866,7 +6872,7 @@ N("pg-todo-import", class extends j {
       <div class="dialog-header">
         <h2 id="title">${e("import.title")}</h2>
         <button class="icon-button" @click=${this.close} aria-label=${e("common.close")}>
-          ${M(i)}
+          ${j(i)}
         </button>
       </div>
       <div class="dialog-body">
@@ -6878,7 +6884,7 @@ N("pg-todo-import", class extends j {
 		}}
                 >
                   ${t.map((e) => x`<option value=${e} ?selected=${e === this._entityId}>
-                        ${U(this.hass.states[e], e)}
+                        ${H(this.hass.states[e], e)}
                       </option>`)}
                 </select>
               </label>` : x`<p class="muted">${e("import.no_lists")}</p>`}
@@ -6912,7 +6918,7 @@ N("pg-todo-import", class extends j {
     </dialog>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       dialog {
         width: min(520px, calc(100vw - 24px));
       }
@@ -6952,7 +6958,7 @@ N("pg-todo-import", class extends j {
 	}
 });
 // src/views/plants-view.ts
-function Ja(e, t) {
+function Ya(e, t) {
 	let n = t.trim().toLocaleLowerCase();
 	return !n || [
 		e.name,
@@ -6962,7 +6968,7 @@ function Ja(e, t) {
 		...e.tags
 	].filter((e) => !!e).some((e) => e.toLocaleLowerCase().includes(n));
 }
-N("pg-plants-view", class extends j {
+M("pg-plants-view", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -6988,15 +6994,15 @@ N("pg-plants-view", class extends j {
 		this.renderRoot.querySelector("pg-todo-import")?.open();
 	}
 	_onSaved(e) {
-		this.store.refresh(), e.detail.created && F(Z(e.detail.plant, this.prefix));
+		this.store.refresh(), e.detail.created && P(Z(e.detail.plant, this.prefix));
 	}
 	render() {
-		let { t: e } = this, t = this.store.plants, n = Un.filter((e) => t.some((t) => t.status === e)), r = t.filter((e) => (this._status === "all" || e.status === this._status) && Ja(e, this._query));
+		let { t: e } = this, t = this.store.plants, n = Gn.filter((e) => t.some((t) => t.status === e)), r = t.filter((e) => (this._status === "all" || e.status === this._status) && Ya(e, this._query));
 		return x`
       ${t.length ? x`
               <div class="filters">
                 <label class="search">
-                  ${M(l)}
+                  ${j(l)}
                   <span class="sr-only">${e("plants.search")}</span>
                   <input
                     type="search"
@@ -7022,7 +7028,7 @@ N("pg-plants-view", class extends j {
                             </button>`)}
                       </div>` : w}
                 <button class="button text import" @click=${this._openImport}>
-                  ${M(p)} ${e("import.open")}
+                  ${j(p)} ${e("import.open")}
                 </button>
               </div>
               ${r.length ? x`<div class="grid">
@@ -7034,23 +7040,23 @@ N("pg-plants-view", class extends j {
                     </div>` : x`<p class="muted empty-search">${e("plants.no_results")}</p>`}
             ` : x`
               <section class="card hero welcome">
-                ${Ua}
+                ${Wa}
                 <div class="welcome-text">
                   <h2>${e("plants.empty_title", { garden: this.gardenName })}</h2>
                   <p class="muted">${e("plants.empty_body")}</p>
                   <div class="welcome-actions">
                     <button class="button" @click=${this._openForm}>
-                      ${M(m)} ${e("plants.add")}
+                      ${j(m)} ${e("plants.add")}
                     </button>
                     <button class="button secondary" @click=${this._openImport}>
-                      ${M(p)} ${e("import.open")}
+                      ${j(p)} ${e("import.open")}
                     </button>
                   </div>
                 </div>
               </section>
             `}
       ${t.length ? x`<button class="button fab" @click=${this._openForm} aria-label=${e("plants.add")}>
-              ${M(m)} <span>${e("plants.add")}</span>
+              ${j(m)} <span>${e("plants.add")}</span>
             </button>` : w}
       <pg-plant-form
         .hass=${this.hass}
@@ -7066,8 +7072,8 @@ N("pg-plants-view", class extends j {
 	}
 	static {
 		this.styles = [
-			P,
-			Wa,
+			N,
+			Ga,
 			g`
       :host {
         display: block;
@@ -7170,21 +7176,21 @@ N("pg-plants-view", class extends j {
 	}
 });
 // src/views/garden-view.ts
-var Ya = "plant-garden.viewport.v1", Xa = "plant-garden.zones.v1", Za = /* @__PURE__ */ new Set(), Qa = {}, $a = {}, eo = [
+var Xa = "plant-garden.viewport.v1", Za = "plant-garden.zones.v1", Qa = /* @__PURE__ */ new Set(), $a = {}, eo = {}, to = [
 	"rect",
 	"circle",
 	"polygon",
 	"freehand"
 ];
-function to(e) {
+function no(e) {
 	return e === "hedge" ? "hedge" : e === "lawn" ? "lawn" : "bed";
 }
-var no = "plant-garden.layer.v1", ro = [
+var ro = "plant-garden.layer.v1", io = [
 	"plan",
 	"deficit",
 	"coverage"
 ];
-function io() {
+function ao() {
 	return {
 		entity_id: null,
 		timer_entity_id: null,
@@ -7198,28 +7204,28 @@ function io() {
 		exclude: []
 	};
 }
-function ao(e, t) {
+function oo(e, t) {
 	let n = Number(e.replace(",", ".").trim());
 	return e.trim() !== "" && n > 0 && n <= t ? n : null;
 }
-var oo = {
-	entity_id: qn,
+var so = {
+	entity_id: Yn,
 	timer_entity_id: ["timer"],
 	meter_entity_id: ["sensor"]
-}, so = "plant-garden.snap.v1", co = [
+}, co = "plant-garden.snap.v1", lo = [
 	0,
 	.1,
 	.25,
 	.5,
 	1
-], lo = Br, uo = class extends Error {};
-function fo(...e) {
-	if (!e.every(xi)) throw new uo("out of plan");
+], uo = Hr, fo = class extends Error {};
+function po(...e) {
+	if (!e.every(Ci)) throw new fo("out of plan");
 }
-function po(e) {
+function mo(e) {
 	return typeof e == "object" && e && "code" in e ? String(e.code) : void 0;
 }
-var mo = {
+var ho = {
 	boundary: -10,
 	lawn: -6,
 	terrace: -5,
@@ -7234,7 +7240,7 @@ var mo = {
 	roof: 6,
 	zone: 7
 };
-function ho(e, t) {
+function go(e, t) {
 	try {
 		let n = localStorage.getItem(e), r = n ? JSON.parse(n) : null;
 		return t(r) ? r : null;
@@ -7242,14 +7248,14 @@ function ho(e, t) {
 		return null;
 	}
 }
-function go(e, t) {
+function _o(e, t) {
 	try {
 		localStorage.setItem(e, JSON.stringify(t));
 	} catch {}
 }
-var _o = (e) => typeof e == "number" && co.includes(e);
-function vo(e, t, n, r) {
-	let i = r / G(t, n);
+var vo = (e) => typeof e == "number" && lo.includes(e);
+function yo(e, t, n, r) {
+	let i = r / W(t, n);
 	return {
 		...e,
 		x: t.x + (e.x - t.x) * i,
@@ -7257,7 +7263,7 @@ function vo(e, t, n, r) {
 		width_m: e.width_m * i
 	};
 }
-N("pg-garden-view", class extends j {
+M("pg-garden-view", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -7283,7 +7289,7 @@ N("pg-garden-view", class extends j {
 		};
 	}
 	constructor() {
-		super(), this._history = new Ba(), this._fitted = !1, this._focused = null, this._states = {}, this._highlightMemo = null, this._onStoreChange = () => {
+		super(), this._history = new Va(), this._fitted = !1, this._focused = null, this._states = {}, this._highlightMemo = null, this._onStoreChange = () => {
 			this.requestUpdate(), this._initViewport();
 		}, this._onHistoryChange = () => this._historyTick += 1, this._onKeyDown = (e) => {
 			let t = e.composedPath()[0];
@@ -7313,7 +7319,7 @@ N("pg-garden-view", class extends j {
 			}
 			let n = this._canvas, r = n?.getBoundingClientRect();
 			if (n && r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
-				let r = Ai(n.planPoint(e.clientX, e.clientY), this._snap);
+				let r = ji(n.planPoint(e.clientX, e.clientY), this._snap);
 				this._onPlace(new CustomEvent("place", { detail: {
 					armed: {
 						kind: "plant",
@@ -7322,7 +7328,7 @@ N("pg-garden-view", class extends j {
 					at: r
 				} }));
 			}
-		}, this._onTrayPointerCancel = () => this._endTrayDrag(), this.prefix = "/plant-garden", this.focusPlantId = null, this._mode = "view", this._tool = "select", this._newKind = "bed", this._areaFor = null, this._snap = ho(so, _o) ?? .25, this._selection = null, this._hover = null, this._armed = null, this._query = "", this._error = "", this._drag = null, this._historyTick = 0, this._markerHistory = null, this._farM = 0, this._showZones = ho(Xa, (e) => typeof e == "boolean") ?? !0, this._zonePick = null, this._layer = ho(no, (e) => ro.includes(e)) ?? "plan";
+		}, this._onTrayPointerCancel = () => this._endTrayDrag(), this.prefix = "/plant-garden", this.focusPlantId = null, this._mode = "view", this._tool = "select", this._newKind = "bed", this._areaFor = null, this._snap = go(co, vo) ?? .25, this._selection = null, this._hover = null, this._armed = null, this._query = "", this._error = "", this._drag = null, this._historyTick = 0, this._markerHistory = null, this._farM = 0, this._showZones = go(Za, (e) => typeof e == "boolean") ?? !0, this._zonePick = null, this._layer = go(ro, (e) => io.includes(e)) ?? "plan";
 	}
 	connectedCallback() {
 		super.connectedCallback(), this.store?.addEventListener("change", this._onStoreChange), this._history.addEventListener("change", this._onHistoryChange), this.addEventListener("keydown", this._onKeyDown);
@@ -7331,7 +7337,7 @@ N("pg-garden-view", class extends j {
 		super.disconnectedCallback(), this.store?.removeEventListener("change", this._onStoreChange), this._history.removeEventListener("change", this._onHistoryChange), this.removeEventListener("keydown", this._onKeyDown), this._endTrayDrag(), clearTimeout(this._errorTimer);
 	}
 	firstUpdated() {
-		let e = ho(Ya, pa);
+		let e = go(Xa, ma);
 		e && this._canvas && (this._canvas.viewport = e, this._fitted = !0, this._trackDistance(e)), this._initViewport();
 	}
 	updated(e) {
@@ -7367,7 +7373,7 @@ N("pg-garden-view", class extends j {
 	}
 	_highlight() {
 		let e = this._selection, t = e?.type === "shape" ? this.store?.getShape(e.id) : void 0;
-		if (t?.kind !== "zone") return Za;
+		if (t?.kind !== "zone") return Qa;
 		let n = this._highlightMemo;
 		if (n?.zone !== t || n.plants !== this._plants || n.shapes !== this._shapes) {
 			let e = new Set(this._coverage(t).keys());
@@ -7381,7 +7387,7 @@ N("pg-garden-view", class extends j {
 		return n.set;
 	}
 	_coverage(e) {
-		return qi(e, Gi(this._plants, this._shapes));
+		return Ji(e, Ki(this._plants, this._shapes));
 	}
 	_initViewport() {
 		!this._fitted && this.store?.loaded && this._canvas && (this._fitted = !0, this.updateComplete.then(() => this._canvas?.fit()));
@@ -7403,7 +7409,7 @@ N("pg-garden-view", class extends j {
 		}
 		let t = this.store.getMarker(e.id);
 		if (t) try {
-			let n = await Ft(this.hass, t.entity_id);
+			let n = await Lt(this.hass, t.entity_id);
 			this._selection?.id === e.id && (this._markerHistory = {
 				entityId: t.entity_id,
 				points: n
@@ -7423,15 +7429,15 @@ N("pg-garden-view", class extends j {
 		}
 	}
 	_showError(e) {
-		let t = Fa(yi, this.language);
-		this._error = e instanceof uo ? this.t("plan.too_far", { extent: t }) : po(e) === "out_of_range" ? this.t("origin.too_far", { extent: t }) : this.t("plan.save_failed", { message: k(e) }), clearTimeout(this._errorTimer), this._errorTimer = setTimeout(() => this._error = "", 8e3);
+		let t = Ia(xi, this.language);
+		this._error = e instanceof fo ? this.t("plan.too_far", { extent: t }) : mo(e) === "out_of_range" ? this.t("origin.too_far", { extent: t }) : this.t("plan.save_failed", { message: O(e) }), clearTimeout(this._errorTimer), this._errorTimer = setTimeout(() => this._error = "", 8e3);
 	}
 	async _setPosition(e, t) {
-		t && fo(t);
+		t && po(t);
 		let n = this.store.getPlant(e)?.position ?? null;
 		this.store.patchPlant(e, { position: t });
 		try {
-			await Tt(this.hass, [{
+			await Dt(this.hass, [{
 				plant_id: e,
 				position: t
 			}]);
@@ -7443,17 +7449,17 @@ N("pg-garden-view", class extends j {
 		let n = this.store.getPlant(e)?.crown_diameter_m ?? null;
 		this.store.patchPlant(e, { crown_diameter_m: t });
 		try {
-			await St(this.hass, e, { crown_diameter_m: t });
+			await wt(this.hass, e, { crown_diameter_m: t });
 		} catch (t) {
 			throw this.store.patchPlant(e, { crown_diameter_m: n }), t;
 		}
 	}
 	async _putShape(e) {
-		fo(...bi(e.geometry));
+		po(...Si(e.geometry));
 		let t = this.store.getShape(e.id);
 		this.store.putShape(e);
 		try {
-			await Dt(this.hass, e);
+			await kt(this.hass, e);
 		} catch (n) {
 			throw t ? this.store.putShape(t) : this.store.removeShape(e.id), n;
 		}
@@ -7461,17 +7467,17 @@ N("pg-garden-view", class extends j {
 	async _removeShape(e) {
 		this.store.removeShape(e.id);
 		try {
-			await Ot(this.hass, e.id);
+			await At(this.hass, e.id);
 		} catch (t) {
 			throw this.store.putShape(e), t;
 		}
 	}
 	async _putMarker(e) {
-		fo(e);
+		po(e);
 		let t = this.store.getMarker(e.id);
 		this.store.putMarker(e);
 		try {
-			await Mt(this.hass, e);
+			await Pt(this.hass, e);
 		} catch (n) {
 			throw t ? this.store.putMarker(t) : this.store.removeMarker(e.id), n;
 		}
@@ -7479,17 +7485,17 @@ N("pg-garden-view", class extends j {
 	async _removeMarker(e) {
 		this.store.removeMarker(e.id);
 		try {
-			await Nt(this.hass, e.id);
+			await Ft(this.hass, e.id);
 		} catch (t) {
 			throw this.store.putMarker(e), t;
 		}
 	}
 	async _applyBackground(e) {
-		e?.type === "image" && fo(e);
+		e?.type === "image" && po(e);
 		let t = this._background;
 		this.store.setBackground(e);
 		try {
-			let t = await kt(this.hass, e);
+			let t = await jt(this.hass, e);
 			this.store.setBackground(t.background);
 		} catch (e) {
 			throw this.store.setBackground(t), e;
@@ -7525,15 +7531,15 @@ N("pg-garden-view", class extends j {
 		});
 	}
 	async _applyOrigin(e, t, n) {
-		let r = await At(this.hass, t.latitude, t.longitude, n);
+		let r = await Mt(this.hass, t.latitude, t.longitude, n);
 		await this.store.applyLayout(r);
 		let i = this._canvas;
 		if (!i) return;
-		let a = i.viewport, o = Fr(e, t, {
+		let a = i.viewport, o = Lr(e, t, {
 			x: a.cx,
 			y: a.cy
 		});
-		i.centerOn(xi(o) ? o : {
+		i.centerOn(Ci(o) ? o : {
 			x: 0,
 			y: 0
 		}, a.width);
@@ -7558,15 +7564,15 @@ N("pg-garden-view", class extends j {
 	}
 	_onCreateShape(e) {
 		let t = {
-			id: Ha(),
+			id: Ua(),
 			kind: this._newKind,
 			geometry: e.detail.geometry,
 			label: null,
 			plant_id: this._newKind === "zone" ? null : this._areaFor,
 			soil_type: null,
 			locked: !1,
-			z: mo[this._newKind],
-			irrigation: this._newKind === "zone" ? io() : null
+			z: ho[this._newKind],
+			irrigation: this._newKind === "zone" ? ao() : null
 		};
 		this._tool = "select", this._areaFor = null, this._selection = {
 			type: "shape",
@@ -7610,14 +7616,14 @@ N("pg-garden-view", class extends j {
 	async _onCalibrate(e) {
 		let t = this._background;
 		if (t?.type !== "image") return;
-		let { a: n, b: r } = e.detail, i = await this.renderRoot.querySelector("pg-number-dialog")?.ask(this.t("plan.calibrate_title"), this.t("plan.calibrate_label"), this.t("plan.calibrate_measured", { length: R(G(n, r), this.language, 2) }));
-		i && (this._tool = "select", this._changeBackground(vo(t, n, r, i)));
+		let { a: n, b: r } = e.detail, i = await this.renderRoot.querySelector("pg-number-dialog")?.ask(this.t("plan.calibrate_title"), this.t("plan.calibrate_label"), this.t("plan.calibrate_measured", { length: L(W(n, r), this.language, 2) }));
+		i && (this._tool = "select", this._changeBackground(yo(t, n, r, i)));
 	}
 	_onPlace(e) {
 		let { armed: t, at: n } = e.detail;
 		if (this._armed = null, t.kind === "marker") {
 			let e = {
-				id: Ha(),
+				id: Ua(),
 				entity_id: t.entityId,
 				x: n.x,
 				y: n.y,
@@ -7668,23 +7674,32 @@ N("pg-garden-view", class extends j {
 		this._armed = null, this._selection = null, this._hover = null;
 	}
 	_onViewport(e) {
-		go(Ya, e.detail.viewport), this._trackDistance(e.detail.viewport);
+		_o(Xa, e.detail.viewport), this._trackDistance(e.detail.viewport);
 	}
 	_trackDistance(e) {
 		let t = Math.hypot(e.cx, e.cy);
-		this._farM = t > lo ? Math.round(t / 100) * 100 : 0;
+		this._farM = t > uo ? Math.round(t / 100) * 100 : 0;
 	}
 	_setMode(e) {
 		this._mode = e, this._tool = "select", this._areaFor = null, this._armed = null, this._hover = null, this._selection = null;
 	}
 	_setTool(e) {
-		this._tool = e, this._armed = null, eo.includes(e) || (this._areaFor = null);
+		this._tool = e, this._armed = null, to.includes(e) || (this._areaFor = null);
+	}
+	get _drawingZone() {
+		return to.includes(this._tool) && this._newKind === "zone";
+	}
+	_drawZone() {
+		this._newKind = "zone", this._areaFor = null, this._armed = null, this._selection = null, to.includes(this._tool) || (this._tool = "rect"), this._showZonesLayer();
+	}
+	_showZonesLayer() {
+		this._showZones || (this._showZones = !0, _o(Za, !0));
 	}
 	_drawAreaFor(e) {
-		this._areaFor = e.id, this._newKind = to(e.category), this._tool = "freehand", this._armed = null, this._selection = null;
+		this._areaFor = e.id, this._newKind = no(e.category), this._tool = "freehand", this._armed = null, this._selection = null;
 	}
 	_setSnap(e) {
-		this._snap = Number(e.target.value), go(so, this._snap);
+		this._snap = Number(e.target.value), _o(co, this._snap);
 	}
 	_openBackground() {
 		this.renderRoot.querySelector("pg-background-dialog")?.open(this._canvas?.viewport ?? {
@@ -7697,7 +7712,7 @@ N("pg-garden-view", class extends j {
 		this._changeBackground(e.detail.background);
 	}
 	_openOrigin() {
-		let e = this.store?.layout?.origin, t = this._canvas?.viewport, n = e && t ? Pr(e, {
+		let e = this.store?.layout?.origin, t = this._canvas?.viewport, n = e && t ? Ir(e, {
 			x: t.cx,
 			y: t.cy
 		}) : null;
@@ -7774,8 +7789,8 @@ N("pg-garden-view", class extends j {
             .armed=${this._armed}
             .highlight=${this._highlight()}
             .showZones=${this._showZones}
-            .water=${this.store?.water?.plants ?? Qa}
-            .care=${this.store?.care?.plants ?? $a}
+            .water=${this.store?.water?.plants ?? $a}
+            .care=${this.store?.care?.plants ?? eo}
             .layer=${this._layer}
             @select=${this._onSelect}
             @hover=${this._onHover}
@@ -7826,7 +7841,7 @@ N("pg-garden-view", class extends j {
       <pg-entity-picker
         class="zone-picker"
         .hass=${this.hass}
-        .domains=${this._zonePick ? [...oo[this._zonePick]] : void 0}
+        .domains=${this._zonePick ? [...so[this._zonePick]] : void 0}
         .heading=${this._zonePick ? this.t(`zone.${this._zonePick}`) : ""}
         @entity-picked=${this._onZoneEntityPicked}
       ></pg-entity-picker>
@@ -7841,7 +7856,7 @@ N("pg-garden-view", class extends j {
       aria-label=${this.t(n)}
       title=${this.t(n)}
     >
-      ${M(t)}
+      ${j(t)}
     </button>`;
 	}
 	_renderToolbar() {
@@ -7854,7 +7869,7 @@ N("pg-garden-view", class extends j {
           @click=${() => this._setMode("view")}
           title=${e("plan.mode_view")}
         >
-          ${M("M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C21.27,16.39 17,19.5 12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C15.76,17.5 19.17,15.36 20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12Z")}<span>${e("plan.mode_view")}</span>
+          ${j("M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C21.27,16.39 17,19.5 12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C15.76,17.5 19.17,15.36 20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12Z")}<span>${e("plan.mode_view")}</span>
         </button>
         <button
           class="seg"
@@ -7862,7 +7877,7 @@ N("pg-garden-view", class extends j {
           @click=${() => this._setMode("edit")}
           title=${e("plan.mode_edit")}
         >
-          ${M(f)}<span>${e("plan.mode_edit")}</span>
+          ${j(f)}<span>${e("plan.mode_edit")}</span>
         </button>
       </div>
       ${t ? x`<div class="group" role="group">
@@ -7872,12 +7887,24 @@ N("pg-garden-view", class extends j {
                 ${this._toolButton("polygon", "M2,2V8H4.28L5.57,16H4V22H10V20.06L15,20.05V22H21V16H19.17L20,9H22V3H16V6.53L14.8,8H9.59L8,5.82V2M4,4H6V6H4M18,5H20V7H18M6.31,8H7.11L9,10.59V14H15V10.91L16.57,9H18L17.16,16H15V18.06H10V16H7.6M11,10H13V12H11M6,18H8V20H6M17,18H19V20H17", "plan.tool_polygon")}
                 ${this._toolButton("freehand", s, "plan.tool_freehand")}
               </div>
-              ${eo.includes(this._tool) ? x`<label class="group compact">
+              <div class="group" role="group">
+                <button
+                  class="seg zone-tool"
+                  aria-pressed=${this._drawingZone}
+                  @click=${this._drawZone}
+                  title=${e("plan.tool_zone_hint")}
+                >
+                  ${j(ne)}<span>${e("plan.tool_zone")}</span>
+                </button>
+              </div>
+              ${to.includes(this._tool) ? x`<label class="group compact">
                       <span class="sr-only">${e("plan.new_kind")}</span>
                       <select
-                        @change=${(e) => this._newKind = e.target.value}
+                        @change=${(e) => {
+			this._newKind = e.target.value, this._newKind === "zone" && this._showZonesLayer();
+		}}
                       >
-                        ${Wn.map((t) => x`<option value=${t} ?selected=${t === this._newKind}>
+                        ${Kn.map((t) => x`<option value=${t} ?selected=${t === this._newKind}>
                               ${e(`kind.${t}`)}
                             </option>`)}
                       </select>
@@ -7889,7 +7916,7 @@ N("pg-garden-view", class extends j {
                   aria-label=${e("plan.background")}
                   title=${e("plan.background")}
                 >
-                  ${M("M12,18.54L19.37,12.8L21,14.07L12,21.07L3,14.07L4.62,12.81L12,18.54M12,16L3,9L12,2L21,9L12,16M12,4.53L6.26,9L12,13.47L17.74,9L12,4.53Z")}
+                  ${j("M12,18.54L19.37,12.8L21,14.07L12,21.07L3,14.07L4.62,12.81L12,18.54M12,16L3,9L12,2L21,9L12,16M12,4.53L6.26,9L12,13.47L17.74,9L12,4.53Z")}
                 </button>
                 <button
                   class="tool"
@@ -7897,7 +7924,7 @@ N("pg-garden-view", class extends j {
                   aria-label=${e("origin.title")}
                   title=${e("origin.title")}
                 >
-                  ${M(u)}
+                  ${j(u)}
                 </button>
                 ${n ? x`${this._toolButton("calibrate", "M20 19.88V22L18.2 20.83L13.41 11.83A4.94 4.94 0 0 0 15.19 10.83M15 7A3 3 0 0 1 12 10A3.27 3.27 0 0 1 11.56 10L5.8 20.83L4 22V19.88L9.79 9A3 3 0 0 1 12 4V2A1 1 0 0 1 13 3V4.18A3 3 0 0 1 15 7M13 7A1 1 0 1 0 12 8A1 1 0 0 0 13 7M4.22 10L6 11.8L4.56 14.56L2.1 12.1M12 17.76L10.5 16.25L9 19L12 22L15 19L13.53 16.23M19.78 10L18 11.8L19.5 14.56L21.9 12.1Z", "plan.tool_calibrate")}
                       ${this._toolButton("background", "M12,2L16,6H13V13.85L19.53,17.61L21,15.03L22.5,20.5L17,21.96L18.53,19.35L12,15.58L5.47,19.35L7,21.96L1.5,20.5L3,15.03L4.47,17.61L11,13.85V6H8L12,2Z", "plan.tool_background")}` : w}
@@ -7907,14 +7934,14 @@ N("pg-garden-view", class extends j {
                   aria-label=${e("plan.add_marker")}
                   title=${e("plan.add_marker")}
                 >
-                  ${M("M15 17H18V14H20V17H23V19H20V22H18V19H15V17M9 6.5C10.4 6.5 11.5 7.6 11.5 9S10.4 11.5 9 11.5 6.5 10.4 6.5 9 7.6 6.5 9 6.5M9 2C12.9 2 16 5.1 16 9C16 14.2 9 22 9 22S2 14.2 2 9C2 5.1 5.1 2 9 2M9 4C6.2 4 4 6.2 4 9C4 10 4 12 9 18.7C14 12 14 10 14 9C14 6.2 11.8 4 9 4Z")}
+                  ${j("M15 17H18V14H20V17H23V19H20V22H18V19H15V17M9 6.5C10.4 6.5 11.5 7.6 11.5 9S10.4 11.5 9 11.5 6.5 10.4 6.5 9 7.6 6.5 9 6.5M9 2C12.9 2 16 5.1 16 9C16 14.2 9 22 9 22S2 14.2 2 9C2 5.1 5.1 2 9 2M9 4C6.2 4 4 6.2 4 9C4 10 4 12 9 18.7C14 12 14 10 14 9C14 6.2 11.8 4 9 4Z")}
                 </button>
               </div>
               <label class="group compact">
                 <span class="label-text">${e("plan.snap")}</span>
                 <select @change=${this._setSnap}>
-                  ${co.map((t) => x`<option value=${t} ?selected=${t === this._snap}>
-                        ${t === 0 ? e("plan.snap_off") : z(t * 100, this.language)}
+                  ${lo.map((t) => x`<option value=${t} ?selected=${t === this._snap}>
+                        ${t === 0 ? e("plan.snap_off") : R(t * 100, this.language)}
                       </option>`)}
                 </select>
               </label>
@@ -7926,7 +7953,7 @@ N("pg-garden-view", class extends j {
                   aria-label=${e("plan.undo")}
                   title=${e("plan.undo")}
                 >
-                  ${M("M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z")}
+                  ${j("M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z")}
                 </button>
                 <button
                   class="tool"
@@ -7935,7 +7962,7 @@ N("pg-garden-view", class extends j {
                   aria-label=${e("plan.redo")}
                   title=${e("plan.redo")}
                 >
-                  ${M("M18.4,10.6C16.55,9 14.15,8 11.5,8C6.85,8 2.92,11.03 1.54,15.22L3.9,16C4.95,12.81 7.95,10.5 11.5,10.5C13.45,10.5 15.23,11.22 16.62,12.38L13,16H22V7L18.4,10.6Z")}
+                  ${j("M18.4,10.6C16.55,9 14.15,8 11.5,8C6.85,8 2.92,11.03 1.54,15.22L3.9,16C4.95,12.81 7.95,10.5 11.5,10.5C13.45,10.5 15.23,11.22 16.62,12.38L13,16H22V7L18.4,10.6Z")}
                 </button>
               </div>` : w}
       <div class="group fit" role="group">
@@ -7947,7 +7974,7 @@ N("pg-garden-view", class extends j {
                 aria-label=${e("zone.layer")}
                 title=${e("zone.layer")}
               >
-                ${M(this._showZones ? se : ce)}
+                ${j(this._showZones ? ce : le)}
               </button>` : w}
         <button
           class="tool"
@@ -7955,19 +7982,19 @@ N("pg-garden-view", class extends j {
           aria-label=${e("plan.fit")}
           title=${e("plan.fit")}
         >
-          ${M("M17 4H20C21.1 4 22 4.9 22 6V8H20V6H17V4M4 8V6H7V4H4C2.9 4 2 4.9 2 6V8H4M20 16V18H17V20H20C21.1 20 22 19.1 22 18V16H20M7 18H4V16H2V18C2 19.1 2.9 20 4 20H7V18M16 10V14H8V10H16M18 8H6V16H18V8Z")}
+          ${j("M17 4H20C21.1 4 22 4.9 22 6V8H20V6H17V4M4 8V6H7V4H4C2.9 4 2 4.9 2 6V8H4M20 16V18H17V20H20C21.1 20 22 19.1 22 18V16H20M7 18H4V16H2V18C2 19.1 2.9 20 4 20H7V18M16 10V14H8V10H16M18 8H6V16H18V8Z")}
         </button>
       </div>
     </div>`;
 	}
 	_renderLayerSelect() {
-		let { t: e } = this, t = ro.filter((e) => e === "plan" || e === "deficit" && Object.keys(this.store?.water?.plants ?? {}).length > 0 || e === "coverage" && this._shapes.some((e) => e.kind === "zone"));
+		let { t: e } = this, t = io.filter((e) => e === "plan" || e === "deficit" && Object.keys(this.store?.water?.plants ?? {}).length > 0 || e === "coverage" && this._shapes.some((e) => e.kind === "zone"));
 		return t.length < 2 ? w : x`<label class="layer-select" title=${e("layer.title")}>
       <span class="sr-only">${e("layer.title")}</span>
-      ${M("M12 16.54L19.37 10.8L21 12.07L12 19.07L3 12.07L4.62 10.81L12 16.54M12 14L3 7L12 0L21 7L12 14M12 2.53L6.26 7L12 11.47L17.74 7L12 2.53M12 21.47L19.37 15.73L21 17L12 24L3 17L4.62 15.74L12 21.47")}
+      ${j("M12 16.54L19.37 10.8L21 12.07L12 19.07L3 12.07L4.62 10.81L12 16.54M12 14L3 7L12 0L21 7L12 14M12 2.53L6.26 7L12 11.47L17.74 7L12 2.53M12 21.47L19.37 15.73L21 17L12 24L3 17L4.62 15.74L12 21.47")}
       <select
         @change=${(e) => {
-			this._layer = e.target.value, go(no, this._layer);
+			this._layer = e.target.value, _o(ro, this._layer);
 		}}
       >
         ${t.map((t) => x`<option value=${t} ?selected=${t === this._layer}>
@@ -7977,14 +8004,15 @@ N("pg-garden-view", class extends j {
     </label>`;
 	}
 	_toggleZones() {
-		this._showZones = !this._showZones, go(Xa, this._showZones), !this._showZones && this.store.getShape(this._selection?.id ?? "")?.kind === "zone" && (this._selection = null);
+		this._showZones = !this._showZones, _o(Za, this._showZones), !this._showZones && this.store.getShape(this._selection?.id ?? "")?.kind === "zone" && (this._selection = null);
 	}
 	_renderHint() {
 		let { t: e } = this, t = this._armed, n = this._mode === "edit", r = "";
 		if (t?.kind === "plant") r = e("plan.place_hint", { name: this.store.getPlant(t.plantId)?.name ?? "" });
-		else if (t?.kind === "marker") r = e("plan.marker_place_hint", { name: U(this.hass?.states[t.entityId], t.entityId) });
+		else if (t?.kind === "marker") r = e("plan.marker_place_hint", { name: H(this.hass?.states[t.entityId], t.entityId) });
 		else if (n && this._farM > 1e4) return this._renderFarHint();
-		else if (n && this._areaFor && eo.includes(this._tool)) r = e("plan.area_for_hint", { name: this.store.getPlant(this._areaFor)?.name ?? "" });
+		else if (n && this._drawingZone) r = e("plan.zone_draw_hint");
+		else if (n && this._areaFor && to.includes(this._tool)) r = e("plan.area_for_hint", { name: this.store.getPlant(this._areaFor)?.name ?? "" });
 		else if (n && this._tool === "freehand") r = e("plan.freehand_hint");
 		else if (n && this._tool === "polygon") r = e("plan.polygon_hint");
 		else if (n && (this._tool === "rect" || this._tool === "circle")) r = e("plan.draw_hint");
@@ -8002,7 +8030,7 @@ N("pg-garden-view", class extends j {
     </div>` : w;
 	}
 	_renderFarHint() {
-		let e = Fa(this._farM, this.language);
+		let e = Ia(this._farM, this.language);
 		return x`<div class="hint" role="status">
       <span>${this.t("plan.far_hint", { distance: e })}</span>
       <button class="button text" @click=${this._openOrigin}>${this.t("plan.far_action")}</button>
@@ -8011,7 +8039,7 @@ N("pg-garden-view", class extends j {
 	_plantAnchor(e) {
 		if (e.position) return e.position;
 		let t = this._shapes.find((t) => t.plant_id === e.id && t.kind !== "zone");
-		return t ? Di(t.geometry) : null;
+		return t ? ki(t.geometry) : null;
 	}
 	_stagePoint(e) {
 		let t = this.renderRoot.querySelector(".stage")?.getBoundingClientRect();
@@ -8055,13 +8083,13 @@ N("pg-garden-view", class extends j {
 		let t = this._infoPlant();
 		if (!t) return w;
 		let { plant: n, x: r, y: a, pinned: o } = t, { t: s, language: c } = this, l = [
-			tr(n.age_months_now, s),
-			n.height_cm === null ? "" : `${s("field.height")} ${z(n.height_cm, c)}`,
-			`Ø ${z(q(n) * 100, c)}`
+			rr(n.age_months_now, s),
+			n.height_cm === null ? "" : `${s("field.height")} ${R(n.height_cm, c)}`,
+			`Ø ${R(q(n) * 100, c)}`
 		].filter(Boolean), u = `--x: ${Math.round(r)}px; --y: ${Math.round(a)}px`;
 		return x`<article class="card info ${o ? "pinned" : "hover"}" style=${u}>
       <div class="info-photo">
-        ${n.cover ? x`<img src=${n.cover.urls.medium} alt="" />` : x`<span class="placeholder">${M(h)}</span>`}
+        ${n.cover ? x`<img src=${n.cover.urls.medium} alt="" />` : x`<span class="placeholder">${j(h)}</span>`}
       </div>
       <div class="info-body">
         <div class="info-title">
@@ -8071,7 +8099,7 @@ N("pg-garden-view", class extends j {
                   @click=${() => this._selection = null}
                   aria-label=${s("common.close")}
                 >
-                  ${M(i)}
+                  ${j(i)}
                 </button>` : w}
         </div>
         ${n.scientific_name ? x`<p class="latin">${n.scientific_name}</p>` : w}
@@ -8080,9 +8108,9 @@ N("pg-garden-view", class extends j {
         ${this._renderWaterFacts(n.id)} ${this._renderCareFacts(n.id)}
         ${o ? x`<button
                 class="button secondary"
-                @click=${() => F(Z(n, this.prefix))}
+                @click=${() => P(Z(n, this.prefix))}
               >
-                ${M(d)} ${s("plan.details")}
+                ${j(d)} ${s("plan.details")}
               </button>` : w}
       </div>
     </article>`;
@@ -8092,17 +8120,17 @@ N("pg-garden-view", class extends j {
 		return x`
       ${n ? x`<p class="small soil-state ${n.needs_water ? "thirsty" : ""}">
               ${r(n.needs_water ? "balance.thirsty" : "balance.fine", {
-			used: R(n.depletion, i, 0),
-			total: R(n.taw, i, 0)
+			used: L(n.depletion, i, 0),
+			total: L(n.taw, i, 0)
 		})}
             </p>` : w}
       ${n?.frost !== null && n?.frost !== void 0 ? x`<p class="small frost-note">
-              ${r("balance.frost", { temp: R(n.frost, i, 0) })}
+              ${r("balance.frost", { temp: L(n.frost, i, 0) })}
             </p>` : w}
       ${t?.last_watering ? x`<p class="muted small water-facts">
-              ${M("M12,3.77L11.25,4.61C11.25,4.61 9.97,6.06 8.68,7.94C7.39,9.82 6,12.07 6,14.23A6,6 0 0,0 12,20.23A6,6 0 0,0 18,14.23C18,12.07 16.61,9.82 15.32,7.94C14.03,6.06 12.75,4.61 12.75,4.61L12,3.77M12,6.9C12.44,7.42 12.84,7.85 13.68,9.07C14.89,10.83 16,13.07 16,14.23C16,16.45 14.22,18.23 12,18.23C9.78,18.23 8,16.45 8,14.23C8,13.07 9.11,10.83 10.32,9.07C11.16,7.85 11.56,7.42 12,6.9Z")}
-              ${r("water.last", { time: B(t.last_watering, i) })}
-              ${t.today_l > 0 ? ` · ${r("water.today", { liters: rr(t.today_l, i) })}` : ""}
+              ${j("M12,3.77L11.25,4.61C11.25,4.61 9.97,6.06 8.68,7.94C7.39,9.82 6,12.07 6,14.23A6,6 0 0,0 12,20.23A6,6 0 0,0 18,14.23C18,12.07 16.61,9.82 15.32,7.94C14.03,6.06 12.75,4.61 12.75,4.61L12,3.77M12,6.9C12.44,7.42 12.84,7.85 13.68,9.07C14.89,10.83 16,13.07 16,14.23C16,16.45 14.22,18.23 12,18.23C9.78,18.23 8,16.45 8,14.23C8,13.07 9.11,10.83 10.32,9.07C11.16,7.85 11.56,7.42 12,6.9Z")}
+              ${r("water.last", { time: z(t.last_watering, i) })}
+              ${t.today_l > 0 ? ` · ${r("water.today", { liters: ar(t.today_l, i) })}` : ""}
             </p>` : w}
     `;
 	}
@@ -8112,23 +8140,23 @@ N("pg-garden-view", class extends j {
 		let { t: i } = this;
 		return x`
       ${n.problem ? x`<p class="small care-problem">
-              ${M(e)}
+              ${j(e)}
               ${i("plan.problem", { status: i(`problem_status.${n.problem}`) })}
             </p>` : w}
       ${n.open_tasks ? x`<p class="small care-tasks ${n.overdue ? "overdue" : ""}">
-              ${M(r)}
+              ${j(r)}
               ${i("plan.tasks", { n: n.open_tasks })}${n.overdue ? ` · ${i("plan.overdue", { n: n.overdue })}` : ""}
               ${n.prune_due ? ` · ${i("plan.prune_due")}` : ""}
             </p>` : w}
       ${n.questions ? x`<p class="small care-questions">
-              ${M("M4,2A2,2 0 0,0 2,4V16A2,2 0 0,0 4,18H8V21A1,1 0 0,0 9,22H9.5V22C9.75,22 10,21.9 10.2,21.71L13.9,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2H4M4,4H20V16H13.08L10,19.08V16H4V4M12.19,5.5C11.3,5.5 10.59,5.68 10.05,6.04C9.5,6.4 9.22,7 9.27,7.69C0.21,7.69 6.57,7.69 11.24,7.69C11.24,7.41 11.34,7.2 11.5,7.06C11.7,6.92 11.92,6.85 12.19,6.85C12.5,6.85 12.77,6.93 12.95,7.11C13.13,7.28 13.22,7.5 13.22,7.8C13.22,8.08 13.14,8.33 13,8.54C12.83,8.76 12.62,8.94 12.36,9.08C11.84,9.4 11.5,9.68 11.29,9.92C11.1,10.16 11,10.5 11,11H13C13,10.72 13.05,10.5 13.14,10.32C13.23,10.15 13.4,10 13.66,9.85C14.12,9.64 14.5,9.36 14.79,9C15.08,8.63 15.23,8.24 15.23,7.8C15.23,7.1 14.96,6.54 14.42,6.12C13.88,5.71 13.13,5.5 12.19,5.5M11,12V14H13V12H11Z")} ${i("plan.questions", { n: n.questions })}
+              ${j("M4,2A2,2 0 0,0 2,4V16A2,2 0 0,0 4,18H8V21A1,1 0 0,0 9,22H9.5V22C9.75,22 10,21.9 10.2,21.71L13.9,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2H4M4,4H20V16H13.08L10,19.08V16H4V4M12.19,5.5C11.3,5.5 10.59,5.68 10.05,6.04C9.5,6.4 9.22,7 9.27,7.69C0.21,7.69 6.57,7.69 11.24,7.69C11.24,7.41 11.34,7.2 11.5,7.06C11.7,6.92 11.92,6.85 12.19,6.85C12.5,6.85 12.77,6.93 12.95,7.11C13.13,7.28 13.22,7.5 13.22,7.8C13.22,8.08 13.14,8.33 13,8.54C12.83,8.76 12.62,8.94 12.36,9.08C11.84,9.4 11.5,9.68 11.29,9.92C11.1,10.16 11,10.5 11,11H13C13,10.72 13.05,10.5 13.14,10.32C13.23,10.15 13.4,10 13.66,9.85C14.12,9.64 14.5,9.36 14.79,9C15.08,8.63 15.23,8.24 15.23,7.8C15.23,7.1 14.96,6.54 14.42,6.12C13.88,5.71 13.13,5.5 12.19,5.5M11,12V14H13V12H11Z")} ${i("plan.questions", { n: n.questions })}
             </p>` : w}
     `;
 	}
 	_renderZoneAdvice(e) {
 		let t = this.store.water?.zones?.[e];
 		if (!t || t.reason === "no_plants") return w;
-		let { t: n, language: r } = this, i = t.reason === "dry" ? n("advice.dry", { minutes: R(t.minutes ?? 0, r, 0) }) : n(`advice.${t.reason}`);
+		let { t: n, language: r } = this, i = t.reason === "dry" ? n("advice.dry", { minutes: L(t.minutes ?? 0, r, 0) }) : n(`advice.${t.reason}`);
 		return x`<p class="small zone-advice ${t.recommended ? "recommended" : ""}">
       ${i}
     </p>`;
@@ -8145,38 +8173,38 @@ N("pg-garden-view", class extends j {
             @click=${() => this._selection = null}
             aria-label=${t("common.close")}
           >
-            ${M(i)}
+            ${j(i)}
           </button>
         </div>
         <p class="muted">
-          ${t(`kind.${e.kind}`)} · ${R(K(e.geometry), n, 1)} m²
+          ${t(`kind.${e.kind}`)} · ${L(G(e.geometry), n, 1)} m²
         </p>
         ${r ? x`<button
                 class="button secondary"
-                @click=${() => F(Z(r, this.prefix))}
+                @click=${() => P(Z(r, this.prefix))}
               >
-                ${M(h)} ${r.name}
+                ${j(h)} ${r.name}
               </button>` : w}
       </div>
     </article>`;
 	}
 	_renderMarkerCard(e) {
-		let { t, language: n } = this, r = this.hass?.states[e.entity_id], a = this._markerHistory?.entityId === e.entity_id ? this._markerHistory : null, o = a ? Ra(a.points, 240, 44) : "";
+		let { t, language: n } = this, r = this.hass?.states[e.entity_id], a = this._markerHistory?.entityId === e.entity_id ? this._markerHistory : null, o = a ? za(a.points, 240, 44) : "";
 		return x`<article class="card info pinned side-card">
       <div class="info-body">
         <div class="info-title">
-          <h3>${e.label ?? U(r, e.entity_id)}</h3>
+          <h3>${e.label ?? H(r, e.entity_id)}</h3>
           <button
             class="icon-button small"
             @click=${() => this._selection = null}
             aria-label=${t("common.close")}
           >
-            ${M(i)}
+            ${j(i)}
           </button>
         </div>
-        <p class="marker-value">${Yr(r, n, t)}</p>
+        <p class="marker-value">${Zr(r, n, t)}</p>
         ${r?.last_changed ? x`<p class="muted small">
-                ${t("plan.marker_changed", { time: L(r.last_changed, n) })}
+                ${t("plan.marker_changed", { time: I(r.last_changed, n) })}
                 ${new Date(r.last_changed).toLocaleTimeString(n, {
 			hour: "2-digit",
 			minute: "2-digit"
@@ -8196,7 +8224,7 @@ N("pg-garden-view", class extends j {
           class="button secondary"
           @click=${() => this.fire("hass-more-info", { entityId: e.entity_id })}
         >
-          ${M(d)} ${t("plan.details")}
+          ${j(d)} ${t("plan.details")}
         </button>
       </div>
     </article>`;
@@ -8224,7 +8252,7 @@ N("pg-garden-view", class extends j {
       @click=${() => this._selection = null}
       aria-label=${this.t("common.close")}
     >
-      ${M(i)}
+      ${j(i)}
     </button>`;
 	}
 	_renderPlantProperties(e) {
@@ -8242,7 +8270,7 @@ N("pg-garden-view", class extends j {
           step="0.05"
           inputmode="decimal"
           .value=${e.crown_diameter_m === null ? "" : String(e.crown_diameter_m)}
-          placeholder=${t("plan.crown_auto", { size: z(q({
+          placeholder=${t("plan.crown_auto", { size: R(q({
 			...e,
 			crown_diameter_m: null
 		}) * 100, n) })}
@@ -8259,8 +8287,8 @@ N("pg-garden-view", class extends j {
         />
       </label>
       <div class="props-actions">
-        <button class="button secondary" @click=${() => F(Z(e, this.prefix))}>
-          ${M(d)} ${t("plan.details")}
+        <button class="button secondary" @click=${() => P(Z(e, this.prefix))}>
+          ${j(d)} ${t("plan.details")}
         </button>
         ${e.position ? x`<button
                 class="button text danger"
@@ -8268,7 +8296,7 @@ N("pg-garden-view", class extends j {
 			this._selection = null, this._movePlant(e.id, e.position, null);
 		}}
               >
-                ${M("M16.6 14.2L15.2 15.6L17.6 18L15.2 20.4L16.6 21.8L19 19.4L21.4 21.8L22.8 20.4L20.4 18L22.8 15.6L21.4 14.2L19 16.6M9 6.5C10.4 6.5 11.5 7.6 11.5 9S10.4 11.5 9 11.5 6.5 10.4 6.5 9 7.6 6.5 9 6.5M9 2C12.9 2 16 5.1 16 9C16 14.2 9 22 9 22S2 14.2 2 9C2 5.1 5.1 2 9 2M9 4C6.2 4 4 6.2 4 9C4 10 4 12 9 18.7C14 12 14 10 14 9C14 6.2 11.8 4 9 4Z")} ${t("plan.unplace")}
+                ${j("M16.6 14.2L15.2 15.6L17.6 18L15.2 20.4L16.6 21.8L19 19.4L21.4 21.8L22.8 20.4L20.4 18L22.8 15.6L21.4 14.2L19 16.6M9 6.5C10.4 6.5 11.5 7.6 11.5 9S10.4 11.5 9 11.5 6.5 10.4 6.5 9 7.6 6.5 9 6.5M9 2C12.9 2 16 5.1 16 9C16 14.2 9 22 9 22S2 14.2 2 9C2 5.1 5.1 2 9 2M9 4C6.2 4 4 6.2 4 9C4 10 4 12 9 18.7C14 12 14 10 14 9C14 6.2 11.8 4 9 4Z")} ${t("plan.unplace")}
               </button>` : w}
       </div>
     </section>`;
@@ -8287,15 +8315,15 @@ N("pg-garden-view", class extends j {
         <span>${t("plan.kind")}</span>
         <select
           @change=${(t) => {
-			let n = t.target.value, i = n === "zone" ? e.irrigation ?? io() : null;
+			let n = t.target.value, i = n === "zone" ? e.irrigation ?? ao() : null;
 			r({
 				kind: n,
-				z: mo[n],
+				z: ho[n],
 				irrigation: i
 			});
 		}}
         >
-          ${Wn.map((n) => x`<option value=${n} ?selected=${n === e.kind}>
+          ${Kn.map((n) => x`<option value=${n} ?selected=${n === e.kind}>
                 ${t(`kind.${n}`)}
               </option>`)}
         </select>
@@ -8317,10 +8345,10 @@ N("pg-garden-view", class extends j {
         />
         <span>${t("plan.locked")}</span>
       </label>
-      <p class="muted">${t("plan.area")}: ${R(K(e.geometry), n, 1)} m²</p>
+      <p class="muted">${t("plan.area")}: ${L(G(e.geometry), n, 1)} m²</p>
       <div class="props-actions">
         <button class="button text danger" @click=${this._onDeleteSelection}>
-          ${M(o)} ${t("plan.delete_shape")}
+          ${j(o)} ${t("plan.delete_shape")}
         </button>
       </div>
     </section>`;
@@ -8348,7 +8376,7 @@ N("pg-garden-view", class extends j {
                 @change=${(e) => r({ soil_type: e.target.value || null })}
               >
                 <option value="" ?selected=${!e.soil_type}>${n("common.not_set")}</option>
-                ${Hn.map((t) => x`<option value=${t} ?selected=${t === e.soil_type}>
+                ${Wn.map((t) => x`<option value=${t} ?selected=${t === e.soil_type}>
                       ${n(`soil.${t}`)}
                     </option>`)}
               </select>
@@ -8356,7 +8384,7 @@ N("pg-garden-view", class extends j {
     `;
 	}
 	_entityLabel(e) {
-		return e ? U(this.hass?.states[e], e) : this.t("zone.none");
+		return e ? H(this.hass?.states[e], e) : this.t("zone.none");
 	}
 	_renderZoneSettings(e, t) {
 		let { t: n, language: r } = this, a = (n) => void this._replaceShape(e, {
@@ -8378,11 +8406,11 @@ N("pg-garden-view", class extends j {
                   title=${n("zone.unlink")}
                   @click=${() => a({ [e]: null })}
                 >
-                  ${M(i)}
+                  ${j(i)}
                 </button>` : w}
         </div>
       </div>
-    `, s = t.emitter === "drip", c = Yi(t.emitter), l = Ji(t, e.geometry), u = this._coverage(e), d = this._plants.filter((e) => u.has(e.id) || t.exclude.includes(e.id)), f = this._plants.filter((e) => !d.includes(e));
+    `, s = t.emitter === "drip", c = Xi(t.emitter), l = Yi(t, e.geometry), u = this._coverage(e), d = this._plants.filter((e) => u.has(e.id) || t.exclude.includes(e.id)), f = this._plants.filter((e) => !d.includes(e));
 		return x`
       ${o("entity_id")}
       <label class="field">
@@ -8390,7 +8418,7 @@ N("pg-garden-view", class extends j {
         <select
           @change=${(e) => a({ emitter: e.target.value })}
         >
-          ${Gn.map((e) => x`<option value=${e} ?selected=${e === t.emitter}>
+          ${qn.map((e) => x`<option value=${e} ?selected=${e === t.emitter}>
                 ${n(`emitter.${e}`)}
               </option>`)}
         </select>
@@ -8404,7 +8432,7 @@ N("pg-garden-view", class extends j {
             step="0.1"
             inputmode="decimal"
             .value=${t[c] === null ? "" : String(t[c])}
-            @change=${(e) => a({ [c]: ao(e.target.value, 500) })}
+            @change=${(e) => a({ [c]: oo(e.target.value, 500) })}
           />
         </label>
         <label class="field">
@@ -8415,12 +8443,12 @@ N("pg-garden-view", class extends j {
             step="0.1"
             inputmode="decimal"
             .value=${t.flow_l_min === null ? "" : String(t.flow_l_min)}
-            @change=${(e) => a({ flow_l_min: ao(e.target.value, 1e3) })}
+            @change=${(e) => a({ flow_l_min: oo(e.target.value, 1e3) })}
           />
         </label>
       </div>
       <p class="muted small">
-        ${l === null ? n(s ? "zone.drip_hint" : "zone.rate_hint") : n("zone.rate_result", { rate: R(l, r, 1) })}
+        ${l === null ? n(s ? "zone.drip_hint" : "zone.rate_hint") : n("zone.rate_result", { rate: L(l, r, 1) })}
       </p>
       <label class="field">
         <span>${n("zone.efficiency")}</span>
@@ -8431,9 +8459,9 @@ N("pg-garden-view", class extends j {
           step="5"
           inputmode="numeric"
           .value=${t.efficiency === null ? "" : String(Math.round(t.efficiency * 100))}
-          placeholder=${n("zone.efficiency_default", { percent: Math.round(Kn[t.emitter] * 100) })}
+          placeholder=${n("zone.efficiency_default", { percent: Math.round(Jn[t.emitter] * 100) })}
           @change=${(e) => {
-			let t = ao(e.target.value, 100);
+			let t = oo(e.target.value, 100);
 			a({ efficiency: t === null ? null : Math.max(.1, t / 100) });
 		}}
         />
@@ -8492,7 +8520,7 @@ N("pg-garden-view", class extends j {
 		});
 	}
 	_renderZoneCard(e, t) {
-		let { t: n, language: r } = this, a = t.entity_id ? this.hass?.states[t.entity_id] : void 0, o = Xi(a?.state), s = this.store.irrigation.zones[e.id], c = Ji(t, e.geometry), l = [...this._coverage(e).keys()].map((e) => this.store.getPlant(e)?.name).filter(Boolean), u = (s?.runtime_today_s ?? 0) / 60;
+		let { t: n, language: r } = this, a = t.entity_id ? this.hass?.states[t.entity_id] : void 0, o = Zi(a?.state), s = this.store.irrigation.zones[e.id], c = Yi(t, e.geometry), l = [...this._coverage(e).keys()].map((e) => this.store.getPlant(e)?.name).filter(Boolean), u = (s?.runtime_today_s ?? 0) / 60;
 		return x`<article class="card info pinned side-card zone-card">
       <div class="info-body">
         <div class="info-title">
@@ -8502,26 +8530,26 @@ N("pg-garden-view", class extends j {
             @click=${() => this._selection = null}
             aria-label=${n("common.close")}
           >
-            ${M(i)}
+            ${j(i)}
           </button>
         </div>
         <p class="zone-state ${o ? "running" : ""}">
-          ${M(o ? se : ce)}
-          ${t.entity_id ? `${this._entityLabel(t.entity_id)}: ${a ? Yr(a, r, n) : n("zone.missing")}` : n("zone.no_entity")}
+          ${j(o ? ce : le)}
+          ${t.entity_id ? `${this._entityLabel(t.entity_id)}: ${a ? Zr(a, r, n) : n("zone.missing")}` : n("zone.no_entity")}
         </p>
         <p class="muted small">
           ${n(`emitter.${t.emitter}`)}
-          ${c === null ? "" : ` · ${R(c, r, 1)} mm/h`}
-          ${t.emitter === "drip" && t.drip_l_h !== null ? ` · ${R(t.drip_l_h, r, 1)} L/h` : ""}
+          ${c === null ? "" : ` · ${L(c, r, 1)} mm/h`}
+          ${t.emitter === "drip" && t.drip_l_h !== null ? ` · ${L(t.drip_l_h, r, 1)} L/h` : ""}
         </p>
         <p>
           ${n("zone.today", {
-			minutes: R(u, r, 0),
-			liters: R(s?.liters_today ?? 0, r, 0)
+			minutes: L(u, r, 0),
+			liters: L(s?.liters_today ?? 0, r, 0)
 		})}
         </p>
         ${s?.last_run ? x`<p class="muted small">
-                ${n("zone.last_run", { time: B(s.last_run, r) })}
+                ${n("zone.last_run", { time: z(s.last_run, r) })}
               </p>` : w}
         <p class="muted small">
           ${l.length ? n("zone.covers", { plants: l.join(", ") }) : n("zone.covers_none")}
@@ -8531,7 +8559,7 @@ N("pg-garden-view", class extends j {
                 class="button secondary"
                 @click=${() => this.fire("hass-more-info", { entityId: t.entity_id })}
               >
-                ${M(d)} ${n("plan.details")}
+                ${j(d)} ${n("plan.details")}
               </button>` : w}
       </div>
     </article>`;
@@ -8540,16 +8568,16 @@ N("pg-garden-view", class extends j {
 		let { t, language: n } = this, r = this.hass?.states[e.entity_id];
 		return x`<section class="props">
       <div class="props-title">
-        <h3>${e.label ?? U(r, e.entity_id)}</h3>
+        <h3>${e.label ?? H(r, e.entity_id)}</h3>
         ${this._closeButton()}
       </div>
-      <p class="muted">${e.entity_id} · ${Yr(r, n, t)}</p>
+      <p class="muted">${e.entity_id} · ${Zr(r, n, t)}</p>
       <label class="field">
         <span>${t("plan.marker_label")}</span>
         <input
           maxlength="60"
           .value=${e.label ?? ""}
-          placeholder=${U(r, e.entity_id)}
+          placeholder=${H(r, e.entity_id)}
           @change=${(t) => void this._replaceMarker(e, {
 			...e,
 			label: t.target.value.trim() || null
@@ -8558,13 +8586,13 @@ N("pg-garden-view", class extends j {
       </label>
       <div class="props-actions">
         <button class="button text danger" @click=${this._onDeleteSelection}>
-          ${M(o)} ${t("plan.delete_marker")}
+          ${j(o)} ${t("plan.delete_marker")}
         </button>
       </div>
     </section>`;
 	}
 	_renderTray() {
-		let { t: e } = this, t = this._plants.filter((e) => Ja(e, this._query)), n = new Set(this._shapes.filter((e) => e.plant_id && e.kind !== "zone").map((e) => e.plant_id)), r = (e) => !!e.position || n.has(e.id), i = t.filter((e) => !r(e)), a = t.filter(r), o = this._armed, c = (t) => {
+		let { t: e } = this, t = this._plants.filter((e) => Ya(e, this._query)), n = new Set(this._shapes.filter((e) => e.plant_id && e.kind !== "zone").map((e) => e.plant_id)), r = (e) => !!e.position || n.has(e.id), i = t.filter((e) => !r(e)), a = t.filter(r), o = this._armed, c = (t) => {
 			let n = o?.kind === "plant" && o.plantId === t.id;
 			return x`<li>
         <button
@@ -8575,7 +8603,7 @@ N("pg-garden-view", class extends j {
 			}}
           aria-pressed=${n}
         >
-          ${t.cover ? x`<img src=${t.cover.urls.thumb} alt="" loading="lazy" draggable="false" />` : x`<span class="thumb-placeholder">${M(h)}</span>`}
+          ${t.cover ? x`<img src=${t.cover.urls.thumb} alt="" loading="lazy" draggable="false" />` : x`<span class="thumb-placeholder">${j(h)}</span>`}
           <span class="tray-name">${t.name}</span>
         </button>
         <button
@@ -8585,7 +8613,7 @@ N("pg-garden-view", class extends j {
           aria-pressed=${this._areaFor === t.id}
           @click=${() => this._drawAreaFor(t)}
         >
-          ${M(s)}
+          ${j(s)}
         </button>
       </li>`;
 		};
@@ -8596,11 +8624,11 @@ N("pg-garden-view", class extends j {
           class="button text"
           @click=${() => this.renderRoot.querySelector("pg-plant-form")?.open()}
         >
-          ${M(m)} ${e("plan.new_plant")}
+          ${j(m)} ${e("plan.new_plant")}
         </button>
       </div>
       <label class="search">
-        ${M(l)}
+        ${j(l)}
         <span class="sr-only">${e("plants.search")}</span>
         <input
           type="search"
@@ -8626,11 +8654,11 @@ N("pg-garden-view", class extends j {
 		if (!e?.dragging) return w;
 		let t = this.store.getPlant(e.plantId);
 		return t ? x`<div class="ghost" style="left: ${e.x}px; top: ${e.y}px">
-      ${t.cover ? x`<img src=${t.cover.urls.thumb} alt="" />` : x`<span class="thumb-placeholder">${M(h)}</span>`}
+      ${t.cover ? x`<img src=${t.cover.urls.thumb} alt="" />` : x`<span class="thumb-placeholder">${j(h)}</span>`}
     </div>` : w;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: block;
         height: 100%;
@@ -9120,7 +9148,7 @@ N("pg-garden-view", class extends j {
       }
     `];
 	}
-}), N("pg-confirm-dialog", class extends j {
+}), M("pg-confirm-dialog", class extends A {
 	static {
 		this.properties = { _request: { state: !0 } };
 	}
@@ -9158,7 +9186,7 @@ N("pg-garden-view", class extends j {
     `;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       dialog {
         width: min(420px, calc(100vw - 24px));
       }
@@ -9170,8 +9198,8 @@ N("pg-garden-view", class extends j {
 	}
 });
 // src/components/growth-chart.ts
-var yo = 200;
-N("pg-growth-chart", class extends j {
+var bo = 200;
+M("pg-growth-chart", class extends A {
 	static {
 		this.properties = {
 			measurements: { attribute: !1 },
@@ -9192,29 +9220,29 @@ N("pg-growth-chart", class extends j {
 	}
 	_series(e, t, n) {
 		return e.length ? S`
-      <path class="line ${t}" d=${za(e)}></path>
+      <path class="line ${t}" d=${Ba(e)}></path>
       ${e.map((e) => S`<circle class="dot ${t}" cx=${e.x} cy=${e.y} r="4">
-          <title>${n} ${L(e.date, this.language)}: ${z(e.value, this.language)}</title>
+          <title>${n} ${I(e.date, this.language)}: ${R(e.value, this.language)}</title>
         </circle>`)}
     ` : w;
 	}
 	render() {
-		let { t: e, language: t } = this, n = La(this.measurements, this._width, yo), r = this._width - Q.right, i = yo - Q.bottom + 18;
+		let { t: e, language: t } = this, n = Ra(this.measurements, this._width, bo), r = this._width - Q.right, i = bo - Q.bottom + 18;
 		return x`
       <svg
-        viewBox="0 0 ${this._width} ${yo}"
+        viewBox="0 0 ${this._width} ${bo}"
         width=${this._width}
-        height=${yo}
+        height=${bo}
         role="img"
         aria-label=${e("chart.label")}
       >
         ${n.ticks.map((e) => S`
             <line class="grid" x1=${Q.left} x2=${r} y1=${e.y} y2=${e.y}></line>
             <text class="tick" x=${Q.left - 8} y=${e.y + 4} text-anchor="end">
-              ${z(e.value, t)}
+              ${R(e.value, t)}
             </text>`)}
-        ${n.first ? S`<text class="tick" x=${Q.left} y=${i}>${L(n.first, t)}</text>` : w}
-        ${n.last ? S`<text class="tick" x=${r} y=${i} text-anchor="end">${L(n.last, t)}</text>` : w}
+        ${n.first ? S`<text class="tick" x=${Q.left} y=${i}>${I(n.first, t)}</text>` : w}
+        ${n.last ? S`<text class="tick" x=${r} y=${i} text-anchor="end">${I(n.last, t)}</text>` : w}
         ${this._series(n.width, "width", e("field.width"))}
         ${this._series(n.height, "height", e("field.height"))}
       </svg>
@@ -9292,19 +9320,19 @@ N("pg-growth-chart", class extends j {
 	}
 });
 // src/util/tags.ts
-var bo = [
+var xo = [
 	"development",
 	"problem",
 	"flowering",
 	"harvest"
 ];
-function xo(e, t) {
-	return bo.includes(e) ? t(`tag.${e}`) : e;
-}
 function So(e, t) {
+	return xo.includes(e) ? t(`tag.${e}`) : e;
+}
+function Co(e, t) {
 	return e.includes(t) ? e.filter((e) => e !== t) : [...e, t];
 }
-N("pg-photo-viewer", class extends j {
+M("pg-photo-viewer", class extends A {
 	static {
 		this.properties = {
 			photos: { attribute: !1 },
@@ -9356,14 +9384,14 @@ N("pg-photo-viewer", class extends j {
 		try {
 			await e(), this.fire("photos-changed");
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		} finally {
 			this._busy = !1;
 		}
 	}
 	_save() {
 		let e = this._photo;
-		return e ? this._run(() => zt(this.hass, e.id, {
+		return e ? this._run(() => Vt(this.hass, e.id, {
 			tags: this._tags,
 			note: this._note
 		})) : Promise.resolve();
@@ -9371,12 +9399,12 @@ N("pg-photo-viewer", class extends j {
 	_setCover() {
 		let e = this._photo;
 		return e ? this._run(async () => {
-			await wt(this.hass, this.plantId, e.id), this.coverId = e.id;
+			await Et(this.hass, this.plantId, e.id), this.coverId = e.id;
 		}) : Promise.resolve();
 	}
 	async _delete() {
 		let e = this._photo, t = this.renderRoot.querySelector("pg-confirm-dialog");
-		e && t && await t.ask(this.t("viewer.delete_confirm"), L(e.taken_at, this.language), this.t("common.delete")) && await this._run(() => Bt(this.hass, e.id));
+		e && t && await t.ask(this.t("viewer.delete_confirm"), I(e.taken_at, this.language), this.t("common.delete")) && await this._run(() => Ht(this.hass, e.id));
 	}
 	_addTag(e) {
 		e.preventDefault();
@@ -9388,7 +9416,7 @@ N("pg-photo-viewer", class extends j {
 		["INPUT", "TEXTAREA"].includes(t.tagName) || (e.key === "ArrowLeft" && this._show(this._index - 1), e.key === "ArrowRight" && this._show(this._index + 1));
 	}
 	render() {
-		let { t: e } = this, t = this._photo, n = this.photos.length > 1, r = t?.id === this.coverId, a = this._tags.filter((e) => !bo.includes(e));
+		let { t: e } = this, t = this._photo, n = this.photos.length > 1, r = t?.id === this.coverId, a = this._tags.filter((e) => !xo.includes(e));
 		return x`
       <dialog @keydown=${this._onKey} aria-label=${e("detail.photos")}>
         ${t ? x`
@@ -9398,7 +9426,7 @@ N("pg-photo-viewer", class extends j {
                       src=${t.urls.medium}
                       srcset="${t.urls.medium} 1024w, ${t.urls.original} 2560w"
                       sizes="(max-width: 900px) 100vw, 70vw"
-                      alt=${e("viewer.taken", { date: L(t.taken_at, this.language) })}
+                      alt=${e("viewer.taken", { date: I(t.taken_at, this.language) })}
                     />
                     ${n ? x`
                             <button
@@ -9406,14 +9434,14 @@ N("pg-photo-viewer", class extends j {
                               @click=${() => this._show(this._index - 1)}
                               aria-label=${e("viewer.previous")}
                             >
-                              ${M("M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z")}
+                              ${j("M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z")}
                             </button>
                             <button
                               class="icon-button nav next"
                               @click=${() => this._show(this._index + 1)}
                               aria-label=${e("viewer.next")}
                             >
-                              ${M("M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z")}
+                              ${j("M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z")}
                             </button>
                             <span class="counter">${this._index + 1} / ${this.photos.length}</span>
                           ` : w}
@@ -9421,32 +9449,32 @@ N("pg-photo-viewer", class extends j {
                   <aside>
                     <div class="aside-header">
                       <h2>
-                        ${e("viewer.taken", { date: L(t.taken_at, this.language) })}
+                        ${e("viewer.taken", { date: I(t.taken_at, this.language) })}
                       </h2>
                       <button
                         class="icon-button"
                         @click=${this.close}
                         aria-label=${e("common.close")}
                       >
-                        ${M(i)}
+                        ${j(i)}
                       </button>
                     </div>
                     <div class="field">
                       <span>${e("viewer.tags")}</span>
                       <div class="chips">
-                        ${bo.map((t) => x`<button
+                        ${xo.map((t) => x`<button
                               class="chip"
                               aria-pressed=${this._tags.includes(t)}
-                              @click=${() => this._tags = So(this._tags, t)}
+                              @click=${() => this._tags = Co(this._tags, t)}
                             >
-                              ${xo(t, e)}
+                              ${So(t, e)}
                             </button>`)}
                         ${a.map((e) => x`<button
                               class="chip selected"
-                              @click=${() => this._tags = So(this._tags, e)}
+                              @click=${() => this._tags = Co(this._tags, e)}
                               aria-label="${e} ✕"
                             >
-                              ${e} ${M(i)}
+                              ${e} ${j(i)}
                             </button>`)}
                       </div>
                       <form class="add-tag" @submit=${this._addTag}>
@@ -9457,7 +9485,7 @@ N("pg-photo-viewer", class extends j {
                           @input=${(e) => this._newTag = e.target.value}
                         />
                         <button class="icon-button" type="submit" aria-label=${e("viewer.add_tag")}>
-                          ${M(m)}
+                          ${j(m)}
                         </button>
                       </form>
                     </div>
@@ -9479,7 +9507,7 @@ N("pg-photo-viewer", class extends j {
                         ?disabled=${this._busy || r}
                         @click=${this._setCover}
                       >
-                        ${M(r ? ne : "M12,15.39L8.24,17.66L9.23,13.38L5.91,10.5L10.29,10.13L12,6.09L13.71,10.13L18.09,10.5L14.77,13.38L15.76,17.66M22,9.24L14.81,8.63L12,2L9.19,8.63L2,9.24L7.45,13.97L5.82,21L12,17.27L18.18,21L16.54,13.97L22,9.24Z")}
+                        ${j(r ? re : "M12,15.39L8.24,17.66L9.23,13.38L5.91,10.5L10.29,10.13L12,6.09L13.71,10.13L18.09,10.5L14.77,13.38L15.76,17.66M22,9.24L14.81,8.63L12,2L9.19,8.63L2,9.24L7.45,13.97L5.82,21L12,17.27L18.18,21L16.54,13.97L22,9.24Z")}
                         ${e(r ? "viewer.is_cover" : "viewer.set_cover")}
                       </button>
                       <a
@@ -9488,14 +9516,14 @@ N("pg-photo-viewer", class extends j {
                         target="_blank"
                         rel="noopener"
                       >
-                        ${M(d)} ${e("viewer.open_original")}
+                        ${j(d)} ${e("viewer.open_original")}
                       </a>
                       <button
                         class="button text danger"
                         ?disabled=${this._busy}
                         @click=${this._delete}
                       >
-                        ${M(o)} ${e("viewer.delete")}
+                        ${j(o)} ${e("viewer.delete")}
                       </button>
                     </div>
                   </aside>
@@ -9506,7 +9534,7 @@ N("pg-photo-viewer", class extends j {
     `;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       dialog {
         width: min(1200px, calc(100vw - 24px));
         height: min(820px, calc(100vh - 24px));
@@ -9609,8 +9637,8 @@ N("pg-photo-viewer", class extends j {
 	}
 });
 // src/components/water-panel.ts
-var Co = 8;
-function wo(e, t, n) {
+var wo = 8;
+function To(e, t, n) {
 	if (!e.length) return [];
 	let r = Math.max(5, ...e.map((e) => e.mm)), i = t / e.length;
 	return e.map((e, t) => {
@@ -9624,7 +9652,7 @@ function wo(e, t, n) {
 		};
 	});
 }
-N("pg-water-panel", class extends j {
+M("pg-water-panel", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -9647,31 +9675,31 @@ N("pg-water-panel", class extends j {
 	async _load() {
 		let e = this.plantId;
 		try {
-			let t = await Wt(this.hass, {
+			let t = await Kt(this.hass, {
 				plant_id: e,
-				limit: Co
+				limit: wo
 			});
 			e === this.plantId && (this._events = t);
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	async _log() {
 		let e = await this.renderRoot.querySelector("pg-number-dialog")?.ask(this.t("water.log_title"), this.t("water.liters"), this.t("water.log_hint"));
 		if (e) try {
-			await Gt(this.hass, [{
+			await qt(this.hass, [{
 				plant_id: this.plantId,
 				liters: e
 			}]), this._error = "", await this._load();
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	async _delete(e) {
 		if (await this.renderRoot.querySelector("pg-confirm-dialog")?.ask(this.t("water.delete_title"), this.t(e.zone_id ? "water.delete_zone" : "water.delete_manual"), this.t("common.delete"))) try {
-			await Kt(this.hass, e.id), this._events = this._events.filter((t) => t.id !== e.id);
+			await Jt(this.hass, e.id), this._events = this._events.filter((t) => t.id !== e.id);
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	_source(e) {
@@ -9688,8 +9716,8 @@ N("pg-water-panel", class extends j {
 		return x`<div class="balance">
       <p class=${e.needs_water ? "thirsty" : ""}>
         ${t(e.needs_water ? "balance.thirsty" : "balance.fine", {
-			used: R(e.depletion, n, 0),
-			total: R(e.taw, n, 0)
+			used: L(e.depletion, n, 0),
+			total: L(e.taw, n, 0)
 		})}
       </p>
       <div
@@ -9702,37 +9730,37 @@ N("pg-water-panel", class extends j {
       >
         <span
           class="used"
-          style="width: ${Zi(e) * 100}%; background: ${Qi(e)}"
+          style="width: ${Qi(e) * 100}%; background: ${$i(e)}"
         ></span>
         <span class="threshold" style="left: ${r * 100}%"></span>
       </div>
       <p class="muted small">
         ${t("balance.soil", {
 			soil: t(`soil.${e.soil}`),
-			depth: R(e.root_depth_m * 100, n, 0),
-			raw: R(e.raw, n, 0)
+			depth: L(e.root_depth_m * 100, n, 0),
+			raw: L(e.raw, n, 0)
 		})}
         ${e.sheltered ? ` · ${t("balance.sheltered")}` : ""}
       </p>
       ${e.frost === null ? w : x`<p class="frost">
-              ${t("balance.frost", { temp: R(e.frost, n, 0) })}
+              ${t("balance.frost", { temp: L(e.frost, n, 0) })}
             </p>`}
     </div>`;
 	}
 	render() {
-		let { t: e, language: t } = this, n = this.store?.irrigation.plants[this.plantId], r = wo(n?.days ?? [], 280, 48);
+		let { t: e, language: t } = this, n = this.store?.irrigation.plants[this.plantId], r = To(n?.days ?? [], 280, 48);
 		return x`
       <div class="block-header">
         <h3>${e("water.title")}</h3>
         <button class="button text" @click=${this._log}>
-          ${M("M18.5 7.47C17.76 8.2 17.57 9.25 17.92 10.15L15 13.07V11C15 10.45 14.55 10 14 10H12.97C13 9.83 13 9.67 13 9.5C13 6.46 10.54 4 7.5 4S2 6.46 2 9.5C2 11.21 2.78 12.73 4 13.74V20C4 20.55 4.45 21 5 21H14C14.55 21 15 20.55 15 20V15.89L19.33 11.56C20.23 11.91 21.28 11.73 22 11L18.5 7.47M4.05 10C4.03 9.83 4 9.67 4 9.5C4 7.57 5.57 6 7.5 6S11 7.57 11 9.5C11 9.67 10.97 9.83 10.95 10M13 19H6V12H13V19Z")} ${e("water.log")}
+          ${j("M18.5 7.47C17.76 8.2 17.57 9.25 17.92 10.15L15 13.07V11C15 10.45 14.55 10 14 10H12.97C13 9.83 13 9.67 13 9.5C13 6.46 10.54 4 7.5 4S2 6.46 2 9.5C2 11.21 2.78 12.73 4 13.74V20C4 20.55 4.45 21 5 21H14C14.55 21 15 20.55 15 20V15.89L19.33 11.56C20.23 11.91 21.28 11.73 22 11L18.5 7.47M4.05 10C4.03 9.83 4 9.67 4 9.5C4 7.57 5.57 6 7.5 6S11 7.57 11 9.5C11 9.67 10.97 9.83 10.95 10M13 19H6V12H13V19Z")} ${e("water.log")}
         </button>
       </div>
       ${n ? x`<p class="summary">
               ${e("water.summary", {
-			today: rr(n.today_l, t),
-			mm: R(n.today_mm, t, 1),
-			total: rr(n.total_l, t)
+			today: ar(n.today_l, t),
+			mm: L(n.today_mm, t, 1),
+			total: ar(n.total_l, t)
 		})}
             </p>` : x`<p class="muted">${e("water.none")}</p>`}
       ${this._renderBalance()}
@@ -9744,7 +9772,7 @@ N("pg-water-panel", class extends j {
                 aria-label=${e("water.chart")}
               >
                 ${r.map((e) => S`<rect x=${e.x} y=${e.y} width=${e.w} height=${e.h} rx="1.5">
-                    <title>${e.day.day}: ${R(e.day.mm, t, 1)} mm</title>
+                    <title>${e.day.day}: ${L(e.day.mm, t, 1)} mm</title>
                   </rect>`)}
               </svg>
               <p class="muted small">${e("water.chart")}</p>` : w}
@@ -9754,17 +9782,17 @@ N("pg-water-panel", class extends j {
 			return x`<li>
                   <div>
                     <strong>${this._source(n)}</strong>
-                    <span class="muted small">${B(n.ended_at, t)}</span>
+                    <span class="muted small">${z(n.ended_at, t)}</span>
                     <span class="muted small">${this._flags(n)}</span>
                   </div>
-                  <span>${r ? rr(r.liters, t) : ""}</span>
+                  <span>${r ? ar(r.liters, t) : ""}</span>
                   <button
                     class="icon-button small"
                     aria-label=${e("water.delete_title")}
                     title=${e("water.delete_title")}
                     @click=${() => this._delete(n)}
                   >
-                    ${M(o)}
+                    ${j(o)}
                   </button>
                 </li>`;
 		})}
@@ -9775,7 +9803,7 @@ N("pg-water-panel", class extends j {
     `;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: block;
       }
@@ -9858,12 +9886,12 @@ N("pg-water-panel", class extends j {
 	}
 });
 // src/components/ai-panel.ts
-var To = 3, Eo = {
+var Eo = 3, Do = {
 	category: "category",
 	water_need: "water",
 	light: "light"
 };
-N("pg-ai-panel", class extends j {
+M("pg-ai-panel", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -9891,10 +9919,10 @@ N("pg-ai-panel", class extends j {
 	}
 	async _load() {
 		try {
-			let [e, t] = await Promise.all([Yt(this.hass), Zt(this.hass, this.plantId)]);
+			let [e, t] = await Promise.all([Zt(this.hass), $t(this.hass, this.plantId)]);
 			this._status = e, this._record = t;
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	async _open() {
@@ -9902,46 +9930,46 @@ N("pg-ai-panel", class extends j {
 	}
 	async _updateEstimate() {
 		try {
-			this._estimate = await $t(this.hass, this._chosen.size);
+			this._estimate = await tn(this.hass, this._chosen.size);
 		} catch {
 			this._estimate = null;
 		}
 	}
 	_toggle(e) {
 		let t = new Map(this._chosen);
-		t.has(e.id) ? t.delete(e.id) : t.size < To && t.set(e.id, "auto"), this._chosen = t, this._updateEstimate();
+		t.has(e.id) ? t.delete(e.id) : t.size < Eo && t.set(e.id, "auto"), this._chosen = t, this._updateEstimate();
 	}
 	async _start() {
 		this._busy = !0, this._error = "";
 		try {
-			this._record = await Xt(this.hass, this.plantId, [...this._chosen].map(([e, t]) => ({
+			this._record = await Qt(this.hass, this.plantId, [...this._chosen].map(([e, t]) => ({
 				photo_id: e,
 				organ: t
 			}))), this.renderRoot.querySelector("dialog")?.close();
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		} finally {
 			this._busy = !1;
 		}
 	}
 	async _decide(e, t) {
 		try {
-			this._record = await Qt(this.hass, this.plantId, e.key, t), this._error = "";
+			this._record = await en(this.hass, this.plantId, e.key, t), this._error = "";
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	_value(e, t) {
 		let { t: n, language: r } = this;
 		if (t == null || t === "") return "–";
-		let i = Eo[e];
+		let i = Do[e];
 		if (i) return n(`${i}.${String(t)}`);
-		if (e === "min_temperature_c") return `${R(Number(t), r, 0)} °C`;
-		if (e === "crown_diameter_m") return `${R(Number(t), r, 1)} m`;
-		if (e === "age") return tr(Number(t), n);
+		if (e === "min_temperature_c") return `${L(Number(t), r, 0)} °C`;
+		if (e === "crown_diameter_m") return `${L(Number(t), r, 1)} m`;
+		if (e === "age") return rr(Number(t), n);
 		if (e === "size" && typeof t == "object") {
 			let e = t;
-			return [e.height_cm === null ? "" : `${n("field.height")} ${z(e.height_cm, r)}`, e.width_cm === null ? "" : `${n("field.width")} ${z(e.width_cm, r)}`].filter(Boolean).join(", ");
+			return [e.height_cm === null ? "" : `${n("field.height")} ${R(e.height_cm, r)}`, e.width_cm === null ? "" : `${n("field.width")} ${R(e.width_cm, r)}`].filter(Boolean).join(", ");
 		}
 		return String(t);
 	}
@@ -9968,7 +9996,7 @@ N("pg-ai-panel", class extends j {
       <div class="block-header">
         <h3>${e("ai.title")}</h3>
         <button class="button text" ?disabled=${!this.photos.length} @click=${this._open}>
-          ${M(a)} ${e("ai.identify")}
+          ${j(a)} ${e("ai.identify")}
         </button>
       </div>
       ${this.photos.length ? w : x`<p class="muted small">${e("ai.needs_photo")}</p>`}
@@ -9979,7 +10007,7 @@ N("pg-ai-panel", class extends j {
         <div class="block-header">
           <h3>${e("ai.title")}</h3>
           <a class="button text" href="/config/integrations/integration/plant_garden">
-            ${M(d)} ${e("ai.setup_link")}
+            ${j(d)} ${e("ai.setup_link")}
           </a>
         </div>
         <p class="muted small">${e("ai.setup")}</p>
@@ -9990,7 +10018,7 @@ N("pg-ai-panel", class extends j {
 		return x`
       <p class="muted small">
         ${t("ai.from", {
-			date: L(e.created, n),
+			date: I(e.created, n),
 			model: e.provider ?? "Pl@ntNet"
 		})}
       </p>
@@ -10047,7 +10075,7 @@ N("pg-ai-panel", class extends j {
                   aria-label=${t("ai.accept")}
                   @click=${() => this._decide(e, !0)}
                 >
-                  ${M(n)}
+                  ${j(n)}
                 </button>
                 <button
                   class="icon-button small"
@@ -10055,14 +10083,14 @@ N("pg-ai-panel", class extends j {
                   aria-label=${t("ai.reject")}
                   @click=${() => this._decide(e, !1)}
                 >
-                  ${M(i)}
+                  ${j(i)}
                 </button>` : e.state === "differs" ? x`<button
                   class="icon-button small"
                   title=${t("ai.reject")}
                   aria-label=${t("ai.reject")}
                   @click=${() => this._decide(e, !1)}
                 >
-                  ${M(i)}
+                  ${j(i)}
                 </button>` : x`<span class="muted small">${t(`ai.state_${e.state}`)}</span>`}
       </span>
     </li>`;
@@ -10072,7 +10100,7 @@ N("pg-ai-panel", class extends j {
 		return x`<dialog aria-labelledby="ai-title">
       <div class="dialog-header"><h2 id="ai-title">${t("ai.identify")}</h2></div>
       <div class="dialog-body">
-        <p class="small">${t("ai.choose", { max: To })}</p>
+        <p class="small">${t("ai.choose", { max: Eo })}</p>
         <div class="photos">
           ${this.photos.map((e) => {
 			let r = this._chosen.get(e.id);
@@ -10082,7 +10110,7 @@ N("pg-ai-panel", class extends j {
                 aria-pressed=${r !== void 0}
                 @click=${() => this._toggle(e)}
               >
-                <img src=${e.urls.thumb} alt=${L(e.taken_at, n)} />
+                <img src=${e.urls.thumb} alt=${I(e.taken_at, n)} />
               </button>
               ${r ? x`<select
                       aria-label=${t("ai.organ")}
@@ -10091,7 +10119,7 @@ N("pg-ai-panel", class extends j {
 				n.set(e.id, t.target.value), this._chosen = n;
 			}}
                     >
-                      ${Jn.map((e) => x`<option value=${e} ?selected=${e === r}>
+                      ${Xn.map((e) => x`<option value=${e} ?selected=${e === r}>
                             ${t(`organ.${e}`)}
                           </option>`)}
                     </select>` : w}
@@ -10101,7 +10129,7 @@ N("pg-ai-panel", class extends j {
         <p class="muted small">${t("ai.tip_reference")}</p>
         ${e.plantnet ? w : x`<p class="muted small">${t("ai.no_plantnet")}</p>`}
         <p class="small">
-          ${r?.cost === null || r === null ? t("ai.cost_unknown") : t("ai.cost", { cost: er(r.cost, r.currency, n) })}
+          ${r?.cost === null || r === null ? t("ai.cost_unknown") : t("ai.cost", { cost: nr(r.cost, r.currency, n) })}
         </p>
         ${this._error ? x`<p class="error-text" role="alert">${this._error}</p>` : w}
       </div>
@@ -10119,7 +10147,7 @@ N("pg-ai-panel", class extends j {
     </dialog>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: block;
       }
@@ -10234,8 +10262,8 @@ N("pg-ai-panel", class extends j {
 	}
 });
 // src/util/markdown.ts
-var Do = /(\*\*[^*]+\*\*|__[^_]+__|\*[^*\s][^*]*\*|_[^_\s][^_]*_|`[^`]+`|\[[^\]]+\]\([^)\s]+\))/;
-function Oo(e) {
+var Oo = /(\*\*[^*]+\*\*|__[^_]+__|\*[^*\s][^*]*\*|_[^_\s][^_]*_|`[^`]+`|\[[^\]]+\]\([^)\s]+\))/;
+function ko(e) {
 	try {
 		let t = new URL(e);
 		return t.protocol === "https:" || t.protocol === "http:" ? t.href : null;
@@ -10246,7 +10274,7 @@ function Oo(e) {
 function $(e) {
 	let t = [], n = e;
 	for (; n;) {
-		let e = Do.exec(n);
+		let e = Oo.exec(n);
 		if (!e) {
 			t.push(n);
 			break;
@@ -10256,20 +10284,20 @@ function $(e) {
 		if (r.startsWith("**") || r.startsWith("__")) t.push(x`<strong>${$(r.slice(2, -2))}</strong>`);
 		else if (r.startsWith("`")) t.push(x`<code>${r.slice(1, -1)}</code>`);
 		else if (r.startsWith("[")) {
-			let [, e = "", n = ""] = /^\[([^\]]+)\]\(([^)\s]+)\)$/.exec(r) ?? [], i = Oo(n);
+			let [, e = "", n = ""] = /^\[([^\]]+)\]\(([^)\s]+)\)$/.exec(r) ?? [], i = ko(n);
 			t.push(i ? x`<a href=${i} target="_blank" rel="noopener noreferrer">${$(e)}</a>` : e);
 		} else t.push(x`<em>${$(r.slice(1, -1))}</em>`);
 		n = n.slice(e.index + r.length);
 	}
 	return t;
 }
-function ko(e) {
+function Ao(e) {
 	return e.flatMap((e, t) => t ? [x`<br />`, ...$(e)] : $(e));
 }
-var Ao = /^\s*[-*•]\s+(.*)$/, jo = /^\s*\d+[.)]\s+(.*)$/, Mo = /^(#{1,3})\s+(.*)$/;
-function No(e) {
+var jo = /^\s*[-*•]\s+(.*)$/, Mo = /^\s*\d+[.)]\s+(.*)$/, No = /^(#{1,3})\s+(.*)$/;
+function Po(e) {
 	let t = [], n = e.replace(/\r\n?/g, "\n").split("\n"), r = [], i = null, a = () => {
-		if (r.length && t.push(x`<p>${ko(r)}</p>`), r = [], i) {
+		if (r.length && t.push(x`<p>${Ao(r)}</p>`), r = [], i) {
 			let e = i.items.map((e) => x`<li>${$(e)}</li>`);
 			t.push(i.ordered ? x`<ol>
               ${e}
@@ -10280,7 +10308,7 @@ function No(e) {
 		i = null;
 	};
 	for (let e of n) {
-		let n = e.trimEnd(), o = Mo.exec(n), s = Ao.exec(n), c = jo.exec(n);
+		let n = e.trimEnd(), o = No.exec(n), s = jo.exec(n), c = Mo.exec(n);
 		if (!n.trim()) a();
 		else if (o) a(), t.push(x`<h4>${$(o[2] ?? "")}</h4>`);
 		else if (s || c) {
@@ -10293,7 +10321,7 @@ function No(e) {
 	}
 	return a(), t.length ? x`${t}` : x`${w}`;
 }
-N("pg-assistant-panel", class extends j {
+M("pg-assistant-panel", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -10324,14 +10352,14 @@ N("pg-assistant-panel", class extends j {
 	async _load() {
 		try {
 			let [e, t, n, r] = await Promise.all([
-				Yt(this.hass),
-				xn(this.hass, this.plantId ?? void 0),
-				Cn(this.hass, this.plantId),
-				En(this.hass, this.plantId)
+				Zt(this.hass),
+				Cn(this.hass, this.plantId ?? void 0),
+				Tn(this.hass, this.plantId),
+				On(this.hass, this.plantId)
 			]);
 			this._status = e, this._questions = t, this._tips = n, this._messages = r;
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	async _run(e, t) {
@@ -10339,25 +10367,25 @@ N("pg-assistant-panel", class extends j {
 		try {
 			await t();
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		} finally {
 			this._busy = "";
 		}
 	}
 	_tipsNow() {
 		return this._run("tips", async () => {
-			this._tips = await wn(this.hass, this.plantId), this._questions = await xn(this.hass, this.plantId ?? void 0);
+			this._tips = await En(this.hass, this.plantId), this._questions = await Cn(this.hass, this.plantId ?? void 0);
 		});
 	}
 	_decide(e, t) {
 		return this._run(e.id, async () => {
-			this._tips = await Tn(this.hass, this.plantId, e.id, t);
+			this._tips = await Dn(this.hass, this.plantId, e.id, t);
 		});
 	}
 	_answer(e, t, n = !1) {
 		let r = t ? String(new FormData(t).get("answer") ?? "").trim() : "";
 		return !n && !r ? Promise.resolve() : this._run(e.id, async () => {
-			await Sn(this.hass, e.id, n ? { dismiss: !0 } : { answer: r }), this._questions = this._questions.filter((t) => t.id !== e.id);
+			await wn(this.hass, e.id, n ? { dismiss: !0 } : { answer: r }), this._questions = this._questions.filter((t) => t.id !== e.id);
 		});
 	}
 	async _send(e) {
@@ -10366,7 +10394,7 @@ N("pg-assistant-panel", class extends j {
 		if (n && this._pending === null) {
 			this._pending = n, this._streaming = "", this._error = "", t && (t.value = "");
 			try {
-				let e = await On(this.hass, this.plantId, n, (e) => {
+				let e = await An(this.hass, this.plantId, n, (e) => {
 					this._streaming += e;
 				}), t = (/* @__PURE__ */ new Date()).toISOString();
 				this._messages = [
@@ -10382,7 +10410,7 @@ N("pg-assistant-panel", class extends j {
 					e
 				];
 			} catch (e) {
-				this._error = k(e), t && !t.value && (t.value = n);
+				this._error = O(e), t && !t.value && (t.value = n);
 			} finally {
 				this._pending = null, this._streaming = "";
 			}
@@ -10400,7 +10428,7 @@ N("pg-assistant-panel", class extends j {
     ` : x`<div class="block-header">
           <h3>${e("assistant.title")}</h3>
           <a class="button text" href="/config/integrations/integration/plant_garden">
-            ${M(d)} ${e("ai.setup_link")}
+            ${j(d)} ${e("ai.setup_link")}
           </a>
         </div>
         <p class="muted small">${e("assistant.setup")}</p>` : w;
@@ -10438,7 +10466,7 @@ N("pg-assistant-panel", class extends j {
                 title=${e("assistant.dismiss")}
                 @click=${() => this._answer(t, null, !0)}
               >
-                ${M(i)}
+                ${j(i)}
               </button>
             </div>
           </form>`)}
@@ -10450,13 +10478,13 @@ N("pg-assistant-panel", class extends j {
       <div class="block-header">
         <h3>${e("assistant.tips")}</h3>
         <button class="button text" ?disabled=${this._busy === "tips"} @click=${this._tipsNow}>
-          ${M(a)}
+          ${j(a)}
           ${this._busy === "tips" ? e("assistant.thinking") : e(n ? "assistant.tips_again" : "assistant.tips_get")}
         </button>
       </div>
       ${n ? x`<p class="muted small">
                 ${e(n.weekly ? "assistant.tips_weekly" : "assistant.tips_from", {
-			date: B(n.created, t),
+			date: z(n.created, t),
 			model: n.model
 		})}
               </p>
@@ -10470,7 +10498,7 @@ N("pg-assistant-panel", class extends j {
 		return x`<li>
       <strong>${e.title}</strong>
       ${r ? x`<a class="muted small" href=${`${this.prefix}/plants/${r.id}`}>${r.name}</a>` : w}
-      <div class="markdown">${No(e.text)}</div>
+      <div class="markdown">${Po(e.text)}</div>
       ${e.task ? x`<div class="proposal small">
               <span>
                 ${t("assistant.task_proposal", { title: e.task.title })}
@@ -10481,7 +10509,7 @@ N("pg-assistant-panel", class extends j {
                         ?disabled=${this._busy === e.id}
                         @click=${() => this._decide(e, !0)}
                       >
-                        ${M(n)} ${t("assistant.take_over")}
+                        ${j(n)} ${t("assistant.take_over")}
                       </button>
                       <button
                         class="icon-button small"
@@ -10489,7 +10517,7 @@ N("pg-assistant-panel", class extends j {
                         title=${t("ai.reject")}
                         @click=${() => this._decide(e, !1)}
                       >
-                        ${M(i)}
+                        ${j(i)}
                       </button>` : x`<span class="muted"
                       >${t(e.state === "accepted" ? "assistant.taken_over" : "ai.state_rejected")}</span
                     >`}
@@ -10506,10 +10534,10 @@ N("pg-assistant-panel", class extends j {
                 aria-label=${e("assistant.clear")}
                 title=${e("assistant.clear")}
                 @click=${() => this._run("clear", async () => {
-			await Dn(this.hass, this.plantId), this._messages = [];
+			await kn(this.hass, this.plantId), this._messages = [];
 		})}
               >
-                ${M("M15,16H19V18H15V16M15,8H22V10H15V8M15,12H21V14H15V12M11,10V18H5V10H11M13,8H3V18A2,2 0 0,0 5,20H11A2,2 0 0,0 13,18V8M14,5H11L10,4H6L5,5H2V7H14V5Z")}
+                ${j("M15,16H19V18H15V16M15,8H22V10H15V8M15,12H21V14H15V12M11,10V18H5V10H11M13,8H3V18A2,2 0 0,0 5,20H11A2,2 0 0,0 13,18V8M14,5H11L10,4H6L5,5H2V7H14V5Z")}
               </button>` : w}
       </div>
       <div class="messages" aria-live="polite">
@@ -10532,7 +10560,7 @@ N("pg-assistant-panel", class extends j {
           title=${e("assistant.send")}
           ?disabled=${this._pending !== null}
         >
-          ${M("M2,21L23,12L2,3V10L17,12L2,14V21Z")}
+          ${j("M2,21L23,12L2,3V10L17,12L2,14V21Z")}
         </button>
       </form>
       <p class="muted small">${e("assistant.cost_hint")}</p>
@@ -10540,11 +10568,11 @@ N("pg-assistant-panel", class extends j {
 	}
 	_renderMessage(e, t) {
 		return x`<div class="message ${e}">
-      ${e === "assistant" ? x`<div class="markdown">${No(t)}</div>` : t}
+      ${e === "assistant" ? x`<div class="markdown">${Po(t)}</div>` : t}
     </div>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: grid;
         gap: 16px;
@@ -10655,7 +10683,7 @@ N("pg-assistant-panel", class extends j {
       }
     `];
 	}
-}), N("pg-problems-panel", class extends j {
+}), M("pg-problems-panel", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -10676,18 +10704,18 @@ N("pg-assistant-panel", class extends j {
 		}, this.photos = [], this._problems = [], this._details = {}, this._status = null, this._busy = "", this._error = "", this._chosen = /* @__PURE__ */ new Set();
 	}
 	connectedCallback() {
-		super.connectedCallback(), this.store?.addEventListener("plant-changed", this._onChange), this._load(), Yt(this.hass).then((e) => this._status = e, () => void 0);
+		super.connectedCallback(), this.store?.addEventListener("plant-changed", this._onChange), this._load(), Zt(this.hass).then((e) => this._status = e, () => void 0);
 	}
 	disconnectedCallback() {
 		super.disconnectedCallback(), this.store?.removeEventListener("plant-changed", this._onChange);
 	}
 	async _load() {
 		try {
-			this._problems = await mn(this.hass, { plantId: this.plantId });
-			let e = await Promise.all(this._problems.filter((e) => e.status !== "resolved").map((e) => hn(this.hass, e.id)));
+			this._problems = await gn(this.hass, { plantId: this.plantId });
+			let e = await Promise.all(this._problems.filter((e) => e.status !== "resolved").map((e) => _n(this.hass, e.id)));
 			this._details = Object.fromEntries(e.map((e) => [e.problem.id, e.log]));
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	_apply(e) {
@@ -10702,7 +10730,7 @@ N("pg-assistant-panel", class extends j {
 			let e = await t();
 			e && typeof e == "object" && "problem" in e ? this._apply(e) : await this._load();
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		} finally {
 			this._busy = "";
 		}
@@ -10714,7 +10742,7 @@ N("pg-assistant-panel", class extends j {
 		e.preventDefault();
 		let t = new FormData(e.target);
 		await this._run("report", async () => {
-			await gn(this.hass, {
+			await vn(this.hass, {
 				plant_id: this.plantId,
 				title: String(t.get("title") ?? "").trim(),
 				note: String(t.get("note") ?? "").trim(),
@@ -10724,10 +10752,10 @@ N("pg-assistant-panel", class extends j {
 	}
 	async _log(e, t) {
 		let n = new FormData(t), r = String(n.get("text") ?? "").trim();
-		r && (await this._run(e.id, () => vn(this.hass, e.id, n.get("kind"), r)), t.reset());
+		r && (await this._run(e.id, () => bn(this.hass, e.id, n.get("kind"), r)), t.reset());
 	}
 	async _delete(e) {
-		await this.renderRoot.querySelector("pg-confirm-dialog")?.ask(this.t("problems.delete_title"), this.t("problems.delete_body", { title: e.title }), this.t("common.delete")) && await this._run(e.id, () => yn(this.hass, e.id));
+		await this.renderRoot.querySelector("pg-confirm-dialog")?.ask(this.t("problems.delete_title"), this.t("problems.delete_body", { title: e.title }), this.t("common.delete")) && await this._run(e.id, () => xn(this.hass, e.id));
 	}
 	render() {
 		let { t: e } = this, t = this._problems.filter((e) => e.status !== "resolved"), n = this._problems.filter((e) => e.status === "resolved");
@@ -10735,7 +10763,7 @@ N("pg-assistant-panel", class extends j {
       <div class="block-header">
         <h3>${e("problems.title")}</h3>
         <button class="button text" @click=${this._openReport}>
-          ${M(m)} ${e("problems.report")}
+          ${j(m)} ${e("problems.report")}
         </button>
       </div>
       ${this._error ? x`<p class="error-text" role="alert">${this._error}</p>` : w}
@@ -10744,11 +10772,11 @@ N("pg-assistant-panel", class extends j {
       ${n.length ? x`<details>
               <summary class="small">${e("problems.resolved", { n: n.length })}</summary>
               ${n.map((t) => x`<p class="small muted">
-                    ${t.title} · ${L(t.observed_on, this.language)}
-                    ${t.resolved_at ? x`– ${L(t.resolved_at, this.language)}` : w}
+                    ${t.title} · ${I(t.observed_on, this.language)}
+                    ${t.resolved_at ? x`– ${I(t.resolved_at, this.language)}` : w}
                     <button
                       class="button text small-button"
-                      @click=${() => this._run(t.id, () => _n(this.hass, t.id, { status: "open" }))}
+                      @click=${() => this._run(t.id, () => yn(this.hass, t.id, { status: "open" }))}
                     >
                       ${e("problems.reopen")}
                     </button>
@@ -10762,12 +10790,12 @@ N("pg-assistant-panel", class extends j {
 		let { t: n, language: r } = this, i = t.photo_ids.map((e) => this.photos.find((t) => t.id === e)).filter((e) => !!e), s = this._busy === t.id;
 		return x`<article class="problem">
       <header>
-        <span class="title">${M(e)} ${t.title}</span>
+        <span class="title">${j(e)} ${t.title}</span>
         <select
           aria-label=${n("problems.status")}
-          @change=${(e) => this._run(t.id, () => _n(this.hass, t.id, { status: e.target.value }))}
+          @change=${(e) => this._run(t.id, () => yn(this.hass, t.id, { status: e.target.value }))}
         >
-          ${Xn.map((e) => x`<option value=${e} ?selected=${e === t.status}>
+          ${Qn.map((e) => x`<option value=${e} ?selected=${e === t.status}>
                 ${n(`problem_status.${e}`)}
               </option>`)}
         </select>
@@ -10777,23 +10805,23 @@ N("pg-assistant-panel", class extends j {
           title=${n("common.delete")}
           @click=${() => this._delete(t)}
         >
-          ${M(o)}
+          ${j(o)}
         </button>
       </header>
       <p class="muted small">
-        ${n("problems.since", { date: L(t.observed_on, r) })}
+        ${n("problems.since", { date: I(t.observed_on, r) })}
       </p>
       ${i.length ? x`<div class="thumbs">
-              ${i.map((e) => x`<img src=${e.urls.thumb} alt=${L(e.taken_at, r)} />`)}
+              ${i.map((e) => x`<img src=${e.urls.thumb} alt=${I(e.taken_at, r)} />`)}
             </div>` : w}
       ${t.diagnosis ? this._renderDiagnosis(t.diagnosis) : w}
       ${this._status?.available ? x`<button
               class="button secondary"
               ?disabled=${s || !i.length}
               title=${i.length ? "" : n("problems.needs_photo")}
-              @click=${() => this._run(t.id, () => bn(this.hass, t.id))}
+              @click=${() => this._run(t.id, () => Sn(this.hass, t.id))}
             >
-              ${M(a)}
+              ${j(a)}
               ${s ? n("problems.diagnosing") : t.diagnosis ? n("problems.diagnose_again") : n("problems.diagnose")}
             </button>` : w}
       ${this._renderLog(t)}
@@ -10832,14 +10860,14 @@ N("pg-assistant-panel", class extends j {
                       >
                       ${e.text}
                       ${e.warning ? x`<br /><span class="warning small"
-                                >${M("M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16")} ${e.warning}</span
+                                >${j("M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16")} ${e.warning}</span
                               >` : w}
                     </li>`)}
               </ul>` : w}
       ${r("problems.monitoring", e.monitoring)} ${r("problems.missing", e.missing_info)}
       <p class="muted small">
         ${t("problems.diagnosed", {
-			date: e.created ? B(e.created, n) : "",
+			date: e.created ? z(e.created, n) : "",
 			model: e.model ?? ""
 		})}
       </p>
@@ -10850,7 +10878,7 @@ N("pg-assistant-panel", class extends j {
 		return x`<section class="log">
       ${r.length ? x`<ul>
               ${r.map((e) => x`<li class="small">
-                    <span class="muted">${B(e.ts, n)}</span>
+                    <span class="muted">${z(e.ts, n)}</span>
                     ${t(`log.${e.kind}`)}${e.kind === "status" ? x`: ${t(`problem_status.${e.text}`)}` : x`: ${e.text}`}
                   </li>`)}
             </ul>` : w}
@@ -10900,7 +10928,7 @@ N("pg-assistant-panel", class extends j {
 			t.has(e.id) ? t.delete(e.id) : t.add(e.id), this._chosen = t;
 		}}
                         >
-                          <img src=${e.urls.thumb} alt=${L(e.taken_at, t)} />
+                          <img src=${e.urls.thumb} alt=${I(e.taken_at, t)} />
                         </button>`)}
                   </div>
                 </div>` : x`<p class="muted small">${e("problems.photo_hint")}</p>`}
@@ -10921,7 +10949,7 @@ N("pg-assistant-panel", class extends j {
     </dialog>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: block;
       }
@@ -11051,15 +11079,15 @@ N("pg-assistant-panel", class extends j {
 	}
 });
 // src/components/task-list.ts
-function Po(e, t) {
+function Fo(e, t) {
 	if (e.status === "done") return "done";
 	if (!e.due) return "undated";
 	if (e.due < t) return "overdue";
 	if (e.due === t) return "today";
-	let n = Zn(t);
-	return n.setDate(n.getDate() + 7), Zn(e.due) <= n ? "week" : "later";
+	let n = $n(t);
+	return n.setDate(n.getDate() + 7), $n(e.due) <= n ? "week" : "later";
 }
-var Fo = [
+var Io = [
 	"overdue",
 	"today",
 	"week",
@@ -11067,7 +11095,7 @@ var Fo = [
 	"undated",
 	"done"
 ];
-N("pg-task-list", class extends j {
+M("pg-task-list", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -11092,23 +11120,23 @@ N("pg-task-list", class extends j {
 	}
 	async _load() {
 		try {
-			this._tasks = await cn(this.hass, this.plantId ?? void 0), this._error = "";
+			this._tasks = await un(this.hass, this.plantId ?? void 0), this._error = "";
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	async _run(e) {
 		try {
 			await e(), await this._load();
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	_toggle(e) {
-		this._run(() => e.status === "done" ? fn(this.hass, e.id) : dn(this.hass, e.id));
+		this._run(() => e.status === "done" ? mn(this.hass, e.id) : pn(this.hass, e.id));
 	}
 	async _delete(e) {
-		await this.renderRoot.querySelector("pg-confirm-dialog")?.ask(this.t("tasks.delete_title"), this.t("tasks.delete_body", { title: e.title }), this.t("common.delete")) && await this._run(() => pn(this.hass, e.id));
+		await this.renderRoot.querySelector("pg-confirm-dialog")?.ask(this.t("tasks.delete_title"), this.t("tasks.delete_body", { title: e.title }), this.t("common.delete")) && await this._run(() => hn(this.hass, e.id));
 	}
 	_open(e) {
 		this._editing = e, this.updateComplete.then(() => this.renderRoot.querySelector("dialog")?.showModal());
@@ -11130,24 +11158,24 @@ N("pg-task-list", class extends j {
 			months: n.getAll("months").map(Number),
 			plant_id: this.plantId ?? (String(n.get("plant") ?? "") || null)
 		}, o = this._editing;
-		await this._run(() => o && o !== "new" ? un(this.hass, o.id, a) : ln(this.hass, a)), this._error || this._close();
+		await this._run(() => o && o !== "new" ? fn(this.hass, o.id, a) : dn(this.hass, a)), this._error || this._close();
 	}
 	_due(e) {
 		let { t, language: n } = this;
-		return e.due ? x`<span class=${Po(e, I()) === "overdue" ? "overdue" : ""}>
-      ${t("tasks.due", { date: L(e.due, n) })}</span
+		return e.due ? x`<span class=${Fo(e, F()) === "overdue" ? "overdue" : ""}>
+      ${t("tasks.due", { date: I(e.due, n) })}</span
     >` : w;
 	}
 	render() {
-		let { t: e } = this, t = this._tasks ?? [], n = I(), r = Fo.map((e) => ({
+		let { t: e } = this, t = this._tasks ?? [], n = F(), r = Io.map((e) => ({
 			group: e,
-			tasks: t.filter((t) => Po(t, n) === e)
+			tasks: t.filter((t) => Fo(t, n) === e)
 		})).filter((e) => e.tasks.length);
 		return x`
       <div class="block-header">
         <h3>${e("tasks.title")}</h3>
         <button class="button text" @click=${() => this._open("new")}>
-          ${M(m)} ${e("tasks.add")}
+          ${j(m)} ${e("tasks.add")}
         </button>
       </div>
       ${this._error ? x`<p class="error-text" role="alert">${this._error}</p>` : w}
@@ -11170,7 +11198,7 @@ N("pg-task-list", class extends j {
         title=${n(i ? "tasks.reopen" : "tasks.complete")}
         @click=${() => this._toggle(t)}
       >
-        ${M(i ? "M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" : "M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z")}
+        ${j(i ? "M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" : "M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z")}
       </button>
       <div class="task-text">
         <span class="title">${t.title}</span>
@@ -11178,10 +11206,10 @@ N("pg-task-list", class extends j {
           ${n(`task_kind.${t.kind}`)}
           ${r ? x`· <a href=${`${this.prefix}/plants/${r.id}`}>${r.name}</a>` : w}
           ${t.due ? x`· ${this._due(t)}` : w}
-          ${t.repeat ? x`· ${M("M17,17H7V14L3,18L7,22V19H19V13H17M7,7H17V10L21,6L17,2V5H5V11H7V7Z")}
+          ${t.repeat ? x`· ${j("M17,17H7V14L3,18L7,22V19H19V13H17M7,7H17V10L21,6L17,2V5H5V11H7V7Z")}
                 ${n(`tasks.every_${t.repeat.unit}`, { n: t.repeat.every })}` : w}
-          ${t.source === "ai" ? x`· ${M(a)} ${n("tasks.from_ai")}` : w}
-          ${t.problem_id ? x`· ${M(e)}` : w}
+          ${t.source === "ai" ? x`· ${j(a)} ${n("tasks.from_ai")}` : w}
+          ${t.problem_id ? x`· ${j(e)}` : w}
         </span>
         ${t.notes ? x`<span class="small notes">${t.notes}</span>` : w}
       </div>
@@ -11191,7 +11219,7 @@ N("pg-task-list", class extends j {
         title=${n("common.edit")}
         @click=${() => this._open(t)}
       >
-        ${M(f)}
+        ${j(f)}
       </button>
       <button
         class="icon-button small"
@@ -11199,7 +11227,7 @@ N("pg-task-list", class extends j {
         title=${n("common.delete")}
         @click=${() => this._delete(t)}
       >
-        ${M(o)}
+        ${j(o)}
       </button>
     </li>`;
 	}
@@ -11218,7 +11246,7 @@ N("pg-task-list", class extends j {
           <label class="field">
             <span>${t("tasks.field_kind")}</span>
             <select name="kind">
-              ${Yn.map((e) => x`<option value=${e} ?selected=${(r?.kind ?? "other") === e}>
+              ${Zn.map((e) => x`<option value=${e} ?selected=${(r?.kind ?? "other") === e}>
                     ${t(`task_kind.${e}`)}
                   </option>`)}
             </select>
@@ -11287,7 +11315,7 @@ N("pg-task-list", class extends j {
     </dialog>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: block;
       }
@@ -11393,10 +11421,10 @@ N("pg-task-list", class extends j {
 	}
 });
 // src/views/plant-detail.ts
-function Io(e) {
+function Lo(e) {
 	let t = [];
 	for (let n of e) {
-		let e = $n(n.taken_at), r = t[t.length - 1];
+		let e = tr(n.taken_at), r = t[t.length - 1];
 		r?.key === e ? r.photos.push(n) : t.push({
 			key: e,
 			photos: [n]
@@ -11404,7 +11432,7 @@ function Io(e) {
 	}
 	return t;
 }
-N("pg-plant-detail", class extends j {
+M("pg-plant-detail", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -11429,7 +11457,7 @@ N("pg-plant-detail", class extends j {
 			t.plant_id === this.plantId && (t.kind === "plant_removed" ? this._notFound = !0 : (clearTimeout(this._reloadTimer), this._reloadTimer = setTimeout(() => void this._load(), 150)));
 		}, this._onStoreChange = () => {
 			Date.now() - this._loadedAt > 36e5 && this._load();
-		}, this.prefix = "/plant-garden", this._error = "", this._notFound = !1, this._uploading = "", this._uploadErrors = [], this._dragging = !1, this._mDate = I(), this._mHeight = "", this._mWidth = "", this._mError = "", this._gpsSuggestion = null;
+		}, this.prefix = "/plant-garden", this._error = "", this._notFound = !1, this._uploading = "", this._uploadErrors = [], this._dragging = !1, this._mDate = F(), this._mHeight = "", this._mWidth = "", this._mError = "", this._gpsSuggestion = null;
 	}
 	connectedCallback() {
 		super.connectedCallback(), this.store?.addEventListener("plant-changed", this._onPlantChanged), this.store?.addEventListener("change", this._onStoreChange);
@@ -11443,11 +11471,11 @@ N("pg-plant-detail", class extends j {
 	async _load() {
 		let e = this.plantId;
 		try {
-			let t = await bt(this.hass, e);
+			let t = await St(this.hass, e);
 			if (e !== this.plantId) return;
 			this._detail = t, this._error = "", this._loadedAt = Date.now();
 		} catch (e) {
-			e.code === "not_found" ? this._notFound = !0 : this._error = k(e);
+			e.code === "not_found" ? this._notFound = !0 : this._error = O(e);
 		}
 	}
 	_edit() {
@@ -11457,9 +11485,9 @@ N("pg-plant-detail", class extends j {
 	async _delete() {
 		let e = this._detail?.plant, t = this.renderRoot.querySelector("pg-confirm-dialog");
 		if (e && t && await t.ask(this.t("detail.delete_title", { name: e.name }), this.t("detail.delete_body"), this.t("common.delete"))) try {
-			await Ct(this.hass, e.id), this.store.refresh(), F(this.prefix, { replace: !0 });
+			await Tt(this.hass, e.id), this.store.refresh(), P(this.prefix, { replace: !0 });
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	_pickFiles() {
@@ -11469,7 +11497,7 @@ N("pg-plant-detail", class extends j {
 		let t = e.filter((e) => e.type.startsWith("image/") || e.type === "");
 		if (!t.length || this._uploading) return;
 		this._uploadErrors = [];
-		let n = await Wr(this.hass, this.plantId, t, this.t, (e, t) => {
+		let n = await Kr(this.hass, this.plantId, t, this.t, (e, t) => {
 			this._uploading = this.t("detail.uploading", {
 				current: e,
 				total: t
@@ -11477,17 +11505,17 @@ N("pg-plant-detail", class extends j {
 		});
 		this._uploading = "", this._uploadErrors = n.errors;
 		let r = this._detail?.plant;
-		r && !r.position && (this._gpsSuggestion = Hr(n.gps, this.store.layout?.origin)), await this._load();
+		r && !r.position && (this._gpsSuggestion = Wr(n.gps, this.store.layout?.origin)), await this._load();
 	}
 	async _acceptGps() {
 		let e = this._gpsSuggestion;
 		if (this._gpsSuggestion = null, e) try {
-			await Tt(this.hass, [{
+			await Dt(this.hass, [{
 				plant_id: this.plantId,
 				position: e
 			}]), this.store.refresh(), await this._load();
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	_onFileInput(e) {
@@ -11509,20 +11537,20 @@ N("pg-plant-detail", class extends j {
 		let t = X(this._mHeight), n = X(this._mWidth);
 		if (t === null && n === null) this._mError = this.t("detail.measurement_needs_value");
 		else try {
-			await Vt(this.hass, this.plantId, {
-				measured_on: this._mDate || I(),
+			await Ut(this.hass, this.plantId, {
+				measured_on: this._mDate || F(),
 				height_cm: t,
 				width_cm: n
 			}), this._mHeight = "", this._mWidth = "", this._mError = "", await this._load();
 		} catch (e) {
-			this._mError = k(e);
+			this._mError = O(e);
 		}
 	}
 	async _deleteMeasurement(e) {
 		try {
-			await Ht(this.hass, e), await this._load();
+			await Wt(this.hass, e), await this._load();
 		} catch (e) {
-			this._mError = k(e);
+			this._mError = O(e);
 		}
 	}
 	_facts(e) {
@@ -11555,30 +11583,30 @@ N("pg-plant-detail", class extends j {
 			} : null,
 			e.age_months_now === null ? null : {
 				label: "field.age",
-				value: tr(e.age_months_now, t),
+				value: rr(e.age_months_now, t),
 				source: r("age") ?? r("planted_on")
 			},
 			e.planted_on ? {
 				label: "field.planted_on",
-				value: L(e.planted_on, n),
+				value: I(e.planted_on, n),
 				source: r("planted_on")
 			} : null,
 			e.height_cm === null ? null : {
 				label: "field.height",
-				value: z(e.height_cm, n)
+				value: R(e.height_cm, n)
 			},
 			e.width_cm === null ? null : {
 				label: "field.width",
-				value: z(e.width_cm, n)
+				value: R(e.width_cm, n)
 			},
 			e.min_temperature_c === null ? null : {
 				label: "field.min_temperature_c",
-				value: t("detail.frost_to", { temp: R(e.min_temperature_c, n) }),
+				value: t("detail.frost_to", { temp: L(e.min_temperature_c, n) }),
 				source: r("min_temperature_c")
 			},
 			e.root_depth_cm === null ? null : {
 				label: "field.root_depth_cm",
-				value: z(e.root_depth_cm, n),
+				value: R(e.root_depth_cm, n),
 				source: r("root_depth_cm")
 			}
 		].filter((e) => e !== null);
@@ -11601,14 +11629,14 @@ N("pg-plant-detail", class extends j {
 		if (!e) return w;
 		let { t } = this, n = e.source === "ai" ? e.confidence === null ? t("source.ai") : t("source.ai_confidence", { confidence: Math.round(e.confidence * 100) }) : t(`source.${e.source}`), r = e.source === "user" ? "M2 17V20H10V18.11H3.9V17C3.9 16.36 7.03 14.9 10 14.9C10.96 14.91 11.91 15.04 12.83 15.28L14.35 13.76C12.95 13.29 11.5 13.03 10 13C7.33 13 2 14.33 2 17M10 4C7.79 4 6 5.79 6 8S7.79 12 10 12 14 10.21 14 8 12.21 4 10 4M10 10C8.9 10 8 9.11 8 8S8.9 6 10 6 12 6.9 12 8 11.11 10 10 10M21.7 13.35L20.7 14.35L18.65 12.35L19.65 11.35C19.86 11.14 20.21 11.14 20.42 11.35L21.7 12.63C21.91 12.84 21.91 13.19 21.7 13.4M12 18.94L18.06 12.88L20.11 14.88L14.11 20.95H12V18.94" : a;
 		return x`<span class="source source-${e.source}" title=${n}
-      >${M(r, n)}</span
+      >${j(r, n)}</span
     >`;
 	}
 	render() {
 		let { t: e } = this;
 		if (this._notFound) return x`<section class="card message">
         <p>${e("detail.not_found")}</p>
-        <button class="button" @click=${() => F(this.prefix, { replace: !0 })}>
+        <button class="button" @click=${() => P(this.prefix, { replace: !0 })}>
           ${e("detail.back_to_list")}
         </button>
       </section>`;
@@ -11626,7 +11654,7 @@ N("pg-plant-detail", class extends j {
 		}}
           aria-label=${e("detail.cover")}
         >
-          ${i ? x`<img src=${i.urls.medium} alt="" />` : x`<span class="placeholder">${M(h)}</span>`}
+          ${i ? x`<img src=${i.urls.medium} alt="" />` : x`<span class="placeholder">${j(h)}</span>`}
         </button>
         <div class="summary">
           <div class="title-row">
@@ -11646,19 +11674,19 @@ N("pg-plant-detail", class extends j {
           </dl>
           <div class="actions">
             <button class="button" @click=${this._pickFiles} ?disabled=${!!this._uploading}>
-              ${M(c)} ${e("detail.add_photos")}
+              ${j(c)} ${e("detail.add_photos")}
             </button>
             <button class="button secondary" @click=${this._edit}>
-              ${M(f)} ${e("detail.edit")}
+              ${j(f)} ${e("detail.edit")}
             </button>
             ${t.position ? x`<button
                     class="button secondary"
-                    @click=${() => F(`${this.prefix}/plan/${t.id}`)}
+                    @click=${() => P(`${this.prefix}/plan/${t.id}`)}
                   >
-                    ${M(u)} ${e("plan.show_on_plan")}
+                    ${j(u)} ${e("plan.show_on_plan")}
                   </button>` : w}
             <button class="button text danger" @click=${this._delete}>
-              ${M(o)} ${e("detail.delete")}
+              ${j(o)} ${e("detail.delete")}
             </button>
           </div>
         </div>
@@ -11768,7 +11796,7 @@ N("pg-plant-detail", class extends j {
             @click=${this._pickFiles}
             ?disabled=${!!this._uploading}
           >
-            ${M(c)} ${e("detail.add_photos")}
+            ${j(c)} ${e("detail.add_photos")}
           </button>
         </div>
         ${this._uploading ? x`<p class="muted" aria-live="polite">${this._uploading}</p>` : w}
@@ -11820,9 +11848,9 @@ N("pg-plant-detail", class extends j {
       </thead>
       <tbody>
         ${n.map((n) => x`<tr>
-              <td>${L(n.measured_on, t)}</td>
-              <td>${z(n.height_cm, t) || "–"}</td>
-              <td>${z(n.width_cm, t) || "–"}</td>
+              <td>${I(n.measured_on, t)}</td>
+              <td>${R(n.height_cm, t) || "–"}</td>
+              <td>${R(n.width_cm, t) || "–"}</td>
               <td class="row-action">
                 <button
                   class="icon-button"
@@ -11830,7 +11858,7 @@ N("pg-plant-detail", class extends j {
                   aria-label=${e("detail.delete_measurement")}
                   title=${e("detail.delete_measurement")}
                 >
-                  ${M(o)}
+                  ${j(o)}
                 </button>
               </td>
             </tr>`)}
@@ -11839,19 +11867,19 @@ N("pg-plant-detail", class extends j {
 	}
 	_renderTimeline(e, t) {
 		let { t: n, language: r } = this;
-		return Io(e).map((e) => x`<div class="month">
-          <h4>${Qn(e.photos[0]?.taken_at ?? "", r)}</h4>
+		return Lo(e).map((e) => x`<div class="month">
+          <h4>${er(e.photos[0]?.taken_at ?? "", r)}</h4>
           <div class="thumbs">
             ${e.photos.map((e) => x`<button
                   class="thumb"
                   @click=${() => this._openPhoto(e)}
-                  aria-label=${n("viewer.taken", { date: L(e.taken_at, r) })}
+                  aria-label=${n("viewer.taken", { date: I(e.taken_at, r) })}
                 >
                   <img src=${e.urls.thumb} alt="" loading="lazy" decoding="async" />
-                  ${e.id === t ? x`<span class="star">${M(ne)}</span>` : w}
+                  ${e.id === t ? x`<span class="star">${j(re)}</span>` : w}
                   ${e.tags.length ? x`<span class="tags">
                           ${e.tags.map((e) => x`<span class="tag ${e === "problem" ? "problem" : ""}"
-                                >${xo(e, n)}</span
+                                >${So(e, n)}</span
                               >`)}
                         </span>` : w}
                 </button>`)}
@@ -11859,7 +11887,7 @@ N("pg-plant-detail", class extends j {
         </div>`);
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: grid;
         gap: 16px;
@@ -12154,7 +12182,7 @@ N("pg-plant-detail", class extends j {
       }
     `];
 	}
-}), N("pg-assistant-view", class extends j {
+}), M("pg-assistant-view", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -12172,7 +12200,7 @@ N("pg-plant-detail", class extends j {
     </section>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: block;
       }
@@ -12181,7 +12209,7 @@ N("pg-plant-detail", class extends j {
       }
     `];
 	}
-}), N("pg-tasks-view", class extends j {
+}), M("pg-tasks-view", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -12204,9 +12232,9 @@ N("pg-plant-detail", class extends j {
 	}
 	async _load() {
 		try {
-			this._problems = await mn(this.hass, { activeOnly: !0 }), this._error = "";
+			this._problems = await gn(this.hass, { activeOnly: !0 }), this._error = "";
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	render() {
@@ -12222,13 +12250,13 @@ N("pg-plant-detail", class extends j {
                 ${this._problems.map((r) => {
 			let i = this.store?.getPlant(r.plant_id);
 			return x`<li>
-                    ${M(e)}
+                    ${j(e)}
                     <a href=${`${this.prefix}/plants/${r.plant_id}`}>
                       <strong>${i?.name ?? ""}</strong>: ${r.title}
                     </a>
                     <span class="muted small">
                       ${t(`problem_status.${r.status}`)} ·
-                      ${t("problems.since", { date: L(r.observed_on, n) })}
+                      ${t("problems.since", { date: I(r.observed_on, n) })}
                     </span>
                     ${r.diagnosis ? x`<span class="small diagnosis">${r.diagnosis.summary}</span>` : w}
                   </li>`;
@@ -12238,7 +12266,7 @@ N("pg-plant-detail", class extends j {
     `;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: grid;
         gap: 16px;
@@ -12275,14 +12303,14 @@ N("pg-plant-detail", class extends j {
 	}
 });
 // src/views/tech-view.ts
-var Lo = 100, Ro = [
+var Ro = 100, zo = [
 	"input",
 	"cached_input",
 	"cache_write",
 	"output",
 	"per_image",
 	"per_request"
-], zo = 600, Bo = 110, Vo = [
+], Bo = 600, Vo = 110, Ho = [
 	"#2e7d32",
 	"#1565c0",
 	"#ef6c00",
@@ -12291,7 +12319,7 @@ var Lo = 100, Ro = [
 	"#c62828",
 	"#827717"
 ];
-function Ho(e) {
+function Uo(e) {
 	let t = [
 		"ts",
 		"feature",
@@ -12315,7 +12343,7 @@ function Ho(e) {
 	};
 	return [t.join(","), ...e.map((e) => t.map((t) => n(e[t])).join(","))].join("\n");
 }
-function Uo(e, t, n) {
+function Wo(e, t, n) {
 	let r = [...new Set(e.map((e) => e.day))].sort(), i = [...new Set(e.map((e) => e.model))], a = r.map((t) => e.filter((e) => e.day === t).reduce((e, t) => e + (t.cost ?? 0), 0)), o = Math.max(...a, .01), s = r.length ? t / r.length : t, c = [];
 	for (let [t, i] of r.entries()) {
 		let r = n;
@@ -12338,7 +12366,7 @@ function Uo(e, t, n) {
 		bars: c
 	};
 }
-N("pg-tech-view", class extends j {
+M("pg-tech-view", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -12361,19 +12389,19 @@ N("pg-tech-view", class extends j {
 	async _load() {
 		try {
 			let [e, t, n, r] = await Promise.all([
-				en(this.hass),
-				this._fetchLog(0),
 				nn(this.hass),
-				on(this.hass)
+				this._fetchLog(0),
+				an(this.hass),
+				cn(this.hass)
 			]);
 			this._summary = e, this._rows = t, this._pricing = n, this._info = r, this._error = "";
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	_fetchLog(e) {
-		return tn(this.hass, {
-			limit: Lo,
+		return rn(this.hass, {
+			limit: Ro,
 			offset: e,
 			...this._feature ? { feature: this._feature } : {},
 			...this._status ? { status: this._status } : {}
@@ -12383,22 +12411,22 @@ N("pg-tech-view", class extends j {
 		try {
 			this._rows = await this._fetchLog(0);
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	async _more() {
 		this._rows = [...this._rows, ...await this._fetchLog(this._rows.length)];
 	}
 	_download() {
-		let e = new Blob([Ho(this._rows)], { type: "text/csv" }), t = document.createElement("a");
+		let e = new Blob([Uo(this._rows)], { type: "text/csv" }), t = document.createElement("a");
 		t.href = URL.createObjectURL(e), t.download = "plant-garden-ai-log.csv", t.click(), URL.revokeObjectURL(t.href);
 	}
 	async _test(e) {
 		this._testing = e;
 		try {
-			await an(this.hass, e), this._info = await on(this.hass);
+			await sn(this.hass, e), this._info = await cn(this.hass);
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		} finally {
 			this._testing = "";
 		}
@@ -12410,16 +12438,16 @@ N("pg-tech-view", class extends j {
 			t !== "" && (r[e.dataset.key] = Number(t));
 		}
 		try {
-			this._pricing = await rn(this.hass, e, t, r);
+			this._pricing = await on(this.hass, e, t, r);
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		}
 	}
 	async _resetPrice(e, t) {
-		this._pricing = await rn(this.hass, e, t, null);
+		this._pricing = await on(this.hass, e, t, null);
 	}
 	_money(e) {
-		return e == null ? this.t("tech.unknown") : er(e * (this._summary?.rate ?? 1), this._summary?.currency ?? "USD", this.language);
+		return e == null ? this.t("tech.unknown") : nr(e * (this._summary?.rate ?? 1), this._summary?.currency ?? "USD", this.language);
 	}
 	_tokens(e) {
 		return e.input + e.cached_input + e.cache_write + e.output;
@@ -12430,7 +12458,7 @@ N("pg-tech-view", class extends j {
       <div class="toolbar">
         <h2>${e("tech.title")}</h2>
         <button class="button text" @click=${this._load}>
-          ${M(ee)} ${e("weather.refresh")}
+          ${j(ee)} ${e("weather.refresh")}
         </button>
       </div>
       ${this._error ? x`<p class="error-text" role="alert">${this._error}</p>` : w}
@@ -12448,20 +12476,20 @@ N("pg-tech-view", class extends j {
         <p class="big">${this._money(r.requests ? r.cost : 0)}</p>
         <p class="small">
           ${t("tech.requests", { n: r.requests })} ·
-          ${t("tech.tokens", { n: R(this._tokens(r), n, 0) })}
+          ${t("tech.tokens", { n: L(this._tokens(r), n, 0) })}
         </p>
         <p class="small muted">
           ${t("tech.detail", {
-			input: R(r.input, n, 0),
-			cached: R(r.cached_input + r.cache_write, n, 0),
-			output: R(r.output, n, 0),
+			input: L(r.input, n, 0),
+			cached: L(r.cached_input + r.cache_write, n, 0),
+			output: L(r.output, n, 0),
 			images: r.images
 		})}
         </p>
         <p class="small muted">
           ${t("tech.quality", {
 			errors: r.requests ? Math.round(r.errors / r.requests * 100) : 0,
-			latency: r.requests ? R(r.latency_ms / r.requests / 1e3, n, 1) : 0
+			latency: r.requests ? L(r.latency_ms / r.requests / 1e3, n, 1) : 0
 		})}
           ${r.unknown_cost ? ` · ${t("tech.unknown_calls", { n: r.unknown_cost })}` : ""}
         </p>
@@ -12474,8 +12502,8 @@ N("pg-tech-view", class extends j {
       ${e.budget > 0 ? x`<div class="budget">
               <span class="small">
                 ${t("tech.budget", {
-			spent: er(i, e.currency, n),
-			budget: er(e.budget, e.currency, n)
+			spent: nr(i, e.currency, n),
+			budget: nr(e.budget, e.currency, n)
 		})}
                 ${e.budget_stop ? ` · ${t("tech.budget_stop")}` : ""}
               </span>
@@ -12486,14 +12514,14 @@ N("pg-tech-view", class extends j {
     </section>`;
 	}
 	_renderChart(e) {
-		let { t } = this, n = Uo(e.daily, zo, Bo);
+		let { t } = this, n = Wo(e.daily, Bo, Vo);
 		if (!n.bars.length) return w;
-		let r = (e) => Vo[n.models.indexOf(e) % Vo.length];
+		let r = (e) => Ho[n.models.indexOf(e) % Ho.length];
 		return x`<section class="card block">
       <h3>${t("tech.per_day")}</h3>
       <svg
         class="chart"
-        viewBox="0 0 ${zo} ${Bo}"
+        viewBox="0 0 ${Bo} ${Vo}"
         preserveAspectRatio="none"
         role="img"
         aria-label=${t("tech.per_day")}
@@ -12571,7 +12599,7 @@ N("pg-tech-view", class extends j {
             <option value="invalid_json">invalid_json</option>
           </select>
           <button class="button text" ?disabled=${!this._rows.length} @click=${this._download}>
-            ${M("M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z")} CSV
+            ${j("M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z")} CSV
           </button>
         </div>
       </div>
@@ -12590,20 +12618,20 @@ N("pg-tech-view", class extends j {
                   </thead>
                   <tbody>
                     ${this._rows.map((n) => x`<tr class=${n.status === "ok" ? "" : "failed"}>
-                          <td>${B(n.ts, t)}</td>
+                          <td>${z(n.ts, t)}</td>
                           <td>${e(`feature.${n.feature}`)}</td>
                           <td>
                             ${n.provider_title}<br /><span class="muted small">${n.model}</span>
                           </td>
                           <td class="num">
-                            ${R(n.input + n.cached_input + n.cache_write, t, 0)}
+                            ${L(n.input + n.cached_input + n.cache_write, t, 0)}
                             /
-                            ${R(n.output, t, 0)}${n.images ? ` · ${n.images} 🖼` : ""}
+                            ${L(n.output, t, 0)}${n.images ? ` · ${n.images} 🖼` : ""}
                           </td>
                           <td class="num">
                             ${this._money(n.cost)}${n.cost_source === "provider" ? " *" : ""}
                           </td>
-                          <td class="num">${R(n.latency_ms / 1e3, t, 1)} s</td>
+                          <td class="num">${L(n.latency_ms / 1e3, t, 1)} s</td>
                           <td>
                             ${n.status}${n.error ? x`<br /><span class="muted small">${n.error}</span>` : w}
                           </td>
@@ -12611,7 +12639,7 @@ N("pg-tech-view", class extends j {
                   </tbody>
                 </table>
               </div>
-              ${this._rows.length % Lo === 0 ? x`<button class="button text" @click=${this._more}>${e("tech.more")}</button>` : w}
+              ${this._rows.length % Ro === 0 ? x`<button class="button text" @click=${this._more}>${e("tech.more")}</button>` : w}
               <p class="muted small">${e("tech.log_hint")}</p>` : x`<p class="muted">${e("tech.no_calls")}</p>`}
     </section>`;
 	}
@@ -12628,7 +12656,7 @@ N("pg-tech-view", class extends j {
                       >
                       ${e.status ? x`<span class="small ${e.status.ok ? "" : "error-text"}">
                               ${e.status.ok ? t("tech.ok") : e.status.error ?? ""} ·
-                              ${B(e.status.checked, n)}
+                              ${z(e.status.checked, n)}
                               ${e.status.remaining !== void 0 && e.status.remaining !== null ? ` · ${t("tech.remaining", { n: e.status.remaining })}` : ""}
                             </span>` : w}
                     </div>
@@ -12661,7 +12689,7 @@ N("pg-tech-view", class extends j {
                   <thead>
                     <tr>
                       <th>${t("tech.col_model")}</th>
-                      ${Ro.map((e) => x`<th>${t(`price.${e}`)}</th>`)}
+                      ${zo.map((e) => x`<th>${t(`price.${e}`)}</th>`)}
                       <th></th>
                     </tr>
                   </thead>
@@ -12670,7 +12698,7 @@ N("pg-tech-view", class extends j {
                           <td>
                             ${r}${e.overrides[n]?.[r] ? x` <span class="muted small">(${t("tech.own_price")})</span>` : w}
                           </td>
-                          ${Ro.map((e) => x`<td>
+                          ${zo.map((e) => x`<td>
                                 <input
                                   data-key=${e}
                                   inputmode="decimal"
@@ -12703,9 +12731,9 @@ N("pg-tech-view", class extends j {
         <dt>${t("tech.storage")}</dt>
         <dd>
           ${t("tech.storage_detail", {
-			photos: nr(r.photos ?? 0, n),
-			backgrounds: nr(r.backgrounds ?? 0, n),
-			database: nr(r.database ?? 0, n)
+			photos: ir(r.photos ?? 0, n),
+			backgrounds: ir(r.backgrounds ?? 0, n),
+			database: ir(r.database ?? 0, n)
 		})}
         </dd>
         <dt>${t("tech.entities")}</dt>
@@ -12713,14 +12741,14 @@ N("pg-tech-view", class extends j {
         <dt>${t("weather.sources")}</dt>
         <dd>
           ${e.weather.sources.length ? x`${e.weather.sources.map((e) => x`${e.title}: ${e.ok ? t("weather.source_days", { days: e.days }) : e.error ?? ""}<br />`)}
-                ${e.weather.updated ? t("weather.updated", { time: B(e.weather.updated, n) }) : t("tech.never")}` : t("tech.no_weather")}
+                ${e.weather.updated ? t("weather.updated", { time: z(e.weather.updated, n) }) : t("tech.never")}` : t("tech.no_weather")}
           ${e.weather.last_error ? x`<br /><span class="error-text">${e.weather.last_error}</span>` : w}
         </dd>
       </dl>
     </section>`;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: grid;
         gap: 16px;
@@ -12870,8 +12898,8 @@ N("pg-tech-view", class extends j {
 	}
 });
 // src/views/water-view.ts
-var Wo = 600, Go = 120;
-N("pg-water-view", class extends j {
+var Go = 600, Ko = 120;
+M("pg-water-view", class extends A {
 	static {
 		this.properties = {
 			store: { attribute: !1 },
@@ -12892,9 +12920,9 @@ N("pg-water-view", class extends j {
 	async _refresh() {
 		this._busy = !0;
 		try {
-			this.store.setWater(await Jt(this.hass)), this._error = "";
+			this.store.setWater(await Xt(this.hass)), this._error = "";
 		} catch (e) {
-			this._error = k(e);
+			this._error = O(e);
 		} finally {
 			this._busy = !1;
 		}
@@ -12907,27 +12935,27 @@ N("pg-water-view", class extends j {
         <div class="block-header">
           <h3>${t("weather.sources")}</h3>
           <button class="button text" ?disabled=${this._busy} @click=${this._refresh}>
-            ${M(ee)} ${t("weather.refresh")}
+            ${j(ee)} ${t("weather.refresh")}
           </button>
         </div>
         <ul>
           ${n.sources.map((n) => x`<li class=${n.ok ? "" : "error-text"}>
-                ${n.ok ? w : M(e)}
+                ${n.ok ? w : j(e)}
                 <strong>${n.title}</strong>
                 ${n.ok ? t("weather.source_days", { days: n.days }) : n.error ?? t("weather.source_failed")}
               </li>`)}
         </ul>
         ${n.updated ? x`<p class="muted small">
-                ${t("weather.updated", { time: B(n.updated, this.language) })}
+                ${t("weather.updated", { time: z(n.updated, this.language) })}
               </p>` : w}
         ${this._error ? x`<p class="error-text" role="alert">${this._error}</p>` : w}
       </section>
     ` : x`<section class="card state">
-        ${M(se)}
+        ${j(ce)}
         <h2>${t("weather.setup_title")}</h2>
         <p class="muted">${t("weather.setup_body")}</p>
         <a class="button" href="/config/integrations/integration/plant_garden">
-          ${M(d)} ${t("weather.setup_action")}
+          ${j(d)} ${t("weather.setup_action")}
         </a>
       </section>`;
 	}
@@ -12936,28 +12964,28 @@ N("pg-water-view", class extends j {
 		if (!e.length) return x`<section class="card block">
         <p class="muted">${t("weather.no_data")}</p>
       </section>`;
-		let r = $i(e, Wo, Go), i = e.filter((e) => !e.forecast).at(-1), a = e.find((e) => e.forecast);
+		let r = ea(e, Go, Ko), i = e.filter((e) => !e.forecast).at(-1), a = e.find((e) => e.forecast);
 		return x`<section class="card block">
       <h3>${t("weather.title")}</h3>
       <p class="today">
         ${i ? t("weather.today", {
-			rain: R(i.precip_mm ?? 0, n, 1),
-			et0: R(i.et0_mm ?? 0, n, 1)
+			rain: L(i.precip_mm ?? 0, n, 1),
+			et0: L(i.et0_mm ?? 0, n, 1)
 		}) : w}
         ${a ? x` ·
-              ${t("weather.tomorrow", { rain: R(a.precip_mm ?? 0, n, 1) })}` : w}
+              ${t("weather.tomorrow", { rain: L(a.precip_mm ?? 0, n, 1) })}` : w}
       </p>
       <svg
         class="chart"
-        viewBox="0 0 ${Wo} ${Go}"
+        viewBox="0 0 ${Go} ${Ko}"
         preserveAspectRatio="none"
         role="img"
         aria-label=${t("weather.chart")}
       >
         ${r.forecastX === null ? w : S`<rect class="forecast" x=${r.forecastX} y="0"
-                width=${Wo - r.forecastX} height=${Go}></rect>`}
+                width=${Go - r.forecastX} height=${Ko}></rect>`}
         ${r.rain.map((e) => S`<rect class="rain" x=${e.x} y=${e.y} width=${e.w} height=${e.h}>
-            <title>${L(e.day.day, n)}: ${R(e.day.precip_mm ?? 0, n, 1)} mm</title>
+            <title>${I(e.day.day, n)}: ${L(e.day.precip_mm ?? 0, n, 1)} mm</title>
           </rect>`)}
         ${r.et0 ? S`<path class="et0" d=${r.et0}></path>` : w}
       </svg>
@@ -12970,18 +12998,18 @@ N("pg-water-view", class extends j {
     </section>`;
 	}
 	_renderPlants() {
-		let { t: e, language: t } = this, n = this.store.water?.plants ?? {}, r = this.store.plants.map((e) => [e, n[e.id]]).filter((e) => e[1] !== void 0).sort((e, t) => Zi(t[1]) - Zi(e[1]));
+		let { t: e, language: t } = this, n = this.store.water?.plants ?? {}, r = this.store.plants.map((e) => [e, n[e.id]]).filter((e) => e[1] !== void 0).sort((e, t) => Qi(t[1]) - Qi(e[1]));
 		return r.length ? x`<section class="card block">
       <h3>${e("balance.title")}</h3>
       <p class="muted small">${e("balance.explain")}</p>
       <ul class="plants">
         ${r.map(([n, r]) => {
-			let i = Zi(r), a = r.taw > 0 ? r.raw / r.taw : .5;
+			let i = Qi(r), a = r.taw > 0 ? r.raw / r.taw : .5;
 			return x`<li>
             <a
               href=${Z(n, this.prefix)}
               @click=${(e) => {
-				e.preventDefault(), F(Z(n, this.prefix));
+				e.preventDefault(), P(Z(n, this.prefix));
 			}}
               >${n.name}</a
             >
@@ -12995,20 +13023,20 @@ N("pg-water-view", class extends j {
             >
               <span
                 class="used"
-                style="width: ${i * 100}%; background: ${Qi(r)}"
+                style="width: ${i * 100}%; background: ${$i(r)}"
               ></span>
               <span class="threshold" style="left: ${a * 100}%"></span>
             </div>
             <span class="numbers small">
-              ${R(r.depletion, t, 0)} /
-              ${R(r.taw, t, 0)} mm
+              ${L(r.depletion, t, 0)} /
+              ${L(r.taw, t, 0)} mm
             </span>
             <span class="badges">
               ${r.needs_water ? x`<span class="badge thirsty">${e("balance.needs")}</span>` : w}
               ${r.frost === null ? w : x`<span
                       class="badge frost"
-                      title=${e("balance.frost", { temp: R(r.frost, t, 0) })}
-                      >${M("M20.79,13.95L18.46,14.57L16.46,13.44V10.56L18.46,9.43L20.79,10.05L21.31,8.12L19.54,7.65L20,5.88L18.07,5.36L17.45,7.69L15.45,8.82L13,7.38V5.12L14.71,3.41L13.29,2L12,3.29L10.71,2L9.29,3.41L11,5.12V7.38L8.5,8.82L6.5,7.69L5.92,5.36L4,5.88L4.47,7.65L2.7,8.12L3.22,10.05L5.55,9.43L7.55,10.56V13.45L5.55,14.58L3.22,13.96L2.7,15.89L4.47,16.36L4,18.12L5.93,18.64L6.55,16.31L8.55,15.18L11,16.62V18.88L9.29,20.59L10.71,22L12,20.71L13.29,22L14.7,20.59L13,18.88V16.62L15.5,15.17L17.5,16.3L18.12,18.63L20,18.12L19.53,16.35L21.3,15.88L20.79,13.95M9.5,10.56L12,9.11L14.5,10.56V13.44L12,14.89L9.5,13.44V10.56Z")}</span
+                      title=${e("balance.frost", { temp: L(r.frost, t, 0) })}
+                      >${j("M20.79,13.95L18.46,14.57L16.46,13.44V10.56L18.46,9.43L20.79,10.05L21.31,8.12L19.54,7.65L20,5.88L18.07,5.36L17.45,7.69L15.45,8.82L13,7.38V5.12L14.71,3.41L13.29,2L12,3.29L10.71,2L9.29,3.41L11,5.12V7.38L8.5,8.82L6.5,7.69L5.92,5.36L4,5.88L4.47,7.65L2.7,8.12L3.22,10.05L5.55,9.43L7.55,10.56V13.45L5.55,14.58L3.22,13.96L2.7,15.89L4.47,16.36L4,18.12L5.93,18.64L6.55,16.31L8.55,15.18L11,16.62V18.88L9.29,20.59L10.71,22L12,20.71L13.29,22L14.7,20.59L13,18.88V16.62L15.5,15.17L17.5,16.3L18.12,18.63L20,18.12L19.53,16.35L21.3,15.88L20.79,13.95M9.5,10.56L12,9.11L14.5,10.56V13.44L12,14.89L9.5,13.44V10.56Z")}</span
                     >`}
             </span>
           </li>`;
@@ -13024,7 +13052,7 @@ N("pg-water-view", class extends j {
         ${r.map((r) => {
 			let i = n[r.id];
 			if (!i) return w;
-			let a = i.reason === "dry" ? e("advice.dry", { minutes: R(i.minutes ?? 0, t, 0) }) : e(`advice.${i.reason}`);
+			let a = i.reason === "dry" ? e("advice.dry", { minutes: L(i.minutes ?? 0, t, 0) }) : e(`advice.${i.reason}`);
 			return x`<li class=${i.recommended ? "recommended" : ""}>
             <strong>${r.label ?? e("kind.zone")}</strong> ${a}
           </li>`;
@@ -13034,7 +13062,7 @@ N("pg-water-view", class extends j {
     </section>` : w;
 	}
 	static {
-		this.styles = [P, g`
+		this.styles = [N, g`
       :host {
         display: grid;
         gap: 16px;
@@ -13186,8 +13214,8 @@ N("pg-water-view", class extends j {
 	}
 });
 // src/panel.ts
-var Ko = 9e5;
-function qo(e) {
+var qo = 9e5;
+function Jo(e) {
 	let t = e ?? "", n = /^\/plants\/([0-9A-Za-z]+)\/?$/.exec(t);
 	return n?.[1] ? {
 		name: "plant",
@@ -13197,9 +13225,9 @@ function qo(e) {
 		focusPlantId: /^\/plan\/([0-9A-Za-z]+)\/?$/.exec(t)?.[1] ?? null
 	};
 }
-var Jo = class extends D {
+var Yo = class extends gt {
 	constructor(...e) {
-		super(...e), this._store = new In(() => this.hass), this._started = !1, this._localize = Nn("en"), this._language = "", this._lastList = "plan", this._onStoreChange = () => this.requestUpdate(), this._refreshIfStale = () => {
+		super(...e), this._store = new Rn(() => this.hass), this._started = !1, this._localize = Fn("en"), this._language = "", this._lastList = "plan", this._onStoreChange = () => this.requestUpdate(), this._refreshIfStale = () => {
 			document.visibilityState === "visible" && this._store.stale && this._store.refresh();
 		};
 	}
@@ -13214,28 +13242,28 @@ var Jo = class extends D {
 		};
 	}
 	connectedCallback() {
-		super.connectedCallback(), this._store.addEventListener("change", this._onStoreChange), document.addEventListener("visibilitychange", this._refreshIfStale), this._freshnessTimer = setInterval(this._refreshIfStale, Ko), this.hass && this._start();
+		super.connectedCallback(), this._store.addEventListener("change", this._onStoreChange), document.addEventListener("visibilitychange", this._refreshIfStale), this._freshnessTimer = setInterval(this._refreshIfStale, qo), this.hass && this._start();
 	}
 	disconnectedCallback() {
 		super.disconnectedCallback(), this._store.removeEventListener("change", this._onStoreChange), document.removeEventListener("visibilitychange", this._refreshIfStale), clearInterval(this._freshnessTimer), this._store.disconnect(), this._started = !1;
 	}
 	willUpdate(e) {
 		if (e.has("route")) {
-			let e = qo(this.route?.path);
+			let e = Jo(this.route?.path);
 			e.name !== "plant" && (this._lastList = e.name);
 		}
 		if (!e.has("hass") || !this.hass) return;
 		let t = this.hass.locale?.language ?? this.hass.language;
-		t !== this._language && (this._language = t, this._localize = Nn(t)), this.toggleAttribute("dark", !!this.hass.themes?.darkMode), !this._started && this.isConnected && this._start();
+		t !== this._language && (this._language = t, this._localize = Fn(t)), this.toggleAttribute("dark", !!this.hass.themes?.darkMode), !this._started && this.isConnected && this._start();
 	}
 	_start() {
 		this._started = !0, this._loadInfo(), this._store.connect();
 	}
 	async _loadInfo() {
 		try {
-			this._info = await vt(this.hass), this._infoError = void 0;
+			this._info = await bt(this.hass), this._infoError = void 0;
 		} catch (e) {
-			this._infoError = k(e);
+			this._infoError = O(e);
 		}
 	}
 	_retry() {
@@ -13251,23 +13279,23 @@ var Jo = class extends D {
 		}));
 	}
 	render() {
-		let e = this._localize, t = qo(this.route?.path), n = this._info?.garden_name ?? this.panel?.title ?? "Plant Garden", r = t.name === "plant" ? this._store.getPlant(t.plantId)?.name ?? n : "";
+		let e = this._localize, t = Jo(this.route?.path), n = this._info?.garden_name ?? this.panel?.title ?? "Plant Garden", r = t.name === "plant" ? this._store.getPlant(t.plantId)?.name ?? n : "";
 		return x`
       <header class="toolbar">
         ${t.name === "plant" ? x`<button
                 class="icon-button"
-                @click=${() => F(this._lastList === "plan" ? this._prefix : `${this._prefix}/${this._lastList}`)}
+                @click=${() => P(this._lastList === "plan" ? this._prefix : `${this._prefix}/${this._lastList}`)}
                 aria-label=${e("panel.back")}
                 title=${e("panel.back")}
               >
-                ${M("M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z")}
+                ${j("M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z")}
               </button>` : this.narrow ? x`<button
                   class="icon-button"
                   @click=${this._toggleSidebar}
                   aria-label=${e("panel.open_sidebar")}
                   title=${e("panel.open_sidebar")}
                 >
-                  ${M("M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z")}
+                  ${j("M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z")}
                 </button>` : w}
         <h1>${t.name === "plant" ? r : n}</h1>
         ${t.name === "plant" ? w : x`<nav class="tabs">
@@ -13319,18 +13347,18 @@ var Jo = class extends D {
 		return e ? x`<span class="badge" title=${this._localize("tasks.group_overdue")}>${e}</span>` : w;
 	}
 	_go(e, t) {
-		e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || (e.preventDefault(), F(t));
+		e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || (e.preventDefault(), P(t));
 	}
 	_renderBody(t, n, r) {
 		let i = this._infoError ?? (this._store.loaded ? void 0 : this._store.error);
 		if (i) return x`
         <section class="card state" role="alert">
-          ${M(e)}
+          ${j(e)}
           <h2>${t("panel.error_title")}</h2>
           <p class="muted">${i}</p>
           <p class="muted">${t("panel.error_hint")}</p>
           <button class="button" @click=${this._retry}>
-            ${M(ee)} ${t("panel.retry")}
+            ${j(ee)} ${t("panel.retry")}
           </button>
         </section>
       `;
@@ -13374,8 +13402,8 @@ var Jo = class extends D {
 	}
 	static {
 		this.styles = [
-			Ln,
-			P,
+			zn,
+			N,
 			g`
       :host {
         display: flex;
@@ -13510,4 +13538,4 @@ var Jo = class extends D {
 	}
 };
 // src/main.ts
-customElements.get("plant-garden-panel") || customElements.define("plant-garden-panel", Jo);
+customElements.get("plant-garden-panel") || customElements.define("plant-garden-panel", Yo);

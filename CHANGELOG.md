@@ -8,6 +8,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Plan: a button "Irrigation zone" in the edit tool bar (zones were hidden as an
+  area kind in a drop-down).
 - Plan: freehand drawing of areas, and every plant can be drawn as an area (a
   whole hedge or lawn instead of single plants) – it then shows the plant's name
   and status and opens the plant's card.
