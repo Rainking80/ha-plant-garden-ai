@@ -226,6 +226,7 @@ async def test_identify_and_take_over_suggestions(
 
     # deleting the plant forgets its identification
     await manager.async_delete_plant(rose.id)
+    await hass.async_block_till_done()
     assert entry.runtime_data.ai.identification(rose.id) is None
 
 

@@ -129,6 +129,7 @@ async def test_notifies_once_and_answers_with_the_water_summary(
     entry = MockConfigEntry(domain=DOMAIN, title="Garten", data={}, options={})
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()  # the first weather fetch, else it overwrites ours
     await entry.runtime_data.manager.async_create_plant({"name": "Feige", "location_type": "pot"})
     today = dt_util.now().date()
     frost = DailyWeather(day=today + timedelta(days=1), t_min=-4.0, t_max=3.0)

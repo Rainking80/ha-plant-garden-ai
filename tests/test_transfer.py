@@ -99,11 +99,12 @@ def _point(x: float, y: float) -> Any:
     return Point(x=x, y=y)
 
 
-async def _empty(entry: MockConfigEntry) -> None:
+async def _empty(hass: HomeAssistant, entry: MockConfigEntry) -> None:
     """What a fresh installation looks like: no plants, areas or markers, home elsewhere."""
     manager = entry.runtime_data.manager
     for plant in list(manager.plants):
         await manager.async_delete_plant(plant.id)
+    await hass.async_block_till_done()  # the care data forgets the plants in tasks
     for shape in manager.shapes():
         await manager.async_delete_shape(shape.id)
     for marker_id in list(manager.layout.markers):
@@ -141,7 +142,7 @@ async def test_export_and_import_at_the_same_place(
     assert response.status == 400
     assert "not empty" in (await response.json())["message"]
 
-    await _empty(loaded_entry)
+    await _empty(hass, loaded_entry)
     manager = loaded_entry.runtime_data.manager
     assert manager.layout.origin is not None
     assert manager.layout.origin.latitude == 52.0

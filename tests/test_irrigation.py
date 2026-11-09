@@ -607,6 +607,7 @@ async def test_zone_settings_round_trip_and_plant_removal(
     assert saved.as_dict()["irrigation"]["include"] == [rose.id]
     assert Shape.from_dict(saved.as_dict()).irrigation == saved.irrigation
     await manager.async_delete_plant(rose.id)
+    await hass.async_block_till_done()  # the care data forgets the plant in a task
     assert manager.get_zone(zone.id).irrigation.include == []  # type: ignore[union-attr]
     bed = await manager.async_save_shape({"kind": "bed", "geometry": SQUARE})
     assert bed.irrigation is None
