@@ -140,6 +140,22 @@ wird ein neues Foto einer Pflanze ohne botanischen Namen automatisch bestimmt.
   und Technik, nur Administratoren). Die Kosten für eine Pflanze werden angezeigt,
   mit Websuche meist um 10 Cent. Eine Pflanze mit Wissen wird nie erneut
   recherchiert – lösche ihr Wissen auf der Pflanzenseite, um es neu zu holen.
+  Arbeiten aus ihrem Pflegekalender werden mit *Als Aufgabe* (oder alle auf
+  einmal) zu jährlichen Aufgaben.
+- **Wetter-Warnungen** (Tab *Wasser & Wetter* und *Assistent*): Frost unter der
+  Grenze einer Pflanze, Hitze, Sturm, Starkregen sowie Pilz- und Schneckenwetter,
+  jeweils mit dem, was zu tun ist, und den betroffenen Pflanzen. Neue Warnungen
+  kommen auch als Home-Assistant-Benachrichtigung und als Event
+  `plant_garden_weather_alert` (Option *Wetter-Warnungen*, an; ohne KI, ohne
+  Kosten).
+- **Fotovergleich** (Pflanzenseite): Die KI vergleicht das neueste Foto mit einem
+  früheren – Wachstum, Veränderungen, Auffälligkeiten – und legt ein Problem an,
+  wenn etwas nicht stimmt. Nach jedem Hochladen von selbst mit der Option *Neue
+  Fotos mit früheren vergleichen* (aus; ein KI-Aufruf mit Kosten).
+- **Hecken in Deutschland**: Vom 1. März bis 30. September ist nur ein schonender
+  Form- und Pflegeschnitt erlaubt (§ 39 BNatSchG); Schnitt-Aufgaben an Hecken in
+  dieser Zeit weisen darauf hin, und die KI berücksichtigt es (Land in Home
+  Assistant: Deutschland).
 
 Der Assistent bekommt eine kompakte Zusammenfassung des Gartens (siehe
 *Datenschutz*). Jeder KI-Aufruf wird mit Tokens und Kosten protokolliert.
@@ -166,7 +182,7 @@ Aktionen: `log_watering`, `refresh_weather`, `identify_plant`, `ask_assistant`
 Ordner oder Kamera-Schnappschuss).
 
 Events: `plant_garden_irrigation_finished`, `plant_garden_task_due`,
-`plant_garden_problem_detected`.
+`plant_garden_problem_detected`, `plant_garden_weather_alert`.
 
 Beispiel: Benachrichtigung bei fälliger Aufgabe.
 

@@ -20,13 +20,27 @@ from homeassistant.util import dt as dt_util
 from homeassistant.util.ulid import ulid_now
 
 from ..care import CareManager, ChatMessage, Problem
-from ..const import CONF_CONTEXT_TOKENS, CONF_WEEKLY_CHECK, DEFAULT_CONTEXT_TOKENS, DOMAIN
+from ..const import (
+    CONF_CONTEXT_TOKENS,
+    CONF_PHOTO_COMPARE,
+    CONF_WEEKLY_CHECK,
+    DEFAULT_CONTEXT_TOKENS,
+    DOMAIN,
+)
 from ..garden import GardenChange, GardenManager, NotFoundError
+from ..models import Photo
 from ..photos import PhotoVariant
 from . import context as context_builder
 from .base import AIError, AIRequest, Feature, Message
 from .prompts import assistant as prompts
-from .schemas import DIAGNOSE_SCHEMA, TIPS_SCHEMA, clean_diagnosis, clean_tips
+from .schemas import (
+    COMPARE_SCHEMA,
+    DIAGNOSE_SCHEMA,
+    TIPS_SCHEMA,
+    clean_comparison,
+    clean_diagnosis,
+    clean_tips,
+)
 from .service import AIService
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,6 +51,7 @@ GARDEN = "garden"  # key of the garden-wide tips
 WEEKLY_HOUR = 8  # Monday, local time
 MAX_DIAGNOSE_PHOTOS = 3
 CHAT_HISTORY = 10  # earlier messages sent along
+COMPARE_GAP_DAYS = 14  # a new photo is compared with one at least this much older
 
 
 def _alternating(messages: list[Message]) -> list[Message]:
@@ -75,7 +90,9 @@ class Assistant:
 
     async def async_setup(self) -> None:
         self._data = await self._store.async_load() or {"tips": {}}
+        self._data.setdefault("comparisons", {})
         self._unsubs.append(self._manager.async_subscribe(self._on_garden_change))
+        self._manager.photo_hooks.append(self._async_on_photo)
         self._unsubs.append(
             async_track_time_change(
                 self.hass, self._async_weekly_tick, hour=WEEKLY_HOUR, minute=0, second=0
@@ -87,11 +104,16 @@ class Assistant:
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
+        if self._async_on_photo in self._manager.photo_hooks:
+            self._manager.photo_hooks.remove(self._async_on_photo)
 
     @callback
     def _on_garden_change(self, change: GardenChange) -> None:
-        if change.kind == "plant_removed" and change.plant_id in self._data["tips"]:
-            del self._data["tips"][change.plant_id]
+        if change.kind != "plant_removed":
+            return
+        tips = self._data["tips"].pop(change.plant_id, None)
+        comparison = self._data["comparisons"].pop(change.plant_id, None)
+        if tips or comparison:
             self._save()
 
     def _save(self) -> None:
@@ -116,6 +138,7 @@ class Assistant:
             plant_id=plant_id,
             budget=self._budget(feature),
             latitude=origin.latitude if origin else self.hass.config.latitude,
+            country=self.hass.config.country,
         )
 
     # ------------------------------------------------------------ diagnosis
@@ -183,6 +206,119 @@ class Assistant:
         return await self._care.async_set_diagnosis(
             problem_id, diagnosis, summary=diagnosis["summary"]
         )
+
+    # ------------------------------------------------------------ photo comparison
+    def comparison(self, plant_id: str) -> dict[str, Any] | None:
+        """The last comparison of a new photo of the plant with an earlier one."""
+        found: dict[str, Any] | None = self._data["comparisons"].get(plant_id)
+        return found
+
+    async def async_comparison(self, plant_id: str) -> dict[str, Any] | None:
+        """The last comparison, forgotten when one of its photos was deleted."""
+        found = self.comparison(plant_id)
+        if found is None:
+            return None
+        try:
+            await self._manager.async_get_photo(found["photo_id"])
+            await self._manager.async_get_photo(found["earlier_id"])
+        except NotFoundError:
+            del self._data["comparisons"][plant_id]
+            self._save()
+            return None
+        return found
+
+    async def _async_on_photo(self, photo: Photo, added: bool) -> None:
+        """Option "compare new photos": in the background, only with an earlier photo."""
+        if not added:  # a photo was edited (tags, date), not new
+            return
+        if (
+            not self._entry.options.get(CONF_PHOTO_COMPARE)
+            or self._ai.subentry_for(Feature.COMPARE) is None
+        ):
+            return
+
+        async def compare() -> None:
+            try:
+                await self.async_compare(photo.id)
+            except AIError as err:
+                _LOGGER.warning("Comparing a new photo failed: %s", err)
+
+        self._entry.async_create_background_task(
+            self.hass, compare(), f"plant_garden compare {photo.id}"
+        )
+
+    async def async_compare(self, photo_id: str) -> dict[str, Any]:
+        """Compare a photo with an earlier one of the plant; open a problem if needed.
+
+        The earlier photo is the newest one taken at least two weeks before, else
+        the oldest earlier one. A photo tagged "problem" opened its problem already.
+        """
+        photo = await self._manager.async_get_photo(photo_id)
+        plant = self._manager.get_plant(photo.plant_id)
+        older = [
+            p
+            for p in await self._manager.async_list_photos(plant.id)
+            if p.taken_at < photo.taken_at
+        ]  # newest first
+        if not older:
+            raise AIError("There is no earlier photo of this plant to compare with")
+        gap = photo.taken_at - timedelta(days=COMPARE_GAP_DAYS)
+        earlier = next((p for p in older if p.taken_at <= gap), older[-1])
+        language = self._language()
+        images = await self._ai.async_images(
+            [(photo.id, "auto"), (earlier.id, "auto")], plant.id, PhotoVariant.MEDIUM
+        )
+
+        def day(p: Photo) -> str:
+            return dt_util.as_local(p.taken_at).date().isoformat()
+
+        described = {
+            "name": plant.name,
+            "scientific_name": plant.scientific_name,
+            "category": plant.category.value,
+        }
+        response = await self._ai.async_generate(
+            Feature.COMPARE,
+            AIRequest(
+                feature=Feature.COMPARE,
+                system=prompts.COMPARE_SYSTEM[language],
+                messages=[
+                    Message(
+                        role="user",
+                        text=prompts.compare_text(language, described, day(photo), day(earlier)),
+                        images=images,
+                    )
+                ],
+                json_schema=COMPARE_SCHEMA,
+                max_output_tokens=1500,
+                plant_id=plant.id,
+                prompt_version=prompts.COMPARE_VERSION,
+            ),
+        )
+        result = clean_comparison(response.data or {})
+        record = {
+            **result,
+            "plant_id": plant.id,
+            "photo_id": photo.id,
+            "earlier_id": earlier.id,
+            "taken_at": photo.taken_at.isoformat(),
+            "earlier_taken_at": earlier.taken_at.isoformat(),
+            "model": response.model,
+            "created": dt_util.utcnow().isoformat(),
+            "problem_id": None,
+        }
+        if result["problem_title"] and "problem" not in photo.tags:
+            note = "\n".join(
+                [result["summary"] or "", *(f"- {c['text']}" for c in result["concerns"])]
+            )
+            problem = await self._care.async_create_problem(
+                plant.id, result["problem_title"], photo_ids=[photo.id], note=note.strip()
+            )
+            record["problem_id"] = problem.id
+        self._data["comparisons"][plant.id] = record
+        self._save()
+        self._manager.notify_ai(plant.id)
+        return record
 
     # ------------------------------------------------------------ tips
     def tips(self, plant_id: str | None) -> dict[str, Any] | None:

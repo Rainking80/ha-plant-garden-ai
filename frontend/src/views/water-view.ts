@@ -11,6 +11,7 @@ import { css, html, nothing, svg } from "lit";
 import { errorMessage, refreshWater } from "../api/client";
 import type { Plant, PlantBalance, WeatherDay } from "../api/types";
 import { PgElement, define, icon } from "../components/base";
+import "../components/weather-alerts";
 import { plantPath } from "../components/plant-card";
 import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
@@ -106,6 +107,11 @@ export class PgWaterView extends PgElement {
       </section>`;
     }
     return html`
+      <pg-weather-alerts
+        .hass=${this.hass}
+        .store=${this.store}
+        .prefix=${this.prefix}
+      ></pg-weather-alerts>
       ${this._renderWeather(water.weather)} ${this._renderPlants()} ${this._renderZones()}
       <section class="card block sources">
         <div class="block-header">

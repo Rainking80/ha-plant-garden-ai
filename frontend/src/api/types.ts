@@ -420,6 +420,8 @@ export interface WaterSummary {
   weather: WeatherDay[];
   plants?: Record<string, PlantBalance>;
   zones?: Record<string, ZoneAdvice>;
+  /** warnings of the coming days (frost, heat, storm, rain, diseases, slugs) */
+  alerts?: WeatherAlert[];
 }
 
 // ------------------------------------------------------------ AI
@@ -724,7 +726,8 @@ export type KnowledgeTopic = (typeof KNOWLEDGE_TOPICS)[number];
 export interface PlantKnowledge {
   summary: string | null;
   sections: { topic: KnowledgeTopic; text: string }[];
-  calendar: { months: number[]; task: string }[];
+  /** recurring jobs; `task_id` once one was taken over as a task */
+  calendar: { months: number[]; task: string; kind?: TaskKind; task_id?: string }[];
   warnings: string[];
   /** http(s) pages the knowledge is based on */
   sources: { url: string; title: string }[];
@@ -754,4 +757,37 @@ export interface ResearchSummary {
   queue: string[];
   failed: Record<string, { at: string; error: string }>;
   plants: Record<string, PlantKnowledge>;
+}
+
+// ------------------------------------------------------------ weather warnings
+export const ALERT_KINDS = ["frost", "heat", "storm", "heavy_rain", "fungal", "slugs"] as const;
+export type AlertKind = (typeof ALERT_KINDS)[number];
+
+export interface WeatherAlert {
+  key: string;
+  kind: AlertKind;
+  /** from when it applies (diseases and slugs: until when) */
+  day: string;
+  /** °C, km/h or mm */
+  value: number | null;
+  /** plants at risk */
+  plants: string[];
+}
+
+// ------------------------------------------------------------ photo comparison
+export interface PhotoComparison {
+  plant_id: string;
+  photo_id: string;
+  earlier_id: string;
+  taken_at: string;
+  earlier_taken_at: string;
+  summary: string | null;
+  growth: "more" | "same" | "less" | "unclear";
+  changes: string[];
+  concerns: { text: string; severity: "low" | "medium" | "high" }[];
+  problem_title: string | null;
+  /** the problem it opened, if something was wrong */
+  problem_id: string | null;
+  model: string;
+  created: string;
 }

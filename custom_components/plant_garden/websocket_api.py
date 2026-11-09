@@ -25,7 +25,7 @@ from .models import (
     SoilType,
     WaterNeed,
 )
-from .runtime import get_irrigation, get_loaded_entry, get_manager, get_water
+from .runtime import get_alerts, get_irrigation, get_loaded_entry, get_manager, get_water
 from .serialize import event_dict, layout_dict, measurement_dict, photo_dict, plant_dict
 from .water import water_summary, weather_sources
 
@@ -789,6 +789,12 @@ async def ws_irrigation_delete(
 
 
 # ---------------------------------------------------------------- weather and water balance
+def _with_alerts(hass: HomeAssistant, summary: dict[str, Any]) -> dict[str, Any]:
+    """The current weather warnings (frost, heat, storm, rain, diseases, slugs) go along."""
+    alerts = get_alerts(hass)
+    return {**summary, "alerts": alerts.summary() if alerts else []}
+
+
 @garden_command({probatio.Required("type"): f"{DOMAIN}/water/summary"})
 async def ws_water_summary(
     hass: HomeAssistant,
@@ -801,7 +807,7 @@ async def ws_water_summary(
     coordinator = get_water(hass)
     if entry is None or coordinator is None:  # pragma: no cover - checked by the decorator
         raise NotFoundError("water")
-    return water_summary(coordinator.data, bool(weather_sources(entry)))
+    return _with_alerts(hass, water_summary(coordinator.data, bool(weather_sources(entry))))
 
 
 @garden_command({probatio.Required("type"): f"{DOMAIN}/water/refresh"})
@@ -817,4 +823,4 @@ async def ws_water_refresh(
     if entry is None or coordinator is None:  # pragma: no cover - checked by the decorator
         raise NotFoundError("water")
     await coordinator.async_refresh()
-    return water_summary(coordinator.data, bool(weather_sources(entry)))
+    return _with_alerts(hass, water_summary(coordinator.data, bool(weather_sources(entry))))

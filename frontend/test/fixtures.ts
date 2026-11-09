@@ -28,6 +28,7 @@ import type {
   UsageTotals,
   WaterSummary,
   PlantKnowledge,
+  PhotoComparison,
   ResearchSummary,
 } from "../src/api/types";
 import type { HomeAssistant } from "../src/types/hass";
@@ -475,6 +476,7 @@ export interface FakeBackend {
   ai: FakeAI;
   care: FakeCare;
   research: ResearchSummary;
+  comparison: PhotoComparison | null;
   isAdmin: boolean;
 }
 
@@ -516,7 +518,9 @@ export function fakeBackend(
     ai?: Partial<FakeAI>;
     care?: Partial<FakeCare>;
     research?: Partial<ResearchSummary>;
+    comparison?: PhotoComparison | null;
     isAdmin?: boolean;
+    country?: string | null;
     language?: string;
   } = {},
 ): FakeBackend {
@@ -534,6 +538,7 @@ export function fakeBackend(
     ai: fakeAI(options.ai),
     care: fakeCare(options.care),
     research: fakeResearch(options.research),
+    comparison: options.comparison ?? null,
     isAdmin: options.isAdmin ?? true,
   } as FakeBackend;
   const layout = () => ({
@@ -738,6 +743,26 @@ export function fakeBackend(
         };
         return info;
       }
+      case "plant_garden/research/calendar_task": {
+        const plantId = msg.plant_id as string;
+        const info = backend.research.plants[plantId];
+        if (!info) throw { code: "not_found", message: "Not found" };
+        const calendar = info.calendar.map((item, i) =>
+          i === msg.index ? { ...item, task_id: `T-${i}` } : item,
+        );
+        const updated = { ...info, calendar };
+        backend.research = {
+          ...backend.research,
+          plants: { ...backend.research.plants, [plantId]: updated },
+        };
+        return updated;
+      }
+      case "plant_garden/assistant/comparison":
+        return backend.comparison;
+      case "plant_garden/assistant/compare": {
+        backend.comparison = makeComparison({ photo_id: msg.photo_id as string });
+        return backend.comparison;
+      }
       case "plant_garden/research/delete": {
         const { [msg.plant_id as string]: _gone, ...plants } = backend.research.plants;
         backend.research = {
@@ -760,7 +785,7 @@ export function fakeBackend(
     language,
     locale: { language },
     themes: { darkMode: false },
-    config: { latitude: 52.4, longitude: 13.06 },
+    config: { latitude: 52.4, longitude: 13.06, country: options.country ?? "DE" },
     states: options.states ?? {},
     user: { id: "u", name: "Test", is_admin: backend.isAdmin },
     connection: {
@@ -881,6 +906,25 @@ export function fakeResearch(fields: Partial<ResearchSummary> = {}): ResearchSum
     queue: [],
     failed: {},
     plants: {},
+    ...fields,
+  };
+}
+
+export function makeComparison(fields: Partial<PhotoComparison> = {}): PhotoComparison {
+  return {
+    plant_id: "R",
+    photo_id: "PH2",
+    earlier_id: "PH1",
+    taken_at: "2026-07-01T10:00:00+00:00",
+    earlier_taken_at: "2026-05-01T10:00:00+00:00",
+    summary: "Deutlich gewachsen, aber neue Flecken.",
+    growth: "more",
+    changes: ["Mehr Triebe"],
+    concerns: [{ text: "Flecken wie Sternrußtau", severity: "medium" }],
+    problem_title: "Braune Flecken",
+    problem_id: "P1",
+    model: "claude-opus-5-5",
+    created: "2026-07-01T11:00:00+00:00",
     ...fields,
   };
 }

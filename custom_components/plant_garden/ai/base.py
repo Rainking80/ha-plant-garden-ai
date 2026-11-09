@@ -17,6 +17,7 @@ class Feature(StrEnum):
     CHAT = "chat"
     DIGEST = "digest"
     RESEARCH = "research"  # collecting knowledge about a plant
+    COMPARE = "compare"  # a new photo against an earlier one
 
 
 class ProviderKind(StrEnum):

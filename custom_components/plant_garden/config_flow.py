@@ -31,8 +31,10 @@ from .const import (
     CONF_CONTEXT_TOKENS,
     CONF_GARDEN_NAME,
     CONF_MAX_RUNTIME_HOURS,
+    CONF_PHOTO_COMPARE,
     CONF_RESEARCH_SCHEDULE,
     CONF_USD_EUR,
+    CONF_WEATHER_ALERTS,
     CONF_WEEKLY_CHECK,
     DEFAULT_AI_RETENTION_DAYS,
     DEFAULT_CONTEXT_TOKENS,
@@ -109,6 +111,8 @@ class PlantGardenOptionsFlow(OptionsFlow):
                 CONF_WEEKLY_CHECK: bool(user_input.get(CONF_WEEKLY_CHECK)),
                 CONF_AI_AUTO_IDENTIFY: bool(user_input.get(CONF_AI_AUTO_IDENTIFY)),
                 CONF_RESEARCH_SCHEDULE: user_input.get(CONF_RESEARCH_SCHEDULE) or "off",
+                CONF_WEATHER_ALERTS: bool(user_input.get(CONF_WEATHER_ALERTS)),
+                CONF_PHOTO_COMPARE: bool(user_input.get(CONF_PHOTO_COMPARE)),
             }
             for feature, default in DEFAULT_CONTEXT_TOKENS.items():
                 data[CONF_CONTEXT_TOKENS + feature] = int(
@@ -165,6 +169,12 @@ class PlantGardenOptionsFlow(OptionsFlow):
                 ): bool,
                 probatio.Required(
                     CONF_AI_AUTO_IDENTIFY, default=options.get(CONF_AI_AUTO_IDENTIFY, False)
+                ): bool,
+                probatio.Required(
+                    CONF_WEATHER_ALERTS, default=options.get(CONF_WEATHER_ALERTS, True)
+                ): bool,
+                probatio.Required(
+                    CONF_PHOTO_COMPARE, default=options.get(CONF_PHOTO_COMPARE, False)
                 ): bool,
                 probatio.Required(
                     CONF_RESEARCH_SCHEDULE, default=options.get(CONF_RESEARCH_SCHEDULE, "off")

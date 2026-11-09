@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import date, timedelta
 import json
 from typing import Any
 
@@ -163,7 +163,7 @@ async def test_research_with_claude_web_search(
     # pruning merged, unknown topics dropped, months cleaned
     assert [s["topic"] for s in info["sections"]] == ["watering", "pruning"]
     assert info["sections"][1]["text"].endswith("Verblühtes laufend entfernen.")
-    assert info["calendar"] == [{"months": [3], "task": "Rückschnitt"}]
+    assert info["calendar"] == [{"months": [3], "task": "Rückschnitt", "kind": "prune"}]
     assert info["sources"] == [{"url": "https://garten.example/rose", "title": "Rosen schneiden"}]
     # tokens of three calls plus three searches at $0.01
     assert info["cost"] > 0.03
@@ -185,6 +185,36 @@ async def test_research_with_claude_web_search(
     summary = await _summary(client)
     assert summary["queue"] == []  # has its knowledge: not researched again
     assert summary["plants"][rose.id]["summary"] == KNOWLEDGE["summary"]
+
+    # the care calendar becomes a yearly task in its months
+    calendar_task = {"type": "plant_garden/research/calendar_task", "plant_id": rose.id}
+    await client.send_json_auto_id({**calendar_task, "index": 0})
+    msg = await client.receive_json()
+    assert msg["success"], msg
+    task_id = msg["result"]["calendar"][0]["task_id"]
+    care = entry.runtime_data.care
+    task = await care.async_get_task(task_id)
+    assert (task.title, task.kind.value, task.plant_id, task.months) == (
+        "Rückschnitt",
+        "prune",
+        rose.id,
+        [3],
+    )
+    assert (task.repeat_every, task.repeat_unit.value if task.repeat_unit else None) == (
+        52,
+        "weeks",
+    )
+    assert task.due is not None
+    assert task.due.month == 3
+    assert task.source == "ai"
+    await client.send_json_auto_id({**calendar_task, "index": 0})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"  # once only
+    await client.send_json_auto_id({**calendar_task, "index": 5})
+    assert (await client.receive_json())["error"]["code"] == "not_found"
+    # a deleted task can be taken over again
+    await care.async_delete_task(task_id)
+    summary = await _summary(client)
+    assert "task_id" not in summary["plants"][rose.id]["calendar"][0]
 
     # deleting it puts the plant back in the queue
     await client.send_json_auto_id({"type": "plant_garden/research/delete", "plant_id": rose.id})
@@ -326,7 +356,7 @@ def test_clean_research_tolerates_bad_answers() -> None:
     assert cleaned == {
         "summary": "Kurz.",
         "sections": [{"topic": "soil", "text": "Lehm"}],
-        "calendar": [{"months": [4], "task": "Düngen"}],
+        "calendar": [{"months": [4], "task": "Düngen", "kind": "fertilize"}],
         "warnings": ["Giftig für Katzen"],
     }
 
@@ -346,3 +376,19 @@ async def test_schedules_wait_their_interval(hass: HomeAssistant, schedule: str)
     assert not researcher.is_due(now + interval - timedelta(minutes=30))
     # a tick a few milliseconds early still counts
     assert researcher.is_due(now + interval - timedelta(milliseconds=5))
+
+
+def test_first_day_in_the_months_and_job_kinds() -> None:
+    from custom_components.plant_garden.ai.research import first_day_in  # noqa: PLC0415
+    from custom_components.plant_garden.ai.schemas import calendar_kind  # noqa: PLC0415
+
+    november = date(2026, 11, 9)
+    assert first_day_in([11, 12], november) == november
+    assert first_day_in([3, 4], november) == date(2027, 3, 1)
+    assert first_day_in([12], november) == date(2026, 12, 1)
+    assert calendar_kind("Auslichtungsschnitt") == "prune"
+    assert calendar_kind("Kompost geben") == "fertilize"
+    assert calendar_kind("Beeren ernten") == "harvest"
+    assert calendar_kind("Blattläuse kontrollieren") == "pest_check"
+    assert calendar_kind("Mulchen") == "other"
+    assert calendar_kind("Mulchen", "water") == "water"  # the answer's kind wins

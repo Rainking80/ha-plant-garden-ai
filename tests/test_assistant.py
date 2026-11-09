@@ -321,6 +321,18 @@ async def test_context_is_compact_and_deterministic(
     assert plant["plant"]["ref"] == "p1"
     assert "notes" not in plant["plant"]
 
+    # a German garden with a hedge: the AI knows the hedge cutting season
+    def build(country: str | None) -> Any:
+        return context_builder.async_build(
+            data.manager, data.care, None, plant_id=None, budget=100000, latitude=52,
+            country=country,
+        )  # fmt: skip
+
+    assert "rules" not in (await build("DE"))[0]  # no hedge yet
+    await data.manager.async_create_plant({"name": "Hainbuche", "category": "hedge"})
+    assert "§ 39 BNatSchG" in (await build("DE"))[0]["rules"][0]
+    assert "rules" not in (await build("AT"))[0]
+
 
 def test_schemas_clean_bad_answers() -> None:
     diagnosis = clean_diagnosis(
@@ -423,3 +435,65 @@ async def test_streaming_providers(
     with pytest.raises(AIError, match="bad"):
         async for _ in async_stream(session, "https://example.invalid/bad", json={}):
             pass  # pragma: no cover
+
+
+COMPARISON = {
+    "summary": "Deutlich gewachsen, aber neue braune Flecken.",
+    "growth": "more",
+    "changes": ["Mehr Triebe", "Braune Flecken an unteren Blättern"],
+    "concerns": [{"text": "Flecken deuten auf Sternrußtau", "severity": "medium"}],
+    "problem_title": "Braune Flecken",
+}
+
+
+async def test_compare_a_new_photo_with_an_earlier_one(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    aioclient_mock: AiohttpClientMocker,
+    garden: tuple[MockConfigEntry, Any],
+) -> None:
+    entry, rose = garden
+    data = entry.runtime_data
+    client = await hass_ws_client(hass)
+    first = await data.manager.async_add_photo(rose.id, make_image())
+    msg = await _call(client, type="plant_garden/assistant/compare", photo_id=first.id)
+    assert msg["error"]["code"] == "ai_error"  # nothing earlier to compare with
+
+    old = await data.manager.async_add_photo(rose.id, make_image())
+    await data.manager.async_update_photo(
+        old.id, {"taken_at": dt_util.utcnow() - timedelta(days=40)}
+    )
+    aioclient_mock.post(MESSAGES, json=claude(json.dumps(COMPARISON)))
+    msg = await _call(client, type="plant_garden/assistant/compare", photo_id=first.id)
+    assert msg["success"], msg
+    result = msg["result"]
+    assert (result["growth"], result["earlier_id"]) == ("more", old.id)
+    body = _sent(aioclient_mock)
+    content = body["messages"][0]["content"]
+    assert [c["type"] for c in content] == ["image", "image", "text"]
+    assert "Foto 2" in content[-1]["text"] or "Photo 2" in content[-1]["text"]
+    # a real concern opens a problem with the new photo
+    [problem] = await data.care.async_problems(rose.id)
+    assert (problem.title, problem.photo_ids) == ("Braune Flecken", [first.id])
+    assert result["problem_id"] == problem.id
+    msg = await _call(client, type="plant_garden/assistant/comparison", plant_id=rose.id)
+    assert msg["result"]["summary"] == COMPARISON["summary"]
+    [row] = await data.manager.async_usage_log(limit=1)
+    assert row["feature"] == "compare"
+
+    # option on: a new photo is compared by itself
+    hass.config_entries.async_update_entry(entry, options={"photo_compare": True})
+    calm = {**COMPARISON, "concerns": [], "problem_title": "", "growth": "same"}
+    aioclient_mock.clear_requests()
+    aioclient_mock.post(MESSAGES, json=claude(json.dumps(calm)))
+    newest = await data.manager.async_add_photo(rose.id, make_image())
+    await hass.async_block_till_done()
+    comparison = data.assistant.comparison(rose.id)
+    assert comparison is not None
+    assert (comparison["photo_id"], comparison["growth"]) == (newest.id, "same")
+    assert comparison["problem_id"] is None
+    assert len(await data.care.async_problems(rose.id)) == 1  # no new problem
+    # deleting a compared photo forgets the comparison
+    await data.manager.async_delete_photo(newest.id)
+    msg = await _call(client, type="plant_garden/assistant/comparison", plant_id=rose.id)
+    assert msg["result"] is None

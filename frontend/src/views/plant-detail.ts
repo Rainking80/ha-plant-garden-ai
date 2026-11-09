@@ -37,6 +37,7 @@ import "../components/water-panel";
 import "../components/ai-panel";
 import "../components/assistant-panel";
 import "../components/knowledge-panel";
+import "../components/photo-compare";
 import "../components/problems-panel";
 import "../components/task-list";
 import type { PgPlantForm } from "../components/plant-form";
@@ -583,6 +584,15 @@ export class PgPlantDetail extends PgElement {
           .plantId=${plant.id}
           .photos=${photos}
         ></pg-ai-panel>
+      </section>
+
+      <section class="card block">
+        <pg-photo-compare
+          .hass=${this.hass}
+          .store=${this.store}
+          .plantId=${plant.id}
+          .photos=${photos}
+        ></pg-photo-compare>
       </section>
 
       <section

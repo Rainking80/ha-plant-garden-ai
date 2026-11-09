@@ -1,4 +1,7 @@
 import {
+  mdiCalendarCheckOutline,
+  mdiCheck,
+  mdiPlus,
   mdiAlertOutline,
   mdiBookOpenPageVariantOutline,
   mdiDeleteOutline,
@@ -6,7 +9,7 @@ import {
 } from "@mdi/js";
 import { css, html, nothing } from "lit";
 
-import { deleteKnowledge, errorMessage, researchPlant } from "../api/client";
+import { calendarTask, deleteKnowledge, errorMessage, researchPlant } from "../api/client";
 import type { PlantKnowledge } from "../api/types";
 import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
@@ -33,12 +36,15 @@ export class PgKnowledgePanel extends PgElement {
     plantId: {},
     _busy: { state: true },
     _error: { state: true },
+    _taking: { state: true },
   };
 
   declare store: GardenStore;
   declare plantId: string;
   declare _busy: boolean;
   declare _error: string;
+  /** calendar job being taken over as a task */
+  declare _taking: number | null;
 
   private readonly _onStoreChange = () => this.requestUpdate();
 
@@ -46,6 +52,7 @@ export class PgKnowledgePanel extends PgElement {
     super();
     this._busy = false;
     this._error = "";
+    this._taking = null;
   }
 
   override connectedCallback(): void {
@@ -76,6 +83,29 @@ export class PgKnowledgePanel extends PgElement {
       this._error = errorMessage(err);
     } finally {
       this._busy = false;
+    }
+  }
+
+  /** Take care calendar jobs over as yearly tasks, one after the other. */
+  private async _takeOver(indexes: number[]): Promise<void> {
+    this._error = "";
+    try {
+      for (const index of indexes) {
+        this._taking = index;
+        const info = await calendarTask(this.hass, this.plantId, index);
+        const research = this.store.research;
+        if (research) {
+          const known = research.plants[this.plantId];
+          this.store.setResearch({
+            ...research,
+            plants: { ...research.plants, [this.plantId]: { ...info, cost: known?.cost ?? null } },
+          });
+        }
+      }
+    } catch (err) {
+      this._error = errorMessage(err);
+    } finally {
+      this._taking = null;
     }
   }
 
@@ -192,15 +222,44 @@ export class PgKnowledgePanel extends PgElement {
           ? html`<h4>${t("knowledge.calendar")}</h4>
               <ul class="calendar">
                 ${info.calendar.map(
-                  (item) =>
+                  (item, index) =>
                     html`<li>
                       <span class="months"
                         >${item.months.map((m) => months[m - 1]).join(", ")}</span
                       >
                       <span>${item.task}</span>
+                      ${
+                        item.task_id
+                          ? html`<span class="muted small taken"
+                              >${icon(mdiCheck)} ${t("knowledge.task_taken")}</span
+                            >`
+                          : html`<button
+                              class="button text small"
+                              ?disabled=${this._taking !== null}
+                              @click=${() => void this._takeOver([index])}
+                            >
+                              ${icon(mdiPlus)} ${t("knowledge.task_take")}
+                            </button>`
+                      }
                     </li>`,
                 )}
-              </ul>`
+              </ul>
+              ${
+                info.calendar.filter((item) => !item.task_id).length > 1
+                  ? html`<div class="actions">
+                      <button
+                        class="button secondary"
+                        ?disabled=${this._taking !== null}
+                        @click=${() =>
+                          void this._takeOver(
+                            info.calendar.flatMap((item, i) => (item.task_id ? [] : [i])),
+                          )}
+                      >
+                        ${icon(mdiCalendarCheckOutline)} ${t("knowledge.tasks_take_all")}
+                      </button>
+                    </div>`
+                  : nothing
+              }`
           : nothing
       }
       ${
@@ -297,8 +356,19 @@ export class PgKnowledgePanel extends PgElement {
       }
       .calendar li {
         display: grid;
-        grid-template-columns: minmax(90px, auto) 1fr;
+        grid-template-columns: minmax(90px, auto) 1fr auto;
+        align-items: center;
         gap: 10px;
+      }
+      .calendar .taken {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .calendar .icon,
+      .actions .icon {
+        width: 16px;
+        height: 16px;
       }
       .calendar .months {
         color: var(--pg-accent);

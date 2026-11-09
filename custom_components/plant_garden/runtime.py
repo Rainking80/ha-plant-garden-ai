@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from .ai.assistant import Assistant
 from .ai.research import Researcher
 from .ai.service import AIService
+from .alerts import AlertNotifier
 from .care import CareManager
 from .const import DOMAIN
 from .garden import GardenManager
@@ -29,6 +30,7 @@ class PlantGardenData:
     care: CareManager
     assistant: Assistant
     researcher: Researcher
+    alerts: AlertNotifier
 
 
 type PlantGardenConfigEntry = ConfigEntry[PlantGardenData]
@@ -73,3 +75,8 @@ def get_assistant(hass: HomeAssistant) -> Assistant | None:
 def get_researcher(hass: HomeAssistant) -> Researcher | None:
     entry = get_loaded_entry(hass)
     return entry.runtime_data.researcher if entry else None
+
+
+def get_alerts(hass: HomeAssistant) -> AlertNotifier | None:
+    entry = get_loaded_entry(hass)
+    return entry.runtime_data.alerts if entry else None

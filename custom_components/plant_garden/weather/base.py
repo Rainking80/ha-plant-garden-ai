@@ -33,6 +33,7 @@ class DailyWeather:
     precip_mm: float | None = None
     et0_mm: float | None = None
     rain_probability: float | None = None  # %, forecasts
+    gust_max: float | None = None  # km/h, the strongest gust of the day
     source: str = ""
 
     def merged_with(self, other: Self) -> Self:

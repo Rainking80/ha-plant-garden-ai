@@ -33,6 +33,7 @@ import type {
   PlantKnowledge,
   ResearchSchedule,
   ResearchSummary,
+  PhotoComparison,
 } from "./types";
 
 export const WS_PREFIX = "plant_garden";
@@ -718,4 +719,36 @@ export function setResearchSchedule(
   schedule: ResearchSchedule,
 ): Promise<ResearchSummary> {
   return hass.callWS<ResearchSummary>({ type: `${WS_PREFIX}/research/schedule`, schedule });
+}
+
+/** Take a job of a plant's care calendar over as a yearly task. */
+export function calendarTask(
+  hass: HomeAssistant,
+  plantId: string,
+  index: number,
+): Promise<PlantKnowledge> {
+  return hass.callWS<PlantKnowledge>({
+    type: `${WS_PREFIX}/research/calendar_task`,
+    plant_id: plantId,
+    index,
+  });
+}
+
+// ------------------------------------------------------------ assistant: photo comparison
+export function photoComparison(
+  hass: HomeAssistant,
+  plantId: string,
+): Promise<PhotoComparison | null> {
+  return hass.callWS<PhotoComparison | null>({
+    type: `${WS_PREFIX}/assistant/comparison`,
+    plant_id: plantId,
+  });
+}
+
+/** Compare a photo with an earlier one of its plant (an AI call with costs). */
+export function comparePhoto(hass: HomeAssistant, photoId: string): Promise<PhotoComparison> {
+  return hass.callWS<PhotoComparison>({
+    type: `${WS_PREFIX}/assistant/compare`,
+    photo_id: photoId,
+  });
 }

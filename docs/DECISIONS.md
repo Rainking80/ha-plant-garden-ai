@@ -546,3 +546,41 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   never the location, notes or entity ids. Web content is treated as information,
   never as instructions; the answer can only fill text fields, shown without
   HTML, and only http(s) sources are linked.
+
+## D-039 Weather warnings with what to do (2026-11-09)
+
+- **Rules, no AI**: from the forecast of today and the next three days - frost
+  below a plant's own limit (tender categories and pots below 0 °C), heat from
+  30 °C, gusts from 60 km/h (new: `gust_max` from Open-Meteo and Bright Sky),
+  heavy rain from 25 mm on a likely day - and from the days around today: at
+  least three humid, warm days (mean 12-26 °C with rain or 85 % humidity) mean
+  weather for fungal diseases, at least two mild, wet days mean slug weather.
+  Which plants are at risk comes from category, pot, planting date and - for
+  diseases and slugs - the words in their researched knowledge (D-038), else
+  from well-known names.
+- **Notification once**: a new warning becomes a Home Assistant notification
+  (one per kind, replaced, not stacked) and the event `plant_garden_weather_alert`
+  for own automations; the same kind waits two days. Option `weather_alerts`, on
+  by default (no costs, nothing leaves Home Assistant). The panel shows the
+  current warnings with what to do on the Water & weather and the Assistant tab.
+
+## D-040 Care calendar as tasks, the hedge season, photo comparison (2026-11-09)
+
+- **Care calendar → tasks**: a job of the researched calendar becomes a task with
+  its kind (asked from the AI, else guessed from its words), its months as
+  season, a yearly repeat (52 weeks from when it was done) and the first due day
+  in its months. The calendar entry keeps the task's id; a deleted task can be
+  taken over again.
+- **Hedge cutting season (Germany)**: § 39 (5) 2 BNatSchG allows only gentle
+  shaping cuts of hedges from 1 March to 30 September. With Home Assistant's
+  country set to DE, pruning tasks of hedges (or plants drawn as hedges) in that
+  time show the rule, and the AI context carries it as a rule when the garden
+  has hedges.
+- **Photo comparison**: the newest photo against the newest one taken at least
+  14 days earlier (else the oldest), both in medium size, with the photo
+  provider. The answer gives growth, changes and concerns; a medium or high
+  concern with a title opens a problem with the new photo (not for photos tagged
+  "problem", which open one anyway). By hand on the plant page, or after every
+  upload with the option `photo_compare` (off by default - an AI call with
+  costs). The last comparison per plant is kept in Store `plant_garden.assistant`
+  and dropped when one of its photos is deleted.

@@ -147,3 +147,36 @@ def tips_text(language: str, *, plant: bool, weekly: bool) -> str:
     if plant:
         return "Tipps für diese Pflanze." if de else "Tips for this plant."
     return "Tipps für den ganzen Garten." if de else "Tips for the whole garden."
+
+
+# ---------------------------------------------------------------- photo comparison
+COMPARE_VERSION = "compare-1"
+
+COMPARE_SYSTEM = {
+    "de": """Du vergleichst zwei Fotos derselben Gartenpflanze, aufgenommen an verschiedenen \
+Tagen (Foto 1 ist das neue). Beschreibe, was sich verändert hat: Wachstum, Blätter (Farbe, \
+Flecken, Welke, Fraß), Blüte und Frucht, Anzeichen von Schädlingen oder Krankheiten.
+Bewerte nur, was auf den Fotos zu sehen ist. Andere Jahreszeit, anderes Licht und ein anderer \
+Blickwinkel sind kein Problem; ein Blattfall im Herbst ist normal. Melde ein Problem nur, \
+wenn etwas wirklich auf einen Schaden hindeutet, und gib ihm dann einen kurzen Titel. \
+Antworte auf Deutsch und knapp.""",
+    "en": """You compare two photos of the same garden plant, taken on different days \
+(photo 1 is the new one). Describe what has changed: growth, leaves (colour, spots, wilting, \
+feeding damage), flowers and fruit, signs of pests or diseases.
+Judge only what the photos show. Another season, other light and another angle are no \
+problem; leaf fall in autumn is normal. Report a problem only if something really points to \
+damage, and then give it a short title. Answer in English and briefly.""",
+}
+
+
+def compare_text(language: str, plant: dict[str, Any], new: str, old: str) -> str:
+    """The plant and the dates of the two photos."""
+    de = language == "de"
+    name = plant["name"] + (
+        f" ({plant['scientific_name']})" if plant.get("scientific_name") else ""
+    )
+    return (
+        f"{'Pflanze' if de else 'Plant'}: {name}, {plant['category']}\n"
+        f"{'Foto 1 (neu)' if de else 'Photo 1 (new)'}: {new}\n"
+        f"{'Foto 2 (früher)' if de else 'Photo 2 (earlier)'}: {old}"
+    )

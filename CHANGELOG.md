@@ -8,6 +8,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Weather warnings with what to do: frost below a plant's limit, heat, storm,
+  heavy rain, and weather for fungal diseases and slugs - for the plants at risk,
+  shown on the Water & weather and the Assistant tab, as a Home Assistant
+  notification and as the event `plant_garden_weather_alert` (option, on by
+  default; rules only, no AI).
+- Care calendar to tasks: take a job of a plant's researched care calendar - or
+  all of them - over as a yearly task in its months.
+- Hedge cutting season in Germany (§ 39 BNatSchG): hedge pruning tasks between
+  March and September point out that only gentle shaping cuts are allowed; the
+  AI knows the rule too.
+- Photo comparison: the AI compares the newest photo of a plant with an earlier
+  one (growth, changes, concerns) and opens a problem when something is wrong -
+  by hand on the plant page or after every upload (option, off by default).
+- Gusts in the weather data (Open-Meteo, Bright Sky).
+
 - Assistant: plant knowledge. The assistant researches care, pests, toxicity and
   more for one plant at a time - on the web with Claude, Gemini or OpenRouter
   (with sources), else from Wikipedia - and keeps it: on the plant page (by

@@ -95,7 +95,15 @@ sensors and offers recommendations as entities for your own automations.
 - Plant knowledge: the assistant researches care, pests, toxicity and more for
   each plant - on the web with Claude, Gemini or OpenRouter (with sources), else
   from Wikipedia - and keeps it on the plant page. You choose how often it
-  researches on its own (off by default); a plant is researched only once.
+  researches on its own (off by default); a plant is researched only once. Its
+  care calendar becomes yearly tasks with one click.
+- Weather warnings with what to do: frost, heat, storm, heavy rain, and weather
+  for fungal diseases and slugs - for the plants at risk, as a notification too
+  (rules, no AI).
+- Photo comparison: the AI compares a new photo with an earlier one and opens a
+  problem when something is wrong (by hand, or after every upload if you want).
+- Hedges in Germany: pruning tasks point out the cutting ban from March to
+  September (§ 39 BNatSchG).
 - A **Tech** page for administrators: requests, tokens and costs per day, model,
   feature and plant, a request log with CSV export, editable prices, a monthly
   budget that warns and can stop.
@@ -204,7 +212,7 @@ Actions: `plant_garden.log_watering`, `plant_garden.refresh_weather`,
 a camera snapshot).
 
 Events: `plant_garden_irrigation_finished`, `plant_garden_task_due`,
-`plant_garden_problem_detected`.
+`plant_garden_problem_detected`, `plant_garden_weather_alert`.
 
 Example – a notification when a garden task is due:
 

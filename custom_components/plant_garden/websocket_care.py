@@ -114,6 +114,8 @@ def async_register_care_commands(hass: HomeAssistant) -> None:
         ws_tips_get,
         ws_tips_create,
         ws_tips_decide,
+        ws_compare_get,
+        ws_compare_run,
         ws_chat_history,
         ws_chat_clear,
         ws_chat,
@@ -507,3 +509,28 @@ async def ws_chat(
         send({"error": str(err), "code": websocket_api.ERR_INVALID_FORMAT})
     else:
         send({"done": True, "message": answer.as_dict()})
+
+
+# ---------------------------------------------------------------- photo comparison
+@care_command({**_type("assistant/comparison"), probatio.Required("plant_id"): str})
+async def ws_compare_get(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    care: CareManager,
+    assistant: Assistant,
+) -> dict[str, Any] | None:
+    """The last comparison of a new photo of the plant with an earlier one (or null)."""
+    return await assistant.async_comparison(msg["plant_id"])
+
+
+@care_command({**_type("assistant/compare"), probatio.Required("photo_id"): str})
+async def ws_compare_run(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    care: CareManager,
+    assistant: Assistant,
+) -> dict[str, Any]:
+    """Compare a photo with an earlier one of its plant (costs money)."""
+    return await assistant.async_compare(msg["photo_id"])

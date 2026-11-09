@@ -88,6 +88,8 @@ async def test_options_flow_sets_the_run_time_warning(
         "weekly_check": False,
         "ai_auto_identify": False,
         "research_schedule": "off",
+        "weather_alerts": True,
+        "photo_compare": False,
         "context_tokens_diagnose": 2500,
         "context_tokens_tips": 4000,
         "context_tokens_chat": 3000,

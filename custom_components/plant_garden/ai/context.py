@@ -17,7 +17,7 @@ from homeassistant.util import dt as dt_util
 
 from ..care import CareManager, TaskStatus
 from ..garden import GardenManager
-from ..models import Plant
+from ..models import Plant, PlantCategory, ShapeKind
 from ..water import WaterData
 from .pricing import estimate_tokens
 
@@ -127,6 +127,20 @@ def _trim(context: dict[str, Any], budget: int, order: list[tuple[str, ...]]) ->
     return context
 
 
+# Germany, § 39 (5) 2 BNatSchG: no strong hedge cutting in the breeding season.
+HEDGE_RULE_DE = (
+    "Germany (§ 39 BNatSchG): from 1 March to 30 September only light shaping and care "
+    "cuts of hedges are allowed; cut hedges back hard from 1 October to the end of February."
+)
+
+
+def has_hedges(manager: GardenManager) -> bool:
+    """A hedge plant, or a plant drawn as a hedge area."""
+    return any(p.category is PlantCategory.HEDGE for p in manager.plants) or any(
+        s.kind is ShapeKind.HEDGE and s.plant_id for s in manager.shapes()
+    )
+
+
 async def async_build(
     manager: GardenManager,
     care: CareManager,
@@ -135,6 +149,7 @@ async def async_build(
     plant_id: str | None,
     budget: int,
     latitude: float,
+    country: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, str]]:
     """The context and the plant references used in it (ref -> plant id)."""
     today = dt_util.now().date()
@@ -221,6 +236,8 @@ async def async_build(
         }
         for t in tasks[:30]
     ]
+    if country == "DE" and has_hedges(manager):
+        context["rules"] = [HEDGE_RULE_DE]
     context = {k: v for k, v in context.items() if v not in (None, [], {})}
     order = [
         ("weather",),

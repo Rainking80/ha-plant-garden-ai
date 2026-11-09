@@ -37,7 +37,9 @@
           "context_tokens_tips": "Context size for tips",
           "context_tokens_chat": "Context size for the chat",
           "ai_auto_identify": "Identify new plants after a photo upload",
-          "research_schedule": "Research plants on its own"
+          "research_schedule": "Research plants on its own",
+          "weather_alerts": "Weather warnings",
+          "photo_compare": "Compare new photos with earlier ones"
         },
         "data_description": {
           "max_runtime_hours": "If an irrigation zone runs longer, a notice appears under Repairs (e.g. a stuck valve).",
@@ -47,7 +49,9 @@
           "weekly_check": "Every Monday at 8:00 the AI looks at the garden and gives tips. Costs money; the budget applies.",
           "context_tokens_diagnose": "Roughly how many tokens of garden data the AI may receive (weather, water balance, tasks, problems). More context costs more.",
           "ai_auto_identify": "Only for plants without a botanical name yet. Every identification is an AI call with costs; the budget applies.",
-          "research_schedule": "The assistant looks up care, pests, toxicity and more for one plant without knowledge at a time - on the web with Claude, Gemini or OpenRouter, else from Wikipedia - and keeps it. Every research costs money; the budget applies. Plants that have their knowledge are not researched again."
+          "research_schedule": "The assistant looks up care, pests, toxicity and more for one plant without knowledge at a time - on the web with Claude, Gemini or OpenRouter, else from Wikipedia - and keeps it. Every research costs money; the budget applies. Plants that have their knowledge are not researched again.",
+          "weather_alerts": "A notification with what to do when frost below a plant's limit, heat, storm, heavy rain, or weather for plant diseases and slugs is coming. No AI, no costs.",
+          "photo_compare": "After a photo upload the AI compares it with an earlier photo of the plant (growth, discolouration, pests) and opens a problem if something is wrong. Every comparison is an AI call with costs; the budget applies."
         }
       }
     }

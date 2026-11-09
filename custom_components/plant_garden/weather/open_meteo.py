@@ -28,6 +28,7 @@ DAILY = (
     "precipitation_sum",
     "et0_fao_evapotranspiration",
     "precipitation_probability_max",
+    "wind_gusts_10m_max",
 )
 MAX_PAST_DAYS = 92
 TIMEOUT = aiohttp.ClientTimeout(total=30)
@@ -38,6 +39,10 @@ def _value(daily: dict[str, Any], key: str, index: int) -> float | None:
     values = daily.get(key) or []
     value = values[index] if index < len(values) else None
     return float(value) if value is not None else None
+
+
+def _kmh(metres_per_second: float | None) -> float | None:
+    return round(metres_per_second * 3.6, 1) if metres_per_second is not None else None
 
 
 def parse(payload: dict[str, Any]) -> list[DailyWeather]:
@@ -63,6 +68,7 @@ def parse(payload: dict[str, Any]) -> list[DailyWeather]:
                 precip_mm=_value(daily, "precipitation_sum", index),
                 et0_mm=_value(daily, "et0_fao_evapotranspiration", index),
                 rain_probability=_value(daily, "precipitation_probability_max", index),
+                gust_max=_kmh(_value(daily, "wind_gusts_10m_max", index)),
                 source=SOURCE_OPEN_METEO,
             )
         )

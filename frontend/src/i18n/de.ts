@@ -762,4 +762,46 @@ export const de: Translations = {
   "knowledge.topic_companions": "Gute Nachbarn",
   "knowledge.topic_toxicity": "Giftigkeit",
   "knowledge.topic_facts": "Wissenswertes",
+  "feature.compare": "Fotovergleich",
+  "knowledge.task_take": "Als Aufgabe",
+  "knowledge.task_taken": "Aufgabe angelegt",
+  "knowledge.tasks_take_all": "Alle als Aufgaben übernehmen",
+  "tasks.hedge_season":
+    "Vom 1. März bis 30. September ist bei Hecken nur ein schonender Form- und Pflegeschnitt erlaubt; starker Rückschnitt erst ab Oktober (§ 39 BNatSchG).",
+  "alert.title": "Warnungen",
+  "alert.plants": "Betrifft:",
+  "alert.frost": "Frost bis {value} °C ab {day}",
+  "alert.frost_action":
+    "Kübel ins Haus oder an die Hauswand stellen, Empfindliches mit Vlies abdecken, abends nicht mehr gießen.",
+  "alert.heat": "Hitze bis {value} °C ab {day}",
+  "alert.heat_action":
+    "Morgens durchdringend gießen – vor allem Kübel und frisch Gepflanztes –, mittags schattieren, nicht düngen.",
+  "alert.storm": "Sturmböen bis {value} km/h ab {day}",
+  "alert.storm_action":
+    "Kübel und Töpfe sichern oder hinlegen, junge Bäume anbinden, Rankhilfen prüfen.",
+  "alert.heavy_rain": "Starkregen, {value} mm am {day}",
+  "alert.heavy_rain_action":
+    "Bewässerung aussetzen, Untersetzer der Kübel leeren, Abflüsse freihalten.",
+  "alert.fungal": "Pilzwetter bis {day}",
+  "alert.fungal_action":
+    "Mehrere feucht-warme Tage: morgens und nur an den Boden gießen, Blätter trocken halten, befallene Blätter entfernen.",
+  "alert.slugs": "Schneckenwetter bis {day}",
+  "alert.slugs_action":
+    "Mild und nass: abends Schnecken absammeln, Jungpflanzen schützen (Kragen, Barrieren), morgens statt abends gießen.",
+  "compare.title": "Fotovergleich",
+  "compare.run": "Neuestes Foto vergleichen",
+  "compare.running": "Vergleiche …",
+  "compare.empty":
+    "Die KI vergleicht das neueste Foto mit einem früheren: Wachstum, Blätter, Schädlinge. Ein KI-Aufruf mit Kosten.",
+  "compare.need_two": "Mit zwei Fotos von verschiedenen Tagen kann die KI sie vergleichen.",
+  "compare.option":
+    "Nach jedem Hochladen von selbst: Option „Neue Fotos mit früheren vergleichen“ in den Einstellungen der Integration.",
+  "compare.growth_more": "gewachsen",
+  "compare.growth_same": "etwa gleich",
+  "compare.growth_less": "kleiner",
+  "compare.growth_unclear": "Wachstum unklar",
+  "compare.severity_low": "gering",
+  "compare.severity_medium": "beobachten",
+  "compare.severity_high": "handeln",
+  "compare.problem": "Problem „{title}“ angelegt – siehe Probleme.",
 };

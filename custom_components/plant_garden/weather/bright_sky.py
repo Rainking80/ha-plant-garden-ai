@@ -59,6 +59,7 @@ def aggregate(records: list[dict[str, Any]]) -> list[DailyWeather]:
         rain = _numbers(hours, "precipitation")
         dew = _numbers(hours, "dew_point")
         probability = _numbers(hours, "precipitation_probability")
+        gusts = _numbers(hours, "wind_gust_speed")
         result.append(
             DailyWeather(
                 day=day,
@@ -73,6 +74,7 @@ def aggregate(records: list[dict[str, Any]]) -> list[DailyWeather]:
                 solar_mj=round(sum(solar) * KWH_TO_MJ, 2) if solar else None,
                 precip_mm=round(sum(rain), 2) if rain else None,
                 rain_probability=max(probability) if probability else None,
+                gust_max=max(gusts) if gusts else None,
                 source=SOURCE_BRIGHT_SKY,
             )
         )

@@ -33,6 +33,7 @@ DEFAULT_MAX_RUNTIME_HOURS: Final = 6
 EVENT_IRRIGATION_FINISHED: Final = "plant_garden_irrigation_finished"
 EVENT_PROBLEM_DETECTED: Final = "plant_garden_problem_detected"
 EVENT_TASK_DUE: Final = "plant_garden_task_due"
+EVENT_WEATHER_ALERT: Final = "plant_garden_weather_alert"
 ZONE_ENTITY_DOMAINS: Final = ("valve", "switch", "input_boolean", "binary_sensor")
 
 # AI (options of the entry; providers are config subentries of type "ai")
@@ -51,6 +52,10 @@ CONF_WEEKLY_CHECK: Final = "weekly_check"  # opt-in garden check by the AI every
 # how often the assistant researches the next plant without knowledge (opt-in, D-038)
 CONF_RESEARCH_SCHEDULE: Final = "research_schedule"
 RESEARCH_SCHEDULES: Final = ("off", "weekly", "daily", "three_daily", "hourly")
+# notify about frost, heat, storm, heavy rain, plant diseases and slugs (no AI, on by default)
+CONF_WEATHER_ALERTS: Final = "weather_alerts"
+# compare a new photo with earlier ones of the plant (an AI call, off by default)
+CONF_PHOTO_COMPARE: Final = "photo_compare"
 # context size (estimated tokens) the assistant may send, per feature: option
 # "context_tokens_<feature>"
 CONF_CONTEXT_TOKENS: Final = "context_tokens_"

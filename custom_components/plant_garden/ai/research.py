@@ -13,7 +13,7 @@ a user can always research one plant by hand. Every AI call goes through
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import logging
 from typing import Any
 
@@ -24,13 +24,14 @@ from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
+from ..care import CareManager
 from ..const import CONF_RESEARCH_SCHEDULE, DOMAIN, RESEARCH_SCHEDULES
-from ..garden import GardenChange, GardenManager
+from ..garden import GardenChange, GardenManager, NotFoundError
 from ..models import Plant, PlantStatus
 from . import wikipedia
 from .base import AIError, AIRequest, Feature, Message
 from .prompts import assistant as assistant_prompts, research as prompts
-from .schemas import RESEARCH_SCHEMA, clean_research
+from .schemas import RESEARCH_SCHEMA, calendar_kind, clean_research
 from .service import AIService, season_text
 
 _LOGGER = logging.getLogger(__name__)
@@ -50,16 +51,37 @@ SLACK = timedelta(minutes=5)  # an hourly schedule must not slip by an hour
 SKIPPED_STATUS = frozenset({PlantStatus.REMOVED, PlantStatus.DEAD})
 
 
+def first_day_in(months: list[int], today: date) -> date:
+    """Today if this month is one of `months`, else the 1st of the next one that is."""
+    if today.month in months:
+        return today
+    year, month = today.year, today.month
+    for _ in range(12):
+        month += 1
+        if month > 12:
+            year, month = year + 1, 1
+        if month in months:
+            return date(year, month, 1)
+    return today
+
+
 class Researcher:
     """Researches plants on demand or on the schedule and keeps what it found."""
 
     def __init__(
-        self, hass: HomeAssistant, entry: ConfigEntry, *, manager: GardenManager, ai: AIService
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        *,
+        manager: GardenManager,
+        ai: AIService,
+        care: CareManager,
     ) -> None:
         self.hass = hass
         self._entry = entry
         self._manager = manager
         self._ai = ai
+        self._care = care
         self._store: Store[dict[str, Any]] = Store(hass, STORE_VERSION, STORE_KEY)
         self._data: dict[str, Any] = {"plants": {}, "failed": {}, "last_run": None}
         self._lock = asyncio.Lock()
@@ -98,6 +120,11 @@ class Researcher:
     def schedule(self) -> str:
         value = self._entry.options.get(CONF_RESEARCH_SCHEDULE, "off")
         return value if value in RESEARCH_SCHEDULES else "off"
+
+    def knowledge(self) -> dict[str, dict[str, Any]]:
+        """Plant id -> what is known about it (read only)."""
+        plants: dict[str, dict[str, Any]] = self._data["plants"]
+        return plants
 
     def info(self, plant_id: str) -> dict[str, Any] | None:
         info: dict[str, Any] | None = self._data["plants"].get(plant_id)
@@ -177,6 +204,50 @@ class Researcher:
         self._data["failed"].pop(plant_id, None)
         self._save()
         self._manager.notify_ai(plant_id)
+
+    async def async_forget_deleted_tasks(self) -> None:
+        """Calendar jobs whose task was deleted can be taken over again."""
+        changed = False
+        for info in self._data["plants"].values():
+            for item in info.get("calendar") or []:
+                if not item.get("task_id"):
+                    continue
+                try:
+                    await self._care.async_get_task(item["task_id"])
+                except NotFoundError:
+                    item.pop("task_id")
+                    changed = True
+        if changed:
+            self._save()
+
+    async def async_calendar_task(self, plant_id: str, index: int) -> dict[str, Any]:
+        """Take a job of the care calendar over as a yearly task (seasonal months)."""
+        await self.async_forget_deleted_tasks()
+        info = self._data["plants"].get(plant_id)
+        if info is None:
+            raise NotFoundError(f"knowledge of {plant_id}")
+        calendar = info.get("calendar") or []
+        if not 0 <= index < len(calendar):
+            raise NotFoundError(f"calendar entry {index}")
+        item = calendar[index]
+        if item.get("task_id"):
+            raise ValueError("this job is a task already")
+        today = dt_util.now().date()
+        task = await self._care.async_create_task(
+            {
+                "title": item["task"],
+                "kind": calendar_kind(item["task"], item.get("kind")),
+                "plant_id": plant_id,
+                "due": first_day_in(item["months"], today),
+                "repeat": {"every": 52, "unit": "weeks"},
+                "months": item["months"],
+            },
+            source="ai",
+        )
+        item["task_id"] = task.id
+        self._save()
+        self._manager.notify_ai(plant_id)
+        return dict(info)
 
     async def async_research(self, plant_id: str) -> dict[str, Any]:
         """Research one plant now and keep the result (replaces earlier knowledge)."""

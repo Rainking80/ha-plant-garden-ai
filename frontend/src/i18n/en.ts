@@ -746,6 +746,46 @@ export const en = {
   "knowledge.topic_companions": "Good companions",
   "knowledge.topic_toxicity": "Toxicity",
   "knowledge.topic_facts": "Good to know",
+  "feature.compare": "Photo comparison",
+  "knowledge.task_take": "As a task",
+  "knowledge.task_taken": "Task created",
+  "knowledge.tasks_take_all": "Take all over as tasks",
+  "tasks.hedge_season":
+    "From 1 March to 30 September only gentle shaping and care cuts of hedges are allowed in Germany; cut back hard from October (§ 39 BNatSchG).",
+  "alert.title": "Warnings",
+  "alert.plants": "Concerns:",
+  "alert.frost": "Frost down to {value} °C from {day}",
+  "alert.frost_action":
+    "Bring pots inside or against the house wall, cover tender plants with fleece, no watering in the evening.",
+  "alert.heat": "Heat up to {value} °C from {day}",
+  "alert.heat_action":
+    "Water deeply in the morning - pots and new plants first -, shade at midday, do not fertilise.",
+  "alert.storm": "Gusts up to {value} km/h from {day}",
+  "alert.storm_action": "Secure or lay down pots, tie young trees, check trellises.",
+  "alert.heavy_rain": "Heavy rain, {value} mm on {day}",
+  "alert.heavy_rain_action": "Pause the irrigation, empty the saucers of pots, keep drains clear.",
+  "alert.fungal": "Weather for fungal diseases until {day}",
+  "alert.fungal_action":
+    "Several humid, warm days: water in the morning and only at the soil, keep leaves dry, remove infected leaves.",
+  "alert.slugs": "Slug weather until {day}",
+  "alert.slugs_action":
+    "Mild and wet: collect slugs in the evening, protect young plants (collars, barriers), water in the morning.",
+  "compare.title": "Photo comparison",
+  "compare.run": "Compare the newest photo",
+  "compare.running": "Comparing …",
+  "compare.empty":
+    "The AI compares the newest photo with an earlier one: growth, leaves, pests. An AI call with costs.",
+  "compare.need_two": "With two photos taken at different times, the AI can compare them.",
+  "compare.option":
+    'After every upload on its own: option "Compare new photos with earlier ones" in the integration settings.',
+  "compare.growth_more": "grown",
+  "compare.growth_same": "about the same",
+  "compare.growth_less": "smaller",
+  "compare.growth_unclear": "growth unclear",
+  "compare.severity_low": "minor",
+  "compare.severity_medium": "watch it",
+  "compare.severity_high": "act now",
+  "compare.problem": 'Opened the problem "{title}" - see Problems.',
 } as const;
 
 export type TranslationKey = keyof typeof en;

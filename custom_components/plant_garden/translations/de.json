@@ -37,7 +37,9 @@
           "context_tokens_tips": "Kontextgröße für Tipps",
           "context_tokens_chat": "Kontextgröße für den Chat",
           "ai_auto_identify": "Neue Pflanzen nach dem Foto-Upload bestimmen",
-          "research_schedule": "Pflanzen selbstständig recherchieren"
+          "research_schedule": "Pflanzen selbstständig recherchieren",
+          "weather_alerts": "Wetter-Warnungen",
+          "photo_compare": "Neue Fotos mit früheren vergleichen"
         },
         "data_description": {
           "max_runtime_hours": "Läuft eine Bewässerungszone länger, erscheint ein Hinweis unter Reparaturen (z. B. ein hängendes Ventil).",
@@ -47,7 +49,9 @@
           "weekly_check": "Jeden Montag um 8 Uhr schaut sich die KI den Garten an und gibt Tipps. Kostet Geld; das Budget gilt.",
           "context_tokens_diagnose": "Ungefähr so viele Tokens Gartendaten darf die KI bekommen (Wetter, Wasserbilanz, Aufgaben, Probleme). Mehr Kontext kostet mehr.",
           "ai_auto_identify": "Nur für Pflanzen ohne botanischen Namen. Jede Bestimmung ist ein KI-Aufruf mit Kosten; das Budget gilt.",
-          "research_schedule": "Der Assistent sucht für jeweils eine Pflanze ohne Wissen Pflege, Schädlinge, Giftigkeit und mehr – im Web mit Claude, Gemini oder OpenRouter, sonst in Wikipedia – und speichert es. Jede Recherche kostet Geld; das Budget gilt. Pflanzen mit Wissen werden nicht erneut recherchiert."
+          "research_schedule": "Der Assistent sucht für jeweils eine Pflanze ohne Wissen Pflege, Schädlinge, Giftigkeit und mehr – im Web mit Claude, Gemini oder OpenRouter, sonst in Wikipedia – und speichert es. Jede Recherche kostet Geld; das Budget gilt. Pflanzen mit Wissen werden nicht erneut recherchiert.",
+          "weather_alerts": "Eine Benachrichtigung mit dem, was zu tun ist, wenn Frost unter der Grenze einer Pflanze, Hitze, Sturm, Starkregen oder Wetter für Pflanzenkrankheiten und Schnecken kommt. Ohne KI, ohne Kosten.",
+          "photo_compare": "Nach dem Hochladen vergleicht die KI ein Foto mit einem früheren der Pflanze (Wachstum, Verfärbungen, Schädlinge) und legt ein Problem an, wenn etwas nicht stimmt. Jeder Vergleich ist ein KI-Aufruf mit Kosten; das Budget gilt."
         }
       }
     }

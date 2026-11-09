@@ -134,7 +134,20 @@ new photo of a plant without botanical name is identified automatically.
   hour (off by default; on the Assistant and the Tech tab, administrators only).
   The cost of one plant is shown, usually around 10 cents with web search. A
   plant with knowledge is never researched again - delete its knowledge on the
-  plant page to have it researched anew.
+  plant page to have it researched anew. Jobs of its care calendar become yearly
+  tasks with *As a task* (or all at once).
+- **Weather warnings** (tab *Water & weather* and *Assistant*): frost below a
+  plant's limit, heat, storm, heavy rain, and weather for fungal diseases and
+  slugs, each with what to do and the plants at risk. New warnings also arrive as
+  a Home Assistant notification and as the event `plant_garden_weather_alert`
+  (option *Weather warnings*, on; no AI, no costs).
+- **Photo comparison** (plant page): the AI compares the newest photo with an
+  earlier one - growth, changes, concerns - and opens a problem when something is
+  wrong. After every upload on its own with the option *Compare new photos with
+  earlier ones* (off; an AI call with costs).
+- **Hedges in Germany**: from 1 March to 30 September only gentle shaping cuts
+  are allowed (§ 39 BNatSchG); pruning tasks of hedges in that time say so, and
+  the AI takes it into account (Home Assistant's country must be Germany).
 
 The assistant receives a compact summary of the garden (see *Privacy*). Every AI
 call is logged with tokens and costs.
@@ -161,7 +174,7 @@ Actions: `log_watering`, `refresh_weather`, `identify_plant`, `ask_assistant`
 camera snapshot).
 
 Events: `plant_garden_irrigation_finished`, `plant_garden_task_due`,
-`plant_garden_problem_detected`.
+`plant_garden_problem_detected`, `plant_garden_weather_alert`.
 
 Example: notify when a task is due.
 

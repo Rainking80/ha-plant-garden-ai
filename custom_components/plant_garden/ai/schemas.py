@@ -411,6 +411,26 @@ RESEARCH_TOPICS = (
     "toxicity",
     "facts",
 )
+# what a care calendar job is, as task kinds (care.TaskKind)
+CALENDAR_KINDS = ("water", "fertilize", "prune", "repot", "pest_check", "harvest", "other")
+# words that tell the kind when an answer leaves it out (German and English)
+KIND_WORDS = {
+    "prune": ("schnitt", "schneid", "auslicht", "prune", "pruning", "cut back", "trim"),
+    "fertilize": ("dünge", "dung", "kompost", "fertil", "feed", "compost"),
+    "harvest": ("ernte", "pflück", "harvest", "pick"),
+    "repot": ("umtopf", "repot"),
+    "pest_check": ("schädling", "kontroll", "läuse", "pest", "aphid", "inspect"),
+    "water": ("gieß", "gies", "bewässer", "water"),
+}
+
+
+def calendar_kind(task: str, kind: Any = None) -> str:
+    """The task kind of a care calendar job: the answer's, else guessed from its words."""
+    if kind in CALENDAR_KINDS and kind != "other":
+        return str(kind)
+    text = task.lower()
+    return next((k for k, words in KIND_WORDS.items() if any(w in text for w in words)), "other")
+
 
 RESEARCH_SCHEMA: dict[str, Any] = _object(
     {
@@ -439,6 +459,7 @@ RESEARCH_SCHEMA: dict[str, Any] = _object(
                         "description": "1 = January ... 12 = December",
                     },
                     "task": {"type": "string"},
+                    "kind": {"type": "string", "enum": list(CALENDAR_KINDS)},
                 }
             ),
         },
@@ -467,7 +488,9 @@ def clean_research(data: dict[str, Any]) -> dict[str, Any]:
         )
         task = _text(item.get("task"), 200)
         if months and task:
-            calendar.append({"months": months, "task": task})
+            calendar.append(
+                {"months": months, "task": task, "kind": calendar_kind(task, item.get("kind"))}
+            )
     warnings = [text for value in data.get("warnings") or [] if (text := _text(value, 300))]
     return {
         "summary": _text(data.get("summary"), 1000),
@@ -478,4 +501,44 @@ def clean_research(data: dict[str, Any]) -> dict[str, Any]:
         ],
         "calendar": calendar[:24],
         "warnings": warnings[:8],
+    }
+
+
+# ---------------------------------------------------------------- photo comparison
+GROWTH = ("more", "same", "less", "unclear")
+SEVERITY = ("low", "medium", "high")
+
+COMPARE_SCHEMA: dict[str, Any] = _object(
+    {
+        "summary": {"type": "string", "description": "One or two sentences."},
+        "growth": {"type": "string", "enum": list(GROWTH)},
+        "changes": {"type": "array", "items": {"type": "string"}},
+        "concerns": {
+            "type": "array",
+            "items": _object(
+                {"text": {"type": "string"}, "severity": {"type": "string", "enum": list(SEVERITY)}}
+            ),
+        },
+        "problem_title": _text_or_empty(),
+    }
+)
+
+
+def clean_comparison(data: dict[str, Any]) -> dict[str, Any]:
+    """Growth, changes and concerns; a problem only with a title and a real concern."""
+    concerns = []
+    for raw in data.get("concerns") or []:
+        item = _dict(raw)
+        text = _text(item.get("text"), 300)
+        if text:
+            severity = item.get("severity") if item.get("severity") in SEVERITY else "low"
+            concerns.append({"text": text, "severity": severity})
+    serious = any(c["severity"] != "low" for c in concerns)
+    title = _text(data.get("problem_title"), 120)
+    return {
+        "summary": _text(data.get("summary"), 600),
+        "growth": data.get("growth") if data.get("growth") in GROWTH else "unclear",
+        "changes": [t for value in data.get("changes") or [] if (t := _text(value, 300))][:8],
+        "concerns": concerns[:6],
+        "problem_title": title if serious else None,
     }

@@ -7,6 +7,7 @@ import {
   mdiPencilOutline,
   mdiPlus,
   mdiRepeat,
+  mdiScaleBalance,
 } from "@mdi/js";
 import { css, html, nothing } from "lit";
 
@@ -30,6 +31,7 @@ import {
 import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
 import { formatDate, parseLocalDate, todayIso } from "../util/format";
+import { hedgeCutRestricted } from "../util/rules";
 import { PgElement, define, icon } from "./base";
 import type { PgConfirmDialog } from "./confirm-dialog";
 import "./confirm-dialog";
@@ -236,6 +238,18 @@ export class PgTaskList extends PgElement {
           ${task.problem_id ? html`· ${icon(mdiAlertCircleOutline)}` : nothing}
         </span>
         ${task.notes ? html`<span class="small notes">${task.notes}</span>` : nothing}
+        ${
+          hedgeCutRestricted(
+            task,
+            task.plant_id ? this.store?.getPlant(task.plant_id) : undefined,
+            this.store?.layout?.shapes ?? [],
+            this.hass?.config?.country,
+          )
+            ? html`<span class="small legal"
+                >${icon(mdiScaleBalance)} ${t("tasks.hedge_season")}</span
+              >`
+            : nothing
+        }
       </div>
       <button
         class="icon-button small"
@@ -398,6 +412,17 @@ export class PgTaskList extends PgElement {
       }
       .check {
         color: var(--pg-accent);
+      }
+      .legal {
+        display: flex;
+        align-items: flex-start;
+        gap: 4px;
+        color: var(--warning-color, #b07000);
+      }
+      .legal .icon {
+        flex: none;
+        width: 16px;
+        height: 16px;
       }
       .task-text {
         flex: 1;

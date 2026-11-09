@@ -4,6 +4,7 @@ import { css, html, nothing } from "lit";
 import { errorMessage, researchPlant } from "../api/client";
 import type { Plant } from "../api/types";
 import "../components/assistant-panel";
+import "../components/weather-alerts";
 import { PgElement, define, icon } from "../components/base";
 import { plantPath } from "../components/plant-card";
 import "../components/research-schedule";
@@ -75,7 +76,12 @@ export class PgAssistantView extends PgElement {
   }
 
   protected override render() {
-    return html`<section class="card block">
+    return html`<pg-weather-alerts
+        .hass=${this.hass}
+        .store=${this.store}
+        .prefix=${this.prefix}
+      ></pg-weather-alerts>
+      <section class="card block">
         <pg-assistant-panel
           .hass=${this.hass}
           .store=${this.store}

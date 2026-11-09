@@ -32,6 +32,7 @@ def _researcher(hass: HomeAssistant) -> Researcher:
 def async_register_research_commands(hass: HomeAssistant) -> None:
     for command in (
         ws_research_summary,
+        ws_research_calendar_task,
         ws_research_run,
         ws_research_delete,
         ws_research_schedule,
@@ -47,7 +48,26 @@ async def ws_research_summary(
     manager: GardenManager,
 ) -> dict[str, Any]:
     """Schedule, cost per plant, what is queued and the knowledge of every plant."""
-    return _researcher(hass).summary()
+    researcher = _researcher(hass)
+    await researcher.async_forget_deleted_tasks()
+    return researcher.summary()
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/research/calendar_task",
+        probatio.Required("plant_id"): str,
+        probatio.Required("index"): probatio.All(int, probatio.Range(min=0, max=100)),
+    }
+)
+async def ws_research_calendar_task(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Take a job of a plant's care calendar over as a yearly task."""
+    return await _researcher(hass).async_calendar_task(msg["plant_id"], msg["index"])
 
 
 @websocket_api.websocket_command(
