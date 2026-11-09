@@ -24,6 +24,7 @@ from homeassistant.util import dt as dt_util
 from homeassistant.util.ulid import ulid_now
 
 from ..const import (
+    CONF_AI_AUTO_IDENTIFY,
     CONF_AI_BUDGET,
     CONF_AI_BUDGET_STOP,
     CONF_AI_DEBUG,
@@ -135,6 +136,7 @@ class AIService:
             async_track_time_change(self.hass, self._async_purge, hour=3, minute=17, second=0)
         )
         self._unsubs.append(self._manager.async_subscribe(self._on_garden_change))
+        self._manager.photo_hooks.append(self._async_on_photo)
         await self.async_refresh_stats()
 
     async def async_refresh_stats(self) -> None:
@@ -159,6 +161,28 @@ class AIService:
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
+        if self._async_on_photo in self._manager.photo_hooks:
+            self._manager.photo_hooks.remove(self._async_on_photo)
+
+    async def _async_on_photo(self, photo: Any, added: bool) -> None:
+        """Option "identify after upload": only plants whose species is still unknown."""
+        if not added or not self._entry.options.get(CONF_AI_AUTO_IDENTIFY):
+            return
+        plant = self._manager.get_plant(photo.plant_id)
+        if plant.scientific_name or (
+            self.subentry_for(Feature.IDENTIFY) is None and self.plantnet() is None
+        ):
+            return
+
+        async def identify() -> None:
+            try:
+                await self.async_identify(plant.id, [(photo.id, "auto")], self.hass.config.language)
+            except AIError as err:
+                _LOGGER.warning("Identification after upload failed: %s", err)
+
+        self._entry.async_create_background_task(
+            self.hass, identify(), f"plant_garden identify {plant.id}"
+        )
 
     def _save(self) -> None:
         self._store.async_delay_save(lambda: self._data, 1)
@@ -599,6 +623,24 @@ class AIService:
         self._manager.notify_ai(plant_id)
         return self.identification(plant_id) or {}
 
+    @staticmethod
+    def _care_suggestions(care: dict[str, Any]) -> dict[str, tuple[Any, float]]:
+        """Care profile fields from the "care" part of an identification."""
+        confidence = care["confidence"]
+        suggestions = {
+            key: (care[key], confidence) for key in CARE_FIELDS if care.get(key) is not None
+        }
+        for key, hint in (
+            ("care_water", "watering"),
+            ("care_fertilize", "fertilizing"),
+            ("care_prune", "pruning"),
+        ):
+            if care.get(hint):
+                suggestions[key] = (care[hint], confidence)
+        if care.get("mature_crown_diameter_m"):
+            suggestions["crown_diameter_m"] = (care["mature_crown_diameter_m"], confidence)
+        return suggestions
+
     def _suggested(self, record: dict[str, Any]) -> dict[str, tuple[Any, float]]:
         """field -> (value, confidence) from an identification record."""
         result = record.get("result")
@@ -615,15 +657,7 @@ class AIService:
             if top.get("family"):
                 suggestions["family"] = (top["family"], top["score"])
         if result:
-            care = result["care"]
-            for key in CARE_FIELDS:
-                if care.get(key) is not None:
-                    suggestions[key] = (care[key], care["confidence"])
-            if care.get("mature_crown_diameter_m"):
-                suggestions["crown_diameter_m"] = (
-                    care["mature_crown_diameter_m"],
-                    care["confidence"],
-                )
+            suggestions.update(self._care_suggestions(result["care"]))
             size = result["size"]
             if size.get("height_cm") or size.get("width_cm"):
                 value = {"height_cm": size.get("height_cm"), "width_cm": size.get("width_cm")}

@@ -420,3 +420,16 @@ minutes), because automations know devices, not internal plant ids.
   removed after the next successful call or connection test. A zone whose linked
   valve, timer or meter is neither a state nor in the entity registry gets an
   issue once Home Assistant has started (entities appear during start-up).
+
+## D-032 Care profile and identification after upload (2026-11-09)
+
+- **Care profile** (spec 4.1): three short text fields per plant - watering,
+  fertilising, pruning - with the same provenance as every other field. An
+  identification suggests them (prompt `identify-2`, schema fields `watering`,
+  `fertilizing`, `pruning`); they are taken over one by one like all suggestions
+  and never replace the user's own text. The assistant's context includes them
+  (unlike the free notes).
+- **Identification after upload** (spec 4.3, option, off by default): a new photo
+  starts an identification with that photo only when the plant has no botanical
+  name yet - once the species is known, further uploads would only cost money.
+  It runs as a background task of the entry; failures are logged, not shown.

@@ -357,6 +357,25 @@ export class PgPlantDetail extends PgElement {
     return facts.filter((fact): fact is Fact => fact !== null);
   }
 
+  /** Care profile: watering, fertilising, pruning – with where each hint came from. */
+  private _renderCare(plant: Plant) {
+    const { t } = this;
+    const hints = (["care_water", "care_fertilize", "care_prune"] as const).filter(
+      (key) => plant[key],
+    );
+    if (!hints.length) return nothing;
+    return html`<section class="card block">
+      <h3>${t("detail.care")}</h3>
+      <dl class="care">
+        ${hints.map(
+          (key) =>
+            html`<dt>${t(`field.${key}`)}</dt>
+              <dd>${plant[key]} ${this._sourceMark(plant.sources[key])}</dd>`,
+        )}
+      </dl>
+    </section>`;
+  }
+
   private _sourceMark(source: FieldSource | undefined) {
     if (!source) return nothing;
     const { t } = this;
@@ -458,6 +477,7 @@ export class PgPlantDetail extends PgElement {
         </div>
       </section>
 
+      ${this._renderCare(plant)}
       ${
         plant.notes
           ? html`<section class="card block">
@@ -810,6 +830,18 @@ export class PgPlantDetail extends PgElement {
         gap: 8px;
       }
       .block-header h3 {
+        margin: 0;
+      }
+      .care {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 4px 16px;
+        margin: 0;
+      }
+      .care dt {
+        color: var(--pg-text-muted);
+      }
+      .care dd {
         margin: 0;
       }
       .notes {

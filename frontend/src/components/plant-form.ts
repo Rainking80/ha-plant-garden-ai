@@ -356,6 +356,19 @@ export class PgPlantForm extends PgElement {
                   <span>${t("field.notes")}</span>
                   <textarea .value=${this._state.notes} @input=${this._input("notes")}></textarea>
                 </label>
+                <p class="wide care-title">${t("form.care")}</p>
+                ${(["care_water", "care_fertilize", "care_prune"] as const).map(
+                  (key) =>
+                    html`<label class="field wide">
+                      <span>${t(`field.${key}`)}</span>
+                      <textarea
+                        rows="2"
+                        maxlength="1000"
+                        .value=${this._state[key]}
+                        @input=${this._input(key)}
+                      ></textarea>
+                    </label>`,
+                )}
               </div>
             </fieldset>
           </div>
@@ -469,6 +482,10 @@ export class PgPlantForm extends PgElement {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 12px;
+      }
+      .care-title {
+        margin: 8px 0 0;
+        font-weight: 500;
       }
       .wide {
         grid-column: 1 / -1;

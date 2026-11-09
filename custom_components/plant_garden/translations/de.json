@@ -35,7 +35,8 @@
           "weekly_check": "Wöchentlicher Garten-Check durch die KI",
           "context_tokens_diagnose": "Kontextgröße für Diagnosen",
           "context_tokens_tips": "Kontextgröße für Tipps",
-          "context_tokens_chat": "Kontextgröße für den Chat"
+          "context_tokens_chat": "Kontextgröße für den Chat",
+          "ai_auto_identify": "Neue Pflanzen nach dem Foto-Upload bestimmen"
         },
         "data_description": {
           "max_runtime_hours": "Läuft eine Bewässerungszone länger, erscheint ein Hinweis unter Reparaturen (z. B. ein hängendes Ventil).",
@@ -43,7 +44,8 @@
           "ai_debug": "Nur zur Fehlersuche; Prompts können Angaben zu Pflanzen enthalten.",
           "ai_retention_days": "Ältere Aufrufe bleiben als Tagessummen erhalten.",
           "weekly_check": "Jeden Montag um 8 Uhr schaut sich die KI den Garten an und gibt Tipps. Kostet Geld; das Budget gilt.",
-          "context_tokens_diagnose": "Ungefähr so viele Tokens Gartendaten darf die KI bekommen (Wetter, Wasserbilanz, Aufgaben, Probleme). Mehr Kontext kostet mehr."
+          "context_tokens_diagnose": "Ungefähr so viele Tokens Gartendaten darf die KI bekommen (Wetter, Wasserbilanz, Aufgaben, Probleme). Mehr Kontext kostet mehr.",
+          "ai_auto_identify": "Nur für Pflanzen ohne botanischen Namen. Jede Bestimmung ist ein KI-Aufruf mit Kosten; das Budget gilt."
         }
       }
     }

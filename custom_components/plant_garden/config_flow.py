@@ -21,6 +21,7 @@ import probatio
 
 from .ai.flow import AISubentryFlow
 from .const import (
+    CONF_AI_AUTO_IDENTIFY,
     CONF_AI_BUDGET,
     CONF_AI_BUDGET_STOP,
     CONF_AI_DEBUG,
@@ -104,6 +105,7 @@ class PlantGardenOptionsFlow(OptionsFlow):
                 ),
                 CONF_USD_EUR: float(user_input.get(CONF_USD_EUR) or 0),
                 CONF_WEEKLY_CHECK: bool(user_input.get(CONF_WEEKLY_CHECK)),
+                CONF_AI_AUTO_IDENTIFY: bool(user_input.get(CONF_AI_AUTO_IDENTIFY)),
             }
             for feature, default in DEFAULT_CONTEXT_TOKENS.items():
                 data[CONF_CONTEXT_TOKENS + feature] = int(
@@ -157,6 +159,9 @@ class PlantGardenOptionsFlow(OptionsFlow):
                 ): number(7, 730, 1, "d"),
                 probatio.Required(
                     CONF_WEEKLY_CHECK, default=options.get(CONF_WEEKLY_CHECK, False)
+                ): bool,
+                probatio.Required(
+                    CONF_AI_AUTO_IDENTIFY, default=options.get(CONF_AI_AUTO_IDENTIFY, False)
                 ): bool,
             }
         )

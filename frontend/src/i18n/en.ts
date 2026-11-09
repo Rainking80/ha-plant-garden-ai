@@ -633,6 +633,11 @@ export const en = {
   "plan.overdue": "{n} overdue",
   "plan.prune_due": "pruning due",
   "plan.questions": "{n} questions of the assistant",
+  "field.care_water": "Watering",
+  "field.care_fertilize": "Fertilising",
+  "field.care_prune": "Pruning",
+  "form.care": "Care profile (optional)",
+  "detail.care": "Care",
 } as const;
 
 export type TranslationKey = keyof typeof en;

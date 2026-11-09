@@ -73,6 +73,17 @@ describe("plant form", () => {
     });
   });
 
+  it("edits the care profile without touching the other hints", () => {
+    const plant = makePlant({ care_prune: "Im Frühjahr", care_water: "Mäßig" });
+    const state = formStateFromPlant(plant);
+    expect(state.care_prune).toBe("Im Frühjahr");
+    const edited = { ...state, care_fertilize: " Kompost im März ", care_water: "" };
+    expect(changedFields(fieldsFromFormState(edited), plantFields(plant))).toEqual({
+      care_fertilize: "Kompost im März",
+      care_water: null,
+    });
+  });
+
   it("parses decimal commas", () => {
     expect(parseNumber("1,5")).toBe(1.5);
     expect(parseNumber("")).toBeNull();

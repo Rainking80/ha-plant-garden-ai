@@ -158,6 +158,7 @@ async def test_identify_and_take_over_suggestions(
         "water_need": "new",
         "light": "new",
         "min_temperature_c": "new",
+        "care_prune": "new",
         "crown_diameter_m": "new",
         "size": "new",
         "age": "new",
@@ -217,9 +218,43 @@ async def test_identify_and_take_over_suggestions(
     assert cost.attributes["unit_of_measurement"] == "USD"
     assert float(cost.state) == pytest.approx(0.014, abs=0.001)
 
+    # a care hint becomes part of the plant's care profile, marked as from the AI
+    await entry.runtime_data.ai.async_decide(rose.id, "care_prune", accept=True)
+    plant = manager.get_plant(rose.id)
+    assert plant.care_prune == "spring"
+    assert plant.sources["care_prune"].source.value == "ai"
+
     # deleting the plant forgets its identification
     await manager.async_delete_plant(rose.id)
     assert entry.runtime_data.ai.identification(rose.id) is None
+
+
+async def test_identify_after_upload(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    garden: tuple[MockConfigEntry, Any, Any],
+) -> None:
+    """Option on: a new photo of a plant without botanical name is identified."""
+    entry, rose, _photo = garden
+    manager = entry.runtime_data.manager
+    aioclient_mock.post(MESSAGES, json=claude_reply(json.dumps(ANSWER)))
+    await manager.async_add_photo(rose.id, make_image(600, 400))
+    await hass.async_block_till_done()
+    assert entry.runtime_data.ai.identification(rose.id) is None  # option is off
+
+    hass.config_entries.async_update_entry(entry, options={"ai_auto_identify": True})
+    photo = await manager.async_add_photo(rose.id, make_image(600, 400))
+    await hass.async_block_till_done()
+    record = entry.runtime_data.ai.identification(rose.id)
+    assert record is not None
+    assert record["photos"] == [photo.id]
+
+    # known species: no further calls
+    calls = aioclient_mock.call_count
+    await manager.async_update_plant(rose.id, {"scientific_name": "Rosa canina"})
+    await manager.async_add_photo(rose.id, make_image(600, 400))
+    await hass.async_block_till_done()
+    assert aioclient_mock.call_count == calls
 
 
 async def test_budget_and_json_repair(

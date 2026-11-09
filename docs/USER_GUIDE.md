@@ -78,7 +78,11 @@ Add an AI provider in the integration settings (**Add AI provider**):
 On a plant's page choose **Identify**, pick 1–3 photos and what they show (leaf,
 flower, fruit, bark, whole plant). You see an estimate of the cost first. Every
 suggestion can be taken over or dismissed on its own; values you entered yourself
-are never replaced.
+are never replaced. Suggestions include a care profile (watering, fertilising,
+pruning), which you can also write yourself in the plant form.
+
+With the option *Identify new plants after a photo upload* (off by default), a
+new photo of a plant without botanical name is identified automatically.
 
 ## 6. Assistant
 

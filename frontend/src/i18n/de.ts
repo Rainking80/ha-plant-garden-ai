@@ -645,4 +645,9 @@ export const de: Translations = {
   "plan.overdue": "{n} überfällig",
   "plan.prune_due": "Schnitt fällig",
   "plan.questions": "{n} Rückfragen des Assistenten",
+  "field.care_water": "Gießen",
+  "field.care_fertilize": "Düngen",
+  "field.care_prune": "Schnitt",
+  "form.care": "Pflegeprofil (optional)",
+  "detail.care": "Pflege",
 };

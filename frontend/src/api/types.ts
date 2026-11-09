@@ -73,6 +73,10 @@ export interface PlantFields {
   variety: string | null;
   family: string | null;
   notes: string | null;
+  /** care profile: short hints, the AI can suggest them */
+  care_water: string | null;
+  care_fertilize: string | null;
+  care_prune: string | null;
   category: PlantCategory;
   location_type: LocationType;
   light: Light | null;

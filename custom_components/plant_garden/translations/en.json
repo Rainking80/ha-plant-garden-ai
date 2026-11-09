@@ -35,7 +35,8 @@
           "weekly_check": "Weekly garden check by the AI",
           "context_tokens_diagnose": "Context size for diagnoses",
           "context_tokens_tips": "Context size for tips",
-          "context_tokens_chat": "Context size for the chat"
+          "context_tokens_chat": "Context size for the chat",
+          "ai_auto_identify": "Identify new plants after a photo upload"
         },
         "data_description": {
           "max_runtime_hours": "If an irrigation zone runs longer, a notice appears under Repairs (e.g. a stuck valve).",
@@ -43,7 +44,8 @@
           "ai_debug": "For troubleshooting only; prompts can contain plant details.",
           "ai_retention_days": "Older calls are kept as daily sums.",
           "weekly_check": "Every Monday at 8:00 the AI looks at the garden and gives tips. Costs money; the budget applies.",
-          "context_tokens_diagnose": "Roughly how many tokens of garden data the AI may receive (weather, water balance, tasks, problems). More context costs more."
+          "context_tokens_diagnose": "Roughly how many tokens of garden data the AI may receive (weather, water balance, tasks, problems). More context costs more.",
+          "ai_auto_identify": "Only for plants without a botanical name yet. Every identification is an AI call with costs; the budget applies."
         }
       }
     }

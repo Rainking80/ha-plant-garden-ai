@@ -155,7 +155,9 @@ class AgeReference:
 
 # Fields a user (or later the AI) may set on a plant, with the type used for
 # (de)serialisation. "name" is required and handled separately.
-TEXT_FIELDS = ("scientific_name", "variety", "family", "notes")
+# care profile: short watering, fertilising and pruning hints (the AI can suggest them)
+CARE_TEXT_FIELDS = ("care_water", "care_fertilize", "care_prune")
+TEXT_FIELDS = ("scientific_name", "variety", "family", "notes", *CARE_TEXT_FIELDS)
 ENUM_FIELDS: dict[str, type[StrEnum]] = {
     "category": PlantCategory,
     "location_type": LocationType,
@@ -206,6 +208,9 @@ class Plant:
     variety: str | None = None
     family: str | None = None
     notes: str | None = None
+    care_water: str | None = None
+    care_fertilize: str | None = None
+    care_prune: str | None = None
     category: PlantCategory = PlantCategory.OTHER
     location_type: LocationType = LocationType.BED
     light: Light | None = None

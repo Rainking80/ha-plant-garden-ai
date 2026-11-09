@@ -79,7 +79,11 @@ In den Einstellungen **KI-Anbieter hinzufügen**:
 Auf der Pflanzenseite **Bestimmen** wählen, 1–3 Fotos auswählen und angeben, was
 sie zeigen (Blatt, Blüte, Frucht, Rinde, ganze Pflanze). Vorher erscheint eine
 Kostenschätzung. Jeder Vorschlag wird einzeln übernommen oder verworfen; eigene
-Eingaben werden nie überschrieben.
+Eingaben werden nie überschrieben. Die Vorschläge enthalten auch ein Pflegeprofil
+(Gießen, Düngen, Schnitt), das du im Pflanzenformular auch selbst schreiben kannst.
+
+Mit der Option *Neue Pflanzen nach dem Foto-Upload bestimmen* (standardmäßig aus)
+wird ein neues Foto einer Pflanze ohne botanischen Namen automatisch bestimmt.
 
 ## 6. Assistent
 

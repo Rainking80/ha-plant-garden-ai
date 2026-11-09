@@ -17,6 +17,10 @@ All notable changes to this project are documented here. The format follows
     longer exists now appear under Settings → Repairs (and disappear when fixed).
   - User guide in English and German (`docs/USER_GUIDE.md`), FAQ, key links and
     how to delete all data in the README.
+  - Care profile per plant (watering, fertilising, pruning hints): edit it in the
+    plant form, see it on the plant page; an identification suggests it.
+  - Option "identify new plants after a photo upload" (off by default; only
+    plants without a botanical name).
 - M7 garden assistant:
   - Tasks (water, fertilise, prune, repot, check for pests, harvest, take a photo,
     other) with due date, repetition every N days or weeks (from the day it was

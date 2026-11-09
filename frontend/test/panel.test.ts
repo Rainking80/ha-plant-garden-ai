@@ -140,10 +140,17 @@ describe("plant-garden-panel", () => {
       light: "partial_shade",
       age_months_now: 14,
       height_cm: 80,
+      care_prune: "Nach der Blüte auslichten",
       photo_count: 2,
       cover: { id: "P2", urls: makePhoto("P2", "2026-07-01T10:00:00Z").urls },
       sources: {
         light: { source: "ai", confidence: 0.82, model: "x", updated_at: "2026-06-01T00:00:00Z" },
+        care_prune: {
+          source: "ai",
+          confidence: 0.7,
+          model: "x",
+          updated_at: "2026-06-01T00:00:00Z",
+        },
       },
     });
     const backend = fakeBackend({
@@ -178,6 +185,7 @@ describe("plant-garden-panel", () => {
     expect(text).toContain("1 Jahr, 2 Monate");
     expect(text).toContain("80 cm");
     expect(text).toContain("Wachstum");
+    expect(text).toContain("Pflege Schnitt Nach der Blüte auslichten");
     expect(text).toContain("Problem");
     expect(deepQuery(el, ".source-ai")?.getAttribute("title")).toBe("KI-Vorschlag (82 %)");
     // toolbar shows the plant name and a back button

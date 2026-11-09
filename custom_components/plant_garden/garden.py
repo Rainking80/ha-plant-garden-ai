@@ -109,8 +109,9 @@ class GardenManager:
         self._plants: dict[str, Plant] = {}
         self._layout = Layout()
         self._listeners: list[Callable[[GardenChange], None]] = []
-        # awaited after a photo was added or changed (the assistant opens problems)
-        self.photo_hooks: list[Callable[[Photo], Awaitable[None]]] = []
+        # awaited after a photo was added (True) or changed (False): the assistant
+        # opens problems, the AI may identify the plant
+        self.photo_hooks: list[Callable[[Photo, bool], Awaitable[None]]] = []
 
     @property
     def db(self) -> GardenDatabase:
@@ -616,13 +617,13 @@ class GardenManager:
             await self.hass.async_add_executor_job(self._files.delete, plant_id, photo.id)
             raise
         self._notify("plant", plant_id)
-        await self._run_photo_hooks(photo)
+        await self._run_photo_hooks(photo, added=True)
         return photo
 
-    async def _run_photo_hooks(self, photo: Photo) -> None:
+    async def _run_photo_hooks(self, photo: Photo, *, added: bool) -> None:
         for hook in list(self.photo_hooks):
             try:
-                await hook(photo)
+                await hook(photo, added)
             except Exception:
                 _LOGGER.exception("Photo hook failed for %s", photo.id)
 
@@ -646,7 +647,7 @@ class GardenManager:
             photo.note = changes["note"].strip()
         await self.hass.async_add_executor_job(self._db.update_photo, photo)
         self._notify("plant", photo.plant_id)
-        await self._run_photo_hooks(photo)
+        await self._run_photo_hooks(photo, added=False)
         return photo
 
     async def async_delete_photo(self, photo_id: str) -> None:

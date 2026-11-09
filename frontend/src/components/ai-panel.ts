@@ -182,6 +182,9 @@ export class PgAIPanel extends PgElement {
       light: "field.light",
       min_temperature_c: "field.min_temperature_c",
       crown_diameter_m: "ai.crown",
+      care_water: "field.care_water",
+      care_fertilize: "field.care_fertilize",
+      care_prune: "field.care_prune",
       size: "ai.size",
       age: "field.age",
     };

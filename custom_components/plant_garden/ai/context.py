@@ -90,6 +90,9 @@ def plant_profile(plant: Plant, today: date) -> dict[str, Any]:
         "min_temperature_c": plant.min_temperature_c,
         "root_depth_cm": plant.root_depth_cm,
         "crown_m": plant.crown_diameter_m,
+        "care_water": plant.care_water,
+        "care_fertilize": plant.care_fertilize,
+        "care_prune": plant.care_prune,
     }
     sources = {
         key: f"{src.source.value} {src.confidence:.0%}" if src.confidence else src.source.value

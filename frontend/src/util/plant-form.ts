@@ -8,6 +8,9 @@ export interface PlantFormState {
   variety: string;
   family: string;
   notes: string;
+  care_water: string;
+  care_fertilize: string;
+  care_prune: string;
   category: PlantCategory;
   location_type: LocationType;
   light: string;
@@ -33,6 +36,9 @@ export function emptyFormState(today = todayIso()): PlantFormState {
     variety: "",
     family: "",
     notes: "",
+    care_water: "",
+    care_fertilize: "",
+    care_prune: "",
     category: "other",
     location_type: "bed",
     light: "",
@@ -56,6 +62,9 @@ export function formStateFromPlant(plant: Plant, today = todayIso()): PlantFormS
     variety: str(plant.variety),
     family: str(plant.family),
     notes: str(plant.notes),
+    care_water: str(plant.care_water),
+    care_fertilize: str(plant.care_fertilize),
+    care_prune: str(plant.care_prune),
     category: plant.category,
     location_type: plant.location_type,
     light: str(plant.light),
@@ -94,6 +103,9 @@ export function fieldsFromFormState(state: PlantFormState): PlantFields {
     variety: text(state.variety),
     family: text(state.family),
     notes: text(state.notes),
+    care_water: text(state.care_water),
+    care_fertilize: text(state.care_fertilize),
+    care_prune: text(state.care_prune),
     category: state.category,
     location_type: state.location_type,
     light: (text(state.light) as PlantFields["light"]) ?? null,
@@ -148,6 +160,9 @@ export function plantFields(plant: Plant): PlantFields {
     variety,
     family,
     notes,
+    care_water,
+    care_fertilize,
+    care_prune,
     category,
     location_type,
     light,
@@ -166,6 +181,9 @@ export function plantFields(plant: Plant): PlantFields {
     variety,
     family,
     notes,
+    care_water,
+    care_fertilize,
+    care_prune,
     category,
     location_type,
     light,

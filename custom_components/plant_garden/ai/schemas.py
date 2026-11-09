@@ -81,6 +81,8 @@ IDENTIFY_SCHEMA: dict[str, Any] = _object(
                 "light": _choice([light.value for light in Light]),
                 "min_temperature_c": _nullable("number"),
                 "mature_crown_diameter_m": _nullable("number"),
+                "watering": _nullable("string"),
+                "fertilizing": _nullable("string"),
                 "pruning": _nullable("string"),
                 "confidence": {"type": "number"},
             }
@@ -171,6 +173,8 @@ def clean_identification(data: dict[str, Any]) -> dict[str, Any]:
             "light": choice(care.get("light"), [light.value for light in Light]),
             "min_temperature_c": _number(care.get("min_temperature_c")),
             "mature_crown_diameter_m": _number(care.get("mature_crown_diameter_m")),
+            "watering": _text(care.get("watering")),
+            "fertilizing": _text(care.get("fertilizing")),
             "pruning": _text(care.get("pruning")),
             "confidence": _confidence(care.get("confidence")),
         },

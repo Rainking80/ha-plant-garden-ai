@@ -865,7 +865,7 @@ class CareManager:
         await self._run(self._tables.delete_problem, problem_id)
         await self._async_changed(problem.plant_id)
 
-    async def _async_on_photo(self, photo: Photo) -> None:
+    async def _async_on_photo(self, photo: Photo, _added: bool) -> None:
         """A photo tagged "problem" opens a problem or joins the newest active one."""
         if PROBLEM_TAG not in photo.tags:
             return
