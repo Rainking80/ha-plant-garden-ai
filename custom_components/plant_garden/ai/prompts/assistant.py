@@ -10,9 +10,9 @@ import json
 from typing import Any
 
 DIAGNOSE_VERSION = "diagnose-1"
-TIPS_VERSION = "tips-1"
+TIPS_VERSION = "tips-2"
 CHAT_VERSION = "chat-1"
-DIGEST_VERSION = "digest-1"
+DIGEST_VERSION = "digest-2"
 
 _RULES = {
     "de": """Regeln:
@@ -78,7 +78,7 @@ zu Jahreszeit, Wetter und Wasserbilanz.
 - Wenn ein Tipp eine konkrete Arbeit ist, schlage sie als Aufgabe vor (task), sonst null. \
 Schlage keine Aufgabe vor, die schon offen ist.
 - questions: höchstens 3 Rückfragen, die die Daten verbessern (field = betroffenes \
-Pflanzenfeld oder null).
+Pflanzenfeld oder leer).
 - Antworte ausschließlich mit dem JSON-Objekt nach dem Schema, Texte auf Deutsch.""",
     "en": """You are an experienced gardener advising on the care of a private garden. \
 You give a few concrete tips for the next one or two weeks, fitting the season, the \
@@ -91,7 +91,7 @@ weather and the water balance.
 - If a tip is a concrete job, propose it as a task, else null. Do not propose a task that \
 is already open.
 - questions: at most 3 questions that improve the data (field = the plant field concerned \
-or null).
+or empty).
 - Answer only with the JSON object following the schema, texts in English.""",
 }
 

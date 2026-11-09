@@ -451,3 +451,14 @@ minutes), because automations know devices, not internal plant ids.
   the same status as a crown (needs water, pruning due, problem); in view mode
   hovering or tapping it opens the plant's card. One plant may have several
   areas; the individual plants of a hedge need not be drawn.
+
+## D-034 Answer schemas within Claude's structured-output limits (2026-11-09)
+
+Claude rejected the tips schema (`enum` inside a type array `["string", "null"]`)
+and allows at most 16 union fields (`anyOf` or type arrays) per request; the
+identification schema had over 20. All schemas now follow one rule: unknown text
+and choices are an empty string (choices list `""` as a value), unknown sizes are
+0, and only fields where 0 is a real value (frost limit, ages, days) stay nullable
+as `anyOf` with null. The cleaners turn "" and 0 into None. A test checks every
+schema: no type arrays, at most 16 unions, every object closed and fully
+required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null.

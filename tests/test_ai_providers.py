@@ -465,3 +465,42 @@ async def test_gemini_rejects_a_wrong_key_with_400(
     provider = gemini.GeminiProvider(async_get_clientsession(hass), "AIza-wrong", "")
     with pytest.raises(AuthError, match="API key not valid"):
         await provider.async_validate()
+
+
+def test_schemas_stay_within_claude_limits() -> None:
+    """Claude: no enum inside a type array, at most 16 union fields, all fields required."""
+    from custom_components.plant_garden.ai.schemas import (  # noqa: PLC0415
+        DIAGNOSE_SCHEMA,
+        IDENTIFY_SCHEMA,
+        TIPS_SCHEMA,
+        union_count,
+    )
+
+    def walk(node: Any) -> list[dict[str, Any]]:
+        if isinstance(node, list):
+            return [found for item in node for found in walk(item)]
+        if not isinstance(node, dict):
+            return []
+        return [node, *(found for value in node.values() for found in walk(value))]
+
+    for schema in (IDENTIFY_SCHEMA, DIAGNOSE_SCHEMA, TIPS_SCHEMA):
+        assert union_count(schema) <= 16
+        for node in walk(schema):
+            assert not isinstance(node.get("type"), list), node  # no type arrays at all
+            if node.get("type") == "object":
+                assert node["additionalProperties"] is False
+                assert set(node["required"]) == set(node["properties"])
+    # the answer format "empty or 0 = unknown" is cleaned to None
+    cleaned = clean_identification(
+        {
+            "candidates": [{"scientific_name": "Fagus sylvatica", "variety": "", "family": ""}],
+            "size": {"height_cm": 0, "width_cm": 180, "basis": ""},
+            "care": {"category": "", "light": "partial_shade", "mature_crown_diameter_m": 0},
+        }
+    )
+    assert cleaned["candidates"][0]["variety"] is None
+    assert cleaned["size"]["height_cm"] is None
+    assert cleaned["size"]["width_cm"] == 180
+    assert cleaned["care"]["category"] is None
+    assert cleaned["care"]["light"] == "partial_shade"
+    assert cleaned["care"]["mature_crown_diameter_m"] is None

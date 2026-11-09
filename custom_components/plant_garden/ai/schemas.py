@@ -1,9 +1,12 @@
 """JSON schemas for structured AI answers (spec 6.4).
 
 Written for strict structured output on every provider: all properties
-required (null where unknown), `additionalProperties: false`, no numeric or
-length constraints (Anthropic and OpenAI reject them). Answers are validated
-again here, tolerantly.
+required, `additionalProperties: false`, no numeric or length constraints
+(Anthropic and OpenAI reject them). Unknown values are an empty string or 0;
+only where 0 is a real value (a frost limit, an age, a number of days) a field
+may be null, as `anyOf` with null - Claude allows at most 16 such union fields
+per schema (and rejects `enum` inside a type array). Answers are validated
+again here, tolerantly; "" and 0 become None.
 """
 
 from __future__ import annotations
@@ -23,11 +26,30 @@ def _object(properties: dict[str, Any]) -> dict[str, Any]:
 
 
 def _nullable(kind: str) -> dict[str, Any]:
-    return {"type": [kind, "null"]}
+    """A value that may be null - a union, keep them few (Claude: at most 16)."""
+    return {"anyOf": [{"type": kind}, {"type": "null"}]}
+
+
+def _text_or_empty() -> dict[str, Any]:
+    return {"type": "string", "description": "Empty string if unknown."}
+
+
+def _positive() -> dict[str, Any]:
+    return {"type": "number", "description": "0 if unknown."}
 
 
 def _choice(values: list[str]) -> dict[str, Any]:
-    return {"type": ["string", "null"], "enum": [*values, None]}
+    return {"type": "string", "enum": [*values, ""], "description": "Empty string if unknown."}
+
+
+def union_count(schema: Any) -> int:
+    """Fields using anyOf or type arrays (Claude's limit is 16 per schema)."""
+    if isinstance(schema, list):
+        return sum(union_count(item) for item in schema)
+    if not isinstance(schema, dict):
+        return 0
+    own = 1 if "anyOf" in schema or isinstance(schema.get("type"), list) else 0
+    return own + sum(union_count(value) for value in schema.values())
 
 
 IDENTIFY_SCHEMA: dict[str, Any] = _object(
@@ -38,10 +60,10 @@ IDENTIFY_SCHEMA: dict[str, Any] = _object(
             "items": _object(
                 {
                     "scientific_name": {"type": "string"},
-                    "common_name_de": _nullable("string"),
-                    "common_name_en": _nullable("string"),
-                    "variety": _nullable("string"),
-                    "family": _nullable("string"),
+                    "common_name_de": _text_or_empty(),
+                    "common_name_en": _text_or_empty(),
+                    "variety": _text_or_empty(),
+                    "family": _text_or_empty(),
                     "confidence": {"type": "number", "description": "0 to 1"},
                     "reason": {"type": "string"},
                 }
@@ -49,14 +71,14 @@ IDENTIFY_SCHEMA: dict[str, Any] = _object(
         },
         "size": _object(
             {
-                "height_cm": _nullable("number"),
-                "height_min_cm": _nullable("number"),
-                "height_max_cm": _nullable("number"),
-                "width_cm": _nullable("number"),
-                "width_min_cm": _nullable("number"),
-                "width_max_cm": _nullable("number"),
+                "height_cm": _positive(),
+                "height_min_cm": _positive(),
+                "height_max_cm": _positive(),
+                "width_cm": _positive(),
+                "width_min_cm": _positive(),
+                "width_max_cm": _positive(),
                 "confidence": {"type": "number"},
-                "basis": _nullable("string"),
+                "basis": _text_or_empty(),
             }
         ),
         "age": _object(
@@ -64,7 +86,7 @@ IDENTIFY_SCHEMA: dict[str, Any] = _object(
                 "age_months": _nullable("integer"),
                 "min_months": _nullable("integer"),
                 "max_months": _nullable("integer"),
-                "stage": _nullable("string"),
+                "stage": _text_or_empty(),
                 "confidence": {"type": "number"},
             }
         ),
@@ -80,10 +102,10 @@ IDENTIFY_SCHEMA: dict[str, Any] = _object(
                 "water_need": _choice([w.value for w in WaterNeed]),
                 "light": _choice([light.value for light in Light]),
                 "min_temperature_c": _nullable("number"),
-                "mature_crown_diameter_m": _nullable("number"),
-                "watering": _nullable("string"),
-                "fertilizing": _nullable("string"),
-                "pruning": _nullable("string"),
+                "mature_crown_diameter_m": _positive(),
+                "watering": _text_or_empty(),
+                "fertilizing": _text_or_empty(),
+                "pruning": _text_or_empty(),
                 "confidence": {"type": "number"},
             }
         ),
@@ -98,6 +120,11 @@ IDENTIFY_SCHEMA: dict[str, Any] = _object(
 
 def _number(value: Any) -> float | None:
     return float(value) if isinstance(value, int | float) and not isinstance(value, bool) else None
+
+
+def _positive_number(value: Any) -> float | None:
+    number = _number(value)
+    return number if number is not None and number > 0 else None
 
 
 def _text(value: Any, limit: int = 500) -> str | None:
@@ -145,7 +172,7 @@ def clean_identification(data: dict[str, Any]) -> dict[str, Any]:
     return {
         "candidates": candidates[:3],
         "size": {
-            key: _number(size.get(key))
+            key: _positive_number(size.get(key))
             for key in (
                 "height_cm",
                 "height_min_cm",
@@ -172,7 +199,7 @@ def clean_identification(data: dict[str, Any]) -> dict[str, Any]:
             "water_need": choice(care.get("water_need"), [w.value for w in WaterNeed]),
             "light": choice(care.get("light"), [light.value for light in Light]),
             "min_temperature_c": _number(care.get("min_temperature_c")),
-            "mature_crown_diameter_m": _number(care.get("mature_crown_diameter_m")),
+            "mature_crown_diameter_m": _positive_number(care.get("mature_crown_diameter_m")),
             "watering": _text(care.get("watering")),
             "fertilizing": _text(care.get("fertilizing")),
             "pruning": _text(care.get("pruning")),
@@ -232,7 +259,7 @@ DIAGNOSE_SCHEMA: dict[str, Any] = _object(
                 {
                     "text": {"type": "string"},
                     "urgency": {"type": "string", "enum": URGENCIES},
-                    "warning": _nullable("string"),
+                    "warning": _text_or_empty(),
                 }
             ),
         },
@@ -250,7 +277,7 @@ TIPS_SCHEMA: dict[str, Any] = _object(
                 {
                     "title": {"type": "string"},
                     "text": {"type": "string"},
-                    "plant": _nullable("string"),
+                    "plant": _text_or_empty(),
                     "task": {
                         "anyOf": [
                             _object(
@@ -272,7 +299,7 @@ TIPS_SCHEMA: dict[str, Any] = _object(
             "type": "array",
             "items": _object(
                 {
-                    "plant": _nullable("string"),
+                    "plant": _text_or_empty(),
                     "field": _choice(QUESTION_FIELDS),
                     "question": {"type": "string"},
                 }
