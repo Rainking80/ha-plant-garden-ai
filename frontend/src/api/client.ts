@@ -653,3 +653,43 @@ export async function askAssistant(
     void unsubscribe?.().catch(() => undefined);
   }
 }
+
+// ------------------------------------------------------------ export / import
+export const EXPORT_URL = "/api/plant_garden/export";
+export const IMPORT_URL = "/api/plant_garden/import";
+
+export interface ImportSummary {
+  garden: string | null;
+  plants: number;
+  areas: number;
+  zones: number;
+  markers: number;
+  measurements: number;
+  tasks: number;
+  background: string | null;
+}
+
+async function failure(response: Response): Promise<Error> {
+  try {
+    const body = (await response.json()) as { message?: string };
+    return new Error(body.message ?? response.statusText);
+  } catch {
+    return new Error(response.statusText || `HTTP ${response.status}`);
+  }
+}
+
+/** The garden as a JSON file (plan, plants, measurements, open tasks; no photos). */
+export async function exportGarden(hass: HomeAssistant): Promise<Blob> {
+  const response = await hass.fetchWithAuth(EXPORT_URL);
+  if (!response.ok) throw await failure(response);
+  return response.blob();
+}
+
+/** Import an export into this garden; the backend refuses a garden that is not empty. */
+export async function importGarden(hass: HomeAssistant, file: Blob): Promise<ImportSummary> {
+  const form = new FormData();
+  form.append("file", file, "garden.json");
+  const response = await hass.fetchWithAuth(IMPORT_URL, { method: "POST", body: form });
+  if (!response.ok) throw await failure(response);
+  return (await response.json()) as ImportSummary;
+}

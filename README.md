@@ -23,6 +23,13 @@ Aerial imagery comes directly from the state survey offices (Berlin/Brandenburg,
 
 ## Installation (HACS custom repository)
 
+> While the repository is private, HACS cannot install it (HACS only works with
+> public repositories). Install it by hand instead: copy the folder
+> `custom_components/plant_garden` of this repository into
+> `<config>/custom_components/` of your Home Assistant (Samba, SSH or the Studio
+> Code Server add-on) and restart Home Assistant.
+
+
 1. HACS → ⋮ → **Custom repositories** → add `https://github.com/Rainking80/ha-plant-maintainance`, category **Integration**.
 2. Install **Plant Garden**, restart Home Assistant.
 3. **Settings → Devices & services → Add integration → Plant Garden**, choose a name for your garden.
@@ -83,6 +90,10 @@ privacy – is in [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
 - **Where is my data?** In `<config>/plant_garden/` (database and photos) and
   `.storage/plant_garden.*`, so it is part of every Home Assistant backup. Photos
   make backups larger.
+- **How do I move my garden to another Home Assistant?** Tech tab → *Export as
+  JSON*, then in the other Home Assistant Tech tab → *Import a file* (into an empty
+  garden). Plan, plants, measurements and open tasks arrive at the same place on
+  the map; photos and history stay behind (they are in your backups).
 - **How do I delete everything?** Remove the integration (the garden is kept so a
   re-install finds it), stop Home Assistant and delete `<config>/plant_garden/`
   and `.storage/plant_garden.*`.

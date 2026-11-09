@@ -6,7 +6,7 @@ import "../src/components/ai-panel";
 import type { PgAIPanel } from "../src/components/ai-panel";
 import { GardenStore } from "../src/state/garden-store";
 import "../src/views/tech-view";
-import { costBars, toCsv, type PgTechView } from "../src/views/tech-view";
+import { costBars, previewExport, toCsv, type PgTechView } from "../src/views/tech-view";
 import {
   deepGet,
   deepText,
@@ -291,5 +291,100 @@ describe("pg-tech-view", () => {
     const buttons = view.shadowRoot?.querySelectorAll<HTMLButtonElement>(".row-actions button");
     buttons?.[1]?.click();
     await vi.waitFor(() => expect(deepText(view)).not.toContain("eigener Preis"));
+  });
+});
+
+describe("moving a garden", () => {
+  const EXPORT = {
+    format: "plant_garden.garden",
+    version: 1,
+    exported_at: "2026-11-09T10:00:00+00:00",
+    garden: { name: "Schrebergarten" },
+    layout: {
+      origin: { latitude: 48.13743, longitude: 11.57549 },
+      shapes: [{ kind: "bed" }, { kind: "hedge" }, { kind: "zone" }],
+    },
+    plants: [{}, {}, {}],
+    tasks: [{}],
+  };
+
+  it("previews an export file and refuses other files", () => {
+    const preview = previewExport(new Blob(["{}"]), EXPORT);
+    expect(preview).toMatchObject({
+      name: "Schrebergarten",
+      plants: 3,
+      areas: 2,
+      zones: 1,
+      tasks: 1,
+    });
+    expect(() => previewExport(new Blob(), { format: "other" })).toThrow();
+    expect(() => previewExport(new Blob(), { ...EXPORT, layout: {} })).toThrow();
+  });
+
+  it("exports and imports through the tech page", async () => {
+    const backend = fakeBackend();
+    const fetch = backend.hass.fetchWithAuth as ReturnType<typeof vi.fn>;
+    fetch.mockImplementation(async (url: string) =>
+      url.endsWith("/export")
+        ? new Response(JSON.stringify(EXPORT), { status: 200 })
+        : new Response(
+            JSON.stringify({
+              garden: "Schrebergarten",
+              plants: 3,
+              areas: 2,
+              zones: 1,
+              markers: 0,
+              measurements: 0,
+              tasks: 1,
+              background: null,
+            }),
+            { status: 200 },
+          ),
+    ); // fmt: skip
+    const created = vi.fn(() => "blob:x");
+    URL.createObjectURL = created;
+    URL.revokeObjectURL = vi.fn();
+    const view = await mountTech(backend);
+    expect(deepText(view)).toContain("Garten übertragen");
+
+    const button = (label: string) =>
+      [...(view.shadowRoot?.querySelectorAll<HTMLButtonElement>("button") ?? [])].find((b) =>
+        b.textContent?.includes(label),
+      );
+    button("Als JSON exportieren")?.click();
+    await vi.waitFor(() => expect(created).toHaveBeenCalled());
+    expect(fetch).toHaveBeenCalledWith("/api/plant_garden/export");
+
+    view._preview = previewExport(new Blob([JSON.stringify(EXPORT)]), EXPORT);
+    await view.updateComplete;
+    const text = deepText(view);
+    expect(text).toContain("3 Pflanzen, 2 Flächen, 1 Bewässerungszonen, 1 offene Aufgaben");
+    expect(text).toContain("Standort 48,1374, 11,5755");
+    button("Importieren")?.click();
+    await vi.waitFor(() => expect(deepText(view)).toContain("Importiert: 3 Pflanzen"));
+    const [url, init] = fetch.mock.calls.at(-1) as [string, RequestInit];
+    expect(url).toBe("/api/plant_garden/import");
+    expect(init.method).toBe("POST");
+    expect(init.body).toBeInstanceOf(FormData);
+  });
+
+  it("does not import into a garden that has plants, and shows backend errors", async () => {
+    const backend = fakeBackend({ plants: [makePlant()] });
+    const fetch = backend.hass.fetchWithAuth as ReturnType<typeof vi.fn>;
+    fetch.mockResolvedValue(
+      new Response(JSON.stringify({ message: "Administrators only" }), { status: 403 }),
+    );
+    const view = await mountTech(backend);
+    view._preview = previewExport(new Blob(["{}"]), EXPORT);
+    await view.updateComplete;
+    expect(deepText(view)).toContain("Importieren geht nur in einen leeren Garten");
+    const importButton = [
+      ...(view.shadowRoot?.querySelectorAll<HTMLButtonElement>(".preview button") ?? []),
+    ].at(-1);
+    expect(importButton?.disabled).toBe(true);
+    [...(view.shadowRoot?.querySelectorAll<HTMLButtonElement>("button") ?? [])]
+      .find((b) => b.textContent?.includes("Als JSON exportieren"))
+      ?.click();
+    await vi.waitFor(() => expect(deepText(view)).toContain("Administrators only"));
   });
 });

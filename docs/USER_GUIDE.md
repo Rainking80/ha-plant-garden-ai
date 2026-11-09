@@ -157,14 +157,25 @@ actions:
 - Weather services receive your location rounded to about 1 km. Aerial imagery is
   loaded by your browser from the survey offices.
 
-## 10. Removing the integration
+## 10. Moving to another Home Assistant
+
+On the **Tech** tab (administrators), *Export as JSON* saves the plan (with its
+location and background), the plants, measurements and open tasks. In the other
+Home Assistant, set up Plant Garden, open the Tech tab and choose *Import a file*:
+you see what the file contains and confirm. It only imports into an empty garden,
+and everything lands at the same place on the map, whatever that Home Assistant's
+home location is. Photos, history, AI providers and weather sources are not
+part of the file – add them again; valves and sensors with other names are listed
+under Repairs until you link them again.
+
+## 11. Removing the integration
 
 Removing the integration keeps your garden: plants, photos and history come back
 when you add it again. To delete everything, remove the integration and then
 delete the folder `<config>/plant_garden/` and the files
 `.storage/plant_garden.*` while Home Assistant is stopped.
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 - **Repairs** tells you about a zone that ran for hours (stuck valve), a zone whose
   entity no longer exists, a rejected AI key and the AI budget.

@@ -671,6 +671,30 @@ class CareManager:
         await self.async_check_due()
         return task
 
+    async def async_import_tasks(self, items: list[dict[str, Any]]) -> int:
+        """Tasks from an exported garden (open ones, plants already imported)."""
+        known = {plant.id for plant in self._manager.plants}
+        count = 0
+        for item in items:
+            plant_id = item.get("plant_id")
+            task = Task(
+                id=ulid_now(),
+                kind=TaskKind.OTHER,
+                title="",
+                source=str(item.get("source") or "user")[:10],
+                created_at=dt_util.utcnow(),
+            )
+            fields = {k: v for k, v in item.items() if k in TASK_FIELDS and k != "problem_id"}
+            fields["plant_id"] = plant_id if plant_id in known else None
+            self._apply_task_fields(task, fields)
+            if not task.title:
+                continue
+            await self._run(self._tables.save_task, task)
+            count += 1
+        await self._async_changed(None)
+        await self.async_check_due()
+        return count
+
     async def async_update_task(self, task_id: str, fields: dict[str, Any]) -> Task:
         task = await self.async_get_task(task_id)
         self._apply_task_fields(task, {k: v for k, v in fields.items() if k in TASK_FIELDS})

@@ -7,18 +7,25 @@ Downloads are requested by <img>/<image> tags with signed URLs (see serialize).
 from __future__ import annotations
 
 from http import HTTPStatus
+import json
 import logging
 
 from aiohttp import BodyPartReader, hdrs, web
-from homeassistant.components.http import KEY_AUTHENTICATED, KEY_HASS, HomeAssistantView
+from homeassistant.components.http import (
+    KEY_AUTHENTICATED,
+    KEY_HASS,
+    KEY_HASS_USER,
+    HomeAssistantView,
+)
 from homeassistant.components.http.const import KEY_HASS_REFRESH_TOKEN_ID
 from homeassistant.util import dt as dt_util
 
 from .const import BACKGROUND_FILE_URL, BACKGROUND_UPLOAD_URL, PHOTO_FILE_URL, PHOTO_UPLOAD_URL
 from .garden import NotFoundError
 from .photos import MAX_UPLOAD_BYTES, InvalidImageError, PhotoVariant, valid_id
-from .runtime import get_manager
+from .runtime import get_loaded_entry, get_manager
 from .serialize import background_url, photo_dict
+from .transfer import TransferError, async_export, async_import
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -184,3 +191,71 @@ def _require_auth(request: web.Request) -> None:
         if hdrs.AUTHORIZATION in request.headers:
             raise web.HTTPUnauthorized
         raise web.HTTPForbidden
+
+
+EXPORT_URL = "/api/plant_garden/export"
+IMPORT_URL = "/api/plant_garden/import"
+MAX_IMPORT_BYTES = 64 * 1024 * 1024  # the plan background travels inside as base64
+
+
+def _is_admin(request: web.Request) -> bool:
+    user = request.get(KEY_HASS_USER)
+    return bool(user and user.is_admin)
+
+
+class GardenExportView(HomeAssistantView):
+    """GET the garden configuration as a JSON file (administrators only)."""
+
+    url = EXPORT_URL
+    name = "api:plant_garden:export"
+    requires_auth = True
+
+    async def get(self, request: web.Request) -> web.Response:
+        if not _is_admin(request):
+            return self.json_message("Administrators only", HTTPStatus.FORBIDDEN)
+        entry = get_loaded_entry(request.app[KEY_HASS])
+        if entry is None:
+            return self.json_message("Plant Garden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
+        data = await async_export(entry)
+        stamp = dt_util.now().strftime("%Y-%m-%d")
+        response = self.json(data)
+        response.headers[hdrs.CONTENT_DISPOSITION] = (
+            f'attachment; filename="plant-garden-{stamp}.json"'
+        )
+        return response
+
+
+class GardenImportView(HomeAssistantView):
+    """POST multipart with one `file`: an export, imported into this empty garden."""
+
+    url = IMPORT_URL
+    name = "api:plant_garden:import"
+    requires_auth = True
+
+    async def post(self, request: web.Request) -> web.Response:  # noqa: PLR0911
+        if not _is_admin(request):
+            return self.json_message("Administrators only", HTTPStatus.FORBIDDEN)
+        entry = get_loaded_entry(request.app[KEY_HASS])
+        if entry is None:
+            return self.json_message("Plant Garden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
+        raw: bytes | None = None
+        try:
+            reader = await request.multipart()
+            while (part := await reader.next()) is not None:
+                if isinstance(part, BodyPartReader) and part.name == "file":
+                    raw = await _read_part(part, MAX_IMPORT_BYTES)
+        except UploadTooLargeError:
+            return self.json_message("File too large", HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
+        except ValueError, AssertionError:
+            return self.json_message("Malformed upload", HTTPStatus.BAD_REQUEST)
+        if raw is None:
+            return self.json_message("file is required", HTTPStatus.BAD_REQUEST)
+        try:
+            data = json.loads(raw)
+        except ValueError:
+            return self.json_message("The file is not JSON", HTTPStatus.BAD_REQUEST)
+        try:
+            summary = await async_import(entry, data)
+        except TransferError as err:
+            return self.json_message(str(err), HTTPStatus.BAD_REQUEST)
+        return self.json(summary)

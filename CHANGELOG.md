@@ -8,6 +8,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Move a garden to another Home Assistant: the Tech tab exports plan, plants,
+  measurements and open tasks as JSON and imports such a file into an empty
+  garden – at the same place on the map (no photos, history or keys).
 - Plan: a button "Irrigation zone" in the edit tool bar (zones were hidden as an
   area kind in a drop-down).
 - Plan: freehand drawing of areas, and every plant can be drawn as an area (a

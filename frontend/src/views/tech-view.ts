@@ -1,15 +1,18 @@
-import { mdiDownload, mdiRefresh } from "@mdi/js";
+import { mdiDownload, mdiRefresh, mdiUpload } from "@mdi/js";
 import { css, html, nothing, svg } from "lit";
 
 import {
   errorMessage,
+  exportGarden,
   getPricing,
+  importGarden,
   setPrice,
   techInfo,
   testProvider,
   usageLog,
   usageSummary,
 } from "../api/client";
+import type { ImportSummary } from "../api/client";
 import type {
   PricingInfo,
   Prices,
@@ -89,6 +92,50 @@ export function costBars(
   return { days, models, bars };
 }
 
+export interface GardenPreview {
+  file: Blob;
+  name: string | null;
+  exportedAt: string | null;
+  plants: number;
+  areas: number;
+  zones: number;
+  tasks: number;
+  latitude: number;
+  longitude: number;
+}
+
+/** What an export file holds, checked before it is sent; throws for other files. */
+export function previewExport(file: Blob, data: unknown): GardenPreview {
+  const raw = data as {
+    format?: string;
+    exported_at?: string;
+    garden?: { name?: string };
+    plants?: unknown[];
+    tasks?: unknown[];
+    layout?: { origin?: { latitude?: number; longitude?: number }; shapes?: { kind?: string }[] };
+  };
+  const origin = raw?.layout?.origin;
+  if (
+    raw?.format !== "plant_garden.garden" ||
+    typeof origin?.latitude !== "number" ||
+    typeof origin?.longitude !== "number"
+  ) {
+    throw new Error("not an export");
+  }
+  const shapes = raw.layout?.shapes ?? [];
+  return {
+    file,
+    name: raw.garden?.name ?? null,
+    exportedAt: raw.exported_at ?? null,
+    plants: raw.plants?.length ?? 0,
+    areas: shapes.filter((s) => s.kind !== "zone").length,
+    zones: shapes.filter((s) => s.kind === "zone").length,
+    tasks: raw.tasks?.length ?? 0,
+    latitude: origin.latitude,
+    longitude: origin.longitude,
+  };
+}
+
 /** Requests, tokens and costs of all AI calls; providers, prices and system data (admins). */
 export class PgTechView extends PgElement {
   static override properties = {
@@ -101,6 +148,8 @@ export class PgTechView extends PgElement {
     _status: { state: true },
     _error: { state: true },
     _testing: { state: true },
+    _preview: { state: true },
+    _transfer: { state: true },
   };
 
   declare store: GardenStore;
@@ -112,6 +161,9 @@ export class PgTechView extends PgElement {
   declare _status: string;
   declare _error: string;
   declare _testing: string;
+  /** A chosen export file, checked in the browser before it is imported. */
+  declare _preview: GardenPreview | null;
+  declare _transfer: { busy: boolean; error: string; done: ImportSummary | null };
 
   constructor() {
     super();
@@ -123,6 +175,8 @@ export class PgTechView extends PgElement {
     this._status = "";
     this._error = "";
     this._testing = "";
+    this._preview = null;
+    this._transfer = { busy: false, error: "", done: null };
   }
 
   override connectedCallback(): void {
@@ -232,7 +286,7 @@ export class PgTechView extends PgElement {
       ${summary ? this._renderChart(summary) : nothing}
       ${summary ? this._renderBreakdown(summary) : nothing} ${this._renderLog()}
       ${this._info ? this._renderProviders(this._info) : nothing}
-      ${this._pricing ? this._renderPricing(this._pricing) : nothing}
+      ${this._pricing ? this._renderPricing(this._pricing) : nothing} ${this._renderTransfer()}
       ${this._info ? this._renderSystem(this._info) : nothing}
     `;
   }
@@ -537,6 +591,129 @@ export class PgTechView extends PgElement {
     </section>`;
   }
 
+  private async _export(): Promise<void> {
+    this._transfer = { busy: true, error: "", done: null };
+    try {
+      const blob = await exportGarden(this.hass);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `plant-garden-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      this._transfer = { busy: false, error: "", done: null };
+    } catch (err) {
+      this._transfer = { busy: false, error: errorMessage(err), done: null };
+    }
+  }
+
+  private async _choose(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    this._transfer = { busy: false, error: "", done: null };
+    try {
+      this._preview = previewExport(file, JSON.parse(await file.text()) as unknown);
+    } catch {
+      this._preview = null;
+      this._transfer = { busy: false, error: this.t("transfer.not_export"), done: null };
+    }
+  }
+
+  private async _import(): Promise<void> {
+    const preview = this._preview;
+    if (!preview) return;
+    this._transfer = { busy: true, error: "", done: null };
+    try {
+      const done = await importGarden(this.hass, preview.file);
+      this._preview = null;
+      this._transfer = { busy: false, error: "", done };
+      await this.store?.refresh();
+    } catch (err) {
+      this._transfer = { busy: false, error: errorMessage(err), done: null };
+    }
+  }
+
+  private _renderTransfer() {
+    const { t, language } = this;
+    const preview = this._preview;
+    const done = this._transfer.done;
+    const occupied =
+      (this.store?.plants.length ?? 0) > 0 || (this.store?.layout?.shapes.length ?? 0) > 0;
+    return html`<section class="card block transfer">
+      <h3>${t("transfer.title")}</h3>
+      <p class="muted small">${t("transfer.hint")}</p>
+      <div class="transfer-actions">
+        <button class="button" ?disabled=${this._transfer.busy} @click=${this._export}>
+          ${icon(mdiDownload)} ${t("transfer.export")}
+        </button>
+        <label class="button secondary">
+          ${icon(mdiUpload)} ${t("transfer.choose")}
+          <input
+            class="sr-only"
+            type="file"
+            accept="application/json,.json"
+            @change=${this._choose}
+          />
+        </label>
+      </div>
+      ${
+        preview
+          ? html`<div class="preview" role="group" aria-label=${t("transfer.preview")}>
+              <p>
+                <strong>${preview.name ?? t("transfer.unnamed")}</strong>
+                ${preview.exportedAt ? html`· ${formatDateTime(preview.exportedAt, language)}` : nothing}
+              </p>
+              <p class="small">
+                ${t("transfer.counts", {
+                  plants: preview.plants,
+                  areas: preview.areas,
+                  zones: preview.zones,
+                  tasks: preview.tasks,
+                })}
+              </p>
+              <p class="small">
+                ${t("transfer.place", {
+                  lat: formatNumber(preview.latitude, language, 4),
+                  lon: formatNumber(preview.longitude, language, 4),
+                })}
+              </p>
+              ${occupied ? html`<p class="error-text small">${t("transfer.not_empty")}</p>` : nothing}
+              <div class="transfer-actions">
+                <button class="button text" @click=${() => (this._preview = null)}>
+                  ${t("common.cancel")}
+                </button>
+                <button
+                  class="button"
+                  ?disabled=${occupied || this._transfer.busy}
+                  @click=${this._import}
+                >
+                  ${this._transfer.busy ? t("transfer.importing") : t("transfer.import")}
+                </button>
+              </div>
+            </div>`
+          : nothing
+      }
+      ${
+        done
+          ? html`<p class="small" role="status">
+              ${t("transfer.done", {
+                plants: done.plants,
+                areas: done.areas,
+                zones: done.zones,
+                tasks: done.tasks,
+              })}
+            </p>`
+          : nothing
+      }
+      ${
+        this._transfer.error
+          ? html`<p class="error-text small" role="alert">${this._transfer.error}</p>`
+          : nothing
+      }
+    </section>`;
+  }
+
   private _renderSystem(info: TechInfo) {
     const { t, language } = this;
     const storage = info.storage;
@@ -704,6 +881,24 @@ export class PgTechView extends PgElement {
       summary {
         cursor: pointer;
         font-weight: 500;
+      }
+      .transfer-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .transfer label.button {
+        cursor: pointer;
+      }
+      .preview {
+        border: 1px solid var(--pg-divider);
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-top: 12px;
+      }
+      .preview p {
+        margin: 2px 0;
       }
       .system {
         display: grid;

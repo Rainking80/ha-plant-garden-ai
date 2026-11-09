@@ -648,6 +648,22 @@ export const en = {
   "plan.tool_zone_hint": "Draw the area a valve or switch waters",
   "plan.zone_draw_hint":
     "Irrigation zone: drag a rectangle over the area that one valve waters – or choose circle, polygon or freehand. Then link the valve or switch on the right.",
+  "transfer.title": "Move the garden",
+  "transfer.hint":
+    "Export plan, plants, measurements and open tasks as a JSON file and import them into another Home Assistant – at the same place on the map. Photos, history, AI keys and settings are not included. The file contains the garden's location.",
+  "transfer.export": "Export as JSON",
+  "transfer.choose": "Import a file …",
+  "transfer.preview": "File to import",
+  "transfer.unnamed": "Garden",
+  "transfer.counts": "{plants} plants, {areas} areas, {zones} irrigation zones, {tasks} open tasks",
+  "transfer.place": "Location {lat}, {lon}",
+  "transfer.not_empty":
+    "This garden already has plants or areas. Import only works into an empty garden (e.g. a fresh installation).",
+  "transfer.import": "Import",
+  "transfer.importing": "Importing …",
+  "transfer.done":
+    "Imported: {plants} plants, {areas} areas, {zones} irrigation zones, {tasks} tasks. Link valves and sensors again if their names differ here.",
+  "transfer.not_export": "This is not a Plant Garden export.",
 } as const;
 
 export type TranslationKey = keyof typeof en;

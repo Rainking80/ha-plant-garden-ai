@@ -462,3 +462,20 @@ and choices are an empty string (choices list `""` as a value), unknown sizes ar
 as `anyOf` with null. The cleaners turn "" and 0 into None. A test checks every
 schema: no type arrays, at most 16 unions, every object closed and fully
 required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null.
+
+## D-035 Moving a garden: JSON export and import (2026-11-09)
+
+- **What travels**: the plan (origin, areas, zones with their entity links,
+  markers, the background - an uploaded picture as base64), plants with all fields
+  and provenance, measurements and open tasks. Not included: photos (Home
+  Assistant's backups carry them), irrigation, weather and AI history, problems,
+  chat, settings and AI keys (subentries are never exported).
+- **Same place on the map**: the import takes over the exported origin, so plan
+  coordinates mean the same real place whatever the new home location is. Plant,
+  area and marker ids are kept, so all links stay intact.
+- **Only into an empty garden** (no plants, areas or markers): nothing is merged
+  or overwritten. Everything is validated before anything is written - with the
+  same rules as edits in the panel - so a broken file changes nothing.
+- **HTTP, not WebSocket**, administrators only: the file can be several MB with a
+  background picture; uploads stream with a 64 MB limit. Entity links that do not
+  exist in the new Home Assistant show up as repair issues (D-031).

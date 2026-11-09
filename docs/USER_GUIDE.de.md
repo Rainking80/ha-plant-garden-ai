@@ -160,14 +160,26 @@ actions:
 - Wetterdienste bekommen den Standort auf etwa 1 km gerundet. Luftbilder lädt der
   Browser direkt bei den Vermessungsämtern.
 
-## 10. Integration entfernen
+## 10. Garten in ein anderes Home Assistant umziehen
+
+Auf der Seite **Technik** (Administratoren) speichert *Als JSON exportieren* den
+Plan (mit Standort und Hintergrund), die Pflanzen, Messungen und offenen Aufgaben.
+Im anderen Home Assistant Plant Garden einrichten, die Technikseite öffnen und
+*Datei importieren …* wählen: Du siehst, was die Datei enthält, und bestätigst. Der
+Import geht nur in einen leeren Garten, und alles landet an derselben Stelle auf
+der Karte, egal welchen Zuhause-Standort dieses Home Assistant hat. Fotos, Verlauf,
+KI-Anbieter und Wetterquellen sind nicht enthalten – die richtest du neu ein;
+Ventile und Sensoren mit anderen Namen stehen unter Reparaturen, bis du sie neu
+verknüpfst.
+
+## 11. Integration entfernen
 
 Beim Entfernen bleibt der Garten erhalten: Pflanzen, Fotos und Verlauf sind wieder
 da, wenn die Integration erneut hinzugefügt wird. Um alles zu löschen: Integration
 entfernen, Home Assistant stoppen und den Ordner `<config>/plant_garden/` sowie die
 Dateien `.storage/plant_garden.*` löschen.
 
-## 11. Fehlersuche
+## 12. Fehlersuche
 
 - **Reparaturen** meldet eine Zone, die stundenlang läuft (hängendes Ventil), eine
   Zone, deren Entität es nicht mehr gibt, einen abgelehnten KI-Key und das

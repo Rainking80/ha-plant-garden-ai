@@ -19,7 +19,14 @@ from .const import CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS, DOMAIN
 from .database import DatabaseError
 from .entity import async_garden_device
 from .garden import GardenManager
-from .http import BackgroundFileView, BackgroundUploadView, PhotoFileView, PhotoUploadView
+from .http import (
+    BackgroundFileView,
+    BackgroundUploadView,
+    GardenExportView,
+    GardenImportView,
+    PhotoFileView,
+    PhotoUploadView,
+)
 from .irrigation import IrrigationTracker
 from .panel import async_register_panel, async_register_static_path, async_unregister_panel
 from .runtime import PlantGardenConfigEntry, PlantGardenData
@@ -38,7 +45,14 @@ PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.T
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up things that exist once per Home Assistant run."""
     await async_register_static_path(hass)
-    for view in (PhotoUploadView(), PhotoFileView(), BackgroundUploadView(), BackgroundFileView()):
+    for view in (
+        PhotoUploadView(),
+        PhotoFileView(),
+        BackgroundUploadView(),
+        BackgroundFileView(),
+        GardenExportView(),
+        GardenImportView(),
+    ):
         hass.http.register_view(view)
     async_register_websocket_commands(hass)
     async_register_ai_commands(hass)

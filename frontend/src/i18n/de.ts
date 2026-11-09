@@ -660,4 +660,21 @@ export const de: Translations = {
   "plan.tool_zone_hint": "Fläche zeichnen, die ein Ventil oder Schalter bewässert",
   "plan.zone_draw_hint":
     "Bewässerungszone: Ziehe ein Rechteck über die Fläche, die ein Ventil bewässert – oder wähle Kreis, Polygon oder Freihand. Danach rechts das Ventil oder den Schalter verknüpfen.",
+  "transfer.title": "Garten übertragen",
+  "transfer.hint":
+    "Plan, Pflanzen, Messungen und offene Aufgaben als JSON-Datei exportieren und in ein anderes Home Assistant importieren – an derselben Stelle auf der Karte. Fotos, Verlauf, KI-Keys und Einstellungen sind nicht enthalten. Die Datei enthält den Standort des Gartens.",
+  "transfer.export": "Als JSON exportieren",
+  "transfer.choose": "Datei importieren …",
+  "transfer.preview": "Zu importierende Datei",
+  "transfer.unnamed": "Garten",
+  "transfer.counts":
+    "{plants} Pflanzen, {areas} Flächen, {zones} Bewässerungszonen, {tasks} offene Aufgaben",
+  "transfer.place": "Standort {lat}, {lon}",
+  "transfer.not_empty":
+    "Dieser Garten hat schon Pflanzen oder Flächen. Importieren geht nur in einen leeren Garten (z. B. eine frische Installation).",
+  "transfer.import": "Importieren",
+  "transfer.importing": "Importiere …",
+  "transfer.done":
+    "Importiert: {plants} Pflanzen, {areas} Flächen, {zones} Bewässerungszonen, {tasks} Aufgaben. Ventile und Sensoren neu verknüpfen, falls sie hier anders heißen.",
+  "transfer.not_export": "Das ist kein Plant-Garden-Export.",
 };

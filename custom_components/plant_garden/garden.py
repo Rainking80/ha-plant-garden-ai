@@ -540,6 +540,73 @@ class GardenManager:
         self._schedule_save()
         self._notify("layout")
 
+    # ------------------------------------------------------------ export / import
+    @property
+    def is_empty(self) -> bool:
+        """No plants, areas or markers yet: a garden another one can be imported into."""
+        return not self._plants and not self._layout.shapes and not self._layout.markers
+
+    async def async_all_measurements(self) -> list[Measurement]:
+        def collect() -> list[Measurement]:
+            return [
+                measurement
+                for plant_id in list(self._plants)
+                for measurement in self._db.measurements_for_plant(plant_id)
+            ]
+
+        return await self.hass.async_add_executor_job(collect)
+
+    async def async_background_bytes(self) -> bytes | None:
+        """The uploaded plan background (JPEG), if the plan uses one."""
+        background = self._layout.background
+        if not background or background.get("type") != "image":
+            return None
+        path = self._backgrounds.path(background["image_id"])
+
+        def read() -> bytes | None:
+            return path.read_bytes() if path.exists() else None
+
+        return await self.hass.async_add_executor_job(read)
+
+    async def async_import_garden(
+        self,
+        *,
+        plants: list[Plant],
+        layout: Layout,
+        measurements: list[Measurement],
+        background_image: bytes | None,
+    ) -> None:
+        """Take over an exported garden - only into an empty one, nothing is merged.
+
+        The layout keeps the exported origin, so everything lands at the same place
+        on the map, whatever this Home Assistant's home location is.
+        """
+        if not self.is_empty:
+            raise ValueError("the garden is not empty")
+        background = layout.background
+        if background and background.get("type") == "image":
+            if background_image is None:
+                layout.background = None
+            else:
+                content, width, height = await self.hass.async_add_executor_job(
+                    process_background, background_image
+                )
+                image_id = ulid_now()
+                await self.hass.async_add_executor_job(self._backgrounds.write, image_id, content)
+                layout.background = {
+                    **background,
+                    "image_id": image_id,
+                    "width_px": width,
+                    "height_px": height,
+                }
+        self._plants = {plant.id: plant for plant in plants}
+        self._layout = layout
+        for measurement in measurements:
+            await self.hass.async_add_executor_job(self._db.insert_measurement, measurement)
+        await self._store.async_save(self._data_to_save())
+        self._notify("layout")
+        self._notify("plant")
+
     # ------------------------------------------------------------ markers
     async def async_save_marker(self, data: dict[str, Any]) -> Marker:
         marker = Marker(
