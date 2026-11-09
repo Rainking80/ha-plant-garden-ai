@@ -22,7 +22,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.3  # no floating major tag since v8: pin the release
       - name: Versions match the tag
         run: uv run --no-project python scripts/check_versions.py --tag "$GITHUB_REF_NAME"
       - name: Release notes from CHANGELOG.md

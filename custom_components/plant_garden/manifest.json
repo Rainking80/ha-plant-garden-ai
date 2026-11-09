@@ -2,6 +2,7 @@
   "domain": "plant_garden",
   "name": "Plant Garden",
   "after_dependencies": ["ai_task", "camera", "media_source", "recorder"],
+  "categories": ["garden_plants"],
   "codeowners": ["@Rainking80"],
   "config_flow": true,
   "dependencies": ["frontend", "http", "panel_custom", "websocket_api"],

@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.3  # no floating major tag since v8: pin the release
       - run: uv sync --frozen
       - run: uv run --frozen python scripts/check_versions.py
       - run: uv run --frozen ruff check .
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.3  # no floating major tag since v8: pin the release
       - run: uv sync --frozen
       - run: uv run --frozen pytest --cov --cov-report=term-missing
 
@@ -37,5 +37,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.3  # no floating major tag since v8: pin the release
       - run: bash scripts/test-min-version
