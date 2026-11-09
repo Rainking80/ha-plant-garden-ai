@@ -8,7 +8,7 @@ Diese Werte gelten im ganzen Dokument.
 |---|---|
 | Integration-Domain | `plant_garden` |
 | Anzeigename | Plant Garden |
-| GitHub-Repository | `Rainking80/ha-plant-maintainance` (privat; für HACS muss es öffentlich sein) |
+| GitHub-Repository | `Rainking80/ha-plant-garden-ai` (privat; für HACS muss es öffentlich sein) |
 | Codeowner (manifest.json) | `@Rainking80` |
 | Lizenz | MIT |
 | Mindestversion Home Assistant | **2026.9.0** – erste Version, in der HA `probatio` statt `voluptuous` verwendet (Begründung in `docs/DECISIONS.md`, D-001). Festgehalten in `hacs.json` und README |
