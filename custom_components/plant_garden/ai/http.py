@@ -41,6 +41,22 @@ def _message(payload: Any, status: int) -> str:
     return f"HTTP {status}"
 
 
+KEY_REJECTED = frozenset({"API_KEY_INVALID", "API_KEY_EXPIRED"})
+
+
+def _key_rejected(payload: Any) -> bool:
+    """Google answers a wrong key with 400 and the reason API_KEY_INVALID, not 401."""
+    error = payload.get("error") if isinstance(payload, dict) else None
+    if not isinstance(error, dict):
+        return False
+    if error.get("status") == "UNAUTHENTICATED":
+        return True
+    details = error.get("details")
+    return isinstance(details, list) and any(
+        isinstance(item, dict) and item.get("reason") in KEY_REJECTED for item in details
+    )
+
+
 async def async_request(
     session: aiohttp.ClientSession,
     method: str,
@@ -76,7 +92,7 @@ async def async_request(
                 if resp.status < 400:
                     return payload, dict(resp.headers)
                 text = _message(payload, resp.status)
-                if resp.status in (401, 403):
+                if resp.status in (401, 403) or _key_rejected(payload):
                     raise AuthError(text, status=resp.status)
                 retryable = resp.status == 429 or resp.status >= 500
                 if not retryable or attempt == retries:
@@ -148,7 +164,7 @@ async def async_stream(
                 except aiohttp.ContentTypeError, ValueError:
                     error_payload = None
                 text = _message(error_payload, resp.status)
-                if resp.status in (401, 403):
+                if resp.status in (401, 403) or _key_rejected(error_payload):
                     raise AuthError(text, status=resp.status)
                 retryable = resp.status == 429 or resp.status >= 500
                 if not retryable or attempt == retries:

@@ -439,3 +439,29 @@ def test_identify_schema_is_strict_everywhere() -> None:
                 check(value)
 
     check(IDENTIFY_SCHEMA)
+
+
+async def test_gemini_rejects_a_wrong_key_with_400(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    """Google answers a wrong key with 400 API_KEY_INVALID: that is a key problem, not the net."""
+    aioclient_mock.get(
+        f"{gemini.BASE_URL}/models",
+        status=400,
+        json={
+            "error": {
+                "code": 400,
+                "message": "API key not valid. Please pass a valid API key.",
+                "status": "INVALID_ARGUMENT",
+                "details": [
+                    {
+                        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                        "reason": "API_KEY_INVALID",
+                    }
+                ],
+            }
+        },
+    )
+    provider = gemini.GeminiProvider(async_get_clientsession(hass), "AIza-wrong", "")
+    with pytest.raises(AuthError, match="API key not valid"):
+        await provider.async_validate()
