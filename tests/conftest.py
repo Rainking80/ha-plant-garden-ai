@@ -18,6 +18,24 @@ def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
     """Allow Home Assistant to load the integration from custom_components."""
 
 
+@pytest.fixture(autouse=True)
+def wait_for_background_tasks(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Let async_block_till_done wait for background tasks as well.
+
+    Home Assistant runs time listeners (async_track_time_change, async_call_later)
+    as background tasks, and so does the integration with work that must not hold
+    up the start (first weather fetch, identification and photo comparison after
+    an upload). async_block_till_done skips them by default: on a fast machine they
+    happen to be done in time, on a slow CI runner they are not.
+    """
+    original = HomeAssistant.async_block_till_done
+
+    async def block_till_done(self: HomeAssistant, wait_background_tasks: bool = True) -> None:
+        await original(self, wait_background_tasks=wait_background_tasks)
+
+    monkeypatch.setattr(HomeAssistant, "async_block_till_done", block_till_done)
+
+
 @pytest.fixture
 def hass_config_dir(hass_tmp_config_dir: str) -> str:
     """Use a temporary config dir, so photos and the database land in tmp_path."""
