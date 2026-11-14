@@ -95,7 +95,9 @@ export function makePhoto(id: string, takenAt: string, overrides: Partial<Photo>
       original: `/api/plant_garden/photos/${id}/original?authSig=x`,
       medium: `/api/plant_garden/photos/${id}/medium?authSig=x`,
       thumb: `/api/plant_garden/photos/${id}/thumb?authSig=x`,
+      source: `/api/plant_garden/photos/${id}/source?authSig=x`,
     },
+    edit: null,
     ...overrides,
   };
 }
@@ -572,6 +574,12 @@ export function fakeBackend(
         const detail = backend.details[String(msg.plant_id ?? "")];
         if (!detail) throw { code: "not_found", message: "Not found" };
         return detail;
+      }
+      case "plant_garden/photos/edit": {
+        const crop = msg.crop as { x: number; y: number; w: number; h: number } | null;
+        const rotate = msg.rotate as 0 | 90 | 180 | 270;
+        const edit = crop || rotate ? { ...(crop ?? { x: 0, y: 0, w: 1, h: 1 }), rotate } : null;
+        return makePhoto(String(msg.photo_id), "2026-07-01T10:00:00Z", { edit });
       }
       case "plant_garden/layout/get":
         return layout();

@@ -22,7 +22,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import BACKGROUND_FILE_URL, BACKGROUND_UPLOAD_URL, PHOTO_FILE_URL, PHOTO_UPLOAD_URL
 from .garden import NotFoundError
-from .photos import MAX_UPLOAD_BYTES, InvalidImageError, PhotoVariant, valid_id
+from .photos import MAX_UPLOAD_BYTES, SOURCE, InvalidImageError, PhotoVariant, valid_id
 from .runtime import get_loaded_entry, get_manager
 from .serialize import background_url, photo_dict
 from .transfer import TransferError, async_export, async_import
@@ -31,7 +31,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _TEXT_FIELD_LIMIT = 4096
 _CACHE_FOREVER = "private, max-age=31536000, immutable"
-_VARIANTS = frozenset(variant.value for variant in PhotoVariant)
+_VARIANTS = frozenset({*(variant.value for variant in PhotoVariant), SOURCE})
 
 
 class UploadTooLargeError(Exception):
@@ -125,7 +125,11 @@ class PhotoFileView(HomeAssistantView):
             photo = await manager.async_get_photo(photo_id)
         except NotFoundError:
             raise web.HTTPNotFound from None
-        path = manager.photo_path(photo, PhotoVariant(variant))
+        path = (
+            manager.photo_upload_path(photo)
+            if variant == SOURCE
+            else manager.photo_path(photo, PhotoVariant(variant))
+        )
         return web.FileResponse(path, headers={"Cache-Control": _CACHE_FOREVER})
 
 

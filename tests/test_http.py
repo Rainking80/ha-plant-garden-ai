@@ -10,7 +10,7 @@ import aiohttp
 from homeassistant.core import HomeAssistant
 from PIL import Image
 from pytest_homeassistant_custom_component.common import MockConfigEntry
-from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
+from pytest_homeassistant_custom_component.typing import ClientSessionGenerator, WebSocketGenerator
 
 from custom_components.plant_garden.runtime import get_manager
 
@@ -85,6 +85,62 @@ async def test_upload_and_download(
     resp = await client.get(plain)
     assert resp.status == HTTPStatus.OK
     assert resp.headers["Content-Type"] == "image/jpeg"
+
+
+async def test_crop_and_turn_a_photo(
+    hass: HomeAssistant,
+    hass_client: ClientSessionGenerator,
+    hass_ws_client: WebSocketGenerator,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """photos/edit: new variants with new URLs, the upload stays available as `source`."""
+    plant_id = await _plant_id(hass)
+    client = await hass_client()
+    resp = await client.post(UPLOAD, data=_form(plant_id, make_image(1200, 800)))
+    photo = await resp.json()
+    assert photo["edit"] is None
+    assert "?v=" not in photo["urls"]["thumb"]
+    ws = await hass_ws_client(hass)
+
+    async def edit(**fields: object) -> dict:
+        await ws.send_json_auto_id(
+            {"type": "plant_garden/photos/edit", "photo_id": photo["id"], **fields}
+        )
+        return await ws.receive_json()
+
+    async def size(url: str) -> tuple[int, int]:
+        resp = await client.get(url)
+        assert resp.status == HTTPStatus.OK, url
+        return Image.open(io.BytesIO(await resp.read())).size
+
+    # the right half, turned clockwise: 400 x 800 becomes 800 x 400 ... of the turned image
+    msg = await edit(crop={"x": 0, "y": 0.5, "w": 1, "h": 0.5}, rotate=90)
+    assert msg["success"], msg
+    edited = msg["result"]
+    assert edited["edit"] == {"x": 0.0, "y": 0.5, "w": 1.0, "h": 0.5, "rotate": 90}
+    assert (edited["width"], edited["height"]) == (800, 600)
+    assert "?v=" in edited["urls"]["original"]
+    assert "?v=" not in edited["urls"]["source"]
+    assert await size(edited["urls"]["original"]) == (800, 600)
+    assert await size(edited["urls"]["source"]) == (1200, 800)  # what the crop tool shows
+
+    # the cover in the plant list follows the edit
+    await ws.send_json_auto_id({"type": "plant_garden/plants/list"})
+    [plant] = (await ws.receive_json())["result"]["plants"]
+    assert plant["cover"]["urls"]["thumb"].split("&")[0] == edited["urls"]["thumb"].split("&")[0]
+
+    # back to the upload
+    msg = await edit(crop=None)
+    assert msg["result"]["edit"] is None
+    assert (msg["result"]["width"], msg["result"]["height"]) == (1200, 800)
+    assert "?v=" not in msg["result"]["urls"]["original"]
+
+    msg = await edit(crop={"x": 0.5, "y": 0, "w": 0.6, "h": 1})
+    assert msg["result"]["edit"]["x"] == 0.4  # moved back into the image
+    msg = await edit(crop={"x": 1.5, "y": 0, "w": 1, "h": 1})
+    assert msg["error"]["code"] == "invalid_format"
+    msg = await edit(rotate=45)
+    assert msg["error"]["code"] == "invalid_format"
 
 
 async def test_upload_requires_auth(

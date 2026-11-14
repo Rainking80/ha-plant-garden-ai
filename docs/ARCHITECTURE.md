@@ -31,7 +31,7 @@ Browser (HA frontend)                              Home Assistant core
 | `garden.py` | `GardenManager`: the only way to read or change data. Validates/normalises fields, records provenance, coordinates Store + SQLite + files, sets the plan origin from `zone.home` once (moving it later reprojects everything), notifies subscribers (`GardenChange` with `kind` plant / plant_removed / layout). |
 | `storage.py` | `GardenStore` (HA `Store`, key `plant_garden.garden`, version 1.2 with step-wise migrations; 1.2 added the layout). Holds plants and layout. Writes are delayed by 2 s to batch edits. |
 | `database.py` | `GardenDatabase`: SQLite in WAL mode, schema migrations via `PRAGMA user_version`. Tables `photos`, `measurements`. Blocking; always called through the executor; a lock serialises access. |
-| `photos.py` | `process_image` (Pillow, executor): validates format/pixel count, reads EXIF capture time, applies EXIF orientation, strips all metadata, renders `original` (≤2560 px JPEG), `medium` (1024 px WebP), `thumb` (360 px WebP). `process_background` (≤4096 px JPEG). `PhotoFiles` / `BackgroundFiles` write atomically; IDs must be ULIDs (no path tricks). |
+| `photos.py` | `process_image` (Pillow, executor): validates format/pixel count, reads EXIF capture time, applies EXIF orientation, strips all metadata, renders `original` (≤2560 px JPEG), `medium` (1024 px WebP), `thumb` (360 px WebP). `process_background` (≤4096 px JPEG). `PhotoFiles` / `BackgroundFiles` write atomically; IDs must be ULIDs (no path tricks). `edit_image` / `PhotoFiles.apply_edit`: turn and crop from the kept upload, reset by moving it back byte for byte (D-041). |
 | `http.py` | `POST /api/plant_garden/photos` (multipart: plant_id, file, taken_at, tags, note; 20 MB limit), `GET /api/plant_garden/photos/{id}/{variant}`, `POST /api/plant_garden/backgrounds`, `GET /api/plant_garden/backgrounds/{id}`; file views check auth themselves (see D-011). |
 | `serialize.py` | JSON shapes for the panel; signs photo URLs (`async_sign_path`, 24 h). |
 | `websocket_api.py` | Commands below; `garden_command` decorator maps `NotFoundError` → `not_found`, `ValueError` → `invalid_format`, missing entry → `not_loaded`. |
@@ -100,6 +100,7 @@ Nothing is keyed by config entry id: removing and re-adding the integration keep
 | `plants/delete` | also deletes photos (rows and files) and measurements |
 | `plants/set_cover` | photo must belong to the plant; `null` = newest photo |
 | `photos/update`, `photos/delete` | tags, note, taken_at |
+| `photos/edit` | crop (fractions of the turned image) and quarter turn; the upload is kept as `<id>.source.jpg`, the variants are rendered anew; `crop: null` without a turn shows it as uploaded (D-041) |
 | `measurements/add`, `measurements/update`, `measurements/delete` | height and/or width in cm; editing an AI estimate turns it into a user value |
 | `plants/move` | set or clear the plan position of up to 1000 plants in one save |
 | `layout/get` | origin (lat/lon) and shapes in drawing order (z) |

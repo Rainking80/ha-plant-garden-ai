@@ -15,9 +15,11 @@ import probatio
 from .const import DOMAIN, PLAN_EXTENT_M, ZONE_ENTITY_DOMAINS
 from .garden import GardenChange, GardenManager, NotFoundError, OutOfRangeError
 from .models import (
+    ROTATIONS,
     Emitter,
     Light,
     LocationType,
+    PhotoEdit,
     PlantCategory,
     PlantStatus,
     Point,
@@ -216,6 +218,7 @@ def async_register_websocket_commands(hass: HomeAssistant) -> None:
         ws_markers_save,
         ws_markers_delete,
         ws_photos_update,
+        ws_photos_edit,
         ws_photos_delete,
         ws_measurements_add,
         ws_measurements_update,
@@ -600,6 +603,39 @@ async def ws_photos_update(
     manager: GardenManager,
 ) -> dict[str, Any]:
     photo = await manager.async_update_photo(msg["photo_id"], _fields(msg, "photo_id"))
+    return photo_dict(hass, photo, connection.refresh_token_id)
+
+
+FRACTION = _number(0, 1)
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/photos/edit",
+        probatio.Required("photo_id"): str,
+        # fractions of the turned image; None (or the whole image unturned): as uploaded
+        probatio.Optional("crop"): probatio.Any(
+            None,
+            {
+                probatio.Required("x"): FRACTION,
+                probatio.Required("y"): FRACTION,
+                probatio.Required("w"): FRACTION,
+                probatio.Required("h"): FRACTION,
+            },
+        ),
+        probatio.Optional("rotate", default=0): probatio.In(ROTATIONS),
+    }
+)
+async def ws_photos_edit(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Crop and turn what is shown of a photo; the upload itself is kept (D-041)."""
+    crop = msg.get("crop") or {"x": 0.0, "y": 0.0, "w": 1.0, "h": 1.0}
+    edit = PhotoEdit.clean(crop["x"], crop["y"], crop["w"], crop["h"], msg["rotate"])
+    photo = await manager.async_edit_photo(msg["photo_id"], edit)
     return photo_dict(hass, photo, connection.refresh_token_id)
 
 

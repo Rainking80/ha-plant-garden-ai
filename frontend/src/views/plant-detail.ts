@@ -31,6 +31,8 @@ import { PgElement, define, icon } from "../components/base";
 import type { PgConfirmDialog } from "../components/confirm-dialog";
 import "../components/confirm-dialog";
 import "../components/growth-chart";
+import type { PgPhotoCrop } from "../components/photo-crop";
+import "../components/photo-crop";
 import type { PgPhotoViewer } from "../components/photo-viewer";
 import "../components/photo-viewer";
 import "../components/water-panel";
@@ -223,6 +225,14 @@ export class PgPlantDetail extends PgElement {
       this._gpsSuggestion = suggestedPosition(result.gps, this.store.layout?.origin);
     }
     await this._load();
+    // frame the plant in each new photo (D-041)
+    if (result.photos.length) await this._crop(result.photos);
+  }
+
+  private _crop(photos: Photo[]): Promise<void> {
+    return (
+      this.renderRoot.querySelector<PgPhotoCrop>("pg-photo-crop")?.edit(photos) ?? Promise.resolve()
+    );
   }
 
   private async _acceptGps(): Promise<void> {
@@ -653,7 +663,9 @@ export class PgPlantDetail extends PgElement {
         .plantId=${plant.id}
         .coverId=${cover?.id ?? null}
         @photos-changed=${() => this._load()}
+        @crop-photo=${(e: CustomEvent<Photo>) => void this._crop([e.detail])}
       ></pg-photo-viewer>
+      <pg-photo-crop .hass=${this.hass} @photos-changed=${() => this._load()}></pg-photo-crop>
       <pg-confirm-dialog .hass=${this.hass}></pg-confirm-dialog>
     `;
   }

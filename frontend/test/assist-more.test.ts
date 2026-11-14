@@ -50,7 +50,13 @@ const photo = (id: string, taken: string): Photo => ({
   size_bytes: 1000,
   tags: [],
   note: "",
-  urls: { thumb: `/thumb/${id}`, medium: `/medium/${id}`, original: `/original/${id}` },
+  edit: null,
+  urls: {
+    thumb: `/thumb/${id}`,
+    medium: `/medium/${id}`,
+    original: `/original/${id}`,
+    source: `/source/${id}`,
+  },
 });
 
 afterEach(() => {

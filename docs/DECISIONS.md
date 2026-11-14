@@ -584,3 +584,27 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   upload with the option `photo_compare` (off by default - an AI call with
   costs). The last comparison per plant is kept in Store `plant_garden.assistant`
   and dropped when one of its photos is deleted.
+
+## D-041 Cropping photos without losing the upload (2026-11-14)
+
+- **Not destructive**: a crop is stored as fractions (0..1) of the photo after a
+  quarter turn (`photos.edit`, schema 6). Before the first edit the stored upload
+  is copied to `<id>.source.jpg`; `original`, `medium` and `thumb` are rendered
+  anew from it. A reset moves the copy back, byte for byte. The crop tool and
+  *Open original* use the URL `source`, everything else the crop - also the plan
+  avatars and the AI (identification, comparison), which then see more plant and
+  less background.
+- **Cache**: photo files are served as immutable; the variants of an edited photo
+  carry `?v=<hash of the edit>` (signed with the path, so the signature stays
+  valid). The same edit gives the same files, so the stamp is deterministic.
+- **When**: after every upload on the plant page and after creating a plant with
+  photos, one photo after the other (skip keeps a photo as it is), and at any time
+  from the photo viewer.
+- **Suggestion without AI**: the browser looks at a 128 px copy for leaves (excess
+  green) and vivid flowers or fruit, weighted towards the middle where photos
+  usually have the plant, and frames 94 % of that weight with a margin. Nothing
+  leaves the browser, it costs nothing; with too little plant colour the frame
+  stays on the whole photo. A plant against a lawn is framed loosely - the user
+  adjusts it.
+- **Turning** in quarter turns covers photos taken sideways; straightening by a
+  few degrees is left out (it would need a crop that avoids empty corners).

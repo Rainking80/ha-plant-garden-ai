@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import StrEnum
+import hashlib
+import json
 from typing import Any, Self
 
 
@@ -521,6 +523,57 @@ class Layout:
         )
 
 
+MIN_CROP = 0.05  # a crop keeps at least 5 % of the width and of the height
+ROTATIONS = (0, 90, 180, 270)
+
+
+@dataclass(slots=True, frozen=True)
+class PhotoEdit:
+    """What is shown of a photo: a turn clockwise in steps of 90°, then a crop.
+
+    The crop is given as fractions (0..1) of the turned image, so it does not
+    depend on the stored size. The uploaded image itself is kept (D-041).
+    """
+
+    x: float = 0.0
+    y: float = 0.0
+    w: float = 1.0
+    h: float = 1.0
+    rotate: int = 0
+
+    @classmethod
+    def clean(cls, x: float, y: float, w: float, h: float, rotate: int = 0) -> Self:
+        """Clamp into the image, at least MIN_CROP large, rounded for stable versions."""
+        w = round(min(1.0, max(MIN_CROP, w)), 4)
+        h = round(min(1.0, max(MIN_CROP, h)), 4)
+        x = round(min(1.0 - w, max(0.0, x)), 4)
+        y = round(min(1.0 - h, max(0.0, y)), 4)
+        return cls(x=x, y=y, w=w, h=h, rotate=rotate % 360 if rotate % 90 == 0 else 0)
+
+    @property
+    def is_identity(self) -> bool:
+        return self.rotate == 0 and (self.x, self.y, self.w, self.h) == (0.0, 0.0, 1.0, 1.0)
+
+    @property
+    def version(self) -> str:
+        """Short stamp for the image URLs: the same edit always gives the same files."""
+        key = json.dumps(self.as_dict(), sort_keys=True)
+        return hashlib.sha1(key.encode(), usedforsecurity=False).hexdigest()[:8]
+
+    def as_dict(self) -> dict[str, Any]:
+        return {"x": self.x, "y": self.y, "w": self.w, "h": self.h, "rotate": self.rotate}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls.clean(
+            float(data.get("x", 0.0)),
+            float(data.get("y", 0.0)),
+            float(data.get("w", 1.0)),
+            float(data.get("h", 1.0)),
+            int(data.get("rotate", 0)),
+        )
+
+
 @dataclass(slots=True, kw_only=True)
 class Photo:
     """Metadata of one stored photo. The image files live on disk."""
@@ -534,6 +587,7 @@ class Photo:
     size_bytes: int
     tags: list[str] = field(default_factory=list)
     note: str = ""
+    edit: PhotoEdit | None = None  # None: shown as uploaded
 
 
 @dataclass(slots=True, kw_only=True)

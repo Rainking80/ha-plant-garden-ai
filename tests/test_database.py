@@ -13,7 +13,7 @@ from custom_components.plant_garden.database import (
     DatabaseError,
     GardenDatabase,
 )
-from custom_components.plant_garden.models import Measurement, Photo
+from custom_components.plant_garden.models import Measurement, Photo, PhotoEdit
 
 T0 = datetime(2026, 6, 1, 8, 0, tzinfo=UTC)
 
@@ -87,6 +87,12 @@ def test_photos(db: GardenDatabase) -> None:
     photo.note = "gelbe Blätter"
     db.update_photo(photo)
     assert db.get_photo("A") == photo
+
+    assert db.photo_versions() == {}
+    photo.width, photo.height, photo.edit = 5, 8, PhotoEdit.clean(0.25, 0, 0.5, 0.8, 90)
+    db.update_photo_image(photo)
+    assert db.get_photo("A") == photo
+    assert db.photo_versions() == {"A": photo.edit.version}
 
     db.delete_photo("A")
     assert db.get_photo("A") is None

@@ -9,6 +9,7 @@ from pathlib import Path
 from PIL import Image
 import pytest
 
+from custom_components.plant_garden.models import PhotoEdit
 from custom_components.plant_garden.photos import (
     InvalidImageError,
     PhotoFiles,
@@ -144,3 +145,44 @@ def test_files_reject_foreign_ids(tmp_path: Path) -> None:
         files.path("..", PHOTO, PhotoVariant.THUMB)
     with pytest.raises(ValueError, match="invalid id"):
         files.delete_plant("../x")
+
+
+def _color(data: bytes, x: int, y: int) -> str:
+    red, green, _blue = _open(data).convert("RGB").getpixel((x, y))
+    return "green" if green > red else "red"
+
+
+def test_edit_crops_turns_and_resets(tmp_path: Path) -> None:
+    """The upload is kept aside, the variants show the edit, a reset restores it exactly."""
+    files = PhotoFiles(tmp_path)
+    files.write(PLANT, PHOTO, process_image(make_image(400, 200)))  # left green, right red
+    original = files.path(PLANT, PHOTO, PhotoVariant.ORIGINAL)
+    medium = files.path(PLANT, PHOTO, PhotoVariant.MEDIUM)
+    source = files.source_path(PLANT, PHOTO)
+    uploaded = original.read_bytes()
+    assert files.upload_path(PLANT, PHOTO) == original
+
+    # the right half: red only
+    assert files.apply_edit(PLANT, PHOTO, PhotoEdit.clean(0.5, 0, 0.5, 1))[:2] == (200, 200)
+    assert source.read_bytes() == uploaded
+    assert files.upload_path(PLANT, PHOTO) == source
+    assert _color(original.read_bytes(), 20, 100) == "red"
+    assert _open(medium.read_bytes()).size == (200, 200)
+
+    # turned clockwise, the green left half is on top
+    assert files.apply_edit(PLANT, PHOTO, PhotoEdit.clean(0, 0, 1, 1, 90))[:2] == (200, 400)
+    assert _color(original.read_bytes(), 100, 50) == "green"
+    assert _color(original.read_bytes(), 100, 350) == "red"
+    assert source.read_bytes() == uploaded  # edits always start from the upload
+
+    # reset: the uploaded bytes come back, the kept copy is gone
+    width, height, size = files.apply_edit(PLANT, PHOTO, None)
+    assert (width, height, size) == (400, 200, len(uploaded))
+    assert original.read_bytes() == uploaded
+    assert not source.exists()
+    assert _open(medium.read_bytes()).size == (400, 200)
+    assert files.apply_edit(PLANT, PHOTO, PhotoEdit())[:2] == (400, 200)  # nothing to undo
+
+    files.apply_edit(PLANT, PHOTO, PhotoEdit.clean(0.1, 0.1, 0.5, 0.5))
+    files.delete(PLANT, PHOTO)
+    assert not any((tmp_path / PLANT).iterdir())

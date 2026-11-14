@@ -9,6 +9,7 @@ import {
   PLANT_STATUSES,
   SOIL_TYPES,
   WATER_NEEDS,
+  type Photo,
   type Plant,
   type Point,
 } from "../api/types";
@@ -27,6 +28,8 @@ import {
 import { canPickSeveralFiles, positionFromFiles, uploadFiles } from "../util/upload";
 import type { GeoOrigin } from "../util/wms";
 import { PgElement, define, icon } from "./base";
+import type { PgPhotoCrop } from "./photo-crop";
+import "./photo-crop";
 
 export interface PlantSavedDetail {
   plant: Plant;
@@ -168,17 +171,24 @@ export class PgPlantForm extends PgElement {
         errors.push(errorMessage(err));
       }
     }
+    const uploaded: Photo[] = [];
     if (this._files.length) {
       const result = await uploadFiles(this.hass, plant.id, this._files, this.t, (n, total) => {
         this._progress = this.t("detail.uploading", { current: n, total });
       });
       errors.push(...result.errors);
+      uploaded.push(...result.photos);
     }
     if (errors.length) {
       // The plant exists; show what went wrong and let the user continue.
       this._created = plant;
       this._errors = errors;
       return;
+    }
+    if (uploaded.length) {
+      // frame the plant in each photo before its page opens (D-041)
+      this.close();
+      await this.renderRoot.querySelector<PgPhotoCrop>("pg-photo-crop")?.edit(uploaded);
     }
     this._finish(plant, true);
   }
@@ -400,6 +410,7 @@ export class PgPlantForm extends PgElement {
           </div>
         </form>
       </dialog>
+      <pg-photo-crop .hass=${this.hass}></pg-photo-crop>
     `;
   }
 

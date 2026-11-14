@@ -115,7 +115,7 @@ async def test_detail_with_photos_and_measurements(
     assert detail["plant"]["photo_count"] == 1
     assert detail["plant"]["height_cm"] == 42.5
     assert detail["plant"]["cover"]["id"] == photo.id
-    assert set(detail["plant"]["cover"]["urls"]) == {"original", "medium", "thumb"}
+    assert set(detail["plant"]["cover"]["urls"]) == {"original", "medium", "thumb", "source"}
     assert "authSig=" in detail["plant"]["cover"]["urls"]["thumb"]
     assert [p["id"] for p in detail["photos"]] == [photo.id]
     assert [m["id"] for m in detail["measurements"]] == [measurement["id"]]

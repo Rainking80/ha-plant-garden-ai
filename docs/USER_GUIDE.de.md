@@ -15,6 +15,14 @@ unter **Einstellungen → Geräte & Dienste → Plant Garden**.
    später kommen.
 3. Auf der Pflanzenseite Fotos hinzufügen (Drag-and-drop geht). Das Aufnahmedatum
    kommt aus dem Foto; GPS und andere Metadaten werden entfernt.
+4. Nach dem Hochladen öffnet sich für jedes Foto **Foto zuschneiden**: Der Rahmen
+   steht schon um die Pflanze (erkannt an ihren Farben, ohne KI). Zieh ihn mit
+   Finger oder Maus oder an seinen Ecken, wähle *Quadrat* für runde Vorschaubilder
+   und *Drehen* für schief aufgenommene Fotos. *Übernehmen* speichert den
+   Ausschnitt, *Überspringen* lässt das Foto wie es ist. Später geht das im
+   Fotobetrachter mit **Zuschneiden**; das hochgeladene Foto bleibt erhalten, *Wie
+   hochgeladen* holt es zurück. Vorschaubilder, die Pflanze auf dem Plan und die KI
+   sehen den Ausschnitt.
 
 ## 2. Gartenplan
 

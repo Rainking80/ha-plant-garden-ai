@@ -11,7 +11,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import BACKGROUND_FILE_URL, PHOTO_FILE_URL
 from .models import IrrigationEvent, Layout, Measurement, Photo, Plant
-from .photos import PhotoVariant
+from .photos import SOURCE, PhotoVariant
 
 # Long enough for a panel that stays open all day; the panel reloads data when
 # it becomes visible again, which issues fresh URLs.
@@ -22,17 +22,26 @@ def local_today() -> date:
     return dt_util.now().date()
 
 
-def photo_urls(hass: HomeAssistant, photo_id: str, refresh_token_id: str | None) -> dict[str, str]:
-    """Signed URLs that work in <img src> without an Authorization header."""
-    return {
-        variant.value: async_sign_path(
-            hass,
-            PHOTO_FILE_URL.format(photo_id=photo_id, variant=variant.value),
-            SIGNED_URL_LIFETIME,
-            refresh_token_id=refresh_token_id,
-        )
-        for variant in PhotoVariant
-    }
+def photo_urls(
+    hass: HomeAssistant,
+    photo_id: str,
+    refresh_token_id: str | None,
+    version: str | None = None,
+) -> dict[str, str]:
+    """Signed URLs that work in <img src> without an Authorization header.
+
+    The files are cached as immutable, so the variants of an edited photo carry
+    its version stamp: a new crop gets new URLs. `source` is the upload itself.
+    """
+    query = f"?v={version}" if version else ""
+
+    def sign(name: str, suffix: str) -> str:
+        path = PHOTO_FILE_URL.format(photo_id=photo_id, variant=name) + suffix
+        return async_sign_path(hass, path, SIGNED_URL_LIFETIME, refresh_token_id=refresh_token_id)
+
+    urls = {variant.value: sign(variant.value, query) for variant in PhotoVariant}
+    urls[SOURCE] = sign(SOURCE, "")
+    return urls
 
 
 def background_url(hass: HomeAssistant, image_id: str, refresh_token_id: str | None) -> str:
@@ -70,7 +79,12 @@ def plant_dict(
     data["photo_count"] = extra.get("photo_count", 0)
     cover_id = extra.get("cover_photo_id")
     data["cover"] = (
-        {"id": cover_id, "urls": photo_urls(hass, cover_id, refresh_token_id)} if cover_id else None
+        {
+            "id": cover_id,
+            "urls": photo_urls(hass, cover_id, refresh_token_id, extra.get("cover_version")),
+        }
+        if cover_id
+        else None
     )
     for key in ("height_cm", "height_cm_on", "width_cm", "width_cm_on"):
         data[key] = extra.get(key)
@@ -88,7 +102,10 @@ def photo_dict(hass: HomeAssistant, photo: Photo, refresh_token_id: str | None) 
         "size_bytes": photo.size_bytes,
         "tags": photo.tags,
         "note": photo.note,
-        "urls": photo_urls(hass, photo.id, refresh_token_id),
+        "edit": photo.edit.as_dict() if photo.edit else None,
+        "urls": photo_urls(
+            hass, photo.id, refresh_token_id, photo.edit.version if photo.edit else None
+        ),
     }
 
 

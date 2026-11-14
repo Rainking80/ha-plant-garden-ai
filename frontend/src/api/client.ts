@@ -1,4 +1,5 @@
 import type { HomeAssistant } from "../types/hass";
+import type { CropBox, Rotation } from "../util/crop";
 import type {
   Background,
   GardenChangeEvent,
@@ -287,6 +288,21 @@ export function updatePhoto(
   changes: { tags?: string[]; note?: string; taken_at?: string },
 ): Promise<Photo> {
   return hass.callWS<Photo>({ type: `${WS_PREFIX}/photos/update`, photo_id: photoId, ...changes });
+}
+
+/** Crop and turn what is shown of a photo; `crop: null` without a turn shows it as uploaded. */
+export function editPhoto(
+  hass: HomeAssistant,
+  photoId: string,
+  crop: CropBox | null,
+  rotate: Rotation,
+): Promise<Photo> {
+  return hass.callWS<Photo>({
+    type: `${WS_PREFIX}/photos/edit`,
+    photo_id: photoId,
+    crop,
+    rotate,
+  });
 }
 
 export async function deletePhoto(hass: HomeAssistant, photoId: string): Promise<void> {

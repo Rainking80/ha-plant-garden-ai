@@ -45,6 +45,8 @@ sensors and offers recommendations as entities for your own automations.
 - Height and width as measurements over time, with a growth chart.
 - Photos from file or camera, a timeline per plant. Capture dates are read from
   the photo; GPS and all other metadata are removed.
+- Crop and turn each photo after the upload, with a suggested frame around the
+  plant; the upload is kept, so a crop can always be changed or undone.
 - A care profile per plant: watering, fertilising, pruning.
 - One-time import of plant names from an existing to-do list.
 

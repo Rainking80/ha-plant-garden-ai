@@ -2,6 +2,7 @@ import {
   mdiChevronLeft,
   mdiChevronRight,
   mdiClose,
+  mdiCrop,
   mdiDeleteOutline,
   mdiOpenInNew,
   mdiPlus,
@@ -21,7 +22,7 @@ import "./confirm-dialog";
 
 /**
  * Full-size photo with navigation and editing of tags, note and cover.
- * Fires "photos-changed" after any change.
+ * Fires "photos-changed" after any change and "crop-photo" (Photo) to crop one.
  */
 export class PgPhotoViewer extends PgElement {
   static override properties = {
@@ -277,9 +278,16 @@ export class PgPhotoViewer extends PgElement {
                         ${icon(isCover ? mdiStar : mdiStarOutline)}
                         ${isCover ? t("viewer.is_cover") : t("viewer.set_cover")}
                       </button>
+                      <button
+                        class="button text"
+                        ?disabled=${this._busy}
+                        @click=${() => this.fire<Photo>("crop-photo", photo)}
+                      >
+                        ${icon(mdiCrop)} ${t("viewer.crop")}
+                      </button>
                       <a
                         class="button text"
-                        href=${photo.urls.original}
+                        href=${photo.urls.source}
                         target="_blank"
                         rel="noopener"
                       >

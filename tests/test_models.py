@@ -10,6 +10,7 @@ from custom_components.plant_garden.models import (
     AgeReference,
     FieldSource,
     Light,
+    PhotoEdit,
     Plant,
     PlantCategory,
     Source,
@@ -74,3 +75,23 @@ def test_plant_round_trip() -> None:
     assert data["water_need"] is None
     assert data["age"] == {"age_months": 24, "on": "2024-04-20"}
     assert Plant.from_dict(data) == plant
+
+
+def test_photo_edit_is_clamped_and_versioned() -> None:
+    # a crop that sticks out moves back into the image; tiny ones grow to 5 %
+    assert PhotoEdit.clean(0.8, -0.2, 0.5, 0.01).as_dict() == {
+        "x": 0.5,
+        "y": 0.0,
+        "w": 0.5,
+        "h": 0.05,
+        "rotate": 0,
+    }
+    assert PhotoEdit.clean(0, 0, 1, 1, 450).rotate == 90
+    assert PhotoEdit.clean(0, 0, 1, 1, 45).rotate == 0  # only quarter turns
+    assert PhotoEdit().is_identity
+    assert not PhotoEdit.clean(0, 0, 1, 1, 180).is_identity
+    same = PhotoEdit.from_dict(PhotoEdit.clean(0.1, 0.2, 0.3, 0.4, 90).as_dict())
+    assert same == PhotoEdit.clean(0.1, 0.2, 0.3, 0.4, 90)
+    assert same.version == PhotoEdit.clean(0.1, 0.2, 0.3, 0.4, 90).version
+    assert same.version != PhotoEdit.clean(0.1, 0.2, 0.3, 0.4).version
+    assert len(same.version) == 8

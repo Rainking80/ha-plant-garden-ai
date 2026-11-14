@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -31,6 +32,7 @@ from .models import (
     Marker,
     Measurement,
     Photo,
+    PhotoEdit,
     Plant,
     PlantStatus,
     Point,
@@ -112,6 +114,7 @@ class GardenManager:
         # awaited after a photo was added (True) or changed (False): the assistant
         # opens problems, the AI may identify the plant
         self.photo_hooks: list[Callable[[Photo, bool], Awaitable[None]]] = []
+        self._edit_lock = asyncio.Lock()  # one crop at a time: they rewrite files
 
     @property
     def db(self) -> GardenDatabase:
@@ -632,12 +635,15 @@ class GardenManager:
         """Plants with photo count, cover photo and latest size, for list views."""
         stats = await self.hass.async_add_executor_job(self._db.photo_stats)
         sizes = await self.hass.async_add_executor_job(self._db.latest_sizes)
+        versions = await self.hass.async_add_executor_job(self._db.photo_versions)
         result = []
         for plant in self.plants:
             count, newest = stats.get(plant.id, (0, None))
+            cover = plant.cover_photo_id or newest
             extra = {
                 "photo_count": count,
-                "cover_photo_id": plant.cover_photo_id or newest,
+                "cover_photo_id": cover,
+                "cover_version": versions.get(cover) if cover else None,
                 **sizes.get(plant.id, {}),
             }
             result.append((plant, extra))
@@ -727,8 +733,26 @@ class GardenManager:
             self._schedule_save()
         self._notify("plant", photo.plant_id)
 
+    async def async_edit_photo(self, photo_id: str, edit: PhotoEdit | None) -> Photo:
+        """Turn and crop what is shown of a photo; None shows it as uploaded (D-041)."""
+        async with self._edit_lock:
+            photo = await self.async_get_photo(photo_id)
+            if edit is not None and edit.is_identity:
+                edit = None
+            width, height, size = await self.hass.async_add_executor_job(
+                self._files.apply_edit, photo.plant_id, photo.id, edit
+            )
+            photo.width, photo.height, photo.size_bytes, photo.edit = width, height, size, edit
+            await self.hass.async_add_executor_job(self._db.update_photo_image, photo)
+        self._notify("plant", photo.plant_id)
+        return photo
+
     def photo_path(self, photo: Photo, variant: PhotoVariant) -> Path:
         return self._files.path(photo.plant_id, photo.id, variant)
+
+    def photo_upload_path(self, photo: Photo) -> Path:
+        """The image as uploaded, before any crop or turn."""
+        return self._files.upload_path(photo.plant_id, photo.id)
 
     async def async_set_cover(self, plant_id: str, photo_id: str | None) -> Plant:
         plant = self.get_plant(plant_id)

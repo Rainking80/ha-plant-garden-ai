@@ -16,7 +16,15 @@ import sqlite3
 import threading
 from typing import Any
 
-from .models import IrrigationEvent, Measurement, Photo, PlantWater, Source, WaterSource
+from .models import (
+    IrrigationEvent,
+    Measurement,
+    Photo,
+    PhotoEdit,
+    PlantWater,
+    Source,
+    WaterSource,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -199,12 +207,19 @@ MIGRATIONS: tuple[str, ...] = (
     );
     CREATE INDEX chat_by_plant ON chat (plant_id, ts);
     """,
+    """
+    ALTER TABLE photos ADD COLUMN edit TEXT;
+    """,
 )
 SCHEMA_VERSION = len(MIGRATIONS)
 
 
 class DatabaseError(Exception):
     """The database could not be opened or migrated."""
+
+
+def _edit_json(edit: PhotoEdit | None) -> str | None:
+    return json.dumps(edit.as_dict()) if edit is not None else None
 
 
 def _photo_from_row(row: sqlite3.Row) -> Photo:
@@ -218,6 +233,7 @@ def _photo_from_row(row: sqlite3.Row) -> Photo:
         size_bytes=row["size_bytes"],
         tags=json.loads(row["tags"]),
         note=row["note"],
+        edit=PhotoEdit.from_dict(json.loads(row["edit"])) if row["edit"] else None,
     )
 
 
@@ -329,7 +345,7 @@ class GardenDatabase:
         with self._cursor() as conn:
             conn.execute(
                 "INSERT INTO photos (id, plant_id, taken_at, uploaded_at, width, height,"
-                " size_bytes, tags, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " size_bytes, tags, note, edit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     photo.id,
                     photo.plant_id,
@@ -340,6 +356,7 @@ class GardenDatabase:
                     photo.size_bytes,
                     json.dumps(photo.tags),
                     photo.note,
+                    _edit_json(photo.edit),
                 ),
             )
 
@@ -349,6 +366,20 @@ class GardenDatabase:
                 "UPDATE photos SET taken_at = ?, tags = ?, note = ? WHERE id = ?",
                 (photo.taken_at.isoformat(), json.dumps(photo.tags), photo.note, photo.id),
             )
+
+    def update_photo_image(self, photo: Photo) -> None:
+        """Store a new crop or turn together with the size it gave."""
+        with self._cursor() as conn:
+            conn.execute(
+                "UPDATE photos SET width = ?, height = ?, size_bytes = ?, edit = ? WHERE id = ?",
+                (photo.width, photo.height, photo.size_bytes, _edit_json(photo.edit), photo.id),
+            )
+
+    def photo_versions(self) -> dict[str, str]:
+        """photo_id -> version stamp, for edited photos only (usually few)."""
+        with self._cursor() as conn:
+            rows = conn.execute("SELECT id, edit FROM photos WHERE edit IS NOT NULL").fetchall()
+        return {row["id"]: PhotoEdit.from_dict(json.loads(row["edit"])).version for row in rows}
 
     def get_photo(self, photo_id: str) -> Photo | None:
         with self._cursor() as conn:

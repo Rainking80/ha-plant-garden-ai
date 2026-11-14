@@ -15,7 +15,12 @@ import tempfile
 
 from PIL import ExifTags, Image, ImageOps, UnidentifiedImageError
 
+from .models import PhotoEdit
+
 _LOGGER = logging.getLogger(__name__)
+
+SOURCE = "source"  # URL name of the image as uploaded (before any crop or turn)
+SOURCE_SUFFIX = ".source.jpg"
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 MAX_PIXELS = 60_000_000  # ~ 9500 x 6300, well above phone cameras
@@ -89,9 +94,7 @@ def _to_rgb(img: Image.Image) -> Image.Image:
     return img.convert("RGB")
 
 
-def process_image(data: bytes) -> ProcessedImage:
-    """Validate, orient, strip metadata and create all size variants."""
-    rgb, taken_at = _load(data)
+def _encode(rgb: Image.Image, taken_at: datetime | None = None) -> ProcessedImage:
     variants: dict[PhotoVariant, bytes] = {}
     width = height = 0
     for variant, (edge, fmt, _suffix, options) in _VARIANT_SPECS.items():
@@ -104,6 +107,32 @@ def process_image(data: bytes) -> ProcessedImage:
         if variant is PhotoVariant.ORIGINAL:
             width, height = copy.size
     return ProcessedImage(variants=variants, width=width, height=height, taken_at=taken_at)
+
+
+def process_image(data: bytes) -> ProcessedImage:
+    """Validate, orient, strip metadata and create all size variants."""
+    rgb, taken_at = _load(data)
+    return _encode(rgb, taken_at)
+
+
+_TURNS = {
+    90: Image.Transpose.ROTATE_270,  # Pillow turns counter-clockwise
+    180: Image.Transpose.ROTATE_180,
+    270: Image.Transpose.ROTATE_90,
+}
+
+
+def edit_image(stored: bytes, edit: PhotoEdit) -> ProcessedImage:
+    """All variants of a stored upload, turned and then cropped."""
+    with Image.open(io.BytesIO(stored)) as img:
+        rgb = img.convert("RGB")
+    if edit.rotate in _TURNS:
+        rgb = rgb.transpose(_TURNS[edit.rotate])
+    width, height = rgb.size
+    left, top = round(edit.x * width), round(edit.y * height)
+    right = max(left + 1, min(width, round((edit.x + edit.w) * width)))
+    bottom = max(top + 1, min(height, round((edit.y + edit.h) * height)))
+    return _encode(rgb.crop((left, top, right, bottom)))
 
 
 def _load(data: bytes) -> tuple[Image.Image, datetime | None]:
@@ -183,7 +212,11 @@ class BackgroundFiles:
 
 
 class PhotoFiles:
-    """Layout: <root>/<plant_id>/<photo_id>{.jpg,.medium.webp,.thumb.webp}."""
+    """Layout: <root>/<plant_id>/<photo_id>{.jpg,.medium.webp,.thumb.webp}.
+
+    An edited photo also keeps its upload as <photo_id>.source.jpg; the variants
+    then show the turned and cropped image.
+    """
 
     def __init__(self, root: Path) -> None:
         self.root = root
@@ -193,15 +226,51 @@ class PhotoFiles:
             raise ValueError("invalid id")
         return self.root / plant_id / f"{photo_id}{_VARIANT_SPECS[variant][2]}"
 
+    def source_path(self, plant_id: str, photo_id: str) -> Path:
+        if not (valid_id(plant_id) and valid_id(photo_id)):
+            raise ValueError("invalid id")
+        return self.root / plant_id / f"{photo_id}{SOURCE_SUFFIX}"
+
+    def upload_path(self, plant_id: str, photo_id: str) -> Path:
+        """The image as uploaded: the kept source of an edited photo, else the original."""
+        source = self.source_path(plant_id, photo_id)
+        return source if source.exists() else self.path(plant_id, photo_id, PhotoVariant.ORIGINAL)
+
     def write(self, plant_id: str, photo_id: str, image: ProcessedImage) -> int:
         """Write all variants atomically; return the size of the original."""
         for variant, content in image.variants.items():
             _write_atomic(self.path(plant_id, photo_id, variant), content)
         return len(image.variants[PhotoVariant.ORIGINAL])
 
+    def apply_edit(
+        self, plant_id: str, photo_id: str, edit: PhotoEdit | None
+    ) -> tuple[int, int, int]:
+        """Show the upload turned and cropped, or as uploaded for None.
+
+        Returns width, height and file size of the new original. The upload is
+        copied aside before the first edit and moved back unchanged on a reset.
+        """
+        source = self.source_path(plant_id, photo_id)
+        original = self.path(plant_id, photo_id, PhotoVariant.ORIGINAL)
+        if edit is None or edit.is_identity:
+            if not source.exists():
+                with Image.open(original) as img:
+                    return img.width, img.height, original.stat().st_size
+            image = edit_image(source.read_bytes(), PhotoEdit())
+            for variant in (PhotoVariant.MEDIUM, PhotoVariant.THUMB):
+                _write_atomic(self.path(plant_id, photo_id, variant), image.variants[variant])
+            source.replace(original)  # the uploaded bytes, not a re-encoded copy
+            return image.width, image.height, original.stat().st_size
+        if not source.exists():
+            _write_atomic(source, original.read_bytes())
+        image = edit_image(source.read_bytes(), edit)
+        size = self.write(plant_id, photo_id, image)
+        return image.width, image.height, size
+
     def delete(self, plant_id: str, photo_id: str) -> None:
         for variant in PhotoVariant:
             self.path(plant_id, photo_id, variant).unlink(missing_ok=True)
+        self.source_path(plant_id, photo_id).unlink(missing_ok=True)
 
     def delete_plant(self, plant_id: str) -> None:
         if not valid_id(plant_id):

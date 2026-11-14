@@ -14,6 +14,13 @@ happens in the sidebar entry the integration creates; the settings live under
    existing to-do list. Name and category are enough; everything else can follow.
 3. Add photos on a plant's page (drag and drop works). Capture dates come from the
    photo; GPS and other metadata are removed.
+4. After the upload, **Crop photo** opens for each photo: the frame already sits
+   around the plant (found from its colours, without AI). Drag it by finger or
+   mouse or by its corners, choose *Square* for round thumbnails and *Rotate* for
+   photos taken sideways. *Apply* saves the crop, *Skip* keeps the photo as it is.
+   Later the photo viewer offers **Crop**; the uploaded photo is kept, *As
+   uploaded* brings it back. Thumbnails, the plant on the plan and the AI see the
+   crop.
 
 ## 2. Garden plan
 

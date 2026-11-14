@@ -19,12 +19,17 @@ from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
 from .garden import NotFoundError
+from .models import Photo
 from .photos import PhotoVariant
 from .runtime import get_manager
 from .serialize import photo_urls
 
 # medium: 1024 px WebP without any metadata, the size AI providers need
 AI_VARIANT = PhotoVariant.MEDIUM
+
+
+def _version(photo: Photo) -> str | None:
+    return photo.edit.version if photo.edit else None
 
 
 async def async_get_media_source(hass: HomeAssistant) -> MediaSource:
@@ -46,7 +51,7 @@ class PlantPhotoSource(MediaSource):
             photo = await manager.async_get_photo(item.identifier)
         except NotFoundError as err:
             raise Unresolvable(f"No photo {item.identifier}") from err
-        url = photo_urls(self.hass, photo.id, None)[AI_VARIANT.value]
+        url = photo_urls(self.hass, photo.id, None, _version(photo))[AI_VARIANT.value]
         return PlayMedia(url, "image/webp", path=manager.photo_path(photo, AI_VARIANT))
 
     async def async_browse_media(self, item: MediaSourceItem) -> BrowseMediaSource:
@@ -69,7 +74,9 @@ class PlantPhotoSource(MediaSource):
                     title=photo.taken_at.date().isoformat(),
                     can_play=True,
                     can_expand=False,
-                    thumbnail=photo_urls(self.hass, photo.id, None)[PhotoVariant.THUMB.value],
+                    thumbnail=photo_urls(self.hass, photo.id, None, _version(photo))[
+                        PhotoVariant.THUMB.value
+                    ],
                 )
                 for photo in photos
             ]

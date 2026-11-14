@@ -64,6 +64,17 @@ export interface PhotoUrls {
   original: string;
   medium: string;
   thumb: string;
+  /** The photo as uploaded, before any crop or turn. */
+  source: string;
+}
+
+/** What is shown of a photo: turned clockwise, then cropped to fractions of the turned image. */
+export interface PhotoEdit {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  rotate: 0 | 90 | 180 | 270;
 }
 
 /** Fields a user can edit. */
@@ -129,6 +140,8 @@ export interface Photo {
   size_bytes: number;
   tags: string[];
   note: string;
+  /** null: shown as uploaded */
+  edit: PhotoEdit | null;
   urls: PhotoUrls;
 }
 

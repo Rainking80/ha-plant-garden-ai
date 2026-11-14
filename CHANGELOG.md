@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Crop and turn photos: after an upload (and from the photo viewer) a frame
+  suggests the part with the plant - found from its colours, without AI - and can
+  be dragged by finger or mouse, free or square, turned in quarter turns. The
+  upload itself is kept: a photo can be cropped anew or shown as uploaded again.
+  Thumbnails, plan avatars and the AI (identification, comparison) see the crop.
+
 ## [0.1.1] - 2026-11-14
 
 ### Fixed
