@@ -34,7 +34,11 @@ unter **Einstellungen → Geräte & Dienste → Plant Garden**.
   (Strg+Z / Strg+Y). Jede Änderung wird sofort gespeichert.
 - **Hintergrund**: amtliche Luftbilder vieler Bundesländer (mit der vorgeschriebenen
   Quellenangabe), jeder WMS-Dienst oder eine hochgeladene Skizze, die mit zwei
-  bekannten Punkten kalibriert wird.
+  bekannten Punkten kalibriert wird. **Hintergrund grau** (Schaltfläche neben
+  *Alles anzeigen*) blendet ihn aus und zeigt schlichtes Grau, damit Pflanzen,
+  Beete und Ringe hervortreten; Luftbilder werden dann nicht geladen. Jedes Gerät
+  merkt sich das. Beim Verschieben und Kalibrieren ist der Hintergrund trotzdem zu
+  sehen.
 - **Standort**: Liegt der Garten nicht zu Hause (Kleingarten), den Plan an seinen
   echten Ort verschieben; Gezeichnetes bleibt auf der Karte, wo es ist, oder zieht
   mit.

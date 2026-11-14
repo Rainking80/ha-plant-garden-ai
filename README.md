@@ -23,7 +23,7 @@ sensors and offers recommendations as entities for your own automations.
 - A to-scale plan of your garden in metres, anchored at its real location.
 - Background: official aerial imagery of 12 German states (with the required
   attribution), any WMS service, or your own site plan or sketch, calibrated with
-  two known points.
+  two known points. It can be hidden behind plain grey, so the plan stands out.
 - Areas as rectangles, circles, polygons or drawn freehand: beds, raised beds,
   lawn, hedges, terrace, paths, buildings, greenhouses, roofs, ponds, the property
   boundary. Grid snapping, undo/redo, everything saved immediately.

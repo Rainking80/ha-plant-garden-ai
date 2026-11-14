@@ -32,7 +32,10 @@ happens in the sidebar entry the integration creates; the settings live under
   immediately.
 - **Background**: official aerial imagery of many German states (with the required
   attribution), any WMS service, or an uploaded sketch that you calibrate with two
-  known points.
+  known points. **Grey background** (button next to *Show everything*) hides it
+  behind plain grey, so plants, beds and rings stand out, and no aerial imagery
+  is loaded; each device remembers it. Moving or calibrating the background
+  still shows it.
 - **Location**: if your garden is not at home (an allotment), move the plan to its
   real place; everything already drawn can stay where it is on the map or move
   along.

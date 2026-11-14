@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Grey background: a button on the plan hides the aerial image or sketch behind
+  plain grey, so plants, beds and rings stand out (no aerial imagery is loaded
+  then). Each device remembers it.
+
 ## [0.2.0] - 2026-11-14
 
 Upgrade note: the database gets a column for photo crops. Plant Garden 0.1.x

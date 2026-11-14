@@ -214,6 +214,7 @@ export const de: Translations = {
   "plan.undo": "Rückgängig",
   "plan.redo": "Wiederholen",
   "plan.fit": "Alles anzeigen",
+  "plan.grey_background": "Hintergrund grau",
   "plan.tray": "Pflanzen",
   "plan.tray_unplaced": "Noch nicht im Plan",
   "plan.tray_placed": "Im Plan",

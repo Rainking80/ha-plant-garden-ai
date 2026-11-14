@@ -210,6 +210,7 @@ export const en = {
   "plan.undo": "Undo",
   "plan.redo": "Redo",
   "plan.fit": "Show everything",
+  "plan.grey_background": "Grey background",
   "plan.tray": "Plants",
   "plan.tray_unplaced": "Not on the plan yet",
   "plan.tray_placed": "On the plan",

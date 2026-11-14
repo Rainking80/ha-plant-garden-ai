@@ -10,6 +10,7 @@ import {
   mdiDeleteOutline,
   mdiEyeOutline,
   mdiFitToScreenOutline,
+  mdiImageFilterBlackWhite,
   mdiLayersOutline,
   mdiLayersTripleOutline,
   mdiMagnify,
@@ -154,6 +155,7 @@ export function areaKind(category: Plant["category"]): ShapeKind {
   return "bed";
 }
 const LAYER_KEY = "plant-garden.layer.v1";
+const GREY_KEY = "plant-garden.grey-background.v1";
 const LAYERS: readonly Layer[] = ["plan", "deficit", "coverage"];
 
 /** Settings of a new zone; sprinklers start as rotors, drip lines as drip hoses. */
@@ -309,6 +311,7 @@ export class PgGardenView extends PgElement {
     _showZones: { state: true },
     _zonePick: { state: true },
     _layer: { state: true },
+    _greyBackground: { state: true },
   };
 
   declare store: GardenStore;
@@ -334,6 +337,8 @@ export class PgGardenView extends PgElement {
   /** which entity of the selected zone the picker fills in */
   declare _zonePick: ZonePick | null;
   declare _layer: Layer;
+  /** the background hidden behind plain grey, so the plan stands out (per device) */
+  declare _greyBackground: boolean;
 
   private readonly _history = new History();
   private _fitted = false;
@@ -374,6 +379,8 @@ export class PgGardenView extends PgElement {
     this._showZones = readStorage(ZONES_KEY, (v): v is boolean => typeof v === "boolean") ?? true;
     this._zonePick = null;
     this._layer = readStorage(LAYER_KEY, (v): v is Layer => LAYERS.includes(v as Layer)) ?? "plan";
+    this._greyBackground =
+      readStorage(GREY_KEY, (v): v is boolean => typeof v === "boolean") ?? false;
   }
 
   override connectedCallback(): void {
@@ -1019,6 +1026,7 @@ export class PgGardenView extends PgElement {
             .water=${this.store?.water?.plants ?? NO_WATER}
             .care=${this.store?.care?.plants ?? NO_CARE}
             .layer=${this._layer}
+            .greyBackground=${this._greyBackground}
             @select=${this._onSelect}
             @hover=${this._onHover}
             @move-plant=${this._onMovePlant}
@@ -1236,6 +1244,19 @@ export class PgGardenView extends PgElement {
               </button>`
             : nothing
         }
+        ${
+          this._background
+            ? html`<button
+                class="tool"
+                aria-pressed=${this._greyBackground}
+                @click=${this._toggleGreyBackground}
+                aria-label=${t("plan.grey_background")}
+                title=${t("plan.grey_background")}
+              >
+                ${icon(mdiImageFilterBlackWhite)}
+              </button>`
+            : nothing
+        }
         <button
           class="tool"
           @click=${() => this._canvas?.fit()}
@@ -1275,6 +1296,11 @@ export class PgGardenView extends PgElement {
         )}
       </select>
     </label>`;
+  }
+
+  private _toggleGreyBackground(): void {
+    this._greyBackground = !this._greyBackground;
+    writeStorage(GREY_KEY, this._greyBackground);
   }
 
   private _toggleZones(): void {

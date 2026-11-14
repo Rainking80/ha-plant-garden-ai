@@ -520,6 +520,82 @@ describe("pg-garden-view M3: markers, background, calibration", () => {
     await clickButton(view, "Rückgängig");
     await vi.waitFor(() => expect(store.layout?.background).toBeNull());
   });
+
+  it("hides the background behind grey on request, remembered per device", async () => {
+    // only offered when there is a background
+    const plain = await mount(fakeBackend());
+    expect(
+      [...(plain.view.shadowRoot?.querySelectorAll("button") ?? [])].some(
+        (b) => b.title === "Hintergrund grau",
+      ),
+    ).toBe(false);
+    document.body.innerHTML = "";
+
+    const backend = fakeBackend({ background: { ...IMAGE_BG } });
+    const { view } = await mount(backend);
+    const svg = () => deepGet<SVGSVGElement>(canvasOf(view), "svg");
+    const image = () => deepQuery<SVGImageElement>(canvasOf(view), "image.backdrop");
+    expect(image()).not.toBeNull();
+    expect(svg().classList.contains("with-backdrop")).toBe(true);
+
+    await clickButton(view, "Hintergrund grau");
+    await canvasOf(view).updateComplete;
+    expect(image()).toBeNull();
+    expect(svg().classList.contains("grey-backdrop")).toBe(true);
+    expect(svg().classList.contains("with-backdrop")).toBe(false);
+    expect(localStorage.getItem("plant-garden.grey-background.v1")).toBe("true");
+    // nothing is saved for the garden: it is a setting of this device
+    expect(calls(backend, "plant_garden/layout/set_background")).toHaveLength(0);
+
+    // calibrating needs the picture: shown while that tool is active
+    await clickButton(view, "Bearbeiten");
+    await clickButton(view, "Maßstab kalibrieren");
+    await canvasOf(view).updateComplete;
+    expect(image()).not.toBeNull();
+    document.body.innerHTML = "";
+
+    // a new visit keeps it
+    const again = await mount(fakeBackend({ background: { ...IMAGE_BG } }));
+    const button = [...(again.view.shadowRoot?.querySelectorAll("button") ?? [])].find(
+      (b) => b.title === "Hintergrund grau",
+    );
+    expect(button?.getAttribute("aria-pressed")).toBe("true");
+    expect(deepQuery(canvasOf(again.view), "image.backdrop")).toBeNull();
+
+    await clickButton(again.view, "Hintergrund grau");
+    await canvasOf(again.view).updateComplete;
+    expect(deepQuery(canvasOf(again.view), "image.backdrop")).not.toBeNull();
+    expect(localStorage.getItem("plant-garden.grey-background.v1")).toBe("false");
+  });
+
+  it("loads no aerial imagery and shows no attribution while it is hidden", async () => {
+    const requests: string[] = [];
+    vi.stubGlobal(
+      "Image",
+      class {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        set src(href: string) {
+          requests.push(href);
+        }
+      },
+    );
+    try {
+      localStorage.setItem("plant-garden.grey-background.v1", "true");
+      const backend = fakeBackend({ background: { type: "wms", preset: "ni", opacity: 1 } });
+      const { view } = await mount(backend);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(requests).toEqual([]);
+      expect(deepQuery(canvasOf(view), ".attribution")).toBeNull();
+
+      await clickButton(view, "Hintergrund grau");
+      await vi.waitFor(() => expect(requests).toHaveLength(1));
+      await canvasOf(view).updateComplete;
+      expect(deepGet(canvasOf(view), ".attribution").textContent).toContain("LGLN");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
 
 describe("pg-garden-view: garden location", () => {

@@ -278,6 +278,8 @@ export class PgGardenCanvas extends PgElement {
     layer: {},
     /** draw irrigation zones */
     showZones: { type: Boolean },
+    /** hide the background behind plain grey (its imagery is not loaded then) */
+    greyBackground: { type: Boolean },
     _clock: { state: true },
     _override: { state: true },
     _draft: { state: true },
@@ -303,6 +305,7 @@ export class PgGardenCanvas extends PgElement {
   declare armed: Armed | null;
   declare highlight: ReadonlySet<string>;
   declare showZones: boolean;
+  declare greyBackground: boolean;
   declare water: Record<string, PlantBalance>;
   /** Open tasks and problems per plant: "pruning due" ring, problem dot. */
   declare care: Record<string, PlantCare>;
@@ -351,6 +354,7 @@ export class PgGardenCanvas extends PgElement {
     this.highlight = new Set();
     this.care = {};
     this.showZones = true;
+    this.greyBackground = false;
     this.water = {};
     this.layer = "plan";
     this._clock = Date.now();
@@ -505,19 +509,21 @@ export class PgGardenCanvas extends PgElement {
       this._wmsError = false;
       if (this.background?.type !== "wms") this._wms = null;
       this._scheduleWms(0);
+    } else if (changed.has("greyBackground") || changed.has("mode") || changed.has("tool")) {
+      this._scheduleWms(0); // the imagery may be shown again
     }
   }
 
   // ------------------------------------------------------------ aerial imagery
   private _scheduleWms(delay = WMS_DELAY_MS): void {
     clearTimeout(this._wmsTimer);
-    if (this.background?.type !== "wms") return;
+    if (this._shownBackground?.type !== "wms") return; // none, or hidden behind grey
     this._wmsTimer = setTimeout(() => this._loadWms(), delay);
   }
 
   /** Request imagery for the visible area plus a margin; swap it in once loaded. */
   private _loadWms(): void {
-    const bg = this.background;
+    const bg = this._shownBackground;
     if (bg?.type !== "wms" || !this.origin) return;
     const wms = resolveWms(bg);
     if (!wms) return;
@@ -1565,8 +1571,18 @@ export class PgGardenCanvas extends PgElement {
     return nothing;
   }
 
+  /**
+   * The background that is drawn: none while it is hidden behind grey, except
+   * while it is moved or calibrated, which needs the picture.
+   */
+  private get _shownBackground(): Background | null {
+    const handling =
+      this.mode === "edit" && (this.tool === "background" || this.tool === "calibrate");
+    return this.greyBackground && !handling ? null : this.background;
+  }
+
   private _renderBackground() {
-    const bg = this.background;
+    const bg = this._shownBackground;
     if (bg?.type === "wms") {
       const image = this._wms;
       return image
@@ -1623,12 +1639,14 @@ export class PgGardenCanvas extends PgElement {
     const placed = this.plants
       .filter((plant) => plant.position)
       .sort((a, b) => crownDiameter(b) - crownDiameter(a)); // small plants on top
-    const wms = this.background?.type === "wms" ? resolveWms(this.background) : null;
+    const shown = this._shownBackground;
+    // the attribution belongs to imagery on screen only
+    const wms = shown?.type === "wms" ? resolveWms(shown) : null;
     return html`
       <svg
         class="mode-${this.mode} tool-${this.tool} ${this.armed ? "armed" : ""} ${
-          this.background ? "with-backdrop" : ""
-        }"
+          shown ? "with-backdrop" : ""
+        } ${this.background && !shown ? "grey-backdrop" : ""}"
         @pointerdown=${this._onPointerDown}
         @pointermove=${this._onPointerMove}
         @pointerup=${this._onPointerUp}
@@ -2148,6 +2166,10 @@ export class PgGardenCanvas extends PgElement {
     }
     svg.with-backdrop .grid-minor {
       display: none;
+    }
+    /* the background hidden behind plain grey */
+    svg.grey-backdrop .ground {
+      fill: color-mix(in srgb, var(--pg-text) 9%, var(--pg-surface));
     }
     svg.with-backdrop .grid-major {
       stroke: rgba(255, 255, 255, 0.25);
