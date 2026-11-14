@@ -141,6 +141,8 @@ export const en = {
   "detail.not_found": "This plant no longer exists.",
   "detail.back_to_list": "Back to all plants",
   "detail.drop_photos": "Drop photos here",
+  "detail.one_photo_at_a_time":
+    "This version of the Home Assistant app hands over one photo at a time - from version 2026.11.1 on, several at once.",
   "detail.uploading": "Uploading photo {current} of {total}…",
   "detail.cover": "Cover photo",
   "detail.gps_found": "The photo contains a location. Place the plant there on the plan?",

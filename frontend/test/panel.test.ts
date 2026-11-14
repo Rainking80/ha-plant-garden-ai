@@ -195,6 +195,31 @@ describe("plant-garden-panel", () => {
     );
   });
 
+  it("lets the old Android app pick one photo at a time", async () => {
+    const plant = makePlant({ id: "A1", name: "Hortensie" });
+    const backend = fakeBackend({
+      plants: [plant],
+      details: { A1: { plant, photos: [], measurements: [] } },
+    });
+    const input = () => deepGet<HTMLInputElement>(el, "#file-input");
+    let el = await mount(backend, "/plants/A1");
+    await vi.waitFor(() => expect(input().multiple).toBe(true));
+    expect(deepQuery(el, ".one-at-a-time")).toBeNull();
+    document.body.innerHTML = "";
+
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
+      "Mozilla/5.0 (Linux; Android 16) Chrome/142.0.0.0 Mobile Safari/537.36 " +
+        "Home Assistant/2026.10.1-full (Android 16; Pixel 10 Pro Fold)",
+    );
+    try {
+      el = await mount(backend, "/plants/A1");
+      await vi.waitFor(() => expect(input().multiple).toBe(false));
+      expect(deepText(el)).toContain("nur ein Foto auf einmal");
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
   it("explains when a plant does not exist", async () => {
     const el = await mount(fakeBackend(), "/plants/GONE");
     await vi.waitFor(() => expect(deepText(el)).toContain("Diese Pflanze gibt es nicht mehr."));

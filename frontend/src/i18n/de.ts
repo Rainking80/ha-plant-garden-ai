@@ -144,6 +144,8 @@ export const de: Translations = {
   "detail.not_found": "Diese Pflanze gibt es nicht mehr.",
   "detail.back_to_list": "Zur Pflanzenliste",
   "detail.drop_photos": "Fotos hier ablegen",
+  "detail.one_photo_at_a_time":
+    "Diese Version der Home-Assistant-App übergibt nur ein Foto auf einmal – ab Version 2026.11.1 gehen mehrere.",
   "detail.uploading": "Lade Foto {current} von {total} hoch …",
   "detail.cover": "Titelbild",
   "detail.gps_found":

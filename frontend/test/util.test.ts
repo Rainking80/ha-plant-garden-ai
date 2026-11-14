@@ -6,6 +6,7 @@ import { buildChart, niceStep, pathOf, PADDING } from "../src/util/chart";
 import { formatAge, formatLength, monthKey, parseLocalDate, todayIso } from "../src/util/format";
 import { scaledSize } from "../src/util/image";
 import { tagLabel, toggleTag } from "../src/util/tags";
+import { canPickSeveralFiles } from "../src/util/upload";
 import { groupByMonth } from "../src/views/plant-detail";
 import { matchesQuery } from "../src/views/plants-view";
 import { makePhoto, makePlant } from "./fixtures";
@@ -48,6 +49,28 @@ describe("image", () => {
     expect(scaledSize(800, 600)).toEqual({ width: 800, height: 600 });
     expect(scaledSize(4000, 3000)).toEqual({ width: 2560, height: 1920 });
     expect(scaledSize(3000, 4000)).toEqual({ width: 1920, height: 2560 });
+  });
+
+  it("picks one photo at a time in the Android app before 2026.11.1", () => {
+    const chrome =
+      "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro Fold) AppleWebKit/537.36 " +
+      "(KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36";
+    const app = (version: string) =>
+      `${chrome} Home Assistant/${version} (Android 16; Pixel 10 Pro Fold)`;
+    expect(canPickSeveralFiles(chrome)).toBe(true);
+    expect(canPickSeveralFiles(app("2026.10.1-full"))).toBe(false);
+    expect(canPickSeveralFiles(app("2025.12.3-minimal"))).toBe(false);
+    expect(canPickSeveralFiles(app("2026.11.0-full"))).toBe(false);
+    expect(canPickSeveralFiles(app("2026.11.1-full"))).toBe(true);
+    expect(canPickSeveralFiles(app("2026.12.1-full"))).toBe(true);
+    expect(canPickSeveralFiles(app("2027.1.0"))).toBe(true);
+    // the iOS app picks several files fine
+    expect(
+      canPickSeveralFiles(
+        "Mozilla/5.0 (iPhone) Home Assistant/2026.10 (io.robbie.HomeAssistant; build:1; iOS 26.0)",
+      ),
+    ).toBe(true);
+    expect(canPickSeveralFiles("")).toBe(true);
   });
 });
 

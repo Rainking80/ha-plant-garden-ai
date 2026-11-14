@@ -57,7 +57,7 @@ import {
 import { navigate } from "../util/navigate";
 import { parseNumber } from "../util/plant-form";
 import { tagLabel } from "../util/tags";
-import { suggestedPosition, uploadFiles } from "../util/upload";
+import { canPickSeveralFiles, suggestedPosition, uploadFiles } from "../util/upload";
 
 interface Fact {
   label: TranslationKey;
@@ -410,6 +410,7 @@ export class PgPlantDetail extends PgElement {
     }
     const { plant, photos, measurements } = this._detail;
     const cover = plant.cover;
+    const several = canPickSeveralFiles();
     const subtitle = [plant.scientific_name, plant.variety && `'${plant.variety}'`]
       .filter(Boolean)
       .join(" ");
@@ -611,6 +612,7 @@ export class PgPlantDetail extends PgElement {
             ${icon(mdiImagePlusOutline)} ${t("detail.add_photos")}
           </button>
         </div>
+        ${several ? nothing : html`<p class="muted small one-at-a-time">${t("detail.one_photo_at_a_time")}</p>`}
         ${this._uploading ? html`<p class="muted" aria-live="polite">${this._uploading}</p>` : nothing}
         ${
           this._gpsSuggestion
@@ -641,7 +643,7 @@ export class PgPlantDetail extends PgElement {
         class="sr-only"
         type="file"
         accept="image/*"
-        multiple
+        ?multiple=${several}
         @change=${this._onFileInput}
       />
       <pg-plant-form .hass=${this.hass} @plant-saved=${() => this._load()}></pg-plant-form>

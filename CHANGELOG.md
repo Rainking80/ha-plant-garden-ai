@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Photos could not be uploaded from the Home Assistant app for Android before
+  2026.11.1: it hands no file to the page when the picker allows several
+  (home-assistant/android#7548). In those app versions photos are now picked
+  one at a time, with a note on the plant page.
+
 ## [0.1.0] - 2026-11-09
 
 ### Added

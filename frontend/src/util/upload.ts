@@ -12,6 +12,25 @@ const KNOWN_CODES = new Set(["invalid_image", "unsupported_format", "image_too_l
 /** GPS positions further away than this from home are not suggested (wrong photo, holiday). */
 export const MAX_SUGGESTION_DISTANCE_M = 1000;
 
+/** First release of the Home Assistant app for Android that hands over several picked files. */
+const ANDROID_APP_SEVERAL_FILES = [2026, 11, 1];
+
+/**
+ * Whether a file input may let the user pick several files. The Home Assistant app
+ * for Android before 2026.11.1 hands nothing to the page when the picker allowed
+ * several (home-assistant/android#7548), so there photos are picked one at a time.
+ * The app names itself in the user agent: `Home Assistant/2026.10.1-full (Android 16; …)`.
+ */
+export function canPickSeveralFiles(userAgent = globalThis.navigator?.userAgent ?? ""): boolean {
+  const match = /Home Assistant\/(\d+)\.(\d+)\.(\d+)\S* \(Android/.exec(userAgent);
+  if (!match) return true;
+  for (const [i, fixed] of ANDROID_APP_SEVERAL_FILES.entries()) {
+    const part = Number(match[i + 1]);
+    if (part !== fixed) return part > fixed;
+  }
+  return true;
+}
+
 export function uploadErrorText(err: unknown, t: Localize): string {
   if (err instanceof UploadError) {
     if (err.status === 413) return t("upload.too_large");

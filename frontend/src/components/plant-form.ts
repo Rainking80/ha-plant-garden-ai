@@ -24,7 +24,7 @@ import {
   plantFields,
   type PlantFormState,
 } from "../util/plant-form";
-import { positionFromFiles, uploadFiles } from "../util/upload";
+import { canPickSeveralFiles, positionFromFiles, uploadFiles } from "../util/upload";
 import type { GeoOrigin } from "../util/wms";
 import { PgElement, define, icon } from "./base";
 
@@ -418,7 +418,13 @@ export class PgPlantForm extends PgElement {
                 : nothing
             }
           </span>
-          <input class="sr-only" type="file" accept="image/*" multiple @change=${this._onFiles} />
+          <input
+            class="sr-only"
+            type="file"
+            accept="image/*"
+            ?multiple=${canPickSeveralFiles()}
+            @change=${this._onFiles}
+          />
           <small>${t("form.photos_hint")}</small>
         </label>
         ${
