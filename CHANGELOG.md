@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-14
+
 ### Fixed
 
 - Photos could not be uploaded from the Home Assistant app for Android before

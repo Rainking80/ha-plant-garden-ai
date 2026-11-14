@@ -1,6 +1,6 @@
 [project]
 name = "ha-plant-garden"
-version = "0.1.0"
+version = "0.1.1"
 description = "Plant Garden – Home Assistant custom integration (garden planner, plant journal, water balance, AI assistant)"
 readme = "README.md"
 license = "MIT"

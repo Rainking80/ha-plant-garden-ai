@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from unittest.mock import patch
 
@@ -175,7 +176,8 @@ async def test_ws_info(
     assert msg["success"]
     assert msg["result"]["garden_name"] == "Garten"
     assert msg["result"]["entry_id"] == mock_config_entry.entry_id
-    assert msg["result"]["version"] == "0.1.0"
+    manifest = Path(__file__).parents[1] / "custom_components/plant_garden/manifest.json"
+    assert msg["result"]["version"] == json.loads(manifest.read_text())["version"]
     assert msg["result"]["is_admin"] is True
 
     assert await hass.config_entries.async_unload(mock_config_entry.entry_id)
