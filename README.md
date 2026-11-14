@@ -7,8 +7,7 @@ plant, keep care tasks in Home Assistant's to-do list – and, if you like, let 
 AI identify plants, diagnose problems and give tips, with every token and cent on
 record.
 
-> **Status:** early development, version 0.1.0. All features below are built and
-> tested; the first release is being prepared. Changes are listed in the
+> **Status:** early development, version 0.2.0. Changes are listed in the
 > [changelog](CHANGELOG.md).
 
 Plant Garden never switches anything. It reads the state of your valves and

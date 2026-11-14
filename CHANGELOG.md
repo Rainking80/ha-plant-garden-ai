@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-14
+
+Upgrade note: the database gets a column for photo crops. Plant Garden 0.1.x
+cannot open it afterwards; to go back, restore a backup made before the update.
+
 ### Added
 
 - Crop and turn photos: after an upload (and from the photo viewer) a frame
