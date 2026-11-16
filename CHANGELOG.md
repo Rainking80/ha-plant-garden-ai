@@ -20,6 +20,10 @@ All notable changes to this project are documented here. The format follows
   in any month, from the shadows of buildings, greenhouses, roofs, hedges and
   tall plants (areas can be given a height). A plant's page shows the sun its
   place gets over the season and offers it as the plant's light.
+- What fits here?: tap a place on the plan and the AI proposes up to five plants
+  for its sun, soil, free room, neighbours and winter cold - with size, planting
+  months, companions and cautions. A suggestion becomes a planned plant at that
+  place with a task to plant it.
 
 ## [0.2.0] - 2026-11-14
 

@@ -168,6 +168,14 @@ new photo of a plant without botanical name is identified automatically.
   slugs, each with what to do and the plants at risk. New warnings also arrive as
   a Home Assistant notification and as the event `plant_garden_weather_alert`
   (option *Weather warnings*, on; no AI, no costs).
+- **What fits here?** (the sparkle button on the plan): tap a free place, add a
+  wish if you like ("something for bees"), and choose *Get suggestions*. The AI
+  gets what the plan knows about the place - computed hours of sun, the bed's
+  soil, the free room to the next crown, the neighbouring plants, last year's
+  coldest night, whether it is irrigated - and proposes up to five plants with
+  size, planting months, good and bad neighbours and cautions. *Take over*
+  places the plant there (tagged *planned*, its values marked as AI
+  suggestions) and adds a task to plant it in the next planting month.
 - **Photo comparison** (plant page): the AI compares the newest photo with an
   earlier one - growth, changes, concerns - and opens a problem when something is
   wrong. After every upload on its own with the option *Compare new photos with

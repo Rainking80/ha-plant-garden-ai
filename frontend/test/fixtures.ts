@@ -16,6 +16,7 @@ import type {
   IrrigationSummary,
   Marker,
   Photo,
+  PlacePlan,
   Plant,
   PlantDetail,
   Point,
@@ -486,6 +487,7 @@ export interface FakeBackend {
   comparison: PhotoComparison | null;
   sun: SunSummary;
   sunMap: SunMap | null;
+  placePlan: PlacePlan | null;
   isAdmin: boolean;
 }
 
@@ -530,6 +532,7 @@ export function fakeBackend(
     comparison?: PhotoComparison | null;
     sun?: SunSummary;
     sunMap?: SunMap | null;
+    placePlan?: PlacePlan | null;
     isAdmin?: boolean;
     country?: string | null;
     language?: string;
@@ -551,6 +554,7 @@ export function fakeBackend(
     research: fakeResearch(options.research),
     sun: options.sun ?? { plants: {}, season: [4, 5, 6, 7, 8, 9], obstacles: 0 },
     sunMap: options.sunMap ?? null,
+    placePlan: options.placePlan ?? null,
     comparison: options.comparison ?? null,
     isAdmin: options.isAdmin ?? true,
   } as FakeBackend;
@@ -594,6 +598,16 @@ export function fakeBackend(
       }
       case "plant_garden/layout/get":
         return layout();
+      case "plant_garden/assistant/plan":
+        if (!backend.placePlan) throw { code: "ai_error", message: "No AI provider is set up" };
+        return { ...backend.placePlan, x: msg.x, y: msg.y };
+      case "plant_garden/assistant/plan/accept": {
+        const chosen = backend.placePlan?.suggestions.find((s) => s.id === msg.suggestion_id);
+        if (!chosen) throw { code: "not_found", message: "Not found" };
+        const plant = makePlant({ id: `PLAN${backend.plants.length}`, name: chosen.name });
+        backend.plants = [...backend.plants, plant];
+        return { plant_id: plant.id, task_id: "T1" };
+      }
       case "plant_garden/sun/summary":
         return backend.sun;
       case "plant_garden/sun/map":

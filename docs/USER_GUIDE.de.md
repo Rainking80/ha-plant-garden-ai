@@ -179,6 +179,15 @@ wird ein neues Foto einer Pflanze ohne botanischen Namen automatisch bestimmt.
   kommen auch als Home-Assistant-Benachrichtigung und als Event
   `plant_garden_weather_alert` (Option *Wetter-Warnungen*, an; ohne KI, ohne
   Kosten).
+- **Was passt hier hin?** (die Funkel-Schaltfläche im Plan): eine freie Stelle
+  antippen, bei Bedarf einen Wunsch ergänzen („etwas für Bienen“) und *Vorschläge
+  holen* wählen. Die KI bekommt, was der Plan über die Stelle weiß - berechnete
+  Sonnenstunden, den Boden des Beets, den freien Platz bis zur nächsten Krone, die
+  Nachbarpflanzen, die kälteste Nacht des letzten Jahres, ob bewässert wird - und
+  schlägt bis zu fünf Pflanzen vor, mit Größe, Pflanzmonaten, guten und schlechten
+  Nachbarn und Warnhinweisen. *Übernehmen* setzt die Pflanze an die Stelle
+  (markiert als *geplant*, ihre Werte als KI-Vorschläge) und legt eine Aufgabe zum
+  Pflanzen im nächsten Pflanzmonat an.
 - **Fotovergleich** (Pflanzenseite): Die KI vergleicht das neueste Foto mit einem
   früheren – Wachstum, Veränderungen, Auffälligkeiten – und legt ein Problem an,
   wenn etwas nicht stimmt. Nach jedem Hochladen von selbst mit der Option *Neue

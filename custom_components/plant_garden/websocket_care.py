@@ -18,6 +18,7 @@ from .const import DOMAIN
 from .garden import NotFoundError
 from .runtime import get_assistant, get_care
 from .websocket_ai import ERR_AI, ERR_BUDGET
+from .websocket_api import COORD
 
 ERR_NOT_LOADED = "not_loaded"
 
@@ -114,6 +115,8 @@ def async_register_care_commands(hass: HomeAssistant) -> None:
         ws_tips_get,
         ws_tips_create,
         ws_tips_decide,
+        ws_plan_place,
+        ws_plan_accept,
         ws_compare_get,
         ws_compare_run,
         ws_chat_history,
@@ -422,6 +425,43 @@ async def ws_tips_create(
 ) -> dict[str, Any]:
     """New tips from the AI (costs money)."""
     return await assistant.async_tips(msg.get("plant_id"))
+
+
+@care_command(
+    {
+        **_type("assistant/plan"),
+        probatio.Required("x"): COORD,
+        probatio.Required("y"): COORD,
+        probatio.Optional("wish"): probatio.Any(None, probatio.All(str, probatio.Length(max=300))),
+    }
+)
+async def ws_plan_place(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    care: CareManager,
+    assistant: Assistant,
+) -> dict[str, Any]:
+    """Plants the AI proposes for a place on the plan (costs money)."""
+    return await assistant.async_plan_place(msg["x"], msg["y"], msg.get("wish"))
+
+
+@care_command(
+    {
+        **_type("assistant/plan/accept"),
+        probatio.Required("plan_id"): str,
+        probatio.Required("suggestion_id"): str,
+    }
+)
+async def ws_plan_accept(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    care: CareManager,
+    assistant: Assistant,
+) -> dict[str, Any]:
+    """Take a proposed plant over: placed on the plan, with a task to plant it."""
+    return await assistant.async_accept_plan(msg["plan_id"], msg["suggestion_id"])
 
 
 @care_command(

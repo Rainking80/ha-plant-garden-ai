@@ -5,6 +5,7 @@ import {
   mdiCircleOutline,
   mdiClose,
   mdiCommentQuestionOutline,
+  mdiCreationOutline,
   mdiCursorDefaultOutline,
   mdiDraw,
   mdiDeleteOutline,
@@ -91,6 +92,8 @@ import type {
   Tool,
 } from "../components/garden-canvas";
 import "../components/number-dialog";
+import "../components/place-planner";
+import type { PgPlacePlanner } from "../components/place-planner";
 import type { PgNumberDialog } from "../components/number-dialog";
 import "../components/origin-dialog";
 import {
@@ -800,6 +803,10 @@ export class PgGardenView extends PgElement {
   private _onPlace(event: CustomEvent<PlaceDetail>): void {
     const { armed, at } = event.detail;
     this._armed = null;
+    if (armed.kind === "place") {
+      this.renderRoot.querySelector<PgPlacePlanner>("pg-place-planner")?.open(at);
+      return;
+    }
     if (armed.kind === "marker") {
       const marker: Marker = {
         id: ulid(),
@@ -1128,6 +1135,12 @@ export class PgGardenView extends PgElement {
         @entity-picked=${this._onZoneEntityPicked}
       ></pg-entity-picker>
       <pg-number-dialog .hass=${this.hass}></pg-number-dialog>
+      <pg-place-planner
+        .hass=${this.hass}
+        @plant-planned=${(e: CustomEvent<{ plantId: string }>) => {
+          this._selection = { type: "plant", id: e.detail.plantId };
+        }}
+      ></pg-place-planner>
     `;
   }
 
@@ -1305,6 +1318,15 @@ export class PgGardenView extends PgElement {
         }
         <button
           class="tool"
+          aria-pressed=${this._armed?.kind === "place"}
+          @click=${() => (this._armed = this._armed?.kind === "place" ? null : { kind: "place" })}
+          aria-label=${t("planner.title")}
+          title=${t("planner.title")}
+        >
+          ${icon(mdiCreationOutline)}
+        </button>
+        <button
+          class="tool"
           @click=${() => this._canvas?.fit()}
           aria-label=${t("plan.fit")}
           title=${t("plan.fit")}
@@ -1412,6 +1434,8 @@ export class PgGardenView extends PgElement {
     let text = "";
     if (armed?.kind === "plant") {
       text = t("plan.place_hint", { name: this.store.getPlant(armed.plantId)?.name ?? "" });
+    } else if (armed?.kind === "place") {
+      text = t("planner.pick_hint");
     } else if (armed?.kind === "marker") {
       text = t("plan.marker_place_hint", {
         name: markerName(this.hass?.states[armed.entityId], armed.entityId),

@@ -260,6 +260,43 @@ export interface SunMap {
   day_hours: number;
 }
 
+/** What a place on the plan offers a new plant (sent to the AI). */
+export interface PlaceSite {
+  sun_hours_season: number;
+  light: Light;
+  soil: SoilType | null;
+  free_radius_m: number;
+  irrigated: boolean;
+  under_a_roof: boolean;
+}
+
+export interface PlanSuggestion {
+  id: string;
+  name: string;
+  scientific_name: string | null;
+  category: PlantCategory | null;
+  reason: string;
+  light: Light | null;
+  water_need: WaterNeed | null;
+  height_cm: number | null;
+  width_cm: number | null;
+  min_temperature_c: number | null;
+  /** months (1-12) for planting or sowing */
+  planting_months: number[];
+  neighbours: string | null;
+  caution: string | null;
+}
+
+/** Plants the AI proposes for a place. */
+export interface PlacePlan {
+  id: string;
+  x: number;
+  y: number;
+  site: PlaceSite;
+  note: string | null;
+  suggestions: PlanSuggestion[];
+}
+
 export interface PlantSun {
   /** hours of direct sun per month (January first) */
   months: number[];

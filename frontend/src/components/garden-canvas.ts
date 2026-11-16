@@ -110,7 +110,11 @@ const STROKE_STEP_PX = 3;
 const STROKE_TOLERANCE_PX = 2.5;
 export type Selection = { type: "plant" | "shape" | "marker"; id: string } | null;
 /** Something waiting to be placed with the next tap on the plan. */
-export type Armed = { kind: "plant"; plantId: string } | { kind: "marker"; entityId: string };
+export type Armed =
+  | { kind: "plant"; plantId: string }
+  | { kind: "marker"; entityId: string }
+  /** pick a place to ask what fits there */
+  | { kind: "place" };
 
 export type Handle =
   | { kind: "corner"; corner: Corner }

@@ -21,6 +21,7 @@ import type {
   Plant,
   PlantDetail,
   MoistureFields,
+  PlacePlan,
   SunMap,
   SunSummary,
   PlantFields,
@@ -612,6 +613,29 @@ export function getTips(hass: HomeAssistant, plantId?: string | null): Promise<T
   return hass.callWS<TipsRecord | null>({
     type: `${WS_PREFIX}/assistant/tips`,
     ...plantArg(plantId),
+  });
+}
+
+/** Plants the AI proposes for a place on the plan (an AI call with costs). */
+export function planPlace(hass: HomeAssistant, at: Point, wish: string | null): Promise<PlacePlan> {
+  return hass.callWS<PlacePlan>({
+    type: `${WS_PREFIX}/assistant/plan`,
+    x: at.x,
+    y: at.y,
+    ...(wish ? { wish } : {}),
+  });
+}
+
+/** Take a proposed plant over: it is placed there, with a task to plant it. */
+export function acceptPlan(
+  hass: HomeAssistant,
+  planId: string,
+  suggestionId: string,
+): Promise<{ plant_id: string; task_id: string }> {
+  return hass.callWS({
+    type: `${WS_PREFIX}/assistant/plan/accept`,
+    plan_id: planId,
+    suggestion_id: suggestionId,
   });
 }
 

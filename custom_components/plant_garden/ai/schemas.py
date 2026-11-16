@@ -542,3 +542,76 @@ def clean_comparison(data: dict[str, Any]) -> dict[str, Any]:
         "concerns": concerns[:6],
         "problem_title": title if serious else None,
     }
+
+
+# ---------------------------------------------------------------- plants for a place
+PLAN_SCHEMA: dict[str, Any] = _object(
+    {
+        "note": {
+            "type": "string",
+            "description": "One or two sentences about the place itself. Empty if nothing to say.",
+        },
+        "suggestions": {
+            "type": "array",
+            "description": "Plants that fit the place, the best first, at most 5.",
+            "items": _object(
+                {
+                    "name": {"type": "string", "description": "Common name."},
+                    "scientific_name": _text_or_empty(),
+                    "category": _choice([c.value for c in PlantCategory]),
+                    "reason": {"type": "string", "description": "Why it fits this place."},
+                    "light": _choice([v.value for v in Light]),
+                    "water_need": _choice([v.value for v in WaterNeed]),
+                    "height_cm": _positive(),
+                    "width_cm": _positive(),
+                    "min_temperature_c": _nullable("number"),
+                    "planting_months": {"type": "array", "items": {"type": "integer"}},
+                    "neighbours": _text_or_empty(),
+                    "caution": _text_or_empty(),
+                }
+            ),
+        },
+    }
+)
+MAX_PLAN_SUGGESTIONS = 5
+
+
+def clean_plan(data: dict[str, Any]) -> dict[str, Any]:
+    """Suggestions for a place, checked; unknown values become None."""
+    suggestions = []
+    for item in data.get("suggestions") or []:
+        if not isinstance(item, dict) or not _text(item.get("name"), 100):
+            continue
+        category = item.get("category")
+        light = item.get("light")
+        need = item.get("water_need")
+        low = _number(item.get("min_temperature_c"))
+        months = item.get("planting_months")
+        suggestions.append(
+            {
+                "name": _text(item["name"], 100),
+                "scientific_name": _text(item.get("scientific_name"), 200),
+                "category": category if category in {c.value for c in PlantCategory} else None,
+                "reason": _text(item.get("reason"), 1000) or "",
+                "light": light if light in {v.value for v in Light} else None,
+                "water_need": need if need in {v.value for v in WaterNeed} else None,
+                "height_cm": _positive_number(item.get("height_cm")),
+                "width_cm": _positive_number(item.get("width_cm")),
+                "min_temperature_c": low if low is not None and -60 <= low <= 40 else None,
+                "planting_months": sorted(
+                    {
+                        int(month)
+                        for month in (months if isinstance(months, list) else [])
+                        if isinstance(month, int | float)
+                        and not isinstance(month, bool)
+                        and 1 <= month <= 12
+                    }
+                ),
+                "neighbours": _text(item.get("neighbours"), 500),
+                "caution": _text(item.get("caution"), 500),
+            }
+        )
+    return {
+        "note": _text(data.get("note"), 1000),
+        "suggestions": suggestions[:MAX_PLAN_SUGGESTIONS],
+    }

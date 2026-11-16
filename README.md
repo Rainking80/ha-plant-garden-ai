@@ -104,6 +104,8 @@ sensors and offers recommendations as entities for your own automations.
 - Weather warnings with what to do: frost, heat, storm, heavy rain, and weather
   for fungal diseases and slugs - for the plants at risk, as a notification too
   (rules, no AI).
+- What fits here?: tap a free place on the plan and the AI proposes plants for
+  its sun, soil, room and neighbours; one click plans a plant there, with a task.
 - Photo comparison: the AI compares a new photo with an earlier one and opens a
   problem when something is wrong (by hand, or after every upload if you want).
 - Hedges in Germany: pruning tasks point out the cutting ban from March to

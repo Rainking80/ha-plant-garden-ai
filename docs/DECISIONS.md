@@ -650,3 +650,24 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   side. Computed on request in the executor, nothing is stored.
 - **Not part of it**: clouds, terrain, neighbours outside the plan, the
   transparency of tree crowns in winter. The water balance does not use it (yet).
+
+## D-044 "What fits here?": plants for a place (2026-11-16)
+
+- **On request only**: the user arms the tool, taps a place and presses a button;
+  that is one AI call (feature `plan`, the text provider), budget-checked and
+  logged like the others.
+- **What is sent**: facts of the place, not the place - computed hours of sun
+  (season and per month) and its light class, the soil of the bed under it, the
+  area it lies in, the free radius to the nearest crown, plants within 4 m (name,
+  botanical name, category, distance, crown, height), the species already in the
+  garden, the coldest night of the last 365 stored days, hemisphere and month,
+  whether a zone or a roof covers it, and the user's wish. No coordinates, notes
+  or entity ids.
+- **Answer**: at most five suggestions with category, light, water need, mature
+  size, frost limit, planting months, companions and cautions, validated
+  tolerantly (`clean_plan`).
+- **Taking over** creates the plant at the place with the tag "planned" (name and
+  position are the user's, the rest AI suggestions with their source) and a task
+  "Plant ..." due today in a planting month, else on the first day of the next
+  one. Proposals are kept in memory (the last five) - a restart forgets them,
+  nothing else depends on them.

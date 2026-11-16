@@ -812,3 +812,91 @@ describe("pg-garden-view: sun and shade", () => {
     );
   });
 });
+
+describe("pg-garden-view: what fits here?", () => {
+  const PLAN = {
+    id: "PL1",
+    x: 0,
+    y: 0,
+    site: {
+      sun_hours_season: 3.4,
+      light: "partial_shade" as const,
+      soil: "loam" as const,
+      free_radius_m: 1.2,
+      irrigated: true,
+      under_a_roof: false,
+    },
+    note: "Halbschattig, frischer Boden.",
+    suggestions: [
+      {
+        id: "S1",
+        name: "Elfenblume",
+        scientific_name: "Epimedium x versicolor",
+        category: "perennial" as const,
+        reason: "Verträgt trockenen Schatten.",
+        light: "shade" as const,
+        water_need: "low" as const,
+        height_cm: 30,
+        width_cm: 40,
+        min_temperature_c: -25,
+        planting_months: [3, 4, 9],
+        neighbours: "Passt zu Farnen.",
+        caution: "Schwach giftig.",
+      },
+    ],
+  };
+
+  it("asks for a place, shows the suggestions and takes one over", async () => {
+    const backend = fakeBackend({ placePlan: PLAN });
+    const { view } = await mount(backend);
+    await clickButton(view, "Was passt hier hin?");
+    expect(deepText(view)).toContain("Tippe auf die Stelle, für die du Pflanzvorschläge möchtest.");
+
+    // tap 2 m east of the middle
+    const svg = deepGet<SVGSVGElement>(canvasOf(view), "svg");
+    pointer("pointerdown", svg, 440, 300);
+    pointer("pointerup", svg, 440, 300);
+    const planner = deepGet(view, "pg-place-planner");
+    await vi.waitFor(() => expect(deepText(planner)).toContain("Vorschläge holen"));
+    // nothing is asked before the button is pressed
+    expect(calls(backend, "plant_garden/assistant/plan")).toHaveLength(0);
+
+    const wish = deepGet<HTMLInputElement>(planner, "input");
+    wish.value = "für Bienen";
+    wish.dispatchEvent(new Event("input"));
+    deepGet<HTMLFormElement>(planner, "form").requestSubmit();
+    await vi.waitFor(() => expect(deepText(planner)).toContain("Elfenblume"));
+    expect(calls(backend, "plant_garden/assistant/plan")[0]).toMatchObject({
+      x: 2,
+      y: 0,
+      wish: "für Bienen",
+    });
+    const text = deepText(planner);
+    expect(text).toContain("3,4 h Sonne am Tag · Halbschatten");
+    expect(text).toContain("Lehm");
+    expect(text).toContain("1,2 m frei");
+    expect(text).toContain("bewässert");
+    expect(text).toContain("Epimedium x versicolor");
+    expect(text).toContain("pflanzen: Mär, Apr, Sep");
+    expect(text).toContain("Schwach giftig.");
+
+    deepGet<HTMLButtonElement>(planner, ".suggestion button").click();
+    await vi.waitFor(() => expect(deepText(planner)).toContain("eingeplant"));
+    expect(calls(backend, "plant_garden/assistant/plan/accept")[0]).toMatchObject({
+      plan_id: "PL1",
+      suggestion_id: "S1",
+    });
+  });
+
+  it("says when no AI is set up", async () => {
+    const { view } = await mount(fakeBackend());
+    await clickButton(view, "Was passt hier hin?");
+    const svg = deepGet<SVGSVGElement>(canvasOf(view), "svg");
+    pointer("pointerdown", svg, 400, 300);
+    pointer("pointerup", svg, 400, 300);
+    const planner = deepGet(view, "pg-place-planner");
+    await vi.waitFor(() => deepGet<HTMLFormElement>(planner, "form"));
+    deepGet<HTMLFormElement>(planner, "form").requestSubmit();
+    await vi.waitFor(() => expect(deepText(planner)).toContain("No AI provider is set up"));
+  });
+});

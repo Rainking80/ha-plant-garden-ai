@@ -19,6 +19,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 from homeassistant.util.ulid import ulid_now
 
+from .. import sun
 from ..care import CareManager, ChatMessage, Problem
 from ..const import (
     CONF_CONTEXT_TOKENS,
@@ -30,15 +31,17 @@ from ..const import (
 from ..garden import GardenChange, GardenManager, NotFoundError
 from ..models import Photo
 from ..photos import PhotoVariant
-from . import context as context_builder
+from . import context as context_builder, planner
 from .base import AIError, AIRequest, Feature, Message
 from .prompts import assistant as prompts
 from .schemas import (
     COMPARE_SCHEMA,
     DIAGNOSE_SCHEMA,
+    PLAN_SCHEMA,
     TIPS_SCHEMA,
     clean_comparison,
     clean_diagnosis,
+    clean_plan,
     clean_tips,
 )
 from .service import AIService
@@ -52,6 +55,8 @@ WEEKLY_HOUR = 8  # Monday, local time
 MAX_DIAGNOSE_PHOTOS = 3
 CHAT_HISTORY = 10  # earlier messages sent along
 COMPARE_GAP_DAYS = 14  # a new photo is compared with one at least this much older
+KEPT_PLANS = 5  # proposals for places, kept in memory until one is taken over
+WISH_LENGTH = 300
 
 
 def _alternating(messages: list[Message]) -> list[Message]:
@@ -87,6 +92,7 @@ class Assistant:
         self._store: Store[dict[str, Any]] = Store(hass, STORE_VERSION, STORE_KEY)
         self._data: dict[str, Any] = {"tips": {}}
         self._unsubs: list[CALLBACK_TYPE] = []
+        self._plans: dict[str, dict[str, Any]] = {}  # proposals for places, newest last
 
     async def async_setup(self) -> None:
         self._data = await self._store.async_load() or {"tips": {}}
@@ -396,6 +402,101 @@ class Assistant:
         self._save()
         self._manager.notify_care(plant_id)
         return record
+
+    # ------------------------------------------------------------ plants for a place
+    async def async_plan_place(self, x: float, y: float, wish: str | None = None) -> dict[str, Any]:
+        """Plants that fit a place on the plan: its sun, soil, room and neighbours."""
+        manager = self._manager
+        language = self._language()
+        origin = manager.layout.origin
+        latitude = origin.latitude if origin else self.hass.config.latitude
+        today = dt_util.now().date()
+        heights = await manager.async_latest_heights()
+        widths = await manager.async_latest_widths()
+        weather = await manager.async_stored_weather(today - timedelta(days=365))
+        lows = [day.t_min for day in weather if day.t_min is not None]
+        shapes, plants = manager.shapes(), manager.plants
+        blockers = sun.obstacles(shapes, plants, heights, widths)
+        site = await self.hass.async_add_executor_job(
+            lambda: planner.site_facts(
+                x,
+                y,
+                plants=plants,
+                shapes=shapes,
+                blockers=blockers,
+                widths_cm=widths,
+                heights_cm=heights,
+                latitude=latitude,
+                winter_low=min(lows) if lows else None,
+                today=today,
+            )
+        )
+        wish = (wish or "").strip()[:WISH_LENGTH] or None
+        request = AIRequest(
+            feature=Feature.PLAN,
+            system=prompts.PLAN_SYSTEM[language],
+            messages=[Message(role="user", text=prompts.plan_text(language, site, wish))],
+            json_schema=PLAN_SCHEMA,
+            max_output_tokens=3000,
+            prompt_version=prompts.PLAN_VERSION,
+        )
+        response = await self._ai.async_generate(Feature.PLAN, request)
+        cleaned = clean_plan(response.data or {})
+        record = {
+            "id": ulid_now(),
+            "created": dt_util.utcnow().isoformat(),
+            "model": response.model,
+            "x": x,
+            "y": y,
+            "site": site,
+            "note": cleaned["note"],
+            "suggestions": [{"id": ulid_now(), **s} for s in cleaned["suggestions"]],
+        }
+        self._plans[record["id"]] = record
+        for old in list(self._plans)[:-KEPT_PLANS]:
+            del self._plans[old]
+        return record
+
+    async def async_accept_plan(self, plan_id: str, suggestion_id: str) -> dict[str, Any]:
+        """Take a proposed plant over: it is placed there, with a task to plant it."""
+        record = self._plans.get(plan_id)
+        chosen = next(
+            (s for s in (record or {}).get("suggestions", []) if s["id"] == suggestion_id), None
+        )
+        if record is None or chosen is None:
+            raise NotFoundError(suggestion_id)
+        planned = "geplant" if self._language() == "de" else "planned"
+        plant = await self._manager.async_create_plant(
+            {
+                "name": chosen["name"],
+                "position": {"x": record["x"], "y": record["y"]},
+                "tags": [planned],
+            }
+        )
+        fields = {
+            key: chosen[key]
+            for key in ("scientific_name", "category", "light", "water_need", "min_temperature_c")
+            if chosen[key] is not None
+        }
+        if chosen["width_cm"]:
+            fields["crown_diameter_m"] = round(min(max(chosen["width_cm"] / 100, 0.05), 100), 2)
+        await self._manager.async_apply_ai_fields(
+            plant.id, fields, confidence=None, model=record["model"]
+        )
+        today = dt_util.now().date()
+        task = await self._care.async_create_task(
+            {
+                "kind": "other",
+                "title": ("{} pflanzen" if self._language() == "de" else "Plant {}").format(
+                    chosen["name"]
+                ),
+                "plant_id": plant.id,
+                "due": planner.planting_day(chosen["planting_months"], today),
+            },
+            source="ai",
+        )
+        chosen["plant_id"] = plant.id
+        return {"plant_id": plant.id, "task_id": task.id}
 
     # ------------------------------------------------------------ chat
     async def async_chat(

@@ -62,7 +62,9 @@ from .schemas import IDENTIFY_SCHEMA, clean_identification
 _LOGGER = logging.getLogger(__name__)
 
 STORAGE_KEY = "plant_garden.ai"
-TEXT_FEATURES = frozenset({Feature.TIPS, Feature.CHAT, Feature.DIGEST, Feature.RESEARCH})
+TEXT_FEATURES = frozenset(
+    {Feature.TIPS, Feature.CHAT, Feature.DIGEST, Feature.RESEARCH, Feature.PLAN}
+)
 BUDGET_WARN = 0.8
 MAX_PHOTOS = 3
 # care fields an identification can suggest, with where the value lives in the answer
