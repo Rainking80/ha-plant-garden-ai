@@ -8,7 +8,6 @@ from typing import Any
 from unittest.mock import patch
 
 from freezegun.api import FrozenDateTimeFactory
-from homeassistant.components.camera import Image
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
@@ -23,7 +22,7 @@ from .images import make_image
 from .test_assistant import MESSAGES, _call, claude, garden  # noqa: F401
 
 CAMERA = "camera.beet"
-GET_IMAGE = "homeassistant.components.camera.async_get_image"
+GET_IMAGE = "custom_components.plant_garden.camera.async_camera_picture"
 COMPARISON = {
     "summary": "Die Blätter sind gelb geworden.",
     "growth": "same",
@@ -90,7 +89,7 @@ async def test_daily_pictures_and_snapshot_now(
     )
     assert msg["result"]["camera_entity_id"] == CAMERA
 
-    picture = Image(content_type="image/jpeg", content=make_image(640, 480))
+    picture = make_image(640, 480)
     with patch(GET_IMAGE, return_value=picture) as get_image:
         msg = await _call(client, type="plant_garden/photos/snapshot", plant_id=rose.id)
         assert msg["success"], msg
@@ -133,7 +132,7 @@ async def test_weekly_look_of_the_ai(
         earlier.id, {"taken_at": dt_util.utcnow() - timedelta(days=20)}
     )
     aioclient_mock.post(MESSAGES, json=claude(json.dumps(COMPARISON)))
-    picture = Image(content_type="image/jpeg", content=make_image(640, 480))
+    picture = make_image(640, 480)
 
     def next_noon(weekday: int) -> datetime:
         day = dt_util.start_of_local_day(dt_util.now()) + timedelta(days=1)

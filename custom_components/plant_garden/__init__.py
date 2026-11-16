@@ -31,6 +31,7 @@ from .http import (
     PhotoUploadView,
 )
 from .irrigation import IrrigationTracker
+from .llm_api import async_register_llm_api
 from .panel import async_register_panel, async_register_static_path, async_unregister_panel
 from .runtime import PlantGardenConfigEntry, PlantGardenData
 from .services import async_register_services
@@ -113,6 +114,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) 
         camera=camera,
     )
     async_garden_device(hass, entry)
+    # conversation agents can be given the garden as a tool set (the user's choice per agent)
+    entry.async_on_unload(async_register_llm_api(hass))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await async_register_panel(hass, entry)
 

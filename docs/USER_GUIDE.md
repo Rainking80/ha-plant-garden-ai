@@ -237,6 +237,17 @@ camera snapshot).
 Events: `plant_garden_irrigation_finished`, `plant_garden_task_due`,
 `plant_garden_problem_detected`, `plant_garden_weather_alert`.
 
+**Voice assistants**: Plant Garden appears as a tool set named *Plant Garden* for
+conversation agents that use a language model. Switch it on in the agent's
+settings (**Settings → Voice assistants →** your agent **→** the list of what the
+assistant may control). Then ask, by voice or in the Assist chat, "what needs
+water today?", "how is the rose doing?", or say "I watered the tomatoes with five
+litres", "remind me to prune the hedge in three days", "the rose pruning is done",
+"the basil has brown spots". The tools read and write the garden only - nothing is
+switched. The agent's model sees what the tools answer: plant names, soil water,
+tasks, problems and care hints, never your notes, your location or entity ids.
+Nothing is shared with an agent you have not given the tool set to.
+
 Example: notify when a task is due.
 
 ```yaml

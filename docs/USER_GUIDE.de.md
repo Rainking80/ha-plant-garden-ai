@@ -252,6 +252,19 @@ Ordner oder Kamera-Schnappschuss).
 Events: `plant_garden_irrigation_finished`, `plant_garden_task_due`,
 `plant_garden_problem_detected`, `plant_garden_weather_alert`.
 
+**Sprachassistenten**: Plant Garden erscheint als Werkzeugsatz *Plant Garden* für
+Konversationsagenten mit Sprachmodell. Eingeschaltet wird er in den Einstellungen
+des Agenten (**Einstellungen → Sprachassistenten →** dein Agent **→** die Liste,
+was der Assistent steuern darf). Danach per Sprache oder im Assist-Chat fragen:
+„Was braucht heute Wasser?“, „Wie geht es der Rose?“ - oder sagen: „Ich habe die
+Tomaten mit fünf Litern gegossen“, „Erinnere mich in drei Tagen an den
+Heckenschnitt“, „Der Rosenschnitt ist erledigt“, „Das Basilikum hat braune
+Flecken“. Die Werkzeuge lesen und schreiben nur den Garten - geschaltet wird
+nichts. Das Modell des Agenten sieht, was die Werkzeuge antworten: Pflanzennamen,
+Bodenwasser, Aufgaben, Probleme und Pflegehinweise, nie deine Notizen, deinen
+Standort oder Entitäts-IDs. Mit einem Agenten, dem du den Werkzeugsatz nicht
+gegeben hast, wird nichts geteilt.
+
 Beispiel: Benachrichtigung bei fälliger Aufgabe.
 
 ```yaml

@@ -117,6 +117,8 @@ sensors and offers recommendations as entities for your own automations.
   problem when something is wrong (by hand, or after every upload if you want).
 - Hedges in Germany: pruning tasks point out the cutting ban from March to
   September (§ 39 BNatSchG).
+- Talk to the garden: a tool set for Home Assistant's voice assistants - ask what
+  needs water, log a watering, add or tick off tasks by voice.
 - A **Tech** page for administrators: requests, tokens and costs per day, model,
   feature and plant, a request log with CSV export, editable prices, a monthly
   budget that warns and can stop.

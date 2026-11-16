@@ -58,6 +58,14 @@ def photos_to_thin(photos: Iterable[Photo], today: date, cover_id: str | None) -
     return remove
 
 
+async def async_camera_picture(hass: HomeAssistant, entity_id: str) -> bytes:
+    """The current picture of a camera entity."""
+    # imported here: the camera integration needs extra packages (PyTurboJPEG)
+    from homeassistant.components.camera import async_get_image  # noqa: PLC0415
+
+    return (await async_get_image(hass, entity_id)).content
+
+
 class CameraWatcher:
     """Takes the daily pictures and runs the weekly look of the AI."""
 
@@ -94,14 +102,11 @@ class CameraWatcher:
         plant = self._manager.get_plant(plant_id)
         if not plant.camera_entity_id:
             raise ValueError("no camera is linked to this plant")
-        # imported here: the camera integration needs extra packages (PyTurboJPEG)
-        from homeassistant.components.camera import async_get_image  # noqa: PLC0415
-
         try:
-            image = await async_get_image(self.hass, plant.camera_entity_id)
+            picture = await async_camera_picture(self.hass, plant.camera_entity_id)
         except HomeAssistantError as err:
             raise ValueError(f"the camera delivered no picture: {err}") from err
-        photo = await self._manager.async_add_photo(plant_id, image.content, tags=[CAMERA_TAG])
+        photo = await self._manager.async_add_photo(plant_id, picture, tags=[CAMERA_TAG])
         await self._async_thin(plant_id)
         return photo
 

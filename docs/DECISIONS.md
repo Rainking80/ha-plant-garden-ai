@@ -729,3 +729,27 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
 - **Time-lapse** is the panel playing a plant's photos (medium size) oldest first,
   at 2, 5 or 10 pictures a second, with a scrubber; with at least two camera
   pictures it starts with those only. No video file is produced.
+
+## D-048 Talk to the garden: an LLM API for conversation agents (2026-11-16)
+
+- **How**: an `llm.API` named "Plant Garden" with six tools. Home Assistant lets
+  the user choose per conversation agent which APIs it may use; nothing reaches
+  an agent (or its cloud model) that was not given this one. The tools call no
+  AI of their own, cost nothing and switch nothing.
+- **Tools**: `garden_overview` (who needs water today and in the coming days,
+  frost and weather warnings, tasks due and this week, active problems, rain),
+  `plant_info`, `log_watering` (litres per plant, like the action),
+  `create_task`, `complete_task`, `report_problem`. Reading tools are annotated
+  read-only, all of them as staying inside Home Assistant.
+- **Names, not ids**: plants are addressed by name - exact first, else the only
+  plant whose name or botanical name contains the words. Several matches or none
+  come back as an answer for the model ("ask which one is meant", the list of
+  names), not as an exception. The prompt lists up to 80 plant names.
+- **Privacy**: the answers carry names, species, care hints, soil water, tasks
+  and problems - not notes, coordinates, photos or entity ids (the same line as
+  for the integration's own AI calls).
+- **Versions**: 2026.9 expects tools to return a plain object and has no
+  annotations; newer versions want `ToolResult` and report tools without an
+  `integration`. The module checks what `helpers.llm` offers and takes the
+  schema library from `llm.Tool.parameters`, so one code path serves both.
+- **Not done**: sentence-based intents for agents without a language model.

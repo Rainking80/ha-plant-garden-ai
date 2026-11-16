@@ -35,6 +35,11 @@ All notable changes to this project are documented here. The format follows
   every noon (free, no AI); a plant's photos play as a time-lapse. Optionally
   the AI looks at the newest camera picture every Monday and opens a problem
   when something is wrong. Old camera pictures are thinned to one per week.
+- Talk to the garden: Plant Garden offers itself to Home Assistant's voice
+  assistants as a tool set. An agent with it switched on answers "what needs
+  water today?" and acts on "I gave the tomatoes five litres" or "remind me to
+  prune the roses on Saturday" - overview, plant details, log a watering,
+  create and complete tasks, report a problem.
 
 ## [0.2.0] - 2026-11-14
 
