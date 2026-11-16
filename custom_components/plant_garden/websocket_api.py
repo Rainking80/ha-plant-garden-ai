@@ -183,6 +183,7 @@ PLANT_FIELDS: dict[Any, Any] = {
     probatio.Optional("min_temperature_c"): probatio.Any(None, _number(-60, 40)),
     probatio.Optional("root_depth_cm"): probatio.Any(None, _number(1, 1000)),
     probatio.Optional("moisture_entity_id"): probatio.Any(None, cv.entity_domain("sensor")),
+    probatio.Optional("camera_entity_id"): probatio.Any(None, cv.entity_domain("camera")),
     probatio.Optional("moisture_wet"): probatio.Any(None, _number(0, 100000)),
     probatio.Optional("moisture_dry"): probatio.Any(None, _number(0, 100000)),
     probatio.Optional("planted_on"): probatio.Any(None, cv.date),
@@ -223,6 +224,7 @@ def async_register_websocket_commands(hass: HomeAssistant) -> None:
         ws_markers_delete,
         ws_photos_update,
         ws_photos_edit,
+        ws_photo_snapshot,
         ws_photos_delete,
         ws_measurements_add,
         ws_measurements_update,
@@ -274,6 +276,23 @@ def garden_command(
         return handler
 
     return decorator
+
+
+@garden_command(
+    {probatio.Required("type"): f"{DOMAIN}/photos/snapshot", probatio.Required("plant_id"): str}
+)
+async def ws_photo_snapshot(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """A picture from the plant's camera, now (the daily one comes at noon)."""
+    entry = get_loaded_entry(hass)
+    if entry is None:  # pragma: no cover - the decorator checks the manager first
+        raise NotFoundError("camera")
+    photo = await entry.runtime_data.camera.async_snapshot(msg["plant_id"])
+    return photo_dict(hass, photo, connection.refresh_token_id)
 
 
 def _fields(msg: dict[str, Any], *exclude: str) -> dict[str, Any]:

@@ -56,6 +56,8 @@ RESEARCH_SCHEDULES: Final = ("off", "weekly", "daily", "three_daily", "hourly")
 CONF_WEATHER_ALERTS: Final = "weather_alerts"
 # compare a new photo with earlier ones of the plant (an AI call, off by default)
 CONF_PHOTO_COMPARE: Final = "photo_compare"
+CAMERA_TAG: Final = "camera"  # tag of the daily pictures taken by a plant's camera
+CONF_CAMERA_CHECK: Final = "camera_check"  # weekly look of the AI at the camera pictures
 # context size (estimated tokens) the assistant may send, per feature: option
 # "context_tokens_<feature>"
 CONF_CONTEXT_TOKENS: Final = "context_tokens_"

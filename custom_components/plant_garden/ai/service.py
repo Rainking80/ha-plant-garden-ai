@@ -24,6 +24,7 @@ from homeassistant.util import dt as dt_util
 from homeassistant.util.ulid import ulid_now
 
 from ..const import (
+    CAMERA_TAG,
     CONF_AI_AUTO_IDENTIFY,
     CONF_AI_BUDGET,
     CONF_AI_BUDGET_STOP,
@@ -170,6 +171,8 @@ class AIService:
     async def _async_on_photo(self, photo: Any, added: bool) -> None:
         """Option "identify after upload": only plants whose species is still unknown."""
         if not added or not self._entry.options.get(CONF_AI_AUTO_IDENTIFY):
+            return
+        if CAMERA_TAG in photo.tags:  # the daily camera picture is no reason for an AI call
             return
         plant = self._manager.get_plant(photo.plant_id)
         if plant.scientific_name or (

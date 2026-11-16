@@ -108,6 +108,8 @@ export interface MoistureFields {
   moisture_wet: number | null;
   /** reading at the wilting point; null: derived from the soil */
   moisture_dry: number | null;
+  /** a camera that takes the plant's picture every day at noon */
+  camera_entity_id: string | null;
 }
 
 /**

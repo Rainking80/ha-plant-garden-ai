@@ -1,9 +1,13 @@
 import {
   mdiAccountEditOutline,
+  mdiCameraOutline,
+  mdiCctv,
   mdiCreationOutline,
   mdiDeleteOutline,
   mdiImagePlusOutline,
+  mdiLinkVariantOff,
   mdiPencilOutline,
+  mdiPlayCircleOutline,
   mdiSprout,
   mdiMapMarkerRadiusOutline,
   mdiStar,
@@ -16,6 +20,7 @@ import {
   deletePlant,
   errorMessage,
   getPlant,
+  snapshotPhoto,
   sunSummary,
   updatePlant,
   movePlants,
@@ -33,6 +38,10 @@ import type {
 import { PgElement, define, icon } from "../components/base";
 import type { PgConfirmDialog } from "../components/confirm-dialog";
 import "../components/confirm-dialog";
+import "../components/entity-picker";
+import type { PgEntityPicker } from "../components/entity-picker";
+import "../components/timelapse";
+import type { PgTimelapse } from "../components/timelapse";
 import "../components/growth-chart";
 import type { PgPhotoCrop } from "../components/photo-crop";
 import "../components/photo-crop";
@@ -99,6 +108,7 @@ export class PgPlantDetail extends PgElement {
     _mError: { state: true },
     _gpsSuggestion: { state: true },
     _sun: { state: true },
+    _snapping: { state: true },
   };
 
   declare store: GardenStore;
@@ -117,6 +127,7 @@ export class PgPlantDetail extends PgElement {
   declare _gpsSuggestion: Point | null;
   /** computed sun of this plant's place, when it is on the plan */
   declare _sun: PlantSun | null;
+  declare _snapping: boolean;
 
   private _loadedAt = 0;
   private _reloadTimer?: ReturnType<typeof setTimeout>;
@@ -150,6 +161,7 @@ export class PgPlantDetail extends PgElement {
     this._mError = "";
     this._gpsSuggestion = null;
     this._sun = null;
+    this._snapping = false;
   }
 
   override connectedCallback(): void {
@@ -394,6 +406,75 @@ export class PgPlantDetail extends PgElement {
         : null,
     ];
     return facts.filter((fact): fact is Fact => fact !== null);
+  }
+
+  /** The plant's camera (a picture every noon) and the time-lapse of its photos. */
+  private _renderCamera(plant: Plant, photos: Photo[]) {
+    const { t } = this;
+    const camera = plant.camera_entity_id;
+    const name = camera
+      ? ((this.hass?.states[camera]?.attributes.friendly_name as string | undefined) ?? camera)
+      : "";
+    return html`<div class="camera">
+      ${
+        camera
+          ? html`<span class="camera-name">
+                ${icon(mdiCctv)} <strong>${name}</strong>
+                <span class="muted small">${t("camera.daily")}</span>
+              </span>
+              <button class="button text" ?disabled=${this._snapping} @click=${this._snapshot}>
+                ${icon(mdiCameraOutline)} ${t(this._snapping ? "camera.taking" : "camera.now")}
+              </button>
+              <button
+                class="icon-button small"
+                aria-label=${t("camera.unlink")}
+                title=${t("camera.unlink")}
+                @click=${() => this._setCamera(null)}
+              >
+                ${icon(mdiLinkVariantOff)}
+              </button>`
+          : html`<button
+              class="button text"
+              @click=${() =>
+                this.renderRoot.querySelector<PgEntityPicker>("pg-entity-picker.camera")?.open()}
+            >
+              ${icon(mdiCctv)} ${t("camera.link")}
+            </button>`
+      }
+      ${
+        photos.length >= 2
+          ? html`<button
+              class="button text timelapse"
+              @click=${() =>
+                this.renderRoot.querySelector<PgTimelapse>("pg-timelapse")?.open(photos)}
+            >
+              ${icon(mdiPlayCircleOutline)} ${t("timelapse.title")}
+            </button>`
+          : nothing
+      }
+    </div>`;
+  }
+
+  private async _setCamera(entityId: string | null): Promise<void> {
+    try {
+      await updatePlant(this.hass, this.plantId, { camera_entity_id: entityId });
+      await this._load();
+    } catch (err) {
+      this._error = errorMessage(err);
+    }
+  }
+
+  private async _snapshot(): Promise<void> {
+    this._snapping = true;
+    this._uploadErrors = [];
+    try {
+      await snapshotPhoto(this.hass, this.plantId);
+      await this._load();
+    } catch (err) {
+      this._uploadErrors = [`${this.t("camera.failed")}: ${errorMessage(err)}`];
+    } finally {
+      this._snapping = false;
+    }
   }
 
   /** Care profile: watering, fertilising, pruning – with where each hint came from. */
@@ -673,6 +754,7 @@ export class PgPlantDetail extends PgElement {
           </button>
         </div>
         ${several ? nothing : html`<p class="muted small one-at-a-time">${t("detail.one_photo_at_a_time")}</p>`}
+        ${this._renderCamera(plant, photos)}
         ${this._uploading ? html`<p class="muted" aria-live="polite">${this._uploading}</p>` : nothing}
         ${
           this._gpsSuggestion
@@ -717,6 +799,15 @@ export class PgPlantDetail extends PgElement {
       ></pg-photo-viewer>
       <pg-photo-crop .hass=${this.hass} @photos-changed=${() => this._load()}></pg-photo-crop>
       <pg-confirm-dialog .hass=${this.hass}></pg-confirm-dialog>
+      <pg-timelapse .hass=${this.hass}></pg-timelapse>
+      <pg-entity-picker
+        class="camera"
+        .hass=${this.hass}
+        .domains=${["camera"]}
+        heading=${t("camera.link")}
+        @entity-picked=${(e: CustomEvent<{ entityId: string }>) =>
+          this._setCamera(e.detail.entityId)}
+      ></pg-entity-picker>
     `;
   }
 
@@ -1038,6 +1129,18 @@ export class PgPlantDetail extends PgElement {
       .photos.dragging {
         outline: 2px dashed var(--pg-accent);
         outline-offset: -6px;
+      }
+      .camera {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 12px;
+        margin: 4px 0 8px;
+      }
+      .camera-name {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
       }
       .gps {
         display: flex;

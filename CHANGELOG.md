@@ -31,6 +31,10 @@ All notable changes to this project are documented here. The format follows
 - A plan from a picture: with an uploaded sketch, site plan or aerial screenshot
   as background, the AI traces the areas it recognises (house, lawn, beds,
   paths ...); you tick which to take over, and one undo removes them again.
+- Camera watch and time-lapse: link a camera to a plant and it gets a picture
+  every noon (free, no AI); a plant's photos play as a time-lapse. Optionally
+  the AI looks at the newest camera picture every Monday and opens a problem
+  when something is wrong. Old camera pictures are thinned to one per week.
 
 ## [0.2.0] - 2026-11-14
 

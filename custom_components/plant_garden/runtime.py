@@ -11,6 +11,7 @@ from .ai.assistant import Assistant
 from .ai.research import Researcher
 from .ai.service import AIService
 from .alerts import AlertNotifier
+from .camera import CameraWatcher
 from .care import CareManager
 from .const import DOMAIN
 from .garden import GardenManager
@@ -31,6 +32,7 @@ class PlantGardenData:
     assistant: Assistant
     researcher: Researcher
     alerts: AlertNotifier
+    camera: CameraWatcher
 
 
 type PlantGardenConfigEntry = ConfigEntry[PlantGardenData]

@@ -272,6 +272,11 @@ export class UploadError extends Error {
   }
 }
 
+/** A picture from the plant's camera, now. */
+export function snapshotPhoto(hass: HomeAssistant, plantId: string): Promise<Photo> {
+  return hass.callWS<Photo>({ type: `${WS_PREFIX}/photos/snapshot`, plant_id: plantId });
+}
+
 export async function uploadPhoto(hass: HomeAssistant, upload: PhotoUpload): Promise<Photo> {
   const form = new FormData();
   form.append("plant_id", upload.plantId);

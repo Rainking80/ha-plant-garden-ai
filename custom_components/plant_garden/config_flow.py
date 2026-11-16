@@ -28,6 +28,7 @@ from .const import (
     CONF_AI_IDENTIFY,
     CONF_AI_RETENTION_DAYS,
     CONF_AI_TEXT,
+    CONF_CAMERA_CHECK,
     CONF_CONTEXT_TOKENS,
     CONF_GARDEN_NAME,
     CONF_MAX_RUNTIME_HOURS,
@@ -113,6 +114,7 @@ class PlantGardenOptionsFlow(OptionsFlow):
                 CONF_RESEARCH_SCHEDULE: user_input.get(CONF_RESEARCH_SCHEDULE) or "off",
                 CONF_WEATHER_ALERTS: bool(user_input.get(CONF_WEATHER_ALERTS)),
                 CONF_PHOTO_COMPARE: bool(user_input.get(CONF_PHOTO_COMPARE)),
+                CONF_CAMERA_CHECK: bool(user_input.get(CONF_CAMERA_CHECK)),
             }
             for feature, default in DEFAULT_CONTEXT_TOKENS.items():
                 data[CONF_CONTEXT_TOKENS + feature] = int(
@@ -175,6 +177,9 @@ class PlantGardenOptionsFlow(OptionsFlow):
                 ): bool,
                 probatio.Required(
                     CONF_PHOTO_COMPARE, default=options.get(CONF_PHOTO_COMPARE, False)
+                ): bool,
+                probatio.Required(
+                    CONF_CAMERA_CHECK, default=options.get(CONF_CAMERA_CHECK, False)
                 ): bool,
                 probatio.Required(
                     CONF_RESEARCH_SCHEDULE, default=options.get(CONF_RESEARCH_SCHEDULE, "off")

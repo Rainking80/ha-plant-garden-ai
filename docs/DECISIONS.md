@@ -710,3 +710,22 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   nothing is saved by the backend. The panel creates the ticked areas through the
   normal shape command, all in one history step. Plants, trees and irrigation are
   not read from the picture.
+
+## D-047 Camera watch and time-lapse (2026-11-16)
+
+- **Linking is the switch**: a plant with a `camera_entity_id` gets one snapshot a
+  day at 12:00 local time (similar light every day), as an ordinary photo tagged
+  `camera`. No AI is involved and nothing is sent anywhere. A camera that is
+  down is logged and skipped.
+- **Storage stays bounded**: camera photos the user never touched (only the tag
+  `camera`, no note, no crop, not the cover) are thinned once they are older than
+  60 days - the first of each ISO week stays. A year is then about 110 pictures
+  per plant instead of 365.
+- **AI by option**: `camera_check` (off). On Mondays, after the snapshot, the
+  newest camera photo is compared with an earlier one through the existing photo
+  comparison (feature `compare`); a real concern opens a problem. The options
+  "identify after upload" and "compare new photos" ignore camera photos, so a
+  camera never causes a daily AI call.
+- **Time-lapse** is the panel playing a plant's photos (medium size) oldest first,
+  at 2, 5 or 10 pictures a second, with a scrubber; with at least two camera
+  pictures it starts with those only. No video file is produced.

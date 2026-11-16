@@ -196,6 +196,16 @@ new photo of a plant without botanical name is identified automatically.
   earlier one - growth, changes, concerns - and opens a problem when something is
   wrong. After every upload on its own with the option *Compare new photos with
   earlier ones* (off; an AI call with costs).
+- **Camera watch and time-lapse** (plant page, under *Photos*): *Link a camera*
+  and the plant gets a picture from that camera every day at noon, tagged
+  `camera` - free and without AI. *Take one now* adds a picture at once.
+  *Time-lapse* plays a plant's photos from the oldest to the newest (with camera
+  pictures only those, as they show the same view). Camera pictures older than
+  60 days are thinned to one per week; pictures you tagged, annotated, cropped
+  or made the cover always stay. With the option *Weekly look at the camera
+  pictures* (off; an AI call with costs) the AI compares the newest camera
+  picture with an earlier one every Monday and opens a problem when something
+  is wrong.
 - **Hedges in Germany**: from 1 March to 30 September only gentle shaping cuts
   are allowed (§ 39 BNatSchG); pruning tasks of hedges in that time say so, and
   the AI takes it into account (Home Assistant's country must be Germany).

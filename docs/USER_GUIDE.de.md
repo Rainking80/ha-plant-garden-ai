@@ -210,6 +210,16 @@ wird ein neues Foto einer Pflanze ohne botanischen Namen automatisch bestimmt.
   früheren – Wachstum, Veränderungen, Auffälligkeiten – und legt ein Problem an,
   wenn etwas nicht stimmt. Nach jedem Hochladen von selbst mit der Option *Neue
   Fotos mit früheren vergleichen* (aus; ein KI-Aufruf mit Kosten).
+- **Kamera-Wächter und Zeitraffer** (Pflanzenseite, unter *Fotos*): *Kamera
+  verknüpfen*, und die Pflanze bekommt jeden Mittag ein Bild dieser Kamera, mit dem
+  Tag `camera` - kostenlos und ohne KI. *Jetzt aufnehmen* ergänzt sofort ein Bild.
+  *Zeitraffer* spielt die Fotos einer Pflanze vom ältesten zum neuesten ab (bei
+  Kamerabildern nur diese, weil sie denselben Blick zeigen). Kamerabilder, die älter
+  als 60 Tage sind, werden auf eines pro Woche ausgedünnt; Bilder mit eigenem Tag,
+  Notiz, Zuschnitt oder als Titelbild bleiben immer. Mit der Option *Wöchentlicher
+  Blick auf die Kamerabilder* (aus; ein KI-Aufruf mit Kosten) vergleicht die KI
+  jeden Montag das neueste Kamerabild mit einem früheren und legt ein Problem an,
+  wenn etwas nicht stimmt.
 - **Hecken in Deutschland**: Vom 1. März bis 30. September ist nur ein schonender
   Form- und Pflegeschnitt erlaubt (§ 39 BNatSchG); Schnitt-Aufgaben an Hecken in
   dieser Zeit weisen darauf hin, und die KI berücksichtigt es (Land in Home

@@ -22,6 +22,7 @@ from homeassistant.util.ulid import ulid_now
 from .. import sun
 from ..care import CareManager, ChatMessage, Problem
 from ..const import (
+    CAMERA_TAG,
     CONF_CONTEXT_TOKENS,
     CONF_PHOTO_COMPARE,
     CONF_WEEKLY_CHECK,
@@ -238,6 +239,8 @@ class Assistant:
     async def _async_on_photo(self, photo: Photo, added: bool) -> None:
         """Option "compare new photos": in the background, only with an earlier photo."""
         if not added:  # a photo was edited (tags, date), not new
+            return
+        if CAMERA_TAG in photo.tags:  # daily pictures: the weekly look handles them
             return
         if (
             not self._entry.options.get(CONF_PHOTO_COMPARE)

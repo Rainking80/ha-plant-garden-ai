@@ -177,7 +177,8 @@ NUMBER_FIELDS = (
     "moisture_dry",
 )
 # entities linked to a plant: a soil moisture sensor that corrects the water balance
-ENTITY_FIELDS = ("moisture_entity_id",)
+# ... and a camera that takes its picture every day
+ENTITY_FIELDS = ("moisture_entity_id", "camera_entity_id")
 EDITABLE_FIELDS = frozenset(
     (
         "name",
@@ -232,6 +233,7 @@ class Plant:
     min_temperature_c: float | None = None
     root_depth_cm: float | None = None
     moisture_entity_id: str | None = None
+    camera_entity_id: str | None = None
     moisture_wet: float | None = None
     moisture_dry: float | None = None
     planted_on: date | None = None

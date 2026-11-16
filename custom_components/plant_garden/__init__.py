@@ -16,6 +16,7 @@ from .ai.pricing import load_defaults as load_pricing
 from .ai.research import Researcher
 from .ai.service import AIService
 from .alerts import AlertNotifier
+from .camera import CameraWatcher
 from .care import CareManager
 from .const import CONF_MAX_RUNTIME_HOURS, DEFAULT_MAX_RUNTIME_HOURS, DOMAIN
 from .database import DatabaseError
@@ -97,6 +98,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) 
         hass, entry, manager=manager, water=water, knowledge=researcher.knowledge
     )
     await alerts.async_setup()
+    camera = CameraWatcher(hass, entry, manager=manager, assistant=assistant, ai=ai)
+    camera.async_start()
     entry.runtime_data = PlantGardenData(
         version=str(integration.version),
         manager=manager,
@@ -107,6 +110,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) 
         assistant=assistant,
         researcher=researcher,
         alerts=alerts,
+        camera=camera,
     )
     async_garden_device(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -127,6 +131,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry)
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         async_unregister_panel(hass)
+        entry.runtime_data.camera.async_stop()
         entry.runtime_data.alerts.async_stop()
         entry.runtime_data.researcher.async_stop()
         entry.runtime_data.assistant.async_stop()

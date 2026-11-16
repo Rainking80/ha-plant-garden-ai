@@ -60,6 +60,7 @@ export function makePlant(overrides: Partial<Plant> = {}): Plant {
     moisture_entity_id: null,
     moisture_wet: null,
     moisture_dry: null,
+    camera_entity_id: null,
     planted_on: null,
     age: null,
     tags: [],
@@ -594,6 +595,8 @@ export function fakeBackend(
         if (!detail) throw { code: "not_found", message: "Not found" };
         return detail;
       }
+      case "plant_garden/photos/snapshot":
+        return makePhoto("SNAP", "2026-07-02T12:00:00Z", { tags: ["camera"] });
       case "plant_garden/photos/edit": {
         const crop = msg.crop as { x: number; y: number; w: number; h: number } | null;
         const rotate = msg.rotate as 0 | 90 | 180 | 270;

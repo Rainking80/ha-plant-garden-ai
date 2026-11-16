@@ -39,7 +39,8 @@
           "ai_auto_identify": "Neue Pflanzen nach dem Foto-Upload bestimmen",
           "research_schedule": "Pflanzen selbstständig recherchieren",
           "weather_alerts": "Wetter-Warnungen",
-          "photo_compare": "Neue Fotos mit früheren vergleichen"
+          "photo_compare": "Neue Fotos mit früheren vergleichen",
+          "camera_check": "Wöchentlicher Blick auf die Kamerabilder"
         },
         "data_description": {
           "max_runtime_hours": "Läuft eine Bewässerungszone länger, erscheint ein Hinweis unter Reparaturen (z. B. ein hängendes Ventil).",
@@ -51,7 +52,8 @@
           "ai_auto_identify": "Nur für Pflanzen ohne botanischen Namen. Jede Bestimmung ist ein KI-Aufruf mit Kosten; das Budget gilt.",
           "research_schedule": "Der Assistent sucht für jeweils eine Pflanze ohne Wissen Pflege, Schädlinge, Giftigkeit und mehr – im Web mit Claude, Gemini oder OpenRouter, sonst in Wikipedia – und speichert es. Jede Recherche kostet Geld; das Budget gilt. Pflanzen mit Wissen werden nicht erneut recherchiert.",
           "weather_alerts": "Eine Benachrichtigung mit dem, was zu tun ist, wenn Frost unter der Grenze einer Pflanze, Hitze, Sturm, Starkregen oder Wetter für Pflanzenkrankheiten und Schnecken kommt. Ohne KI, ohne Kosten.",
-          "photo_compare": "Nach dem Hochladen vergleicht die KI ein Foto mit einem früheren der Pflanze (Wachstum, Verfärbungen, Schädlinge) und legt ein Problem an, wenn etwas nicht stimmt. Jeder Vergleich ist ein KI-Aufruf mit Kosten; das Budget gilt."
+          "photo_compare": "Nach dem Hochladen vergleicht die KI ein Foto mit einem früheren der Pflanze (Wachstum, Verfärbungen, Schädlinge) und legt ein Problem an, wenn etwas nicht stimmt. Jeder Vergleich ist ein KI-Aufruf mit Kosten; das Budget gilt.",
+          "camera_check": "Pflanzen mit Kamera bekommen jeden Mittag ein Foto (kostenlos, ohne KI). Mit dieser Option vergleicht die KI jeden Montag das neueste Kamerabild mit einem früheren und legt ein Problem an, wenn etwas nicht stimmt. Jeder Blick ist ein KI-Aufruf mit Kosten; das Budget gilt."
         }
       }
     }

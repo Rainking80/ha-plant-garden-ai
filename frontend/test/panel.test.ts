@@ -221,6 +221,59 @@ describe("plant-garden-panel", () => {
     );
   });
 
+  it("links a camera, takes a picture now and offers the time-lapse", async () => {
+    const plant = makePlant({ id: "A1", name: "Hortensie" });
+    const photos = [
+      makePhoto("P2", "2026-07-01T10:00:00Z"),
+      makePhoto("P1", "2026-06-01T10:00:00Z"),
+    ];
+    const backend = fakeBackend({
+      plants: [plant],
+      details: { A1: { plant, photos, measurements: [] } },
+      states: {
+        "camera.beet": {
+          entity_id: "camera.beet",
+          state: "idle",
+          attributes: { friendly_name: "Beetkamera" },
+        },
+      },
+    });
+    const el = await mount(backend, "/plants/A1");
+    await vi.waitFor(() => expect(deepText(el)).toContain("Kamera verknüpfen"));
+    expect(deepText(el)).toContain("Zeitraffer");
+
+    deepGet(el, "pg-entity-picker.camera").dispatchEvent(
+      new CustomEvent("entity-picked", { detail: { entityId: "camera.beet" } }),
+    );
+    await vi.waitFor(() =>
+      expect(backend.callWS).toHaveBeenCalledWith({
+        type: "plant_garden/plants/update",
+        plant_id: "A1",
+        camera_entity_id: "camera.beet",
+      }),
+    );
+    // the backend now knows the camera
+    backend.details.A1 = {
+      plant: { ...plant, camera_entity_id: "camera.beet" },
+      photos,
+      measurements: [],
+    };
+    backend.emit({ kind: "plant", plant_id: "A1" });
+    await vi.waitFor(() => expect(deepText(el)).toContain("jeden Mittag ein Foto"));
+    expect(deepText(deepGet(el, ".camera"))).toContain("Beetkamera");
+
+    const now = [...(deepGet(el, ".camera").querySelectorAll("button") ?? [])].find((b) =>
+      b.textContent?.includes("Jetzt aufnehmen"),
+    );
+    now?.click();
+    await vi.waitFor(() =>
+      expect(backend.callWS).toHaveBeenCalledWith({
+        type: "plant_garden/photos/snapshot",
+        plant_id: "A1",
+      }),
+    );
+  });
+
   it("lets the old Android app pick one photo at a time", async () => {
     const plant = makePlant({ id: "A1", name: "Hortensie" });
     const backend = fakeBackend({

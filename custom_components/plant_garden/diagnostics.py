@@ -28,6 +28,7 @@ TO_REDACT = {
     "timer_entity_id",
     "meter_entity_id",
     "moisture_entity_id",
+    "camera_entity_id",
     "prompt",
     "response",
 }

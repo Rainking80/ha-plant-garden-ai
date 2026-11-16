@@ -20,7 +20,6 @@ class Feature(StrEnum):
     COMPARE = "compare"  # a new photo against an earlier one
     PLAN = "plan"  # plants proposed for a place on the plan
     SKETCH = "sketch"  # a plan drawn from a photo of a sketch or an aerial image
-    WATCH = "watch"  # the regular look at a camera picture
 
 
 class ProviderKind(StrEnum):

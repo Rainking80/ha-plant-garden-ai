@@ -47,6 +47,8 @@ sensors and offers recommendations as entities for your own automations.
   the photo; GPS and all other metadata are removed.
 - Crop and turn each photo after the upload, with a suggested frame around the
   plant; the upload is kept, so a crop can always be changed or undone.
+- A camera per plant takes its picture every day; a plant's photos play as a
+  time-lapse of the season.
 - A care profile per plant: watering, fertilising, pruning.
 - Garden walk: photograph one plant after the other; every photo becomes a
   plant, placed on the plan by the photo's GPS and - if you like - identified
