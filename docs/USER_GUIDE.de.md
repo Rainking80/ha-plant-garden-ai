@@ -89,6 +89,17 @@ Verdunstung (FAO-56 ET₀), Boden, Wurzeltiefe, Wasserbedarf und Bewässerung;
 Gießbedarf besteht, wenn das leicht verfügbare Wasser verbraucht ist. Pflanzen
 unter einem Dach bekommen keinen Regen.
 
+**Bodenfeuchtesensoren**: Auf der Seite einer Pflanze unter *Wasser* *Bodenfeuchtesensor
+verknüpfen* wählen. Ab dann steht der Messwert des Sensors für das Bodenwasser der
+Pflanze - „Gießbedarf“, der Wochenausblick und die Zonenempfehlung rechnen von der
+Messung aus weiter, und die Seite zeigt, was die Berechnung ergeben hätte. Der Sensor
+braucht eine Skala: *nass* ist der Messwert einen Tag nach gründlichem Gießen,
+*trocken* der Wert, bei dem die Pflanze welkt. Ohne eigene Angaben gilt als *nass*
+der höchste Wert der letzten 60 Tage, *trocken* folgt aus der Bodenart (beide als
+„gelernt“ markiert); ein Tipp darauf trägt eigene Werte ein. Ein Sensor ohne
+Messwert seit einem Tag wird ignoriert, dann wird wieder gerechnet. Ein Sensor kann
+mit mehreren Pflanzen verknüpft sein.
+
 Der Tab **Wasser & Wetter** zeigt Regen und Verdunstung der letzten Woche und der
 nächsten sieben Tage, mit Wochentag und Datum. Über jedem kommenden Tag stehen die
 Pflanzen, die dann Wasser brauchen, als Kreise in einer Wolke (Antippen öffnet die

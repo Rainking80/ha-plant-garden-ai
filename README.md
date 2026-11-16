@@ -72,6 +72,8 @@ sensors and offers recommendations as entities for your own automations.
 - A soil water bucket per plant from rain, evaporation, soil, root depth, water
   need and irrigation; "needs water" per plant and "irrigation recommended" with a
   run time per zone, taking expected rain into account.
+- Soil moisture sensors linked to plants replace the calculated soil water with
+  the measured one; their scale between wet and dry is learned.
 - A week's outlook: which plants need water on which of the next seven days,
   with the forecast rain – shown as clouds of plants above the weather chart.
 

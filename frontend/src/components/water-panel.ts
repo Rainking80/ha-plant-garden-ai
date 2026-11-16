@@ -1,8 +1,19 @@
-import { mdiDeleteOutline, mdiWateringCanOutline } from "@mdi/js";
+import {
+  mdiDeleteOutline,
+  mdiLinkVariantOff,
+  mdiWaterPercent,
+  mdiWateringCanOutline,
+} from "@mdi/js";
 import { css, html, nothing, svg } from "lit";
 
-import { deleteIrrigationEvent, errorMessage, irrigationEvents, logWatering } from "../api/client";
-import type { GardenChangeEvent, IrrigationEvent, WaterDay } from "../api/types";
+import {
+  deleteIrrigationEvent,
+  errorMessage,
+  irrigationEvents,
+  logWatering,
+  updatePlant,
+} from "../api/client";
+import type { GardenChangeEvent, IrrigationEvent, MoistureFields, WaterDay } from "../api/types";
 import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
 import { formatDateTime, formatLiters, formatNumber } from "../util/format";
@@ -10,6 +21,8 @@ import { deficitColor, deficitFraction } from "../util/water";
 import { PgElement, define, icon } from "./base";
 import "./confirm-dialog";
 import type { PgConfirmDialog } from "./confirm-dialog";
+import "./entity-picker";
+import type { PgEntityPicker } from "./entity-picker";
 import "./number-dialog";
 import type { PgNumberDialog } from "./number-dialog";
 
@@ -115,6 +128,99 @@ export class PgWaterPanel extends PgElement {
     }
   }
 
+  private async _setMoisture(fields: Partial<MoistureFields>): Promise<void> {
+    try {
+      await updatePlant(this.hass, this.plantId, fields);
+      this._error = "";
+    } catch (err) {
+      this._error = errorMessage(err);
+    }
+  }
+
+  /** Ask for one end of the sensor's scale; an empty answer keeps it. */
+  private async _askScale(end: "wet" | "dry", current: number | null): Promise<void> {
+    const dialog = this.renderRoot.querySelector<PgNumberDialog>("pg-number-dialog");
+    const value = await dialog?.ask(
+      this.t(`moisture.${end}_title`),
+      this.t("moisture.reading"),
+      this.t(`moisture.${end}_hint`),
+      current,
+    );
+    if (value === null || value === undefined) return;
+    await this._setMoisture(end === "wet" ? { moisture_wet: value } : { moisture_dry: value });
+  }
+
+  private _renderMoisture() {
+    const { t, language } = this;
+    const plant = this.store?.getPlant(this.plantId);
+    if (!plant) return nothing;
+    const sensor = plant.moisture_entity_id;
+    if (!sensor) {
+      return html`<p class="moisture">
+        <button
+          class="button text"
+          @click=${() => this.renderRoot.querySelector<PgEntityPicker>("pg-entity-picker")?.open()}
+        >
+          ${icon(mdiWaterPercent)} ${t("moisture.link")}
+        </button>
+      </p>`;
+    }
+    const state = this.hass?.states[sensor];
+    const name = (state?.attributes.friendly_name as string | undefined) ?? sensor;
+    const unit = (state?.attributes.unit_of_measurement as string | undefined) ?? "";
+    const reading = this.store?.water?.plants?.[this.plantId]?.moisture;
+    const model = this.store?.water?.plants?.[this.plantId]?.model_depletion;
+    const number = (value: number | null) =>
+      value === null ? "–" : `${formatNumber(value, language, 1)} ${unit}`.trim();
+    return html`<div class="moisture">
+      <p>
+        ${icon(mdiWaterPercent)}
+        <strong>${name}</strong>
+        ${
+          reading?.status === "ok"
+            ? html`${number(reading.value)}
+                <span class="muted small"
+                  >${
+                    model === null || model === undefined
+                      ? t("moisture.measured")
+                      : t("moisture.measured_model", { mm: formatNumber(model, language, 0) })
+                  }</span
+                >`
+            : html`<span class="muted small"
+                >${t(reading?.status === "learning" ? "moisture.learning" : "moisture.unavailable")}</span
+              >`
+        }
+      </p>
+      <p class="scale">
+        <button
+          class="chip"
+          title=${t("moisture.wet_title")}
+          @click=${() => this._askScale("wet", plant.moisture_wet ?? reading?.wet ?? null)}
+        >
+          ${t("moisture.wet", { value: number(plant.moisture_wet ?? reading?.wet ?? null) })}
+          ${plant.moisture_wet === null ? html`<span class="muted">· ${t("moisture.learned")}</span>` : nothing}
+        </button>
+        <button
+          class="chip"
+          title=${t("moisture.dry_title")}
+          @click=${() => this._askScale("dry", plant.moisture_dry ?? reading?.dry ?? null)}
+        >
+          ${t("moisture.dry", { value: number(plant.moisture_dry ?? reading?.dry ?? null) })}
+          ${plant.moisture_dry === null ? html`<span class="muted">· ${t("moisture.learned")}</span>` : nothing}
+        </button>
+        <button
+          class="icon-button small"
+          aria-label=${t("moisture.unlink")}
+          title=${t("moisture.unlink")}
+          @click=${() =>
+            this._setMoisture({ moisture_entity_id: null, moisture_wet: null, moisture_dry: null })}
+        >
+          ${icon(mdiLinkVariantOff)}
+        </button>
+      </p>
+    </div>`;
+  }
+
   private _source(event: IrrigationEvent): string {
     if (!event.zone_id) return this.t("water.by_hand");
     const zone = this.store.getShape(event.zone_id);
@@ -197,7 +303,7 @@ export class PgWaterPanel extends PgElement {
             </p>`
           : html`<p class="muted">${t("water.none")}</p>`
       }
-      ${this._renderBalance()}
+      ${this._renderBalance()} ${this._renderMoisture()}
       ${
         bars.some((bar) => bar.h > 0)
           ? html`<svg
@@ -245,6 +351,13 @@ export class PgWaterPanel extends PgElement {
       ${this._error ? html`<p class="error-text" role="alert">${this._error}</p>` : nothing}
       <pg-number-dialog .hass=${this.hass}></pg-number-dialog>
       <pg-confirm-dialog .hass=${this.hass}></pg-confirm-dialog>
+      <pg-entity-picker
+        .hass=${this.hass}
+        .domains=${["sensor"]}
+        heading=${t("moisture.link")}
+        @entity-picked=${(e: CustomEvent<{ entityId: string }>) =>
+          this._setMoisture({ moisture_entity_id: e.detail.entityId })}
+      ></pg-entity-picker>
     `;
   }
 
@@ -307,6 +420,19 @@ export class PgWaterPanel extends PgElement {
         width: 2px;
         background: var(--pg-text);
         opacity: 0.5;
+      }
+      .moisture {
+        margin: 8px 0;
+      }
+      .moisture p {
+        margin: 4px 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 8px;
+      }
+      .moisture .icon {
+        color: var(--pg-water);
       }
       .events {
         list-style: none;

@@ -181,6 +181,9 @@ PLANT_FIELDS: dict[Any, Any] = {
     probatio.Optional("status"): _choice(PlantStatus),
     probatio.Optional("min_temperature_c"): probatio.Any(None, _number(-60, 40)),
     probatio.Optional("root_depth_cm"): probatio.Any(None, _number(1, 1000)),
+    probatio.Optional("moisture_entity_id"): probatio.Any(None, cv.entity_domain("sensor")),
+    probatio.Optional("moisture_wet"): probatio.Any(None, _number(0, 100000)),
+    probatio.Optional("moisture_dry"): probatio.Any(None, _number(0, 100000)),
     probatio.Optional("planted_on"): probatio.Any(None, cv.date),
     probatio.Optional("age"): probatio.Any(
         None,

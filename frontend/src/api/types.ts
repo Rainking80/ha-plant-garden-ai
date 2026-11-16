@@ -101,6 +101,15 @@ export interface PlantFields {
   tags: string[];
 }
 
+/** A soil moisture sensor linked to a plant, and its readings wet and dry. */
+export interface MoistureFields {
+  moisture_entity_id: string | null;
+  /** reading at field capacity; null: learned from the wettest reading */
+  moisture_wet: number | null;
+  /** reading at the wilting point; null: derived from the soil */
+  moisture_dry: number | null;
+}
+
 /**
  * Plan coordinates: metres east (x) and south (y) of the origin, the garden's
  * location (initially Home Assistant's home, can be moved).
@@ -110,7 +119,7 @@ export interface Point {
   y: number;
 }
 
-export interface Plant extends PlantFields {
+export interface Plant extends PlantFields, MoistureFields {
   id: string;
   created_at: string;
   updated_at: string;
@@ -409,6 +418,20 @@ export interface PlantBalance {
   days: BalanceDay[];
   /** today and the forecast days: when the plant needs water (forecast rain included) */
   outlook?: OutlookDay[];
+  /** the linked soil moisture sensor; with status "ok" `depletion` is measured */
+  moisture?: MoistureReading | null;
+  /** what the calculation alone says, while the sensor is used, mm */
+  model_depletion?: number | null;
+}
+
+export interface MoistureReading {
+  /** learning: no scale yet; unavailable: no fresh reading (the calculation is used) */
+  status: "ok" | "learning" | "unavailable";
+  value: number | null;
+  wet: number | null;
+  dry: number | null;
+  /** an end of the scale was not set by the user */
+  learned: boolean | null;
 }
 
 export interface OutlookDay {

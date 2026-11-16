@@ -20,6 +20,7 @@ import type {
   Photo,
   Plant,
   PlantDetail,
+  MoistureFields,
   PlantFields,
   Point,
   Shape,
@@ -81,7 +82,7 @@ export function createPlant(
 export function updatePlant(
   hass: HomeAssistant,
   plantId: string,
-  fields: Partial<PlantFields> & { crown_diameter_m?: number | null },
+  fields: Partial<PlantFields> & Partial<MoistureFields> & { crown_diameter_m?: number | null },
 ): Promise<Plant> {
   return hass.callWS<Plant>({ type: `${WS_PREFIX}/plants/update`, plant_id: plantId, ...fields });
 }

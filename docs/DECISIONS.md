@@ -608,3 +608,23 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   adjusts it.
 - **Turning** in quarter turns covers photos taken sideways; straightening by a
   few degrees is left out (it would need a crop that avoids empty corners).
+
+## D-042 Soil moisture sensors correct the water balance (2026-11-16)
+
+- **Per plant**: a plant can carry a `sensor` entity (`moisture_entity_id`). Beds
+  have no sensor of their own; the same sensor may be linked to every plant it
+  stands for. It is linked on the plant page, not in the plant form.
+- **Measurement beats calculation**: with a fresh numeric reading (reported within
+  24 h) today's depletion is the measured one; the outlook, "needs water", the
+  sensors and the zone advice go on from it. The calculated value is kept as
+  `model_depletion` for comparison. Without a reading the calculation is used,
+  so a dead battery never blocks the advice.
+- **Scale**: depletion = TAW x (wet - reading) / (wet - dry), clamped. `wet`
+  (field capacity) and `dry` (wilting point) are the user's values, else learned:
+  `wet` = the highest reading of the last 60 days from the long-term statistics
+  (a higher current reading counts at once), `dry` = wet x wp/fc of the soil
+  texture, as capacitive sensors read roughly in proportion to the water content.
+  Any unit works; nothing assumes volumetric percent.
+- **Not done**: soil type and root depth are not fitted to the sensor's curve -
+  the scale is what is learned. The entity id is redacted in diagnostics and
+  never part of the AI context.

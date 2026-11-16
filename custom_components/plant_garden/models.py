@@ -168,13 +168,23 @@ ENUM_FIELDS: dict[str, type[StrEnum]] = {
     "soil_type": SoilType,
     "status": PlantStatus,
 }
-NUMBER_FIELDS = ("min_temperature_c", "root_depth_cm", "crown_diameter_m")
+NUMBER_FIELDS = (
+    "min_temperature_c",
+    "root_depth_cm",
+    "crown_diameter_m",
+    # readings of the soil moisture sensor at field capacity and at the wilting point
+    "moisture_wet",
+    "moisture_dry",
+)
+# entities linked to a plant: a soil moisture sensor that corrects the water balance
+ENTITY_FIELDS = ("moisture_entity_id",)
 EDITABLE_FIELDS = frozenset(
     (
         "name",
         *TEXT_FIELDS,
         *ENUM_FIELDS,
         *NUMBER_FIELDS,
+        *ENTITY_FIELDS,
         "planted_on",
         "age",
         "tags",
@@ -221,6 +231,9 @@ class Plant:
     status: PlantStatus = PlantStatus.HEALTHY
     min_temperature_c: float | None = None
     root_depth_cm: float | None = None
+    moisture_entity_id: str | None = None
+    moisture_wet: float | None = None
+    moisture_dry: float | None = None
     planted_on: date | None = None
     age: AgeReference | None = None
     tags: list[str] = field(default_factory=list)
@@ -252,7 +265,7 @@ class Plant:
             "position": self.position.as_dict() if self.position else None,
             "sources": {key: src.as_dict() for key, src in self.sources.items()},
         }
-        for key in (*TEXT_FIELDS, *NUMBER_FIELDS):
+        for key in (*TEXT_FIELDS, *NUMBER_FIELDS, *ENTITY_FIELDS):
             data[key] = getattr(self, key)
         for key in ENUM_FIELDS:
             value = getattr(self, key)
@@ -277,6 +290,8 @@ class Plant:
         }
         for key in (*TEXT_FIELDS, *NUMBER_FIELDS):
             kwargs[key] = data.get(key)
+        for key in ENTITY_FIELDS:
+            kwargs[key] = data.get(key) or None
         for key, enum in ENUM_FIELDS.items():
             if data.get(key) is not None:
                 kwargs[key] = enum(data[key])

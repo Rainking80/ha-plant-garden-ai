@@ -15,9 +15,9 @@ import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
@@ -25,6 +25,7 @@ from .const import DOMAIN
 from .et0 import DayInput, reference_et0
 from .geometry import footprints, precipitation_rate, zone_coverage
 from .models import Emitter, Plant, Shape
+from .moisture import Moisture, async_observed_max, measure
 from .water_balance import (
     BalanceDay,
     OutlookDay,
@@ -55,6 +56,7 @@ FORECAST_DAYS = 7  # the outlook of when plants need water
 FROST_DAYS = 3  # frost warnings look this far ahead
 SHOW_DAYS = 14
 RECOMPUTE_DELAY = 3  # seconds; batches quick edits
+MOISTURE_DELAY = 60  # seconds; chatty soil moisture sensors recompute once a minute at most
 MAX_RECOMMENDED_MIN = 240
 RAIN_LOOKAHEAD_DAYS = 2
 
@@ -78,6 +80,9 @@ class PlantWaterState:
     frost: float | None  # coldest forecast night below the plant's limit
     days: list[BalanceDay]
     outlook: list[OutlookDay] = field(default_factory=list)  # today and the forecast days
+    # with a soil moisture sensor: its reading; `depletion` is then the measured one
+    moisture: Moisture | None = None
+    model_depletion: float | None = None  # what the balance alone says
 
 
 @dataclass(slots=True)
@@ -230,9 +235,14 @@ class WaterCoordinator(DataUpdateCoordinator[WaterData]):
         self._unsubs: list[CALLBACK_TYPE] = []
         self._recompute_later: CALLBACK_TYPE | None = None
         self._sources: list[SourceStatus] = []
+        self._moisture_max: dict[str, float] = {}  # sensor -> wettest reading of the last weeks
+        self._moisture_tracked: frozenset[str] = frozenset()
+        self._moisture_unsub: CALLBACK_TYPE | None = None
+        self._moisture_later: CALLBACK_TYPE | None = None
 
     async def async_start(self) -> None:
         """Show what is stored right away, then fetch in the background."""
+        await self._async_learn_moisture()
         self.async_set_updated_data(await self._async_compute(await self._async_stored()))
         self._unsubs.append(self._manager.async_subscribe(self._on_garden_change))
         # every new result reaches open panels (and keeps the hourly refresh scheduled)
@@ -246,9 +256,52 @@ class WaterCoordinator(DataUpdateCoordinator[WaterData]):
         if self._recompute_later:
             self._recompute_later()
             self._recompute_later = None
+        if self._moisture_later:
+            self._moisture_later()
+            self._moisture_later = None
+        if self._moisture_unsub:
+            self._moisture_unsub()
+            self._moisture_unsub = None
+        self._moisture_tracked = frozenset()
+
+    # ------------------------------------------------------------ soil moisture sensors
+    def _moisture_entities(self) -> frozenset[str]:
+        return frozenset(
+            plant.moisture_entity_id
+            for plant in self._manager.watered_plants()
+            if plant.moisture_entity_id
+        )
+
+    async def _async_learn_moisture(self) -> None:
+        """Read the wettest readings of the linked sensors and follow their states."""
+        entities = self._moisture_entities()
+        self._moisture_max = await async_observed_max(self.hass, entities)
+        if entities == self._moisture_tracked:
+            return
+        if self._moisture_unsub:
+            self._moisture_unsub()
+            self._moisture_unsub = None
+        self._moisture_tracked = entities
+        if entities:
+            self._moisture_unsub = async_track_state_change_event(
+                self.hass, sorted(entities), self._on_moisture_change
+            )
+
+    @callback
+    def _on_moisture_change(self, _event: Event[EventStateChangedData]) -> None:
+        if self._moisture_later or self._recompute_later:
+            return  # a recompute is on its way
+
+        @callback
+        def recompute(_now: datetime) -> None:
+            self._moisture_later = None
+            self.hass.async_create_task(self._async_recompute(), eager_start=True)
+
+        self._moisture_later = async_call_later(self.hass, MOISTURE_DELAY, recompute)
 
     # ------------------------------------------------------------ fetching
     async def _async_update_data(self) -> WaterData:
+        await self._async_learn_moisture()
         today = dt_util.now().date()
         start = today - timedelta(days=FETCH_DAYS)
         end = today + timedelta(days=FORECAST_DAYS)
@@ -334,6 +387,8 @@ class WaterCoordinator(DataUpdateCoordinator[WaterData]):
         current: WaterData | None = self.data  # None until async_start ran
         if current is None:
             return
+        if self._moisture_entities() != self._moisture_tracked:
+            await self._async_learn_moisture()  # a sensor was linked or unlinked
         self.async_set_updated_data(await self._async_compute(current.weather))
 
     async def _async_compute(self, weather: list[DailyWeather]) -> WaterData:
@@ -402,14 +457,32 @@ class WaterCoordinator(DataUpdateCoordinator[WaterData]):
         soil = soil_water(plant, shapes, self.defaults)
         balance = run_balance(plant, soil, days, irrigation, self.defaults)
         depletion = balance[-1].depletion if balance else 0.0
+        model_depletion = None
+        moisture = None
+        if sensor := plant.moisture_entity_id:
+            moisture = measure(
+                plant,
+                self.hass.states.get(sensor),
+                observed_max=self._moisture_max.get(sensor),
+                texture=self.defaults["soil"][soil.soil],
+                taw=soil.taw,
+                now=dt_util.utcnow(),
+            )
+        measured = moisture is not None and moisture.depletion is not None
+        if moisture is not None and moisture.depletion is not None:
+            # the measurement beats the calculation; the outlook goes on from it
+            model_depletion = depletion if balance else None
+            depletion = moisture.depletion
         frost = None
         if plant.min_temperature_c is not None and lows and min(lows) < plant.min_temperature_c:
             frost = min(lows)
         return PlantWaterState(
             soil=soil,
             depletion=depletion,
-            needs_water=bool(balance) and depletion > soil.raw,
+            needs_water=(bool(balance) or measured) and depletion > soil.raw,
             frost=frost,
+            moisture=moisture,
+            model_depletion=model_depletion,
             days=balance[-SHOW_DAYS:],
             outlook=outlook(
                 plant,
@@ -420,7 +493,7 @@ class WaterCoordinator(DataUpdateCoordinator[WaterData]):
                 defaults=self.defaults,
                 rain_lookahead=RAIN_LOOKAHEAD_DAYS,
             )
-            if balance
+            if balance or measured
             else [],
         )
 
@@ -456,6 +529,8 @@ def water_summary(data: WaterData | None, has_sources: bool) -> dict[str, Any]:
                 "sheltered": state.soil.sheltered,
                 "needs_water": state.needs_water,
                 "frost": state.frost,
+                "moisture": state.moisture.as_dict() if state.moisture else None,
+                "model_depletion": state.model_depletion,
                 "days": [
                     {
                         "day": d.day.isoformat(),

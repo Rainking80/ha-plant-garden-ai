@@ -20,6 +20,7 @@ from .database import GardenDatabase
 from .geo import reproject
 from .irrigation import water_summary
 from .models import (
+    ENTITY_FIELDS,
     ENUM_FIELDS,
     NUMBER_FIELDS,
     TEXT_FIELDS,
@@ -236,7 +237,7 @@ class GardenManager:
                 if not (name := _clean_text(value)):
                     raise ValueError("name must not be empty")
                 plant.name = name
-            elif key in TEXT_FIELDS:
+            elif key in TEXT_FIELDS or key in ENTITY_FIELDS:
                 setattr(plant, key, _clean_text(value))
             elif key in ENUM_FIELDS:
                 enum = ENUM_FIELDS[key]

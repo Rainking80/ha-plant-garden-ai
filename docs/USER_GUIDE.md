@@ -85,6 +85,16 @@ Plant Garden keeps a soil water "bucket" for every plant from rain, evaporation
 (FAO-56 ET₀), soil, root depth, water need and irrigation; a plant "needs water"
 when its readily available water is used up. Plants under a roof get no rain.
 
+**Soil moisture sensors**: on a plant's page, under *Water*, choose *Link a soil
+moisture sensor*. From then on the sensor's reading stands for the plant's soil
+water - "needs water", the week's outlook and the zone advice go on from the
+measurement, and the page shows what the calculation would have said. The sensor
+needs a scale: *wet* is the reading a day after thorough watering, *dry* the
+reading when the plant wilts. Without your values, *wet* is the highest reading
+of the last 60 days and *dry* follows from the soil type (both marked "learned");
+tap either to enter your own. A sensor without a reading for a day is ignored
+and the calculation takes over. One sensor can be linked to several plants.
+
 The **Water & weather** tab shows rain and evaporation of the last week and the
 next seven days, with weekday and date. Above each coming day, the plants that
 will need water then are circles in a cloud (tap one to open the plant): the

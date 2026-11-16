@@ -432,6 +432,22 @@ export const de: Translations = {
   "organ.bark": "Rinde",
   "organ.auto": "Ganze Pflanze",
 
+  "moisture.link": "Bodenfeuchtesensor verknüpfen",
+  "moisture.unlink": "Sensor trennen",
+  "moisture.measured": "gemessen",
+  "moisture.measured_model": "gemessen · berechnet wären {mm} mm verbraucht",
+  "moisture.learning": "lernt noch: gieß einmal gründlich oder trag den Nass-Wert ein",
+  "moisture.unavailable": "kein aktueller Messwert, es wird gerechnet",
+  "moisture.wet": "nass {value}",
+  "moisture.dry": "trocken {value}",
+  "moisture.learned": "gelernt",
+  "moisture.reading": "Messwert des Sensors",
+  "moisture.wet_title": "Messwert bei nassem Boden",
+  "moisture.wet_hint":
+    "Was der Sensor einen Tag nach gründlichem Gießen zeigt. Ohne Angabe gilt der höchste Wert der letzten 60 Tage.",
+  "moisture.dry_title": "Messwert bei trockenem Boden",
+  "moisture.dry_hint":
+    "Was der Sensor zeigt, wenn die Pflanze welkt. Ohne Angabe wird der Wert aus der Bodenart abgeleitet.",
   "balance.title": "Bodenwasser",
   "balance.explain":
     "Wie viel des Wassers, das die Wurzeln erreichen, verbraucht ist. Die Marke zeigt, ab wann die Pflanze Wasser braucht.",

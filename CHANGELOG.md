@@ -11,6 +11,11 @@ All notable changes to this project are documented here. The format follows
 - Grey background: a button on the plan hides the aerial image or sketch behind
   plain grey, so plants, beds and rings stand out (no aerial imagery is loaded
   then). Each device remembers it.
+- Soil moisture sensors: link a sensor to a plant on its page. Its reading then
+  stands for the soil water instead of the calculation - "needs water", the
+  outlook and the zone advice go on from it. The scale between wet and dry is
+  learned from the wettest reading of the last 60 days and the soil type, or set
+  by hand; without a fresh reading the calculation takes over.
 
 ## [0.2.0] - 2026-11-14
 

@@ -121,4 +121,101 @@ describe("pg-water-panel", () => {
     await panel.updateComplete;
     expect(deepText(panel)).toContain("Noch keine Bewässerung erfasst.");
   });
+
+  it("links a soil moisture sensor, shows its reading and takes the scale", async () => {
+    const balance = {
+      depletion: 39,
+      taw: 78,
+      raw: 39,
+      soil: "loam",
+      root_depth_m: 0.6,
+      sheltered: false,
+      needs_water: false,
+      frost: null,
+      days: [],
+    };
+    const backend = fakeBackend({
+      plants: [makePlant({ id: "R", name: "Rose" })],
+      states: {
+        "sensor.beet_feuchte": {
+          entity_id: "sensor.beet_feuchte",
+          state: "30",
+          attributes: { friendly_name: "Beet Feuchte", unit_of_measurement: "%" },
+        },
+      },
+      water: {
+        configured: true,
+        updated: null,
+        sources: [],
+        weather: [],
+        plants: { R: balance },
+        zones: {},
+      },
+    });
+    const store = new GardenStore(() => backend.hass);
+    await store.refresh();
+    const panel = document.createElement("pg-water-panel") as PgWaterPanel;
+    panel.hass = backend.hass;
+    panel.store = store;
+    panel.plantId = "R";
+    document.body.append(panel);
+    await panel.updateComplete;
+    expect(deepText(panel)).toContain("Bodenfeuchtesensor verknüpfen");
+
+    // pick the sensor
+    deepGet(panel, "pg-entity-picker").dispatchEvent(
+      new CustomEvent("entity-picked", { detail: { entityId: "sensor.beet_feuchte" } }),
+    );
+    await vi.waitFor(() =>
+      expect(backend.callWS).toHaveBeenCalledWith({
+        type: "plant_garden/plants/update",
+        plant_id: "R",
+        moisture_entity_id: "sensor.beet_feuchte",
+      }),
+    );
+    // the backend measured: 30 % between 40 (learned) and 20
+    backend.water = {
+      ...backend.water,
+      plants: {
+        R: {
+          ...balance,
+          model_depletion: 77.5,
+          moisture: { status: "ok", value: 30, wet: 40, dry: 20, learned: true },
+        },
+      },
+    };
+    await store.refresh();
+    await vi.waitFor(() => expect(deepText(panel)).toContain("Beet Feuchte"));
+    const text = deepText(panel);
+    expect(text).toContain("30 %");
+    expect(text).toContain("gemessen · berechnet wären 78 mm verbraucht");
+    expect(text).toContain("nass 40 %");
+    expect(text).toContain("trocken 20 %");
+    expect(text).toContain("gelernt");
+
+    // set the dry reading by hand
+    const numbers = deepGet<PgNumberDialog>(panel, "pg-number-dialog");
+    const ask = vi.spyOn(numbers, "ask").mockResolvedValue(15);
+    panel.shadowRoot?.querySelectorAll<HTMLButtonElement>(".scale .chip")[1]?.click();
+    await vi.waitFor(() =>
+      expect(backend.callWS).toHaveBeenCalledWith({
+        type: "plant_garden/plants/update",
+        plant_id: "R",
+        moisture_dry: 15,
+      }),
+    );
+    expect(ask.mock.calls[0]?.[3]).toBe(20);
+
+    // unlink clears the scale too
+    deepGet<HTMLButtonElement>(panel, ".scale .icon-button").click();
+    await vi.waitFor(() =>
+      expect(backend.callWS).toHaveBeenCalledWith({
+        type: "plant_garden/plants/update",
+        plant_id: "R",
+        moisture_entity_id: null,
+        moisture_wet: null,
+        moisture_dry: null,
+      }),
+    );
+  });
 });

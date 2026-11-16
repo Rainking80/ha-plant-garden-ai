@@ -421,6 +421,22 @@ export const en = {
   "organ.bark": "Bark",
   "organ.auto": "Whole plant",
 
+  "moisture.link": "Link a soil moisture sensor",
+  "moisture.unlink": "Unlink the sensor",
+  "moisture.measured": "measured",
+  "moisture.measured_model": "measured · the calculation says {mm} mm used",
+  "moisture.learning": "still learning: water thoroughly once or enter the wet reading",
+  "moisture.unavailable": "no current reading, calculating instead",
+  "moisture.wet": "wet {value}",
+  "moisture.dry": "dry {value}",
+  "moisture.learned": "learned",
+  "moisture.reading": "Reading of the sensor",
+  "moisture.wet_title": "Reading in wet soil",
+  "moisture.wet_hint":
+    "What the sensor shows a day after thorough watering. Without a value, the highest reading of the last 60 days counts.",
+  "moisture.dry_title": "Reading in dry soil",
+  "moisture.dry_hint":
+    "What the sensor shows when the plant wilts. Without a value, it is derived from the soil type.",
   "balance.title": "Soil water",
   "balance.explain":
     "How much of the water the roots can reach is used up. The mark shows where the plant starts to need water.",

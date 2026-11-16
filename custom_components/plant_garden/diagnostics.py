@@ -27,6 +27,7 @@ TO_REDACT = {
     "entity_id",
     "timer_entity_id",
     "meter_entity_id",
+    "moisture_entity_id",
     "prompt",
     "response",
 }
