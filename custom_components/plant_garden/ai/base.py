@@ -74,15 +74,27 @@ class Message:
     images: list[Image] = field(default_factory=list)
 
 
+REASONING_HEADROOM = 12000  # output tokens a model may spend thinking, on top of the answer
+
+
 @dataclass(slots=True)
 class AIRequest:
     feature: Feature
     system: str
     messages: list[Message]
     json_schema: dict[str, Any] | None = None
-    max_output_tokens: int = 4000
+    max_output_tokens: int = 4000  # the answer itself, see `output_limit`
     plant_id: str | None = None
     prompt_version: str = ""
+
+    @property
+    def output_limit(self) -> int:
+        """The limit sent to the provider: the answer plus room to think.
+
+        Providers count reasoning against the output limit; without the room a
+        thinking model uses it up before the answer is complete ("cut off").
+        """
+        return self.max_output_tokens + REASONING_HEADROOM
 
 
 @dataclass(slots=True)

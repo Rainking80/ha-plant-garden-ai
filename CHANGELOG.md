@@ -15,6 +15,16 @@ All notable changes to this project are documented here. The format follows
   could look, with a before/after slider; pictures can be refined in words, and
   plants of the concept become planned plants with a task. Pictures need OpenAI,
   Google Gemini or OpenRouter.
+- Camera frame per plant: right after linking a camera you mark the part of its
+  picture that shows the plant. Every camera picture - the daily one at noon and
+  "Take one now" - is cut to that frame, so the time-lapse of the camera
+  pictures always shows the same view. The frame can be changed at any time.
+
+### Fixed
+
+- "The answer was cut off (output limit)" with thinking models, e.g. in "What
+  fits here?": the thinking counted against the limit meant for the answer and
+  used it up. Every AI call now leaves room to think on top of the answer.
 
 ### Changed
 

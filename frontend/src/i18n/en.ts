@@ -315,6 +315,13 @@ export const en = {
   "picker.more": "Only the first results are shown – search to narrow down.",
 
   "camera.link": "Link a camera",
+  "camera.frame_title": "Frame of the camera picture",
+  "camera.frame_intro":
+    'Drag the frame around the plant. Every camera picture of this plant - the daily one at noon and "Take one now" - is cut to this frame, so the time-lapse always shows the same view.',
+  "camera.frame_loading": "Fetching the camera picture …",
+  "camera.frame_save": "Save the frame",
+  "camera.frame_set": "Choose the frame",
+  "camera.frame_change": "Change the frame",
   "camera.unlink": "Unlink the camera",
   "camera.daily": "a photo every noon",
   "camera.now": "Take one now",

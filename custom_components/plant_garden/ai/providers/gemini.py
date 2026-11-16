@@ -94,7 +94,7 @@ class GeminiProvider:
             contents.append(
                 {"role": "model" if message.role == "assistant" else "user", "parts": parts}
             )
-        config: dict[str, Any] = {"maxOutputTokens": req.max_output_tokens}
+        config: dict[str, Any] = {"maxOutputTokens": req.output_limit}
         if req.json_schema is not None:
             config["responseFormat"] = {
                 "text": {"mimeType": "APPLICATION_JSON", "schema": req.json_schema}

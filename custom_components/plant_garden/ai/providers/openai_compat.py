@@ -124,7 +124,7 @@ class OpenAICompatibleProvider:
         body: dict[str, Any] = {
             "model": self.model,
             "messages": messages,
-            limit: req.max_output_tokens,
+            limit: req.output_limit,
         }
         if req.json_schema is not None:
             body["response_format"] = {

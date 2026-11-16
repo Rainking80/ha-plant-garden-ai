@@ -203,8 +203,25 @@ class GardenManager:
     async def async_update_plant(self, plant_id: str, fields: dict[str, Any]) -> Plant:
         plant = self.get_plant(plant_id)
         now = dt_util.utcnow()
+        camera = plant.camera_entity_id
         self._apply_fields(plant, fields, Source.USER, now)
+        if plant.camera_entity_id != camera:
+            plant.camera_crop = None  # the frame belonged to the other camera's view
         plant.updated_at = now
+        self._schedule_save()
+        self._notify("plant", plant.id)
+        return plant
+
+    async def async_set_camera_crop(self, plant_id: str, crop: dict[str, float] | None) -> Plant:
+        """The part of the camera picture that shows the plant (None: the whole picture)."""
+        plant = self.get_plant(plant_id)
+        frame = None
+        if crop is not None:
+            edit = PhotoEdit.clean(crop["x"], crop["y"], crop["w"], crop["h"])
+            if not edit.is_identity:
+                frame = {"x": edit.x, "y": edit.y, "w": edit.w, "h": edit.h}
+        plant.camera_crop = frame
+        plant.updated_at = dt_util.utcnow()
         self._schedule_save()
         self._notify("plant", plant.id)
         return plant

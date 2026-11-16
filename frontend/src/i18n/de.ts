@@ -323,6 +323,13 @@ export const de: Translations = {
   "picker.more": "Es werden nur die ersten Treffer gezeigt – suche, um einzugrenzen.",
 
   "camera.link": "Kamera verknüpfen",
+  "camera.frame_title": "Bildausschnitt der Kamera",
+  "camera.frame_intro":
+    "Zieh den Rahmen um die Pflanze. Jedes Kamerabild dieser Pflanze - das tägliche um 12 Uhr und „Jetzt aufnehmen“ - wird auf diesen Ausschnitt zugeschnitten, damit der Zeitraffer immer denselben Blick zeigt.",
+  "camera.frame_loading": "Das Kamerabild wird geholt …",
+  "camera.frame_save": "Ausschnitt speichern",
+  "camera.frame_set": "Ausschnitt wählen",
+  "camera.frame_change": "Ausschnitt ändern",
   "camera.unlink": "Kamera trennen",
   "camera.daily": "jeden Mittag ein Foto",
   "camera.now": "Jetzt aufnehmen",

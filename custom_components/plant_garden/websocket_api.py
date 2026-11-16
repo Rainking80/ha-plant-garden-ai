@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Awaitable, Callable
 from enum import StrEnum
 import functools
@@ -55,6 +56,7 @@ def _number(minimum: float, maximum: float) -> Any:
 TAGS = [probatio.All(str, probatio.Length(max=40))]
 
 COORD = _number(-PLAN_EXTENT_M, PLAN_EXTENT_M)
+FRACTION = _number(0, 1)  # a share of a picture's width or height
 POINT = {probatio.Required("x"): COORD, probatio.Required("y"): COORD}
 ID = probatio.Match(r"^[0-9A-Z]{26}$")
 LENGTH_M = _number(0.01, 5000)
@@ -225,6 +227,8 @@ def async_register_websocket_commands(hass: HomeAssistant) -> None:
         ws_photos_update,
         ws_photos_edit,
         ws_photo_snapshot,
+        ws_camera_preview,
+        ws_camera_crop,
         ws_photos_delete,
         ws_measurements_add,
         ws_measurements_update,
@@ -293,6 +297,54 @@ async def ws_photo_snapshot(
         raise NotFoundError("camera")
     photo = await entry.runtime_data.camera.async_snapshot(msg["plant_id"])
     return photo_dict(hass, photo, connection.refresh_token_id)
+
+
+@garden_command(
+    {probatio.Required("type"): f"{DOMAIN}/camera/preview", probatio.Required("plant_id"): str}
+)
+async def ws_camera_preview(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """The whole picture of a plant's camera, to choose the plant's frame on."""
+    entry = get_loaded_entry(hass)
+    if entry is None:  # pragma: no cover - the decorator checks the manager first
+        raise NotFoundError("camera")
+    picture, width, height = await entry.runtime_data.camera.async_preview(msg["plant_id"])
+    return {
+        "image": "data:image/jpeg;base64," + base64.b64encode(picture).decode(),
+        "width": width,
+        "height": height,
+        "crop": manager.get_plant(msg["plant_id"]).camera_crop,
+    }
+
+
+@garden_command(
+    {
+        probatio.Required("type"): f"{DOMAIN}/camera/crop",
+        probatio.Required("plant_id"): str,
+        probatio.Required("crop"): probatio.Any(
+            None,
+            {
+                probatio.Required("x"): FRACTION,
+                probatio.Required("y"): FRACTION,
+                probatio.Required("w"): FRACTION,
+                probatio.Required("h"): FRACTION,
+            },
+        ),
+    }
+)
+async def ws_camera_crop(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    manager: GardenManager,
+) -> dict[str, Any]:
+    """Set the part of the camera picture every snapshot of the plant is cut to."""
+    plant = await manager.async_set_camera_crop(msg["plant_id"], msg["crop"])
+    return await _plant_result(hass, connection, manager, plant.id)
 
 
 def _fields(msg: dict[str, Any], *exclude: str) -> dict[str, Any]:
@@ -627,9 +679,6 @@ async def ws_photos_update(
 ) -> dict[str, Any]:
     photo = await manager.async_update_photo(msg["photo_id"], _fields(msg, "photo_id"))
     return photo_dict(hass, photo, connection.refresh_token_id)
-
-
-FRACTION = _number(0, 1)
 
 
 @garden_command(

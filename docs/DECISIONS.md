@@ -809,3 +809,33 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   "5 x Lavender to plant" in the next planting month.
 - **Not done (yet)**: masking an area by drawing, several variants per call,
   seasonal previews, a shopping list.
+
+## D-050 A frame per plant in the camera's picture (2026-11-16)
+
+- **Why**: a garden camera sees a whole bed; the time-lapse of one plant should
+  show that plant, always from the same view. So the plant carries a frame
+  (`camera_crop`: fractions of the camera picture) next to its camera.
+- **Cut before storing**: every snapshot is cut to the frame and stored as an
+  ordinary photo. Nothing of the rest of the picture is kept, and one camera can
+  serve several plants, each with its own frame. The alternative - storing the
+  whole picture and cropping it non-destructively like uploads (D-041) - would
+  keep a full camera picture per plant and day for no gain.
+- **Choosing it**: right after a camera is linked the panel opens the camera's
+  current picture (`camera/preview`: downsized, as a data URL, never stored) with
+  a draggable frame; it can be reopened with "Change the frame". The whole
+  picture is stored as "no frame". Linking another camera forgets the frame.
+- **Changing the frame later** applies to new pictures only; earlier ones keep
+  their cut (the time-lapse fits each picture into its stage).
+
+## D-051 Room to think on top of the answer (2026-11-16)
+
+- **Why**: all providers count reasoning against the output limit. A request's
+  `max_output_tokens` was sized for the answer alone (e.g. 3000 for five plant
+  proposals), so a thinking model used the limit up before the JSON was
+  complete: "The answer was cut off (output limit)".
+- **What**: `max_output_tokens` stays the size of the answer; providers send
+  `AIRequest.output_limit` = answer + `REASONING_HEADROOM` (12,000 tokens). The
+  limit is a cap, not a cost: only tokens actually produced are billed, and the
+  cost estimate before a call still uses the answer size.
+- **Not done**: switching thinking off or lowering its effort per provider - the
+  parameters differ per provider and model, and the answers are better with it.

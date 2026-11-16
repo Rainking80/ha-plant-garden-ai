@@ -220,7 +220,11 @@ new photo of a plant without botanical name is identified automatically.
   earlier ones* (off; an AI call with costs).
 - **Camera watch and time-lapse** (plant page, under *Photos*): *Link a camera*
   and the plant gets a picture from that camera every day at noon, tagged
-  `camera` - free and without AI. *Take one now* adds a picture at once.
+  `camera` - free and without AI. Right after linking, the camera's whole
+  picture opens: drag the frame around the plant and *Save the frame*. Every
+  camera picture of this plant is cut to it, so one camera can watch several
+  plants, each with its own frame; *Change the frame* adjusts it later (earlier
+  pictures keep their cut). *Take one now* adds a picture at once.
   *Time-lapse* plays a plant's photos from the oldest to the newest (with camera
   pictures only those, as they show the same view). Camera pictures older than
   60 days are thinned to one per week; pictures you tagged, annotated, cropped

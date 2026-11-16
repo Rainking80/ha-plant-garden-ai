@@ -276,6 +276,28 @@ export class UploadError extends Error {
   }
 }
 
+/** The whole picture of a plant's camera, to choose the plant's frame on (not stored). */
+export function cameraPreview(
+  hass: HomeAssistant,
+  plantId: string,
+): Promise<{
+  image: string;
+  width: number;
+  height: number;
+  crop: { x: number; y: number; w: number; h: number } | null;
+}> {
+  return hass.callWS({ type: `${WS_PREFIX}/camera/preview`, plant_id: plantId });
+}
+
+/** The part of the camera's picture every snapshot of the plant is cut to (null: all of it). */
+export function setCameraCrop(
+  hass: HomeAssistant,
+  plantId: string,
+  crop: { x: number; y: number; w: number; h: number } | null,
+): Promise<Plant> {
+  return hass.callWS<Plant>({ type: `${WS_PREFIX}/camera/crop`, plant_id: plantId, crop });
+}
+
 /** A picture from the plant's camera, now. */
 export function snapshotPhoto(hass: HomeAssistant, plantId: string): Promise<Photo> {
   return hass.callWS<Photo>({ type: `${WS_PREFIX}/photos/snapshot`, plant_id: plantId });

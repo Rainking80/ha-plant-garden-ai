@@ -3,6 +3,7 @@ import {
   mdiCameraOutline,
   mdiCctv,
   mdiCreationOutline,
+  mdiCropFree,
   mdiDeleteOutline,
   mdiImagePlusOutline,
   mdiLinkVariantOff,
@@ -37,6 +38,8 @@ import type {
 } from "../api/types";
 import { PgElement, define, icon } from "../components/base";
 import type { PgConfirmDialog } from "../components/confirm-dialog";
+import "../components/camera-crop";
+import type { PgCameraCrop } from "../components/camera-crop";
 import "../components/confirm-dialog";
 import "../components/entity-picker";
 import type { PgEntityPicker } from "../components/entity-picker";
@@ -425,6 +428,10 @@ export class PgPlantDetail extends PgElement {
               <button class="button text" ?disabled=${this._snapping} @click=${this._snapshot}>
                 ${icon(mdiCameraOutline)} ${t(this._snapping ? "camera.taking" : "camera.now")}
               </button>
+              <button class="button text frame" @click=${() => this._frame()}>
+                ${icon(mdiCropFree)}
+                ${t(plant.camera_crop ? "camera.frame_change" : "camera.frame_set")}
+              </button>
               <button
                 class="icon-button small"
                 aria-label=${t("camera.unlink")}
@@ -455,10 +462,17 @@ export class PgPlantDetail extends PgElement {
     </div>`;
   }
 
+  /** Choose the part of the camera's picture that shows this plant. */
+  private _frame(): void {
+    this.renderRoot.querySelector<PgCameraCrop>("pg-camera-crop")?.open(this.plantId);
+  }
+
   private async _setCamera(entityId: string | null): Promise<void> {
     try {
       await updatePlant(this.hass, this.plantId, { camera_entity_id: entityId });
       await this._load();
+      // a newly linked camera: frame the plant right away
+      if (entityId) this._frame();
     } catch (err) {
       this._error = errorMessage(err);
     }
@@ -800,6 +814,7 @@ export class PgPlantDetail extends PgElement {
       <pg-photo-crop .hass=${this.hass} @photos-changed=${() => this._load()}></pg-photo-crop>
       <pg-confirm-dialog .hass=${this.hass}></pg-confirm-dialog>
       <pg-timelapse .hass=${this.hass}></pg-timelapse>
+      <pg-camera-crop .hass=${this.hass} @frame-saved=${() => this._load()}></pg-camera-crop>
       <pg-entity-picker
         class="camera"
         .hass=${this.hass}

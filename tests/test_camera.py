@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+import io
 import json
 from typing import Any
 from unittest.mock import patch
@@ -11,11 +12,16 @@ from freezegun.api import FrozenDateTimeFactory
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
+from PIL import Image as PILImage
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
 from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClientMocker
 from pytest_homeassistant_custom_component.typing import WebSocketGenerator
 
-from custom_components.plant_garden.camera import photos_to_thin
+from custom_components.plant_garden.camera import (
+    cut_to_frame,
+    photos_to_thin,
+    preview_picture,
+)
 from custom_components.plant_garden.models import Photo, PhotoEdit
 
 from .images import make_image
@@ -170,3 +176,87 @@ async def test_weekly_look_of_the_ai(
     assert problem.title == "Gelbe Blätter"
     [row] = await data.manager.async_usage_log(limit=5)
     assert row["feature"] == "compare"
+
+
+def test_pictures_are_cut_to_the_frame() -> None:
+    picture = make_image(1000, 500)
+    # no frame: the picture as it came
+    assert cut_to_frame(picture, None) is picture
+    # the right half, upper 40 %
+    framed = cut_to_frame(picture, {"x": 0.5, "y": 0.0, "w": 0.5, "h": 0.4})
+    with PILImage.open(io.BytesIO(framed)) as image:
+        assert image.size == (500, 200)
+        assert image.format == "JPEG"
+    # the preview is the whole picture, downsized
+    small, width, height = preview_picture(make_image(4000, 2000))
+    assert (width, height) == (1280, 640)
+    with PILImage.open(io.BytesIO(small)) as image:
+        assert image.size == (1280, 640)
+
+
+async def test_frame_of_the_camera_picture(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    garden: tuple[MockConfigEntry, Any],  # noqa: F811
+) -> None:
+    entry, rose = garden
+    manager = entry.runtime_data.manager
+    client = await hass_ws_client(hass)
+    # without a camera there is nothing to frame
+    msg = await _call(client, type="plant_garden/camera/preview", plant_id=rose.id)
+    assert msg["error"]["code"] == "invalid_format"
+    await manager.async_update_plant(rose.id, {"camera_entity_id": CAMERA})
+
+    with patch(GET_IMAGE, return_value=make_image(2000, 1000)):
+        # the whole picture to choose the frame on; nothing is stored
+        msg = await _call(client, type="plant_garden/camera/preview", plant_id=rose.id)
+        preview = msg["result"]
+        assert (preview["width"], preview["height"], preview["crop"]) == (1280, 640, None)
+        assert preview["image"].startswith("data:image/jpeg;base64,")
+        assert await manager.async_list_photos(rose.id) == []
+
+        # the frame: clamped into the picture, stored with the plant
+        msg = await _call(
+            client,
+            type="plant_garden/camera/crop",
+            plant_id=rose.id,
+            crop={"x": 0.25, "y": 0.5, "w": 0.5, "h": 0.9},
+        )
+        assert msg["result"]["camera_crop"] == {"x": 0.25, "y": 0.1, "w": 0.5, "h": 0.9}
+        msg = await _call(
+            client,
+            type="plant_garden/camera/crop",
+            plant_id=rose.id,
+            crop={"x": 0.25, "y": 0.5, "w": 0.5, "h": 0.5},
+        )
+        frame = msg["result"]["camera_crop"]
+        assert frame == {"x": 0.25, "y": 0.5, "w": 0.5, "h": 0.5}
+        msg = await _call(client, type="plant_garden/camera/preview", plant_id=rose.id)
+        assert msg["result"]["crop"] == frame
+
+        # every picture is cut to it: 2000 x 1000 -> its middle lower quarter
+        msg = await _call(client, type="plant_garden/photos/snapshot", plant_id=rose.id)
+        assert (msg["result"]["width"], msg["result"]["height"]) == (1000, 500)
+
+        # the whole picture as frame means no frame
+        msg = await _call(
+            client,
+            type="plant_garden/camera/crop",
+            plant_id=rose.id,
+            crop={"x": 0, "y": 0, "w": 1, "h": 1},
+        )
+        assert msg["result"]["camera_crop"] is None
+        msg = await _call(
+            client,
+            type="plant_garden/camera/crop",
+            plant_id=rose.id,
+            crop={"x": 2, "y": 0, "w": 1, "h": 1},
+        )
+        assert msg["success"] is False
+
+    # another camera shows another view: the frame is forgotten; so is it when unlinking
+    await manager.async_set_camera_crop(rose.id, {"x": 0.1, "y": 0.1, "w": 0.5, "h": 0.5})
+    await manager.async_update_plant(rose.id, {"name": "Rose"})
+    assert manager.get_plant(rose.id).camera_crop is not None
+    await manager.async_update_plant(rose.id, {"camera_entity_id": "camera.other"})
+    assert manager.get_plant(rose.id).camera_crop is None

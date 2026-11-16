@@ -100,7 +100,7 @@ class AnthropicProvider:
             messages.append({"role": message.role, "content": content})
         body: dict[str, Any] = {
             "model": self.model,
-            "max_tokens": req.max_output_tokens,
+            "max_tokens": req.output_limit,
             # static instructions first and cached, so repeated calls are cheaper
             "system": [
                 {"type": "text", "text": req.system, "cache_control": {"type": "ephemeral"}}

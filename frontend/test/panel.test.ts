@@ -253,6 +253,14 @@ describe("plant-garden-panel", () => {
         camera_entity_id: "camera.beet",
       }),
     );
+    // right after linking, the frame of the plant is asked for on the camera's picture
+    await vi.waitFor(() =>
+      expect(backend.callWS).toHaveBeenCalledWith({
+        type: "plant_garden/camera/preview",
+        plant_id: "A1",
+      }),
+    );
+    await vi.waitFor(() => expect(deepText(el)).toContain("Zieh den Rahmen um die Pflanze"));
     // the backend now knows the camera
     backend.details.A1 = {
       plant: { ...plant, camera_entity_id: "camera.beet" },

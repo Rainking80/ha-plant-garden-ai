@@ -110,6 +110,8 @@ export interface MoistureFields {
   moisture_dry: number | null;
   /** a camera that takes the plant's picture every day at noon */
   camera_entity_id: string | null;
+  /** the part of the camera's picture that shows the plant (fractions); null: all of it */
+  camera_crop?: { x: number; y: number; w: number; h: number } | null;
 }
 
 /**

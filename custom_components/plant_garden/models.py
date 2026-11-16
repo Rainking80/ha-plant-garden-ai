@@ -234,6 +234,8 @@ class Plant:
     root_depth_cm: float | None = None
     moisture_entity_id: str | None = None
     camera_entity_id: str | None = None
+    # the part of the camera picture that shows the plant: fractions x, y, w, h
+    camera_crop: dict[str, float] | None = None
     moisture_wet: float | None = None
     moisture_dry: float | None = None
     planted_on: date | None = None
@@ -264,6 +266,7 @@ class Plant:
             "age": self.age.as_dict() if self.age else None,
             "tags": list(self.tags),
             "cover_photo_id": self.cover_photo_id,
+            "camera_crop": self.camera_crop,
             "position": self.position.as_dict() if self.position else None,
             "sources": {key: src.as_dict() for key, src in self.sources.items()},
         }
@@ -285,6 +288,7 @@ class Plant:
             "age": AgeReference.from_dict(data["age"]) if data.get("age") else None,
             "tags": list(data.get("tags", [])),
             "cover_photo_id": data.get("cover_photo_id"),
+            "camera_crop": data.get("camera_crop") or None,
             "position": Point.from_dict(data["position"]) if data.get("position") else None,
             "sources": {
                 key: FieldSource.from_dict(src) for key, src in data.get("sources", {}).items()

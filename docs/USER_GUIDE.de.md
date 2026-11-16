@@ -235,7 +235,12 @@ wird ein neues Foto einer Pflanze ohne botanischen Namen automatisch bestimmt.
   Fotos mit früheren vergleichen* (aus; ein KI-Aufruf mit Kosten).
 - **Kamera-Wächter und Zeitraffer** (Pflanzenseite, unter *Fotos*): *Kamera
   verknüpfen*, und die Pflanze bekommt jeden Mittag ein Bild dieser Kamera, mit dem
-  Tag `camera` - kostenlos und ohne KI. *Jetzt aufnehmen* ergänzt sofort ein Bild.
+  Tag `camera` - kostenlos und ohne KI. Direkt nach dem Verknüpfen öffnet sich das
+  ganze Kamerabild: den Rahmen um die Pflanze ziehen und *Ausschnitt speichern*.
+  Jedes Kamerabild dieser Pflanze wird darauf zugeschnitten, so kann eine Kamera
+  mehrere Pflanzen beobachten, jede mit eigenem Ausschnitt; *Ausschnitt ändern*
+  passt ihn später an (frühere Bilder behalten ihren Zuschnitt). *Jetzt aufnehmen*
+  ergänzt sofort ein Bild.
   *Zeitraffer* spielt die Fotos einer Pflanze vom ältesten zum neuesten ab (bei
   Kamerabildern nur diese, weil sie denselben Blick zeigen). Kamerabilder, die älter
   als 60 Tage sind, werden auf eines pro Woche ausgedünnt; Bilder mit eigenem Tag,

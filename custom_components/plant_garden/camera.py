@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from datetime import date, datetime, timedelta
+import io
 import logging
 from typing import Any
 
@@ -22,6 +23,7 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
+from PIL import Image as PILImage
 
 from .ai.base import AIError, Feature
 from .const import CAMERA_TAG, CONF_CAMERA_CHECK
@@ -56,6 +58,37 @@ def photos_to_thin(photos: Iterable[Photo], today: date, cover_id: str | None) -
         else:
             kept_weeks.add(week)
     return remove
+
+
+PREVIEW_EDGE = 1280  # the picture the frame is chosen on
+
+
+def cut_to_frame(data: bytes, crop: dict[str, float] | None) -> bytes:
+    """A camera picture cut to the plant's frame, as JPEG (blocking).
+
+    Without a frame the picture is passed on as it is.
+    """
+    if not crop:
+        return data
+    with PILImage.open(io.BytesIO(data)) as picture:
+        rgb = picture.convert("RGB")
+    width, height = rgb.size
+    left, top = round(crop["x"] * width), round(crop["y"] * height)
+    right = max(left + 1, min(width, round((crop["x"] + crop["w"]) * width)))
+    bottom = max(top + 1, min(height, round((crop["y"] + crop["h"]) * height)))
+    buffer = io.BytesIO()
+    rgb.crop((left, top, right, bottom)).save(buffer, format="JPEG", quality=92)
+    return buffer.getvalue()
+
+
+def preview_picture(data: bytes) -> tuple[bytes, int, int]:
+    """The whole camera picture, small enough to show in a dialog (blocking)."""
+    with PILImage.open(io.BytesIO(data)) as picture:
+        rgb = picture.convert("RGB")
+    rgb.thumbnail((PREVIEW_EDGE, PREVIEW_EDGE), PILImage.Resampling.LANCZOS)
+    buffer = io.BytesIO()
+    rgb.save(buffer, format="JPEG", quality=85)
+    return buffer.getvalue(), rgb.width, rgb.height
 
 
 async def async_camera_picture(hass: HomeAssistant, entity_id: str) -> bytes:
@@ -102,13 +135,33 @@ class CameraWatcher:
         plant = self._manager.get_plant(plant_id)
         if not plant.camera_entity_id:
             raise ValueError("no camera is linked to this plant")
+        picture = await self._async_picture(plant.camera_entity_id)
         try:
-            picture = await async_camera_picture(self.hass, plant.camera_entity_id)
-        except HomeAssistantError as err:
-            raise ValueError(f"the camera delivered no picture: {err}") from err
-        photo = await self._manager.async_add_photo(plant_id, picture, tags=[CAMERA_TAG])
+            framed = await self.hass.async_add_executor_job(
+                cut_to_frame, picture, plant.camera_crop
+            )
+        except OSError as err:
+            raise ValueError("the camera delivered a picture that cannot be read") from err
+        photo = await self._manager.async_add_photo(plant_id, framed, tags=[CAMERA_TAG])
         await self._async_thin(plant_id)
         return photo
+
+    async def _async_picture(self, entity_id: str) -> bytes:
+        try:
+            return await async_camera_picture(self.hass, entity_id)
+        except HomeAssistantError as err:
+            raise ValueError(f"the camera delivered no picture: {err}") from err
+
+    async def async_preview(self, plant_id: str) -> tuple[bytes, int, int]:
+        """The whole picture of the plant's camera, to choose the frame on (not stored)."""
+        plant = self._manager.get_plant(plant_id)
+        if not plant.camera_entity_id:
+            raise ValueError("no camera is linked to this plant")
+        picture = await self._async_picture(plant.camera_entity_id)
+        try:
+            return await self.hass.async_add_executor_job(preview_picture, picture)
+        except OSError as err:
+            raise ValueError("the camera delivered a picture that cannot be read") from err
 
     async def _async_thin(self, plant_id: str) -> None:
         plant = self._manager.get_plant(plant_id)

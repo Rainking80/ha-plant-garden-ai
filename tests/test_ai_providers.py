@@ -12,6 +12,7 @@ from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClien
 
 from custom_components.plant_garden.ai import pricing
 from custom_components.plant_garden.ai.base import (
+    REASONING_HEADROOM,
     AIError,
     AIRequest,
     AuthError,
@@ -115,6 +116,7 @@ async def test_anthropic_request_and_answer(
     _, _, body, headers = aioclient_mock.mock_calls[0]
     assert headers["anthropic-version"] == "2026-10-21"
     assert "temperature" not in body
+    assert body["max_tokens"] == 1000 + REASONING_HEADROOM
     assert body["system"][0]["cache_control"] == {"type": "ephemeral"}
     assert body["output_config"]["format"]["type"] == "json_schema"
     assert body["messages"][0]["content"][0]["source"]["media_type"] == "image/jpeg"
@@ -168,7 +170,8 @@ async def test_openai_compatible_request_and_answer(
     )
     _, _, body, headers = aioclient_mock.mock_calls[0]
     assert headers["authorization"] == "Bearer sk-or-x"
-    assert body["max_completion_tokens"] == 1000
+    # room to think on top of the answer: reasoning counts against the limit
+    assert body["max_completion_tokens"] == 1000 + REASONING_HEADROOM
     assert body["response_format"]["json_schema"]["strict"] is True
     assert body["messages"][1]["content"][0]["image_url"]["url"].startswith(
         "data:image/jpeg;base64,"
@@ -191,7 +194,7 @@ async def test_openai_compatible_request_and_answer(
         await local.async_generate(_request(schema=False))
     _, _, body, headers = aioclient_mock.mock_calls[0]
     assert "authorization" not in headers
-    assert body["max_tokens"] == 1000
+    assert body["max_tokens"] == 1000 + REASONING_HEADROOM
     aioclient_mock.clear_requests()
     aioclient_mock.post(
         "http://ollama.local:11434/v1/chat/completions",
@@ -231,6 +234,7 @@ async def test_gemini_request_and_answer(
     _, _, body, headers = aioclient_mock.mock_calls[0]
     assert headers["x-goog-api-key"] == "AIza-x"
     assert body["generationConfig"]["responseFormat"]["text"]["mimeType"] == "APPLICATION_JSON"
+    assert body["generationConfig"]["maxOutputTokens"] == 1000 + REASONING_HEADROOM
     assert body["contents"][0]["parts"][0]["inline_data"]["mime_type"] == "image/jpeg"
     for reason, message in (("MAX_TOKENS", "cut off"), ("SAFETY", "declined")):
         aioclient_mock.clear_requests()

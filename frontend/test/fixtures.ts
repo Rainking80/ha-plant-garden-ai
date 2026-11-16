@@ -691,6 +691,20 @@ export function fakeBackend(
         if (!detail) throw { code: "not_found", message: "Not found" };
         return detail;
       }
+      case "plant_garden/camera/preview":
+        return {
+          image: "data:image/jpeg;base64,AAAA",
+          width: 1280,
+          height: 720,
+          crop: backend.plants.find((p) => p.id === msg.plant_id)?.camera_crop ?? null,
+        };
+      case "plant_garden/camera/crop": {
+        const crop = msg.crop as Plant["camera_crop"];
+        backend.plants = backend.plants.map((plant) =>
+          plant.id === msg.plant_id ? { ...plant, camera_crop: crop } : plant,
+        );
+        return backend.plants.find((plant) => plant.id === msg.plant_id);
+      }
       case "plant_garden/photos/snapshot":
         return makePhoto("SNAP", "2026-07-02T12:00:00Z", { tags: ["camera"] });
       case "plant_garden/photos/edit": {
