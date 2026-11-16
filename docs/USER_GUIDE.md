@@ -12,6 +12,14 @@ happens in the sidebar entry the integration creates; the settings live under
    for your garden. The garden starts at Home Assistant's home location.
 2. Open **Plants** and add your plants – by hand, or import them once from an
    existing to-do list. Name and category are enough; everything else can follow.
+   Fastest for a whole garden: the **garden walk** (Plants tab). Take a photo of
+   one plant after the other, or choose many photos at once. Every photo becomes
+   a plant; when the photo carries a GPS position inside your garden, the plant
+   is placed on the plan there. Tick *Identify and name with AI* (the cost per
+   photo is shown, off until you tick it) and each plant is identified, named
+   after its species and filled with its botanical name, care values and size
+   as AI suggestions. When the AI is not sure, the plant keeps a provisional
+   name ("New plant 3") for you to decide on its page.
 3. Add photos on a plant's page (drag and drop works). Capture dates come from the
    photo; GPS and other metadata are removed.
 4. After the upload, **Crop photo** opens for each photo: the frame already sits

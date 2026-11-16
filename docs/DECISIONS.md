@@ -671,3 +671,22 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   "Plant ..." due today in a planting month, else on the first day of the next
   one. Proposals are kept in memory (the last five) - a restart forgets them,
   nothing else depends on them.
+
+## D-045 The garden walk: photos become plants (2026-11-16)
+
+- **Flow** (panel only): for every photo a plant with a placeholder name ("New
+  plant n", the next free number) is created, the photo uploaded, and - when its
+  EXIF GPS is plausibly in the garden - the plant placed there (the same rule as
+  the position suggestion on a plant page; the server strips the metadata, so the
+  GPS is never stored). Photos are worked off one after the other; a failed
+  upload is reported and the walk goes on.
+- **AI by opt-in**: a checkbox in the dialog, off until ticked and then remembered
+  per device, with the estimated cost of one photo. `ai/identify` with
+  `adopt: true` identifies as usual and then takes every suggestion for an empty
+  field over (`AIService.async_adopt`) - marked as the AI's with its confidence,
+  so each can still be changed. Above a confidence of 0.5 the plant is named
+  after the species (common name in Home Assistant's language, else the
+  botanical name; `async_name_by_ai` records the source as AI). Below it the
+  placeholder name stays.
+- **Not in the walk**: cropping (it would interrupt after every photo) and
+  several photos per plant - both remain on the plant page.

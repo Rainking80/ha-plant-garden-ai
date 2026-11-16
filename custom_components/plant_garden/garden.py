@@ -282,6 +282,21 @@ class GardenManager:
             self._notify("plant", plant.id)
         return applied
 
+    async def async_name_by_ai(
+        self, plant_id: str, name: str, *, confidence: float | None, model: str
+    ) -> Plant:
+        """Name a plant after what the AI saw (only asked for by the garden walk)."""
+        plant = self.get_plant(plant_id)
+        now = dt_util.utcnow()
+        self._apply_fields(plant, {"name": name}, Source.AI, now)
+        plant.sources["name"] = FieldSource(
+            source=Source.AI, updated_at=now, confidence=confidence, model=model
+        )
+        plant.updated_at = now
+        self._schedule_save()
+        self._notify("plant", plant.id)
+        return plant
+
     async def async_move_plants(self, moves: Sequence[tuple[str, Point | None]]) -> list[Plant]:
         """Set several positions at once (one save, used for drag and drop and undo)."""
         plants = [self.get_plant(plant_id) for plant_id, _ in moves]  # validate all first

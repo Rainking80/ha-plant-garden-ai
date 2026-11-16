@@ -230,6 +230,67 @@ async def test_identify_and_take_over_suggestions(
     assert entry.runtime_data.ai.identification(rose.id) is None
 
 
+async def test_garden_walk_adopts_the_identification(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    aioclient_mock: AiohttpClientMocker,
+    garden: tuple[MockConfigEntry, Any, Any],
+) -> None:
+    """The garden walk: a plant with a placeholder name takes over what the AI found."""
+    entry, _rose, _photo = garden
+    manager = entry.runtime_data.manager
+    new = await manager.async_create_plant({"name": "New plant 1"})
+    photo = await manager.async_add_photo(new.id, make_image(900, 700))
+    aioclient_mock.post(MESSAGES, json=claude_reply(json.dumps(ANSWER)))
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id(
+        {
+            "type": "plant_garden/ai/identify",
+            "plant_id": new.id,
+            "photos": [{"photo_id": photo.id}],
+            "adopt": True,
+        }
+    )
+    result = (await client.receive_json())["result"]
+    assert result["named"] is True
+    states = {s["key"]: s["state"] for s in result["suggestions"]}
+    assert set(states.values()) == {"accepted"}
+    plant = manager.get_plant(new.id)
+    # named after the species (the tests run in English), everything marked as the AI's
+    assert plant.name == "Dog rose"
+    assert plant.sources["name"].source.value == "ai"
+    assert plant.sources["name"].confidence == 0.86
+    assert plant.scientific_name == "Rosa canina"
+    assert (plant.category.value, plant.light.value) == ("perennial", "full_sun")
+    assert plant.crown_diameter_m == 2.5
+    assert plant.age.age_months == 36
+    sizes = [m for m in await manager.async_all_measurements() if m.plant_id == new.id]
+    assert (sizes[0].height_cm, sizes[0].source.value) == (150, "ai")
+
+    # an unsure answer keeps the placeholder name; the rest is still taken over
+    unsure = {**ANSWER, "candidates": [{**ANSWER["candidates"][0], "confidence": 0.3}]}
+    other = await manager.async_create_plant({"name": "New plant 2"})
+    photo = await manager.async_add_photo(other.id, make_image(900, 700))
+    aioclient_mock.clear_requests()
+    aioclient_mock.post(
+        f"{PLANTNET}/identify/all", status=404, json={"message": "Species not found"}
+    )
+    aioclient_mock.post(MESSAGES, json=claude_reply(json.dumps(unsure)))
+    await client.send_json_auto_id(
+        {
+            "type": "plant_garden/ai/identify",
+            "plant_id": other.id,
+            "photos": [{"photo_id": photo.id}],
+            "adopt": True,
+        }
+    )
+    result = (await client.receive_json())["result"]
+    assert result["named"] is False
+    assert manager.get_plant(other.id).name == "New plant 2"
+    assert manager.get_plant(other.id).scientific_name == "Rosa canina"
+
+
 async def test_identify_after_upload(
     hass: HomeAssistant,
     aioclient_mock: AiohttpClientMocker,

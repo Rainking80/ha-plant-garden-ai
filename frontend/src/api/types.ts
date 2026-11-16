@@ -563,6 +563,8 @@ export interface SpeciesCandidate {
 }
 
 export interface Identification {
+  /** only from the garden walk: the plant was named after the species */
+  named?: boolean;
   created: string;
   photos: string[];
   model: string | null;

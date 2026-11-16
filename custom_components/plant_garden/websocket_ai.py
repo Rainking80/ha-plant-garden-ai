@@ -93,6 +93,8 @@ async def ws_ai_status(
             ],
             probatio.Length(min=1, max=MAX_PHOTOS),
         ),
+        # the garden walk: take the suggestions over and name the plant after the species
+        probatio.Optional("adopt", default=False): bool,
     }
 )
 @websocket_api.async_response
@@ -105,12 +107,14 @@ async def ws_ai_identify(
         connection.send_error(msg["id"], "not_loaded", "Plant Garden is not set up")
         return
     photos = [(p["photo_id"], p["organ"]) for p in msg["photos"]]
+    language = hass.config.language
+
+    async def identify() -> dict[str, Any]:
+        result = await service.async_identify(msg["plant_id"], photos, language)
+        return await service.async_adopt(msg["plant_id"], language) if msg["adopt"] else result
+
     try:
-        result = await _ai_call(
-            connection,
-            msg["id"],
-            service.async_identify(msg["plant_id"], photos, hass.config.language),
-        )
+        result = await _ai_call(connection, msg["id"], identify())
     except NotFoundError as err:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, f"Not found: {err}")
         return

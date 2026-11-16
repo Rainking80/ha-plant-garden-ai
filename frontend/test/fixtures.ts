@@ -713,7 +713,7 @@ export function fakeBackend(
         const photos = msg.photos as { photo_id: string }[];
         const record = makeIdentification({ photos: photos.map((p) => p.photo_id) });
         backend.ai.identifications[String(msg.plant_id)] = record;
-        return record;
+        return msg.adopt ? { ...record, named: true } : record;
       }
       case "plant_garden/ai/decide": {
         const record = backend.ai.identifications[String(msg.plant_id)];

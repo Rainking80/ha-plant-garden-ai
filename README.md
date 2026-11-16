@@ -48,6 +48,9 @@ sensors and offers recommendations as entities for your own automations.
 - Crop and turn each photo after the upload, with a suggested frame around the
   plant; the upload is kept, so a crop can always be changed or undone.
 - A care profile per plant: watering, fertilising, pruning.
+- Garden walk: photograph one plant after the other; every photo becomes a
+  plant, placed on the plan by the photo's GPS and - if you like - identified
+  and named by the AI.
 - One-time import of plant names from an existing to-do list.
 
 **Irrigation (tracking, not switching)**

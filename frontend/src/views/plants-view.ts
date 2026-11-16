@@ -1,9 +1,11 @@
-import { mdiMagnify, mdiPlaylistPlus, mdiPlus } from "@mdi/js";
+import { mdiCameraPlusOutline, mdiMagnify, mdiPlaylistPlus, mdiPlus } from "@mdi/js";
 import { css, html, nothing } from "lit";
 
 import type { Plant, PlantStatus } from "../api/types";
 import { PLANT_STATUSES } from "../api/types";
 import { PgElement, define, icon } from "../components/base";
+import type { PgGardenWalk } from "../components/garden-walk";
+import "../components/garden-walk";
 import { heroIllustration, heroStyles } from "../components/hero";
 import { plantPath } from "../components/plant-card";
 import "../components/plant-card";
@@ -65,6 +67,10 @@ export class PgPlantsView extends PgElement {
     this.renderRoot.querySelector<PgPlantForm>("pg-plant-form")?.open();
   }
 
+  private _openWalk(): void {
+    this.renderRoot.querySelector<PgGardenWalk>("pg-garden-walk")?.open();
+  }
+
   private _openImport(): void {
     this.renderRoot.querySelector<PgTodoImport>("pg-todo-import")?.open();
   }
@@ -122,6 +128,9 @@ export class PgPlantsView extends PgElement {
                       </div>`
                     : nothing
                 }
+                <button class="button text walk" @click=${this._openWalk}>
+                  ${icon(mdiCameraPlusOutline)} ${t("walk.title")}
+                </button>
                 <button class="button text import" @click=${this._openImport}>
                   ${icon(mdiPlaylistPlus)} ${t("import.open")}
                 </button>
@@ -151,6 +160,9 @@ export class PgPlantsView extends PgElement {
                     <button class="button" @click=${this._openForm}>
                       ${icon(mdiPlus)} ${t("plants.add")}
                     </button>
+                    <button class="button secondary" @click=${this._openWalk}>
+                      ${icon(mdiCameraPlusOutline)} ${t("walk.title")}
+                    </button>
                     <button class="button secondary" @click=${this._openImport}>
                       ${icon(mdiPlaylistPlus)} ${t("import.open")}
                     </button>
@@ -171,6 +183,13 @@ export class PgPlantsView extends PgElement {
         .origin=${this.store.layout?.origin ?? null}
         @plant-saved=${this._onSaved}
       ></pg-plant-form>
+      <pg-garden-walk
+        .hass=${this.hass}
+        .origin=${this.store.layout?.origin ?? null}
+        .existingNames=${plants.map((plant) => plant.name)}
+        .prefix=${this.prefix}
+        @walk-finished=${() => void this.store.refresh()}
+      ></pg-garden-walk>
       <pg-todo-import
         .hass=${this.hass}
         .existingNames=${plants.map((plant) => plant.name)}

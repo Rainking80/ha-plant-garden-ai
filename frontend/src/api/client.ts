@@ -77,7 +77,7 @@ export function getPlant(hass: HomeAssistant, plantId: string): Promise<PlantDet
 
 export function createPlant(
   hass: HomeAssistant,
-  fields: Partial<PlantFields> & { name: string },
+  fields: Partial<PlantFields> & { name: string; position?: Point },
 ): Promise<Plant> {
   return hass.callWS<Plant>({ type: `${WS_PREFIX}/plants/create`, ...fields });
 }
@@ -411,11 +411,14 @@ export function identifyPlant(
   hass: HomeAssistant,
   plantId: string,
   photos: { photo_id: string; organ: Organ }[],
+  /** the garden walk: take the suggestions over and name the plant after the species */
+  adopt = false,
 ): Promise<Identification> {
   return hass.callWS<Identification>({
     type: `${WS_PREFIX}/ai/identify`,
     plant_id: plantId,
     photos,
+    ...(adopt ? { adopt: true } : {}),
   });
 }
 

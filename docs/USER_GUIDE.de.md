@@ -13,6 +13,15 @@ unter **Einstellungen → Geräte & Dienste → Plant Garden**.
 2. Unter **Pflanzen** die Pflanzen anlegen – von Hand oder einmalig aus einer
    bestehenden To-do-Liste importieren. Name und Kategorie reichen; der Rest kann
    später kommen.
+   Am schnellsten für einen ganzen Garten: der **Garten-Rundgang** (Reiter
+   Pflanzen). Eine Pflanze nach der anderen fotografieren oder viele Fotos auf
+   einmal wählen. Jedes Foto wird zu einer Pflanze; trägt das Foto einen
+   GPS-Standort in deinem Garten, landet die Pflanze dort auf dem Plan. Mit
+   *Mit KI bestimmen und benennen* (die Kosten pro Foto stehen dabei, aus bis du
+   es ankreuzt) wird jede Pflanze bestimmt, nach ihrer Art benannt und mit
+   botanischem Namen, Pflegewerten und Größe als KI-Vorschlägen gefüllt. Ist die
+   KI unsicher, behält die Pflanze einen vorläufigen Namen („Neue Pflanze 3“),
+   über den du auf ihrer Seite entscheidest.
 3. Auf der Pflanzenseite Fotos hinzufügen (Drag-and-drop geht). Das Aufnahmedatum
    kommt aus dem Foto; GPS und andere Metadaten werden entfernt.
 4. Nach dem Hochladen öffnet sich für jedes Foto **Foto zuschneiden**: Der Rahmen

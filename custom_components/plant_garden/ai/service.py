@@ -62,6 +62,7 @@ from .schemas import IDENTIFY_SCHEMA, clean_identification
 _LOGGER = logging.getLogger(__name__)
 
 STORAGE_KEY = "plant_garden.ai"
+ADOPT_NAME_CONFIDENCE = 0.5  # the garden walk names a plant only when the AI is this sure
 TEXT_FEATURES = frozenset(
     {Feature.TIPS, Feature.CHAT, Feature.DIGEST, Feature.RESEARCH, Feature.PLAN}
 )
@@ -780,6 +781,41 @@ class AIService:
         self._save()
         self._manager.notify_ai(plant_id)
         return self.identification(plant_id) or {}
+
+    def _top_name(self, record: dict[str, Any], language: str) -> tuple[str, float] | None:
+        """Common name (else botanical name) and confidence of the most likely species."""
+        result = record.get("result")
+        if result and result["candidates"]:
+            top = result["candidates"][0]
+            common = top.get("common_name_de" if language == "de" else "common_name_en")
+            return common or top["scientific_name"], top["confidence"]
+        net = record.get("plantnet")
+        if net and net["candidates"]:
+            top = net["candidates"][0]
+            names = top.get("common_names") or []
+            return (names[0] if names else top["scientific_name"]), top["score"]
+        return None
+
+    async def async_adopt(self, plant_id: str, language: str) -> dict[str, Any]:
+        """Take over what the last identification found, for a plant from the garden walk.
+
+        Every suggestion for an empty field is accepted (marked as the AI's, with
+        its confidence). When the AI is sure enough, the plant is also named
+        after the species; else its placeholder name stays for the user to decide.
+        """
+        record = self._data["identifications"].get(plant_id)
+        if record is None:
+            raise AIError("no identification")
+        model = record.get("model") or "plantnet"
+        named = False
+        top = self._top_name(record, language)
+        if top is not None and top[1] >= ADOPT_NAME_CONFIDENCE:
+            await self._manager.async_name_by_ai(plant_id, top[0], confidence=top[1], model=model)
+            named = True
+        for item in (self.identification(plant_id) or {}).get("suggestions", []):
+            if item["state"] == "new":
+                await self.async_decide(plant_id, item["key"], accept=True)
+        return {**(self.identification(plant_id) or {}), "named": named}
 
     @callback
     def forget_plant(self, plant_id: str) -> None:

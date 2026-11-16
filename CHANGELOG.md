@@ -24,6 +24,10 @@ All notable changes to this project are documented here. The format follows
   for its sun, soil, free room, neighbours and winter cold - with size, planting
   months, companions and cautions. A suggestion becomes a planned plant at that
   place with a task to plant it.
+- Garden walk: photograph one plant after the other on the Plants tab - every
+  photo becomes a plant, placed on the plan by the photo's GPS position. With
+  the AI switched on for the walk, each plant is identified, named after its
+  species and gets its botanical name, care values and size as AI suggestions.
 
 ## [0.2.0] - 2026-11-14
 
