@@ -41,7 +41,14 @@ happens in the sidebar entry the integration creates; the settings live under
   along.
 - **Markers** show live values of any Home Assistant entity (soil moisture,
   temperature …) on the plan.
-- **Layers**: plan, soil water deficit (green to red) or irrigation coverage.
+- **Layers**: plan, soil water deficit (green to red), irrigation coverage, or
+  **sun and shade**: the hours of direct sun every place gets on a clear day of
+  the month you choose (dark blue = shade, yellow = sun all day). Shadows come
+  from buildings, greenhouses, roofs, hedges and tall plants; give an area its
+  *height* in edit mode (a house counts as 6 m, a hedge as 1.8 m until you do),
+  trees and shrubs use their measured height. A plant's page shows the sun of
+  its place over the growing season and offers it as the plant's *light*.
+  Clouds, slopes and anything outside the plan are not considered.
 
 Rings around plants: amber dashed = needs water, icy blue = frost expected below
 the plant's limit, violet dotted = pruning due within a week; a red dot marks an

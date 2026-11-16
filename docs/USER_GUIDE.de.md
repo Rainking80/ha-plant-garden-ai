@@ -43,7 +43,15 @@ unter **Einstellungen → Geräte & Dienste → Plant Garden**.
   echten Ort verschieben; Gezeichnetes bleibt auf der Karte, wo es ist, oder zieht
   mit.
 - **Marker** zeigen Live-Werte beliebiger Entitäten (Bodenfeuchte, Temperatur …).
-- **Ebenen**: Plan, Wasserdefizit (grün bis rot) oder Bewässerungsabdeckung.
+- **Ebenen**: Plan, Wasserdefizit (grün bis rot), Bewässerungsabdeckung oder
+  **Sonne und Schatten**: die Stunden direkter Sonne, die jede Stelle an einem
+  klaren Tag des gewählten Monats bekommt (dunkelblau = Schatten, gelb = Sonne den
+  ganzen Tag). Schatten werfen Gebäude, Gewächshäuser, Dächer, Hecken und hohe
+  Pflanzen; im Bearbeitungsmodus bekommt eine Fläche ihre *Höhe* (ein Haus zählt
+  bis dahin als 6 m, eine Hecke als 1,8 m), Bäume und Sträucher nehmen ihre
+  gemessene Höhe. Die Seite einer Pflanze zeigt die Sonne ihres Standorts über
+  die Saison und bietet sie als *Licht* der Pflanze an. Wolken, Hänge und alles
+  außerhalb des Plans bleiben unberücksichtigt.
 
 Ringe um Pflanzen: orange gestrichelt = Gießbedarf, eisblau = Frost unter der
 Grenze der Pflanze erwartet, violett gepunktet = Schnitt innerhalb einer Woche

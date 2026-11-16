@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Shape } from "../src/api/types";
-import type { PgGardenCanvas } from "../src/components/garden-canvas";
+import { sunColor, type PgGardenCanvas } from "../src/components/garden-canvas";
 import { GardenStore } from "../src/state/garden-store";
 import "../src/views/garden-view";
 import type { PgGardenView } from "../src/views/garden-view";
@@ -715,5 +715,100 @@ describe("pg-garden-view: garden location", () => {
       }),
     );
     await vi.waitFor(() => expect(deepText(view)).toContain("Wähle „wandert mit“"));
+  });
+});
+
+describe("pg-garden-view: sun and shade", () => {
+  const HOUSE: Shape = {
+    id: "01JSHAPE0000000000000000HH",
+    kind: "house",
+    geometry: { type: "rect", cx: 0, cy: 0, w: 10, h: 6, rotation: 0 },
+    label: "Haus",
+    plant_id: null,
+    soil_type: null,
+    locked: false,
+    z: 0,
+    height_m: null,
+  };
+  const MAP = {
+    month: 6,
+    x: -7,
+    y: -5,
+    cell: 7,
+    cols: 2,
+    rows: 2,
+    hours: [0, 7.5, 15, 15],
+    day_hours: 15,
+  };
+  const chooseLayer = async (view: PgGardenView, value: string, index = 0) => {
+    const select =
+      view.shadowRoot?.querySelectorAll<HTMLSelectElement>(".layer-select select")[index];
+    if (!select) throw new Error("no layer select");
+    select.value = value;
+    select.dispatchEvent(new Event("change"));
+    await view.updateComplete;
+  };
+
+  it("colours places from shade to sun", () => {
+    expect(sunColor(0, 15)).toBe("hsl(225 35% 32%)");
+    expect(sunColor(15, 15)).toBe("hsl(48 95% 62%)");
+    expect(sunColor(99, 15)).toBe(sunColor(15, 15));
+    expect(sunColor(3, 0)).toBe(sunColor(0, 15));
+  });
+
+  it("draws the sun map of the chosen month with a legend", async () => {
+    const backend = fakeBackend({ shapes: [HOUSE], sunMap: MAP });
+    const { view } = await mount(backend);
+    expect(deepQuery(canvasOf(view), ".sun-map")).toBeNull();
+
+    await chooseLayer(view, "sun");
+    await vi.waitFor(() =>
+      expect(canvasOf(view).shadowRoot?.querySelectorAll(".sun-map rect")).toHaveLength(4),
+    );
+    const month = new Date().getMonth() + 1;
+    expect(calls(backend, "plant_garden/sun/map")[0]?.month).toBe(month);
+    const cells = [...(canvasOf(view).shadowRoot?.querySelectorAll(".sun-map rect") ?? [])];
+    expect(cells.map((cell) => cell.getAttribute("fill"))).toEqual([
+      sunColor(0, 15),
+      sunColor(7.5, 15),
+      sunColor(15, 15),
+      sunColor(15, 15),
+    ]);
+    expect(cells[3]?.getAttribute("x")).toBe("0");
+    expect(cells[3]?.getAttribute("y")).toBe("2");
+    expect(deepText(view)).toContain("Sonnenstunden an einem klaren Tag im");
+    expect(deepText(view)).toContain("15 h");
+    expect(localStorage.getItem("plant-garden.layer.v1")).toBe('"sun"');
+
+    // another month is another map
+    await chooseLayer(view, "12", 1);
+    await vi.waitFor(() => expect(calls(backend, "plant_garden/sun/map")).toHaveLength(2));
+    expect(calls(backend, "plant_garden/sun/map")[1]?.month).toBe(12);
+    await vi.waitFor(() => expect(deepText(view)).toContain("im Dezember"));
+
+    // back on the plan the map is gone
+    await chooseLayer(view, "plan");
+    await canvasOf(view).updateComplete;
+    expect(deepQuery(canvasOf(view), ".sun-map")).toBeNull();
+  });
+
+  it("takes the height of an area for its shadow", async () => {
+    const backend = fakeBackend({ shapes: [HOUSE] });
+    const { view } = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    canvasOf(view).dispatchEvent(
+      new CustomEvent("select", { detail: { selection: { type: "shape", id: HOUSE.id } } }),
+    );
+    await view.updateComplete;
+    const input = deepGet<HTMLInputElement>(view, 'input[max="200"]');
+    expect(input.placeholder).toBe("6"); // a house without a height counts as 6 m
+    input.value = "8,5";
+    input.dispatchEvent(new Event("change"));
+    await vi.waitFor(() =>
+      expect(calls(backend, "plant_garden/layout/shapes/save")[0]?.shape).toMatchObject({
+        id: HOUSE.id,
+        height_m: 8.5,
+      }),
+    );
   });
 });

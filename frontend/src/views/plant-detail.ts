@@ -16,6 +16,8 @@ import {
   deletePlant,
   errorMessage,
   getPlant,
+  sunSummary,
+  updatePlant,
   movePlants,
 } from "../api/client";
 import type {
@@ -25,6 +27,7 @@ import type {
   Plant,
   PlantDetail,
   PlantFields,
+  PlantSun,
   Point,
 } from "../api/types";
 import { PgElement, define, icon } from "../components/base";
@@ -95,6 +98,7 @@ export class PgPlantDetail extends PgElement {
     _mWidth: { state: true },
     _mError: { state: true },
     _gpsSuggestion: { state: true },
+    _sun: { state: true },
   };
 
   declare store: GardenStore;
@@ -111,6 +115,8 @@ export class PgPlantDetail extends PgElement {
   declare _mWidth: string;
   declare _mError: string;
   declare _gpsSuggestion: Point | null;
+  /** computed sun of this plant's place, when it is on the plan */
+  declare _sun: PlantSun | null;
 
   private _loadedAt = 0;
   private _reloadTimer?: ReturnType<typeof setTimeout>;
@@ -143,6 +149,7 @@ export class PgPlantDetail extends PgElement {
     this._mWidth = "";
     this._mError = "";
     this._gpsSuggestion = null;
+    this._sun = null;
   }
 
   override connectedCallback(): void {
@@ -175,9 +182,29 @@ export class PgPlantDetail extends PgElement {
       this._detail = detail;
       this._error = "";
       this._loadedAt = Date.now();
+      void this._loadSun(plantId);
     } catch (err) {
       if ((err as { code?: string }).code === "not_found") this._notFound = true;
       else this._error = errorMessage(err);
+    }
+  }
+
+  /** The computed sun of the plant's place (nothing for plants that are not on the plan). */
+  private async _loadSun(plantId: string): Promise<void> {
+    try {
+      const summary = await sunSummary(this.hass);
+      if (plantId === this.plantId) this._sun = summary.plants[plantId] ?? null;
+    } catch {
+      this._sun = null; // an extra, the page works without it
+    }
+  }
+
+  private async _takeLight(light: PlantSun["light"]): Promise<void> {
+    try {
+      await updatePlant(this.hass, this.plantId, { light });
+      await this._load();
+    } catch (err) {
+      this._error = errorMessage(err);
     }
   }
 
@@ -465,6 +492,29 @@ export class PgPlantDetail extends PgElement {
                   <dd>${fact.value} ${this._sourceMark(fact.source)}</dd>
                 </div>`,
             )}
+            ${
+              this._sun
+                ? html`<div class="sun">
+                    <dt>${t("sun.computed")}</dt>
+                    <dd>
+                      ${t("sun.value", {
+                        hours: formatNumber(this._sun.season_hours, this.language, 1),
+                        light: t(`light.${this._sun.light}`),
+                      })}
+                      ${
+                        plant.light !== this._sun.light
+                          ? html`<button
+                              class="button text"
+                              @click=${() => this._sun && this._takeLight(this._sun.light)}
+                            >
+                              ${t("sun.take_over")}
+                            </button>`
+                          : nothing
+                      }
+                    </dd>
+                  </div>`
+                : nothing
+            }
           </dl>
           <div class="actions">
             <button class="button" @click=${this._pickFiles} ?disabled=${Boolean(this._uploading)}>

@@ -195,6 +195,32 @@ describe("plant-garden-panel", () => {
     );
   });
 
+  it("shows the computed sun of a plant and takes it over as its light", async () => {
+    const plant = makePlant({ id: "A1", name: "Hortensie", position: { x: 1, y: 1 } });
+    const backend = fakeBackend({
+      plants: [plant],
+      details: { A1: { plant, photos: [], measurements: [] } },
+      sun: {
+        plants: { A1: { months: Array(12).fill(2), season_hours: 2.4, light: "shade" } },
+        season: [4, 5, 6, 7, 8, 9],
+        obstacles: 1,
+      },
+    });
+    const el = await mount(backend, "/plants/A1");
+    await vi.waitFor(() => expect(deepText(el)).toContain("Sonne (berechnet)"));
+    expect(deepText(el)).toContain("2,4 h am Tag in der Saison · Schatten");
+    const button = deepGet<HTMLButtonElement>(el, ".sun button");
+    expect(button.textContent?.trim()).toBe("Als Licht übernehmen");
+    button.click();
+    await vi.waitFor(() =>
+      expect(backend.callWS).toHaveBeenCalledWith({
+        type: "plant_garden/plants/update",
+        plant_id: "A1",
+        light: "shade",
+      }),
+    );
+  });
+
   it("lets the old Android app pick one photo at a time", async () => {
     const plant = makePlant({ id: "A1", name: "Hortensie" });
     const backend = fakeBackend({

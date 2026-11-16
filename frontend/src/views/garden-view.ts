@@ -44,6 +44,7 @@ import {
   numericHistory,
   saveMarker,
   saveShape,
+  sunMap,
   setBackground,
   setOrigin,
   updatePlant,
@@ -65,13 +66,14 @@ import {
   type Point,
   type Shape,
   type ShapeKind,
+  type SunMap,
 } from "../api/types";
 import "../components/background-dialog";
 import type { PgBackgroundDialog } from "../components/background-dialog";
 import { PgElement, define, icon } from "../components/base";
 import "../components/entity-picker";
 import type { PgEntityPicker } from "../components/entity-picker";
-import { IRRIGATION_TOOLS } from "../components/garden-canvas";
+import { IRRIGATION_TOOLS, sunColor } from "../components/garden-canvas";
 import type {
   Armed,
   CalibrateDetail,
@@ -156,7 +158,15 @@ export function areaKind(category: Plant["category"]): ShapeKind {
 }
 const LAYER_KEY = "plant-garden.layer.v1";
 const GREY_KEY = "plant-garden.grey-background.v1";
-const LAYERS: readonly Layer[] = ["plan", "deficit", "coverage"];
+const LAYERS: readonly Layer[] = ["plan", "deficit", "coverage", "sun"];
+const SUN_DELAY_MS = 400; // the sun map follows edits after a pause
+/** Typical heights (m) of the areas that cast a shadow; the backend uses the same. */
+const DEFAULT_HEIGHT: Partial<Record<ShapeKind, number>> = {
+  house: 6,
+  greenhouse: 2.5,
+  roof: 2.5,
+  hedge: 1.8,
+};
 
 /** Settings of a new zone; sprinklers start as rotors, drip lines as drip hoses. */
 function defaultIrrigation(geometry?: Geometry): Irrigation {
@@ -312,6 +322,8 @@ export class PgGardenView extends PgElement {
     _zonePick: { state: true },
     _layer: { state: true },
     _greyBackground: { state: true },
+    _sunMonth: { state: true },
+    _sunMap: { state: true },
   };
 
   declare store: GardenStore;
@@ -339,9 +351,14 @@ export class PgGardenView extends PgElement {
   declare _layer: Layer;
   /** the background hidden behind plain grey, so the plan stands out (per device) */
   declare _greyBackground: boolean;
+  /** the month (1-12) the sun layer shows, and its map once loaded */
+  declare _sunMonth: number;
+  declare _sunMap: SunMap | null;
 
   private readonly _history = new History();
   private _fitted = false;
+  private _sunTimer?: ReturnType<typeof setTimeout>;
+  private _sunRequest = 0;
   private _focused: string | null = null;
   private _errorTimer?: ReturnType<typeof setTimeout>;
   private _states: Record<string, HassEntity | undefined> = {};
@@ -355,6 +372,7 @@ export class PgGardenView extends PgElement {
   private readonly _onStoreChange = () => {
     this.requestUpdate();
     this._initViewport();
+    if (this._layer === "sun") this._scheduleSun(); // shadows follow the plan
   };
   private readonly _onHistoryChange = () => (this._historyTick += 1);
 
@@ -381,6 +399,8 @@ export class PgGardenView extends PgElement {
     this._layer = readStorage(LAYER_KEY, (v): v is Layer => LAYERS.includes(v as Layer)) ?? "plan";
     this._greyBackground =
       readStorage(GREY_KEY, (v): v is boolean => typeof v === "boolean") ?? false;
+    this._sunMonth = new Date().getMonth() + 1;
+    this._sunMap = null;
   }
 
   override connectedCallback(): void {
@@ -412,6 +432,31 @@ export class PgGardenView extends PgElement {
   protected override updated(changed: PropertyValues): void {
     if (changed.has("focusPlantId")) this._focusPlant();
     if (changed.has("_selection")) void this._loadMarkerHistory();
+    if ((changed.has("_layer") || changed.has("_sunMonth")) && this._layer === "sun") {
+      this._scheduleSun(0);
+    }
+  }
+
+  /** Load the sun map of the chosen month (again after edits, once they pause). */
+  private _scheduleSun(delay = SUN_DELAY_MS): void {
+    clearTimeout(this._sunTimer);
+    this._sunTimer = setTimeout(() => void this._loadSun(), delay);
+  }
+
+  private async _loadSun(): Promise<void> {
+    const request = ++this._sunRequest;
+    try {
+      const map = await sunMap(this.hass, this._sunMonth);
+      if (request === this._sunRequest) this._sunMap = map;
+    } catch (err) {
+      if (request === this._sunRequest) this._showError(err);
+    }
+  }
+
+  private _monthName(month: number): string {
+    return new Intl.DateTimeFormat(this.language, { month: "long" }).format(
+      new Date(2024, month - 1, 15),
+    );
   }
 
   private get _canvas(): PgGardenCanvas | null {
@@ -1027,6 +1072,7 @@ export class PgGardenView extends PgElement {
             .care=${this.store?.care?.plants ?? NO_CARE}
             .layer=${this._layer}
             .greyBackground=${this._greyBackground}
+            .sunMap=${this._sunMap}
             @select=${this._onSelect}
             @hover=${this._onHover}
             @move-plant=${this._onMovePlant}
@@ -1276,26 +1322,63 @@ export class PgGardenView extends PgElement {
       (layer) =>
         layer === "plan" ||
         (layer === "deficit" && Object.keys(this.store?.water?.plants ?? {}).length > 0) ||
-        (layer === "coverage" && this._shapes.some((shape) => shape.kind === "zone")),
+        (layer === "coverage" && this._shapes.some((shape) => shape.kind === "zone")) ||
+        (layer === "sun" && (this._shapes.length > 0 || this._plants.some((p) => p.position))),
     );
     if (available.length < 2) return nothing;
     return html`<label class="layer-select" title=${t("layer.title")}>
-      <span class="sr-only">${t("layer.title")}</span>
-      ${icon(mdiLayersTripleOutline)}
-      <select
-        @change=${(e: Event) => {
-          this._layer = (e.target as HTMLSelectElement).value as Layer;
-          writeStorage(LAYER_KEY, this._layer);
-        }}
-      >
-        ${available.map(
-          (layer) =>
-            html`<option value=${layer} ?selected=${layer === this._layer}>
-              ${t(`layer.${layer}`)}
-            </option>`,
-        )}
-      </select>
-    </label>`;
+        <span class="sr-only">${t("layer.title")}</span>
+        ${icon(mdiLayersTripleOutline)}
+        <select
+          @change=${(e: Event) => {
+            this._layer = (e.target as HTMLSelectElement).value as Layer;
+            writeStorage(LAYER_KEY, this._layer);
+          }}
+        >
+          ${available.map(
+            (layer) =>
+              html`<option value=${layer} ?selected=${layer === this._layer}>
+                ${t(`layer.${layer}`)}
+              </option>`,
+          )}
+        </select>
+      </label>
+      ${
+        this._layer === "sun" && available.includes("sun")
+          ? html`<label class="layer-select month" title=${t("sun.month")}>
+              <span class="sr-only">${t("sun.month")}</span>
+              <select
+                @change=${(e: Event) =>
+                  (this._sunMonth = Number((e.target as HTMLSelectElement).value))}
+              >
+                ${Array.from({ length: 12 }, (_, i) => i + 1).map(
+                  (month) =>
+                    html`<option value=${month} ?selected=${month === this._sunMonth}>
+                      ${this._monthName(month)}
+                    </option>`,
+                )}
+              </select>
+            </label>`
+          : nothing
+      }`;
+  }
+
+  /** What the colours of the sun layer mean. */
+  private _renderSunLegend() {
+    const map = this._sunMap;
+    if (this._layer !== "sun" || !map) return nothing;
+    const { t, language } = this;
+    return html`<div class="hint sun-legend" role="status">
+      <span>${t("sun.legend", { month: this._monthName(map.month) })}</span>
+      <span class="sun-scale" aria-hidden="true">
+        <span>0 h</span>
+        <span
+          class="bar"
+          style="background: linear-gradient(to right, ${sunColor(0, 1)}, ${sunColor(0.5, 1)}, ${sunColor(1, 1)})"
+        ></span>
+        <span>${formatNumber(map.day_hours, language, 0)} h</span>
+      </span>
+    </div>`;
   }
 
   private _toggleGreyBackground(): void {
@@ -1372,7 +1455,7 @@ export class PgGardenView extends PgElement {
     ) {
       text = t("plan.empty_hint");
     }
-    if (!text) return nothing;
+    if (!text) return this._renderSunLegend();
     return html`<div class="hint" role="status">
       <span>${text}</span>
       ${
@@ -1821,6 +1904,30 @@ export class PgGardenView extends PgElement {
           )}
         </select>
       </label>
+      ${
+        shape.kind !== "boundary"
+          ? html`<label class="field">
+              <span>${t("plan.height")}</span>
+              <input
+                type="number"
+                min="0"
+                max="200"
+                step="0.1"
+                inputmode="decimal"
+                placeholder=${String(DEFAULT_HEIGHT[shape.kind] ?? 0)}
+                .value=${shape.height_m === null || shape.height_m === undefined ? "" : String(shape.height_m)}
+                @change=${(e: Event) => {
+                  const raw = (e.target as HTMLInputElement).value.trim().replace(",", ".");
+                  const value = raw === "" ? null : Number(raw);
+                  if (value === null || (Number.isFinite(value) && value >= 0 && value <= 200)) {
+                    update({ height_m: value });
+                  }
+                }}
+              />
+              <small>${t("plan.height_hint")}</small>
+            </label>`
+          : nothing
+      }
       ${
         soil
           ? html`<label class="field">
@@ -2648,6 +2755,20 @@ export class PgGardenView extends PgElement {
         gap: 4px;
         padding: 0 4px;
         font-size: 13px;
+      }
+      .sun-legend {
+        flex-wrap: wrap;
+      }
+      .sun-scale {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+      }
+      .sun-scale .bar {
+        width: 90px;
+        height: 10px;
+        border-radius: 5px;
       }
       .layer-select .icon {
         width: 18px;

@@ -21,6 +21,8 @@ import type {
   Plant,
   PlantDetail,
   MoistureFields,
+  SunMap,
+  SunSummary,
   PlantFields,
   Point,
   Shape,
@@ -108,6 +110,15 @@ export async function movePlants(
   moves: { plant_id: string; position: Point | null }[],
 ): Promise<void> {
   await hass.callWS<unknown>({ type: `${WS_PREFIX}/plants/move`, moves });
+}
+
+// ------------------------------------------------------------ sun and shade
+export function sunSummary(hass: HomeAssistant): Promise<SunSummary> {
+  return hass.callWS<SunSummary>({ type: `${WS_PREFIX}/sun/summary` });
+}
+
+export function sunMap(hass: HomeAssistant, month: number): Promise<SunMap | null> {
+  return hass.callWS<SunMap | null>({ type: `${WS_PREFIX}/sun/map`, month });
 }
 
 // ------------------------------------------------------------ layout

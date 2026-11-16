@@ -30,7 +30,8 @@ sensors and offers recommendations as entities for your own automations.
 - Plants as round photo avatars in their crown size – or drawn as an area, so a
   whole beech hedge or the lawn is one plant, not a hundred.
 - Rings at a glance: needs water, frost expected, pruning due, open problem.
-  Layers for the soil water deficit and the irrigation coverage.
+  Layers for the soil water deficit, the irrigation coverage and sun and shade
+  (hours of direct sun per month, from the shadows of buildings, hedges and trees).
 - Markers that show live values of any Home Assistant entity (soil moisture,
   temperature, …) with a 24 h history.
 - View mode for looking (nothing moves by accident), edit mode for changing;

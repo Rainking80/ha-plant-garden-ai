@@ -22,6 +22,8 @@ import type {
   PricingInfo,
   Prices,
   Shape,
+  SunMap,
+  SunSummary,
   TechInfo,
   UsageRow,
   UsageSummary,
@@ -482,6 +484,8 @@ export interface FakeBackend {
   care: FakeCare;
   research: ResearchSummary;
   comparison: PhotoComparison | null;
+  sun: SunSummary;
+  sunMap: SunMap | null;
   isAdmin: boolean;
 }
 
@@ -524,6 +528,8 @@ export function fakeBackend(
     care?: Partial<FakeCare>;
     research?: Partial<ResearchSummary>;
     comparison?: PhotoComparison | null;
+    sun?: SunSummary;
+    sunMap?: SunMap | null;
     isAdmin?: boolean;
     country?: string | null;
     language?: string;
@@ -543,6 +549,8 @@ export function fakeBackend(
     ai: fakeAI(options.ai),
     care: fakeCare(options.care),
     research: fakeResearch(options.research),
+    sun: options.sun ?? { plants: {}, season: [4, 5, 6, 7, 8, 9], obstacles: 0 },
+    sunMap: options.sunMap ?? null,
     comparison: options.comparison ?? null,
     isAdmin: options.isAdmin ?? true,
   } as FakeBackend;
@@ -586,6 +594,10 @@ export function fakeBackend(
       }
       case "plant_garden/layout/get":
         return layout();
+      case "plant_garden/sun/summary":
+        return backend.sun;
+      case "plant_garden/sun/map":
+        return backend.sunMap ? { ...backend.sunMap, month: msg.month } : null;
       case "plant_garden/layout/set_background": {
         const bg = msg.background as Background | { type: "none" };
         backend.background = bg.type === "none" ? null : (bg as Background);

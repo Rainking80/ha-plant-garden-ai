@@ -16,6 +16,10 @@ All notable changes to this project are documented here. The format follows
   outlook and the zone advice go on from it. The scale between wet and dry is
   learned from the wettest reading of the last 60 days and the soil type, or set
   by hand; without a fresh reading the calculation takes over.
+- Sun and shade: a new plan layer shows the hours of direct sun on a clear day
+  in any month, from the shadows of buildings, greenhouses, roofs, hedges and
+  tall plants (areas can be given a height). A plant's page shows the sun its
+  place gets over the season and offers it as the plant's light.
 
 ## [0.2.0] - 2026-11-14
 

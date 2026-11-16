@@ -628,3 +628,25 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
 - **Not done**: soil type and root depth are not fitted to the sensor's curve -
   the scale is what is learned. The entity id is redacted in diagnostics and
   never part of the AI context.
+
+## D-043 Sun and shade from the plan (2026-11-16)
+
+- **Model**: the sun's elevation and azimuth follow from the latitude, the day of
+  the year and local solar time (declination by the usual sine formula; no time
+  zone needed to count hours). One clear day in the middle of a month stands for
+  the month, looked at every 20 minutes while the sun is above 5°.
+- **Shadows**: every area with a height and every plant of at least 1 m is a
+  prism over its outline (circles as 16-gons). A place is shaded when the stretch
+  from it towards the sun, as long as the prism's shadow (height / tan elevation),
+  touches the outline. Exact for prisms, a few thousand edge tests per place.
+- **Heights**: `Shape.height_m`, else house 6 m, greenhouse and roof 2.5 m, hedge
+  1.8 m; an area that is a plant takes the plant's measured height. Plants: the
+  newest measured height, else tree 6 m, fruit 3 m, hedge 1.8 m, shrub 1.5 m. A
+  plant does not shade itself.
+- **Results**: hours per month and the mean of the growing season (April to
+  September north of the equator, else October to March) per plant; full sun from
+  6 h, shade below 3 h. The value is shown, the user takes it over as `light`
+  (never set silently). The plan layer is a grid of 40 cells along the longer
+  side. Computed on request in the executor, nothing is stored.
+- **Not part of it**: clouds, terrain, neighbours outside the plan, the
+  transparency of tree crowns in winter. The water balance does not use it (yet).

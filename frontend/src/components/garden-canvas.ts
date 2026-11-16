@@ -14,6 +14,7 @@ import type {
   PolygonGeometry,
   SectorGeometry,
   Shape,
+  SunMap,
 } from "../api/types";
 import type { HomeAssistant } from "../types/hass";
 import { markerIcon, markerValue } from "../util/markers";
@@ -76,7 +77,14 @@ import {
 import { PgElement, define } from "./base";
 
 export type Mode = "view" | "edit";
-export type Layer = "plan" | "deficit" | "coverage";
+export type Layer = "plan" | "deficit" | "coverage" | "sun";
+
+/** Colour of a place with `hours` of direct sun out of `most`: dark blue shade to warm yellow. */
+export function sunColor(hours: number, most: number): string {
+  const share = most > 0 ? Math.min(Math.max(hours / most, 0), 1) : 0;
+  const hue = 225 - 177 * share;
+  return `hsl(${Math.round(hue)} ${Math.round(35 + 60 * share)}% ${Math.round(32 + 30 * share)}%)`;
+}
 export type Tool =
   | "select"
   | "rect"
@@ -278,6 +286,8 @@ export class PgGardenCanvas extends PgElement {
     layer: {},
     /** draw irrigation zones */
     showZones: { type: Boolean },
+    /** hours of direct sun as a grid, drawn while the layer is "sun" */
+    sunMap: { attribute: false },
     /** hide the background behind plain grey (its imagery is not loaded then) */
     greyBackground: { type: Boolean },
     _clock: { state: true },
@@ -306,6 +316,7 @@ export class PgGardenCanvas extends PgElement {
   declare highlight: ReadonlySet<string>;
   declare showZones: boolean;
   declare greyBackground: boolean;
+  declare sunMap: SunMap | null;
   declare water: Record<string, PlantBalance>;
   /** Open tasks and problems per plant: "pruning due" ring, problem dot. */
   declare care: Record<string, PlantCare>;
@@ -355,6 +366,7 @@ export class PgGardenCanvas extends PgElement {
     this.care = {};
     this.showZones = true;
     this.greyBackground = false;
+    this.sunMap = null;
     this.water = {};
     this.layer = "plan";
     this._clock = Date.now();
@@ -1603,6 +1615,22 @@ export class PgGardenCanvas extends PgElement {
     return nothing;
   }
 
+  /** The sun map: one square per cell, dark for shade and bright for sun. */
+  private _renderSunMap() {
+    const map = this.sunMap;
+    if (this.layer !== "sun" || !map) return nothing;
+    return svg`<g class="sun-map">
+      ${map.hours.map((hours, i) => {
+        const col = i % map.cols;
+        const row = Math.floor(i / map.cols);
+        // a hair larger than the cell, so no seams show between the squares
+        return svg`<rect x=${map.x + col * map.cell} y=${map.y + row * map.cell}
+          width=${map.cell * 1.02} height=${map.cell * 1.02}
+          fill=${sunColor(hours, map.day_hours)}></rect>`;
+      })}
+    </g>`;
+  }
+
   private _renderMarker(marker: Marker, mpp: number) {
     const o = this._override;
     const position =
@@ -1689,6 +1717,7 @@ export class PgGardenCanvas extends PgElement {
             (shape) => this._renderShape(shape),
           )}
         </g>
+        ${this._renderSunMap()}
         <g class="zones">
           ${
             this.showZones
@@ -2166,6 +2195,10 @@ export class PgGardenCanvas extends PgElement {
     }
     svg.with-backdrop .grid-minor {
       display: none;
+    }
+    .sun-map {
+      pointer-events: none;
+      opacity: 0.62;
     }
     /* the background hidden behind plain grey */
     svg.grey-backdrop .ground {

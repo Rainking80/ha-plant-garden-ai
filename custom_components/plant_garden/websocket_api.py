@@ -127,6 +127,7 @@ SHAPE = {
     probatio.Optional("locked"): bool,
     probatio.Optional("z"): probatio.All(int, probatio.Range(min=-1000, max=1000)),
     probatio.Optional("irrigation"): probatio.Any(None, IRRIGATION),
+    probatio.Optional("height_m"): probatio.Any(None, _number(0, 200)),
 }
 
 OPACITY = _number(0.05, 1)

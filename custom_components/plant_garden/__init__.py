@@ -39,6 +39,7 @@ from .websocket_ai import async_register_ai_commands
 from .websocket_api import async_register_websocket_commands
 from .websocket_care import async_register_care_commands
 from .websocket_research import async_register_research_commands
+from .websocket_sun import async_register_sun_commands
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -60,6 +61,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async_register_websocket_commands(hass)
     async_register_ai_commands(hass)
     async_register_care_commands(hass)
+    async_register_sun_commands(hass)
     async_register_research_commands(hass)
     async_register_services(hass)
     return True

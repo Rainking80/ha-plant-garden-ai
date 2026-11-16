@@ -325,6 +325,7 @@ class GardenManager:
             locked=bool(data.get("locked", False)),
             z=int(data.get("z", 0)),
             irrigation=irrigation,
+            height_m=float(data["height_m"]) if data.get("height_m") is not None else None,
         )
         self._layout.shapes[shape.id] = shape
         self._schedule_save()
@@ -350,6 +351,10 @@ class GardenManager:
     def watered_plants(self) -> list[Plant]:
         """Plants that can receive water (removed ones are no longer in the garden)."""
         return [plant for plant in self._plants.values() if plant.status is not PlantStatus.REMOVED]
+
+    async def async_latest_heights(self) -> dict[str, float]:
+        sizes = await self.hass.async_add_executor_job(self._db.latest_sizes)
+        return {plant_id: s["height_cm"] for plant_id, s in sizes.items() if s.get("height_cm")}
 
     async def async_latest_widths(self) -> dict[str, float]:
         sizes = await self.hass.async_add_executor_job(self._db.latest_sizes)

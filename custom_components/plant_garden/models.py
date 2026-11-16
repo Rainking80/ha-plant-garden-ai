@@ -427,6 +427,7 @@ class Shape:
     locked: bool = False
     z: int = 0
     irrigation: Irrigation | None = None  # only for kind ZONE
+    height_m: float | None = None  # how tall it is, for the shade it casts (None: by kind)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -439,6 +440,7 @@ class Shape:
             "locked": self.locked,
             "z": self.z,
             "irrigation": self.irrigation.as_dict() if self.irrigation else None,
+            "height_m": self.height_m,
         }
 
     @classmethod
@@ -455,6 +457,7 @@ class Shape:
             locked=bool(data.get("locked", False)),
             z=int(data.get("z", 0)),
             irrigation=(Irrigation.from_dict(irrigation or {}) if kind is ShapeKind.ZONE else None),
+            height_m=float(data["height_m"]) if data.get("height_m") is not None else None,
         )
 
 

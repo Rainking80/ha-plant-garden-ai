@@ -241,6 +241,39 @@ export interface Shape {
   z: number;
   /** Only for kind "zone". */
   irrigation?: Irrigation | null;
+  /** how tall it is, for the shade it casts; null: typical for its kind */
+  height_m?: number | null;
+}
+
+/** Hours of direct sun over the plan on a clear day in one month. */
+export interface SunMap {
+  month: number;
+  /** north-west corner in plan metres, and the side of a cell */
+  x: number;
+  y: number;
+  cell: number;
+  cols: number;
+  rows: number;
+  /** row by row from the north */
+  hours: number[];
+  /** hours a place without any shade gets */
+  day_hours: number;
+}
+
+export interface PlantSun {
+  /** hours of direct sun per month (January first) */
+  months: number[];
+  /** mean of the growing season */
+  season_hours: number;
+  light: Light;
+}
+
+export interface SunSummary {
+  plants: Record<string, PlantSun>;
+  /** months of the growing season (1-12) */
+  season: number[];
+  /** how many things on the plan cast a shadow */
+  obstacles: number;
 }
 
 export interface WmsBackground {

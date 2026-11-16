@@ -272,6 +272,7 @@ describe("soil water on the plan and the plant page", () => {
       "Plan",
       "Wasserdefizit",
       "Bewässerungsabdeckung",
+      "Sonne und Schatten",
     ]);
     select.value = "deficit";
     select.dispatchEvent(new Event("change"));
