@@ -1,11 +1,45 @@
-# Plant Garden for Home Assistant
+# Plant Garden – the AI gardener for Home Assistant
 
-A garden planner and plant journal inside Home Assistant: draw your garden to
-scale on aerial imagery, place your plants, document them with photos, see which
-plant got how much water from your irrigation, follow the soil water of every
-plant, keep care tasks in Home Assistant's to-do list – and, if you like, let an
-AI identify plants, diagnose problems and give tips, with every token and cent on
-record.
+**AI first.** Photograph your plants and the AI names them, fills in their care,
+watches their health and plans what to plant where. Smart algorithms do the daily
+thinking – soil water for every plant, sun and shade, watering advice, weather
+warnings – and Home Assistant automates the rest. Garden care and planning
+become fun.
+
+**What the AI does for you**
+- **Garden walk**: photograph one plant after the other – each photo becomes a
+  plant, placed on the plan by its GPS, identified and named.
+- **A plan from a picture**: the AI traces house, lawn, beds and paths from your
+  sketch or site plan.
+- **What fits here?**: tap a free place and get plants that suit its sun, soil,
+  room and neighbours – one click plans them, with a task to plant.
+- **Plant doctor**: diagnosis from photos, a weekly look at your garden camera,
+  photo comparisons that open a problem when something is wrong.
+- **Plant knowledge**: care, pests, toxicity and a care calendar researched for
+  every plant, turned into tasks.
+- **Talk to the garden**: ask your voice assistant what needs water, log a
+  watering, add or tick off tasks.
+
+**Smart without AI – free and local**
+- A soil water balance per plant from rain, evaporation, soil and irrigation,
+  corrected by your soil moisture sensors; a week's outlook of who needs water
+  when.
+- Sun and shade computed from your buildings, hedges and trees, for every place
+  and month.
+- Irrigation tracked per plant, with a recommended run time per zone that takes
+  the coming rain into account.
+- Weather warnings with what to do: frost, heat, storm, fungal weather, slugs.
+- A daily camera picture per plant and a time-lapse of the season.
+
+**Made for automations**
+- Sensors, binary sensors, events, actions and a to-do list for everything
+  above – "irrigation recommended", "needs water", "task due", "problem
+  detected" – ready for your own automations and dashboards.
+
+You choose the AI: one already set up in Home Assistant, Claude, OpenAI, Gemini,
+OpenRouter or a local model. Every AI call happens on your request or by an
+option you switch on, with every token and cent on record – and everything in
+"Smart without AI" works with no AI at all.
 
 > **Status:** early development, version 0.2.0. Changes are listed in the
 > [changelog](CHANGELOG.md).
@@ -302,16 +336,40 @@ decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Deutsch
 
-Plant Garden ist ein Gartenplaner und Pflanzentagebuch für Home Assistant:
+**KI zuerst.** Plant Garden ist der KI-Gärtner für Home Assistant: Pflanzen
+fotografieren, und die KI benennt sie, füllt ihre Pflege aus, behält ihre
+Gesundheit im Blick und plant, was wohin passt. Schlaue Algorithmen übernehmen das
+tägliche Rechnen, Home Assistant automatisiert den Rest – so machen Gartenpflege
+und Planung Spaß.
 
-- den Garten maßstabsgetreu auf Luftbildern zeichnen,
-- Pflanzen platzieren (auch als Fläche, etwa eine ganze Hecke),
-- Fotos und Wachstum dokumentieren,
-- Bewässerung pro Pflanze erfassen (ohne selbst zu schalten),
-- Bodenwasser aus Regen und Verdunstung berechnen,
-- Pflegeaufgaben in der To-do-Liste von Home Assistant verwalten,
-- optional mit KI: Bestimmung, Diagnose, Tipps und Chat, mit Übersicht über Tokens
-  und Kosten.
+Was die KI übernimmt:
+
+- **Garten-Rundgang**: eine Pflanze nach der anderen fotografieren – jedes Foto
+  wird zur Pflanze, per GPS auf dem Plan platziert, bestimmt und benannt,
+- **Plan aus einem Bild**: Haus, Rasen, Beete und Wege aus Skizze oder Lageplan,
+- **Was passt hier hin?**: Pflanzvorschläge für eine Stelle nach Sonne, Boden,
+  Platz und Nachbarn, mit einem Klick eingeplant,
+- **Pflanzendoktor**: Diagnose aus Fotos, wöchentlicher Blick auf die
+  Gartenkamera, Fotovergleich,
+- **Pflanzenwissen**: Pflege, Schädlinge, Giftigkeit und Pflegekalender je
+  Pflanze, als Aufgaben übernehmbar,
+- **Mit dem Garten sprechen**: per Sprachassistent fragen, was Wasser braucht,
+  Gießen erfassen, Aufgaben anlegen und abhaken.
+
+Schlau auch ohne KI, kostenlos und lokal:
+
+- Bodenwasser je Pflanze aus Regen, Verdunstung, Boden und Bewässerung,
+  korrigiert durch Bodenfeuchtesensoren, mit Wochenausblick,
+- Sonne und Schatten aus Gebäuden, Hecken und Bäumen, für jede Stelle und jeden
+  Monat,
+- Bewässerung pro Pflanze (ohne selbst zu schalten) und empfohlene Laufzeit je
+  Zone, die den kommenden Regen berücksichtigt,
+- Wetterwarnungen mit Handlungstipps, tägliches Kamerabild und Zeitraffer,
+- Sensoren, Ereignisse, Aktionen und eine To-do-Liste für eigene Automationen.
+
+Den KI-Anbieter wählst du selbst (eine KI aus Home Assistant, Claude, OpenAI,
+Gemini, OpenRouter oder ein lokales Modell); jeder Aufruf geschieht auf Wunsch
+oder per Option, mit Übersicht über Tokens und Kosten.
 
 Die Oberfläche gibt es auf Deutsch und Englisch. Installation wie oben
 beschrieben (HACS als benutzerdefiniertes Repository oder manuell), mindestens
