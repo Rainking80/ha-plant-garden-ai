@@ -900,3 +900,91 @@ describe("pg-garden-view: what fits here?", () => {
     await vi.waitFor(() => expect(deepText(planner)).toContain("No AI provider is set up"));
   });
 });
+
+describe("pg-garden-view: a plan from a picture", () => {
+  const BG = {
+    type: "image" as const,
+    image_id: "01JIMAGE0000000000000000AA",
+    width_px: 800,
+    height_px: 400,
+    x: -10,
+    y: -5,
+    width_m: 20,
+    rotation: 0,
+    opacity: 0.8,
+    url: "/bg.jpg?authSig=x",
+  };
+  const SKETCH = {
+    model: "claude-opus-5-5",
+    note: "Die Hecke war nicht klar zu erkennen.",
+    shapes: [
+      {
+        kind: "lawn" as const,
+        label: "Rasen",
+        area_m2: 100,
+        geometry: {
+          type: "polygon" as const,
+          points: [
+            [-10, -5],
+            [0, -5],
+            [0, 5],
+            [-10, 5],
+          ] as [number, number][],
+        },
+      },
+      {
+        kind: "house" as const,
+        label: null,
+        area_m2: 42,
+        geometry: {
+          type: "polygon" as const,
+          points: [
+            [2, -3],
+            [8, -3],
+            [8, 3],
+            [2, 3],
+          ] as [number, number][],
+        },
+      },
+    ],
+  };
+
+  it("offers the tool only with an uploaded picture", async () => {
+    const { view } = await mount(fakeBackend());
+    await clickButton(view, "Bearbeiten");
+    expect(
+      [...(view.shadowRoot?.querySelectorAll("button") ?? [])].some(
+        (b) => b.title === "Flächen aus dem Bild erkennen",
+      ),
+    ).toBe(false);
+  });
+
+  it("takes the chosen areas over in one undoable step", async () => {
+    const backend = fakeBackend({ background: { ...BG }, sketch: SKETCH });
+    const { view, store } = await mount(backend);
+    await clickButton(view, "Bearbeiten");
+    await clickButton(view, "Flächen aus dem Bild erkennen");
+    const dialog = deepGet(view, "pg-sketch-import");
+    // nothing is asked before the button is pressed
+    expect(calls(backend, "plant_garden/assistant/sketch")).toHaveLength(0);
+    deepGet<HTMLButtonElement>(dialog, ".dialog-body button").click();
+    await vi.waitFor(() => expect(deepText(dialog)).toContain("100 m²"));
+    const text = deepText(dialog);
+    expect(text).toContain("„Rasen“");
+    expect(text).toContain("Haus");
+    expect(text).toContain("Die Hecke war nicht klar zu erkennen.");
+    expect(text).toContain("2 übernehmen");
+
+    // leave the house out
+    dialog.shadowRoot?.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')[1]?.click();
+    await vi.waitFor(() => expect(deepText(dialog)).toContain("1 übernehmen"));
+    deepGet<HTMLButtonElement>(dialog, "button.take").click();
+    await vi.waitFor(() => expect(store.layout?.shapes).toHaveLength(1));
+    const saved = calls(backend, "plant_garden/layout/shapes/save")[0]?.shape as Shape;
+    expect(saved).toMatchObject({ kind: "lawn", label: "Rasen", z: -6 });
+    expect(saved.geometry).toEqual(SKETCH.shapes[0]?.geometry);
+
+    await clickButton(view, "Rückgängig");
+    await vi.waitFor(() => expect(store.layout?.shapes).toHaveLength(0));
+  });
+});

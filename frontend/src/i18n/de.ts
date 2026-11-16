@@ -572,6 +572,13 @@ export const de: Translations = {
   "tech.plants": "{n} Pflanzen",
   "tech.never": "noch nie aktualisiert",
   "tech.no_weather": "keine eingerichtet",
+  "sketch.title": "Flächen aus dem Bild erkennen",
+  "sketch.intro":
+    "Die KI zeichnet die Flächen nach, die sie im Hintergrundbild erkennt: Haus, Rasen, Beete, Wege. Kalibriere das Bild vorher, damit der Maßstab stimmt. Das Bild geht an deinen KI-Anbieter, der Aufruf kostet etwas.",
+  "sketch.ask": "Flächen erkennen",
+  "sketch.asking": "Die KI sieht sich das Bild an …",
+  "sketch.none": "Die KI hat keine Flächen erkannt.",
+  "sketch.take": "{count} übernehmen",
   "planner.title": "Was passt hier hin?",
   "planner.pick_hint": "Tippe auf die Stelle, für die du Pflanzvorschläge möchtest.",
   "planner.wish": "Wunsch (optional)",

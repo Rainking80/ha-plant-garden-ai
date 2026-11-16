@@ -22,6 +22,7 @@ import type {
   PlantDetail,
   MoistureFields,
   PlacePlan,
+  SketchResult,
   SunMap,
   SunSummary,
   PlantFields,
@@ -617,6 +618,11 @@ export function getTips(hass: HomeAssistant, plantId?: string | null): Promise<T
     type: `${WS_PREFIX}/assistant/tips`,
     ...plantArg(plantId),
   });
+}
+
+/** Areas the AI sees in the plan's background picture (an AI call with costs; nothing is saved). */
+export function sketchPlan(hass: HomeAssistant): Promise<SketchResult> {
+  return hass.callWS<SketchResult>({ type: `${WS_PREFIX}/assistant/sketch` });
 }
 
 /** Plants the AI proposes for a place on the plan (an AI call with costs). */

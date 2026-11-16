@@ -28,6 +28,9 @@ All notable changes to this project are documented here. The format follows
   photo becomes a plant, placed on the plan by the photo's GPS position. With
   the AI switched on for the walk, each plant is identified, named after its
   species and gets its botanical name, care values and size as AI suggestions.
+- A plan from a picture: with an uploaded sketch, site plan or aerial screenshot
+  as background, the AI traces the areas it recognises (house, lawn, beds,
+  paths ...); you tick which to take over, and one undo removes them again.
 
 ## [0.2.0] - 2026-11-14
 

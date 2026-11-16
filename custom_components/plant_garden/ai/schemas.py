@@ -615,3 +615,61 @@ def clean_plan(data: dict[str, Any]) -> dict[str, Any]:
         "note": _text(data.get("note"), 1000),
         "suggestions": suggestions[:MAX_PLAN_SUGGESTIONS],
     }
+
+
+# ---------------------------------------------------------------- a plan from a picture
+SKETCH_KINDS = [
+    "house",
+    "terrace",
+    "path",
+    "bed",
+    "raised_bed",
+    "lawn",
+    "hedge",
+    "pond",
+    "greenhouse",
+    "roof",
+    "other",
+]
+
+SKETCH_SCHEMA: dict[str, Any] = _object(
+    {
+        "areas": {
+            "type": "array",
+            "description": "Every area of the garden that can be told apart, at most 40.",
+            "items": _object(
+                {
+                    "kind": {"type": "string", "enum": SKETCH_KINDS},
+                    "label": _text_or_empty(),
+                    "points": {
+                        "type": "array",
+                        "description": "Outline, corner by corner: [x, y] pairs, each 0 to 1000 "
+                        "(x across the picture's width from the left, y down its height).",
+                        "items": {"type": "array", "items": {"type": "number"}},
+                    },
+                }
+            ),
+        },
+        "note": _text_or_empty(),
+    }
+)
+
+
+def clean_sketch(data: dict[str, Any]) -> dict[str, Any]:
+    """Outlines with a known kind and at least three corners inside the picture."""
+    areas = []
+    for item in data.get("areas") or []:
+        if not isinstance(item, dict) or item.get("kind") not in SKETCH_KINDS:
+            continue
+        points = [
+            (min(max(float(point[0]), 0), 1000), min(max(float(point[1]), 0), 1000))
+            for point in item.get("points") or []
+            if isinstance(point, list)
+            and len(point) == 2
+            and all(_number(value) is not None for value in point)
+        ]
+        if len(points) >= 3:
+            areas.append(
+                {"kind": item["kind"], "label": _text(item.get("label"), 100), "points": points}
+            )
+    return {"areas": areas, "note": _text(data.get("note"), 500)}

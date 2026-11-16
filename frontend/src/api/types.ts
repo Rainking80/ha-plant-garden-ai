@@ -260,6 +260,20 @@ export interface SunMap {
   day_hours: number;
 }
 
+/** An area the AI outlined in the plan's background picture (not saved yet). */
+export interface SketchShape {
+  kind: ShapeKind;
+  label: string | null;
+  geometry: Geometry;
+  area_m2: number;
+}
+
+export interface SketchResult {
+  model: string;
+  note: string | null;
+  shapes: SketchShape[];
+}
+
 /** What a place on the plan offers a new plant (sent to the AI). */
 export interface PlaceSite {
   sun_hours_season: number;

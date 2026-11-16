@@ -690,3 +690,23 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   placeholder name stays.
 - **Not in the walk**: cropping (it would interrupt after every photo) and
   several photos per plant - both remain on the plant page.
+
+## D-046 A plan from a picture (2026-11-16)
+
+- **Input**: only the uploaded plan background (a sketch, a site plan, a
+  screenshot of an aerial image). The built-in aerial imagery is loaded by the
+  browser from the survey offices; reading it would mean fetching it in the
+  backend (the garden's location in a server request) and sending official
+  imagery on to an AI provider - neither is done.
+- **One call on request** (feature `sketch`, the provider for photos): the picture
+  downsized to 1568 px, its real size in metres from the calibration, and a
+  strict schema of areas with a kind and an outline in picture coordinates
+  (0 to 1000 across the width and down the height).
+- **Geometry**: outlines are clamped into the picture, converted to plan metres
+  (top-left corner, width, aspect ratio, rotation about the centre), closed
+  outlines lose their repeated corner; areas under 0.2 m² or with fewer than
+  three corners are dropped. Everything becomes a polygon.
+- **The user decides**: the answer is a list with kind, lettering and size;
+  nothing is saved by the backend. The panel creates the ticked areas through the
+  normal shape command, all in one history step. Plants, trees and irrigation are
+  not read from the picture.

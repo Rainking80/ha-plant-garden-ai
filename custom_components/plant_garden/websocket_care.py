@@ -117,6 +117,7 @@ def async_register_care_commands(hass: HomeAssistant) -> None:
         ws_tips_decide,
         ws_plan_place,
         ws_plan_accept,
+        ws_sketch_plan,
         ws_compare_get,
         ws_compare_run,
         ws_chat_history,
@@ -425,6 +426,18 @@ async def ws_tips_create(
 ) -> dict[str, Any]:
     """New tips from the AI (costs money)."""
     return await assistant.async_tips(msg.get("plant_id"))
+
+
+@care_command(_type("assistant/sketch"))
+async def ws_sketch_plan(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    care: CareManager,
+    assistant: Assistant,
+) -> dict[str, Any]:
+    """Areas the AI sees in the plan's background picture (costs money; nothing is saved)."""
+    return await assistant.async_sketch_plan()
 
 
 @care_command(

@@ -23,6 +23,7 @@ import type {
   PricingInfo,
   Prices,
   Shape,
+  SketchResult,
   SunMap,
   SunSummary,
   TechInfo,
@@ -488,6 +489,7 @@ export interface FakeBackend {
   sun: SunSummary;
   sunMap: SunMap | null;
   placePlan: PlacePlan | null;
+  sketch: SketchResult | null;
   isAdmin: boolean;
 }
 
@@ -533,6 +535,7 @@ export function fakeBackend(
     sun?: SunSummary;
     sunMap?: SunMap | null;
     placePlan?: PlacePlan | null;
+    sketch?: SketchResult | null;
     isAdmin?: boolean;
     country?: string | null;
     language?: string;
@@ -555,6 +558,7 @@ export function fakeBackend(
     sun: options.sun ?? { plants: {}, season: [4, 5, 6, 7, 8, 9], obstacles: 0 },
     sunMap: options.sunMap ?? null,
     placePlan: options.placePlan ?? null,
+    sketch: options.sketch ?? null,
     comparison: options.comparison ?? null,
     isAdmin: options.isAdmin ?? true,
   } as FakeBackend;
@@ -598,6 +602,9 @@ export function fakeBackend(
       }
       case "plant_garden/layout/get":
         return layout();
+      case "plant_garden/assistant/sketch":
+        if (!backend.sketch) throw { code: "ai_error", message: "No AI provider is set up" };
+        return backend.sketch;
       case "plant_garden/assistant/plan":
         if (!backend.placePlan) throw { code: "ai_error", message: "No AI provider is set up" };
         return { ...backend.placePlan, x: msg.x, y: msg.y };

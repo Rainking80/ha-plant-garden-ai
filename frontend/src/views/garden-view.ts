@@ -11,6 +11,7 @@ import {
   mdiDeleteOutline,
   mdiEyeOutline,
   mdiFitToScreenOutline,
+  mdiImageSearchOutline,
   mdiImageFilterBlackWhite,
   mdiLayersOutline,
   mdiLayersTripleOutline,
@@ -67,6 +68,7 @@ import {
   type Point,
   type Shape,
   type ShapeKind,
+  type SketchShape,
   type SunMap,
 } from "../api/types";
 import "../components/background-dialog";
@@ -93,6 +95,8 @@ import type {
 } from "../components/garden-canvas";
 import "../components/number-dialog";
 import "../components/place-planner";
+import "../components/sketch-import";
+import type { PgSketchImport } from "../components/sketch-import";
 import type { PgPlacePlanner } from "../components/place-planner";
 import type { PgNumberDialog } from "../components/number-dialog";
 import "../components/origin-dialog";
@@ -829,6 +833,30 @@ export class PgGardenView extends PgElement {
     void this._movePlant(plant.id, plant.position, at);
   }
 
+  /** Areas taken over from the picture: created in one step, undone in one step. */
+  private _onSketchShapes(event: CustomEvent<{ shapes: SketchShape[] }>): void {
+    const shapes: Shape[] = event.detail.shapes.map((found) => ({
+      id: ulid(),
+      kind: found.kind,
+      geometry: found.geometry,
+      label: found.label,
+      plant_id: null,
+      soil_type: null,
+      locked: false,
+      z: KIND_Z[found.kind],
+      irrigation: null,
+    }));
+    void this._execute({
+      label: "sketch-shapes",
+      run: async () => {
+        for (const shape of shapes) await this._putShape(shape);
+      },
+      undo: async () => {
+        for (const shape of shapes) await this._removeShape(shape);
+      },
+    });
+  }
+
   private _onDeleteSelection(): void {
     const selection = this._selection;
     if (!selection) return;
@@ -1135,6 +1163,10 @@ export class PgGardenView extends PgElement {
         @entity-picked=${this._onZoneEntityPicked}
       ></pg-entity-picker>
       <pg-number-dialog .hass=${this.hass}></pg-number-dialog>
+      <pg-sketch-import
+        .hass=${this.hass}
+        @shapes-chosen=${this._onSketchShapes}
+      ></pg-sketch-import>
       <pg-place-planner
         .hass=${this.hass}
         @plant-planned=${(e: CustomEvent<{ plantId: string }>) => {
@@ -1243,7 +1275,18 @@ export class PgGardenView extends PgElement {
                 ${
                   imageBackground
                     ? html`${this._toolButton("calibrate", mdiRulerSquareCompass, "plan.tool_calibrate")}
-                      ${this._toolButton("background", mdiAxisArrow, "plan.tool_background")}`
+                        ${this._toolButton("background", mdiAxisArrow, "plan.tool_background")}
+                        <button
+                          class="tool"
+                          @click=${() =>
+                            this.renderRoot
+                              .querySelector<PgSketchImport>("pg-sketch-import")
+                              ?.open()}
+                          aria-label=${t("sketch.title")}
+                          title=${t("sketch.title")}
+                        >
+                          ${icon(mdiImageSearchOutline)}
+                        </button>`
                     : nothing
                 }
                 <button

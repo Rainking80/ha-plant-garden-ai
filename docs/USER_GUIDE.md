@@ -44,6 +44,14 @@ happens in the sidebar entry the integration creates; the settings live under
   behind plain grey, so plants, beds and rings stand out, and no aerial imagery
   is loaded; each device remembers it. Moving or calibrating the background
   still shows it.
+- **A plan from a picture** (edit mode, with an uploaded picture as background):
+  calibrate the picture, then choose *Find areas in the picture*. The AI traces
+  the areas it recognises - house, terrace, lawn, beds, paths, pond - and lists
+  them with their size; untick what does not fit and take the rest over. They
+  are ordinary areas you can reshape, and one *Undo* removes them all. It works
+  on a hand sketch, a site plan or a screenshot of an aerial image; the built-in
+  aerial imagery cannot be read this way (your browser loads it, Home Assistant
+  never sees it). The picture is sent to your AI provider.
 - **Location**: if your garden is not at home (an allotment), move the plan to its
   real place; everything already drawn can stay where it is on the map or move
   along.

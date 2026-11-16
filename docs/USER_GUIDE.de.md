@@ -48,6 +48,15 @@ unter **Einstellungen → Geräte & Dienste → Plant Garden**.
   Beete und Ringe hervortreten; Luftbilder werden dann nicht geladen. Jedes Gerät
   merkt sich das. Beim Verschieben und Kalibrieren ist der Hintergrund trotzdem zu
   sehen.
+- **Plan aus einem Bild** (Bearbeitungsmodus, mit einem hochgeladenen Bild als
+  Hintergrund): das Bild kalibrieren, dann *Flächen aus dem Bild erkennen* wählen.
+  Die KI zeichnet die Flächen nach, die sie erkennt - Haus, Terrasse, Rasen, Beete,
+  Wege, Teich - und listet sie mit ihrer Größe auf; was nicht passt abwählen, den
+  Rest übernehmen. Es sind normale Flächen, die sich nachformen lassen, und ein
+  *Rückgängig* entfernt sie alle wieder. Das geht mit einer Handskizze, einem
+  Lageplan oder einem Screenshot eines Luftbilds; die eingebauten Luftbilder lassen
+  sich so nicht lesen (dein Browser lädt sie, Home Assistant sieht sie nie). Das
+  Bild wird an deinen KI-Anbieter gesendet.
 - **Standort**: Liegt der Garten nicht zu Hause (Kleingarten), den Plan an seinen
   echten Ort verschieben; Gezeichnetes bleibt auf der Karte, wo es ist, oder zieht
   mit.

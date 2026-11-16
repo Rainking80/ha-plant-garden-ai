@@ -107,6 +107,8 @@ sensors and offers recommendations as entities for your own automations.
 - Weather warnings with what to do: frost, heat, storm, heavy rain, and weather
   for fungal diseases and slugs - for the plants at risk, as a notification too
   (rules, no AI).
+- A plan from a picture: the AI traces house, lawn, beds and paths from an
+  uploaded sketch or site plan; you choose which areas to take over.
 - What fits here?: tap a free place on the plan and the AI proposes plants for
   its sun, soil, room and neighbours; one click plans a plant there, with a task.
 - Photo comparison: the AI compares a new photo with an earlier one and opens a

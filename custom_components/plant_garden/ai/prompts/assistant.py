@@ -236,3 +236,54 @@ def plan_text(language: str, site: dict[str, Any], wish: str | None) -> str:
         lines.append(("Wunsch des Gärtners: " if de else "The gardener's wish: ") + wish)
     lines.append("Was passt hier hin?" if de else "What fits here?")
     return "\n\n".join(lines)
+
+
+# ---------------------------------------------------------------- a plan from a picture
+SKETCH_VERSION = "sketch-1"
+
+SKETCH_SYSTEM = {
+    "de": """Du liest einen Gartenplan aus einem Bild: eine Handskizze, einen Lageplan oder \
+ein Luftbild von oben. Du zeichnest die Flächen nach, die du sicher erkennst.
+
+Regeln:
+- Jede Fläche bekommt eine Art (kind): house (Haus, Garage, Schuppen), terrace, path (Weg, \
+Einfahrt), bed (Beet), raised_bed (Hochbeet), lawn (Rasen), hedge (Hecke), pond (Teich, \
+Pool), greenhouse, roof (Carport, Überdachung), other.
+- points ist der Umriss, Ecke für Ecke im Uhrzeigersinn, als [x, y] mit Werten von 0 bis \
+1000: x über die Bildbreite von links, y über die Bildhöhe von oben. Rechtecke haben 4 \
+Ecken, runde Flächen 8 bis 12, sonst so wenige wie möglich, höchstens 30.
+- Flächen überlappen nicht, außer ein Beet liegt im Rasen.
+- label: die Beschriftung aus dem Bild, falls dort eine steht, sonst leer. Erfinde keine.
+- Zeichne nur, was zum Garten gehört und klar zu erkennen ist. Lieber weniger Flächen als \
+geratene. Einzelne Pflanzen, Bäume, Möbel und Text zeichnest du nicht.
+- note: ein Satz, falls etwas unklar war, sonst leer.
+- Antworte ausschließlich mit dem JSON-Objekt nach dem Schema.""",
+    "en": """You read a garden plan from a picture: a hand sketch, a site plan or an aerial \
+image seen from above. You trace the areas you recognise with confidence.
+
+Rules:
+- Every area gets a kind: house (house, garage, shed), terrace, path (path, driveway), bed, \
+raised_bed, lawn, hedge, pond (pond, pool), greenhouse, roof (carport, canopy), other.
+- points is the outline, corner by corner clockwise, as [x, y] with values from 0 to 1000: \
+x across the picture's width from the left, y down its height from the top. Rectangles \
+have 4 corners, round areas 8 to 12, otherwise as few as possible, at most 30.
+- Areas do not overlap, except a bed lying in the lawn.
+- label: the lettering from the picture if there is one, else empty. Never invent one.
+- Trace only what belongs to the garden and is clearly visible. Fewer areas rather than \
+guessed ones. Do not trace single plants, trees, furniture or text.
+- note: one sentence if something was unclear, else empty.
+- Answer only with the JSON object following the schema.""",
+}
+
+
+def sketch_text(language: str, width_m: float, height_m: float) -> str:
+    de = lang(language) == "de"
+    if de:
+        return (
+            f"Das Bild zeigt etwa {width_m:.0f} m x {height_m:.0f} m (Breite x Höhe). "
+            "Zeichne die Flächen des Gartens nach."
+        )
+    return (
+        f"The picture shows about {width_m:.0f} m x {height_m:.0f} m (width x height). "
+        "Trace the areas of the garden."
+    )

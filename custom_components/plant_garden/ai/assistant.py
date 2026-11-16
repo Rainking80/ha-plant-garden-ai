@@ -31,17 +31,19 @@ from ..const import (
 from ..garden import GardenChange, GardenManager, NotFoundError
 from ..models import Photo
 from ..photos import PhotoVariant
-from . import context as context_builder, planner
-from .base import AIError, AIRequest, Feature, Message
+from . import context as context_builder, planner, sketch
+from .base import AIError, AIRequest, Feature, Image, Message
 from .prompts import assistant as prompts
 from .schemas import (
     COMPARE_SCHEMA,
     DIAGNOSE_SCHEMA,
     PLAN_SCHEMA,
+    SKETCH_SCHEMA,
     TIPS_SCHEMA,
     clean_comparison,
     clean_diagnosis,
     clean_plan,
+    clean_sketch,
     clean_tips,
 )
 from .service import AIService
@@ -497,6 +499,46 @@ class Assistant:
         )
         chosen["plant_id"] = plant.id
         return {"plant_id": plant.id, "task_id": task.id}
+
+    # ------------------------------------------------------------ a plan from a picture
+    async def async_sketch_plan(self) -> dict[str, Any]:
+        """Areas the AI sees in the uploaded plan background, in plan metres.
+
+        Nothing is saved: the panel shows them and the user takes over what fits.
+        """
+        background = self._manager.layout.background
+        if not background or background.get("type") != "image":
+            raise ValueError("the plan has no uploaded picture as background")
+        language = self._language()
+        path = await self._manager.async_background_path(background["image_id"])
+
+        def load() -> bytes:
+            return sketch.prepare(path.read_bytes())
+
+        picture = await self.hass.async_add_executor_job(load)
+        width = float(background["width_m"])
+        height = width * background["height_px"] / background["width_px"]
+        request = AIRequest(
+            feature=Feature.SKETCH,
+            system=prompts.SKETCH_SYSTEM[language],
+            messages=[
+                Message(
+                    role="user",
+                    text=prompts.sketch_text(language, width, height),
+                    images=[Image(data=picture)],
+                )
+            ],
+            json_schema=SKETCH_SCHEMA,
+            max_output_tokens=6000,
+            prompt_version=prompts.SKETCH_VERSION,
+        )
+        response = await self._ai.async_generate(Feature.SKETCH, request)
+        cleaned = clean_sketch(response.data or {})
+        return {
+            "model": response.model,
+            "note": cleaned["note"],
+            "shapes": sketch.shapes_from(cleaned["areas"], background),
+        }
 
     # ------------------------------------------------------------ chat
     async def async_chat(

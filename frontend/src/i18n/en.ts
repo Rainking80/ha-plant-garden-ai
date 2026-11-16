@@ -561,6 +561,13 @@ export const en = {
   "tech.plants": "{n} plants",
   "tech.never": "never updated",
   "tech.no_weather": "none set up",
+  "sketch.title": "Find areas in the picture",
+  "sketch.intro":
+    "The AI traces the areas it recognises in the background picture: house, lawn, beds, paths. Calibrate the picture first, so the scale is right. The picture goes to your AI provider, the call costs a little.",
+  "sketch.ask": "Find areas",
+  "sketch.asking": "The AI is looking at the picture …",
+  "sketch.none": "The AI found no areas.",
+  "sketch.take": "Take over {count}",
   "planner.title": "What fits here?",
   "planner.pick_hint": "Tap the place you want planting suggestions for.",
   "planner.wish": "Wish (optional)",
