@@ -1,10 +1,10 @@
-# Plant Garden – user guide
+# Autogarden – user guide
 
 [Deutsch](USER_GUIDE.de.md)
 
-Plant Garden adds a garden planner and plant journal to Home Assistant. Everything
+Autogarden adds a garden planner and plant journal to Home Assistant. Everything
 happens in the sidebar entry the integration creates; the settings live under
-**Settings → Devices & services → Plant Garden**.
+**Settings → Devices & services → Autogarden**.
 
 ## 1. First steps
 
@@ -92,7 +92,7 @@ plan) and a water meter (real litres instead of an estimate; sprinklers sharing 
 share its litres). Choose the emitter (spray, rotor, drip line, drippers per plant,
 by hand) and its rate or flow.
 
-Plant Garden **never switches anything**. It records every run, works out how much
+Autogarden **never switches anything**. It records every run, works out how much
 water each plant in the zone received and offers sensors and the binary sensor
 "irrigation recommended" for your own automations. Watering with a can is logged
 on the plant page or with the action `plant_garden.log_watering`.
@@ -104,7 +104,7 @@ Open-Meteo (worldwide) or Bright Sky / German Weather Service (Germany). Nothing
 fetched before you add one; the services receive your location rounded to about
 1 km.
 
-Plant Garden keeps a soil water "bucket" for every plant from rain, evaporation
+Autogarden keeps a soil water "bucket" for every plant from rain, evaporation
 (FAO-56 ET₀), soil, root depth, water need and irrigation; a plant "needs water"
 when its readily available water is used up. Plants under a roof get no rain.
 
@@ -184,6 +184,28 @@ new photo of a plant without botanical name is identified automatically.
   slugs, each with what to do and the plants at risk. New warnings also arrive as
   a Home Assistant notification and as the event `plant_garden_weather_alert`
   (option *Weather warnings*, on; no AI, no costs).
+- **Dream garden** (its own tab): ideas for redesigning the garden from a photo,
+  in four steps - each starts only when you press its button.
+  1. *Upload a photo* of the garden or a part of it. *Let the AI look*: it
+     describes what it sees ("I see a lawn with a paved path ...") and asks a
+     few questions with answers to tap.
+  2. Say what you wish for, tap what must stay as it is, pick a style (the ones
+     the AI finds fitting are outlined) and how much may change.
+  3. *Create the concept*: steps and a plant list that fits your site - the
+     soil of your beds, last year's coldest night, hottest day and rainfall,
+     the plants you already have - with quantity, spacing and cautions. This is
+     a text call that costs little. Untick plants you do not want.
+  4. *Create the picture*: the AI edits your photo to show the ticked plants.
+     **A picture costs several cents**; the estimated price and the provider
+     are shown, and you confirm every picture. Compare with the before/after
+     slider, describe a change ("more white, no bench") to refine it, or
+     create a new one.
+  *Take over* turns the ticked plants into planned plants with a task to plant
+  them. The picture is an idea, not a building plan: image models may alter
+  details of the house or the layout - what counts is the plant list. Pictures
+  need OpenAI, Google Gemini or OpenRouter as AI provider (choose it and, if you
+  like, the picture model in the integration's options); the first two steps
+  work with any provider that reads photos.
 - **What fits here?** (the sparkle button on the plan): tap a free place, add a
   wish if you like ("something for bees"), and choose *Get suggestions*. The AI
   gets what the plan knows about the place - computed hours of sun, the bed's
@@ -237,7 +259,7 @@ camera snapshot).
 Events: `plant_garden_irrigation_finished`, `plant_garden_task_due`,
 `plant_garden_problem_detected`, `plant_garden_weather_alert`.
 
-**Voice assistants**: Plant Garden appears as a tool set named *Plant Garden* for
+**Voice assistants**: Autogarden appears as a tool set named *Autogarden* (*Autogarten* in German) for
 conversation agents that use a language model. Switch it on in the agent's
 settings (**Settings → Voice assistants →** your agent **→** the list of what the
 assistant may control). Then ask, by voice or in the Assist chat, "what needs
@@ -279,7 +301,7 @@ actions:
 
 On the **Tech** tab (administrators), *Export as JSON* saves the plan (with its
 location and background), the plants, measurements and open tasks. In the other
-Home Assistant, set up Plant Garden, open the Tech tab and choose *Import a file*:
+Home Assistant, set up Autogarden, open the Tech tab and choose *Import a file*:
 you see what the file contains and confirm. It only imports into an empty garden,
 and everything lands at the same place on the map, whatever that Home Assistant's
 home location is. Photos, history, AI providers and weather sources are not

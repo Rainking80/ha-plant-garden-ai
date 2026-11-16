@@ -32,7 +32,7 @@ from .runtime import PlantGardenConfigEntry
 
 @dataclass(frozen=True, kw_only=True)
 class GardenSensorDescription(GardenEntityDescription, SensorEntityDescription):
-    """A Plant Garden sensor."""
+    """A Autogarden sensor."""
 
 
 PLANT_SENSORS: tuple[GardenSensorDescription, ...] = (

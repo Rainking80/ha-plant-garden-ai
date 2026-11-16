@@ -24,7 +24,7 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_WEATHER_ALERTS, DOMAIN, EVENT_WEATHER_ALERT
+from .const import CONF_WEATHER_ALERTS, DOMAIN, EVENT_WEATHER_ALERT, brand_name
 from .models import LocationType, Plant, PlantCategory, PlantStatus
 from .weather.base import DailyWeather
 
@@ -302,7 +302,7 @@ def alert_text(alert: Alert, language: str, names: list[str]) -> tuple[str, str]
     if names:
         shown = ", ".join(names[:8]) + (" …" if len(names) > 8 else "")
         message += ("\n\nBetrifft: " if lang == "de" else "\n\nPlants: ") + shown
-    return f"Plant Garden: {TITLES[lang][alert.kind]}", message
+    return f"{brand_name(lang)}: {TITLES[lang][alert.kind]}", message
 
 
 class AlertNotifier:

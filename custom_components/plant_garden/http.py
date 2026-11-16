@@ -60,7 +60,7 @@ class PhotoUploadView(HomeAssistantView):
         hass = request.app[KEY_HASS]
         manager = get_manager(hass)
         if manager is None:
-            return self.json_message("Plant Garden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
+            return self.json_message("Autogarden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
 
         fields: dict[str, str] = {}
         image: bytes | None = None
@@ -118,7 +118,7 @@ class PhotoFileView(HomeAssistantView):
         hass = request.app[KEY_HASS]
         manager = get_manager(hass)
         if manager is None:
-            return self.json_message("Plant Garden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
+            return self.json_message("Autogarden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
         if not valid_id(photo_id) or variant not in _VARIANTS:
             raise web.HTTPNotFound
         try:
@@ -144,7 +144,7 @@ class BackgroundUploadView(HomeAssistantView):
         hass = request.app[KEY_HASS]
         manager = get_manager(hass)
         if manager is None:
-            return self.json_message("Plant Garden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
+            return self.json_message("Autogarden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
         image: bytes | None = None
         try:
             reader = await request.multipart()
@@ -178,7 +178,7 @@ class BackgroundFileView(HomeAssistantView):
         _require_auth(request)
         manager = get_manager(request.app[KEY_HASS])
         if manager is None:
-            return self.json_message("Plant Garden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
+            return self.json_message("Autogarden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
         if not valid_id(image_id):
             raise web.HTTPNotFound
         try:
@@ -219,7 +219,7 @@ class GardenExportView(HomeAssistantView):
             return self.json_message("Administrators only", HTTPStatus.FORBIDDEN)
         entry = get_loaded_entry(request.app[KEY_HASS])
         if entry is None:
-            return self.json_message("Plant Garden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
+            return self.json_message("Autogarden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
         data = await async_export(entry)
         stamp = dt_util.now().strftime("%Y-%m-%d")
         response = self.json(data)
@@ -241,7 +241,7 @@ class GardenImportView(HomeAssistantView):
             return self.json_message("Administrators only", HTTPStatus.FORBIDDEN)
         entry = get_loaded_entry(request.app[KEY_HASS])
         if entry is None:
-            return self.json_message("Plant Garden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
+            return self.json_message("Autogarden is not set up", HTTPStatus.SERVICE_UNAVAILABLE)
         raw: bytes | None = None
         try:
             reader = await request.multipart()

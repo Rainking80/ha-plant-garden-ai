@@ -156,6 +156,18 @@ def _load(data: bytes) -> tuple[Image.Image, datetime | None]:
     return _to_rgb(oriented), taken_at
 
 
+DREAM_MAX_EDGE = 1536  # a garden photo for the dream garden: enough for the AI, cheap to send
+
+
+def process_dream(data: bytes) -> tuple[bytes, int, int]:
+    """A garden photo: upright, without metadata, at most 1536 px. Returns JPEG, w, h."""
+    rgb, _ = _load(data)
+    rgb.thumbnail((DREAM_MAX_EDGE, DREAM_MAX_EDGE), Image.Resampling.LANCZOS)
+    buffer = io.BytesIO()
+    rgb.save(buffer, format="JPEG", quality=88, optimize=True)
+    return buffer.getvalue(), rgb.width, rgb.height
+
+
 BACKGROUND_MAX_EDGE = 4096  # site plans and aerial screenshots need more detail than photos
 
 

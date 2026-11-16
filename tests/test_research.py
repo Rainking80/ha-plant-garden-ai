@@ -268,7 +268,7 @@ async def test_research_without_web_search_reads_wikipedia(
     ]
     wiki_calls = [c for c in aioclient_mock.mock_calls if str(c[1]).startswith(WIKIPEDIA)]
     assert len(wiki_calls) == 2
-    assert "PlantGarden/" in wiki_calls[0][3]["user-agent"]  # Wikimedia asks for a name
+    assert "Autogarden/" in wiki_calls[0][3]["user-agent"]  # Wikimedia asks for a name
     body = aioclient_mock.mock_calls[-1][2]
     assert "widely accepted gardening knowledge" in body["messages"][0]["content"]
     assert "climbing wild rose" in body["messages"][1]["content"]

@@ -31,7 +31,7 @@ MAX_ITEMS = 10000  # per list; a garden is not that big
 
 
 class TransferError(ValueError):
-    """The file is not a Plant Garden export or does not fit this garden."""
+    """The file is not a Autogarden export or does not fit this garden."""
 
 
 def _measurement_dict(m: Measurement) -> dict[str, Any]:
@@ -186,7 +186,7 @@ def _image(data: dict[str, Any]) -> bytes | None:
 async def async_import(entry: PlantGardenConfigEntry, data: Any) -> dict[str, Any]:
     """Import an export into this (empty) garden; returns what was imported."""
     if not isinstance(data, dict) or data.get("format") != FORMAT:
-        raise TransferError("this is not a Plant Garden export")
+        raise TransferError("this is not a Autogarden export")
     if data.get("version") != VERSION:
         raise TransferError(f"unsupported export version {data.get('version')}")
     runtime = entry.runtime_data

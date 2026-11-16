@@ -187,7 +187,7 @@ async def test_import_rejects_wrong_files_and_users(
     client = await hass_client()
     for content, message in (
         (b"not json", "not JSON"),
-        (b'{"format": "something else"}', "not a Plant Garden export"),
+        (b'{"format": "something else"}', "not a Autogarden export"),
         (b'{"format": "plant_garden.garden", "version": 9}', "unsupported export version"),
         (
             b'{"format": "plant_garden.garden", "version": 1, "layout": {"origin": null}}',

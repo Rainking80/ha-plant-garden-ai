@@ -1,6 +1,6 @@
 """End-to-end smoke test against a running, *fresh* Home Assistant instance.
 
-Onboards HA through its HTTP API, adds Plant Garden through the real config flow
+Onboards HA through its HTTP API, adds Autogarden through the real config flow
 and checks that the panel is registered, the bundle is served and the panel's
 WebSocket command answers. Started by scripts/smoke; can also be run on its own:
 

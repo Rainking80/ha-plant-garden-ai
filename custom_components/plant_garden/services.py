@@ -1,4 +1,4 @@
-"""Actions (services) of Plant Garden."""
+"""Actions (services) of Autogarden."""
 
 from __future__ import annotations
 

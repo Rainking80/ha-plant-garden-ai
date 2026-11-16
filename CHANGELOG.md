@@ -6,6 +6,24 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Dream garden (new tab): upload a photo of your garden; the AI describes what it
+  sees and asks back, you state wishes, a style and what must stay, and get a
+  planting concept that fits your soil, sun and climate - with quantities,
+  spacing and cautions. After a cost warning the AI creates a picture of how it
+  could look, with a before/after slider; pictures can be refined in words, and
+  plants of the concept become planned plants with a task. Pictures need OpenAI,
+  Google Gemini or OpenRouter.
+
+### Changed
+
+- New name: the integration is now called **Autogarden** (German: **Autogarten**)
+  instead of Plant Garden - in Home Assistant, the panel, notifications, the
+  voice assistant tool set and the documentation. The domain `plant_garden`,
+  entities, actions, events and data stay as they are; nothing needs to be
+  set up again.
+
 ## [0.3.0] - 2026-11-16
 
 ### Added

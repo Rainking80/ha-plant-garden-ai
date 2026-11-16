@@ -80,7 +80,7 @@ async def ws_research_run(
     """Research one plant now (a user action, whatever the schedule says)."""
     researcher = get_researcher(hass)
     if researcher is None:
-        connection.send_error(msg["id"], "not_loaded", "Plant Garden is not set up")
+        connection.send_error(msg["id"], "not_loaded", "Autogarden is not set up")
         return
     try:
         info = await researcher.async_research(msg["plant_id"])

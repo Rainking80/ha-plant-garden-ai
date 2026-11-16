@@ -1,9 +1,10 @@
 {
+  "title": "Autogarten",
   "config": {
     "step": {
       "user": {
         "title": "Garten einrichten",
-        "description": "Plant Garden fügt der Seitenleiste einen Gartenplaner hinzu. KI-Anbieter und Wetterquellen kannst du später ergänzen.",
+        "description": "Autogarten fügt der Seitenleiste einen Gartenplaner hinzu. KI-Anbieter und Wetterquellen kannst du später ergänzen.",
         "data": {
           "garden_name": "Name des Gartens"
         },
@@ -16,7 +17,7 @@
       "name_required": "Bitte gib einen Namen ein."
     },
     "abort": {
-      "single_instance_allowed": "Plant Garden ist bereits eingerichtet."
+      "single_instance_allowed": "Autogarten ist bereits eingerichtet."
     }
   },
   "options": {
@@ -40,7 +41,9 @@
           "research_schedule": "Pflanzen selbstständig recherchieren",
           "weather_alerts": "Wetter-Warnungen",
           "photo_compare": "Neue Fotos mit früheren vergleichen",
-          "camera_check": "Wöchentlicher Blick auf die Kamerabilder"
+          "camera_check": "Wöchentlicher Blick auf die Kamerabilder",
+          "ai_image": "KI-Anbieter für Bilder (Traumgarten)",
+          "ai_image_model": "Bildmodell"
         },
         "data_description": {
           "max_runtime_hours": "Läuft eine Bewässerungszone länger, erscheint ein Hinweis unter Reparaturen (z. B. ein hängendes Ventil).",
@@ -53,7 +56,9 @@
           "research_schedule": "Der Assistent sucht für jeweils eine Pflanze ohne Wissen Pflege, Schädlinge, Giftigkeit und mehr – im Web mit Claude, Gemini oder OpenRouter, sonst in Wikipedia – und speichert es. Jede Recherche kostet Geld; das Budget gilt. Pflanzen mit Wissen werden nicht erneut recherchiert.",
           "weather_alerts": "Eine Benachrichtigung mit dem, was zu tun ist, wenn Frost unter der Grenze einer Pflanze, Hitze, Sturm, Starkregen oder Wetter für Pflanzenkrankheiten und Schnecken kommt. Ohne KI, ohne Kosten.",
           "photo_compare": "Nach dem Hochladen vergleicht die KI ein Foto mit einem früheren der Pflanze (Wachstum, Verfärbungen, Schädlinge) und legt ein Problem an, wenn etwas nicht stimmt. Jeder Vergleich ist ein KI-Aufruf mit Kosten; das Budget gilt.",
-          "camera_check": "Pflanzen mit Kamera bekommen jeden Mittag ein Foto (kostenlos, ohne KI). Mit dieser Option vergleicht die KI jeden Montag das neueste Kamerabild mit einem früheren und legt ein Problem an, wenn etwas nicht stimmt. Jeder Blick ist ein KI-Aufruf mit Kosten; das Budget gilt."
+          "camera_check": "Pflanzen mit Kamera bekommen jeden Mittag ein Foto (kostenlos, ohne KI). Mit dieser Option vergleicht die KI jeden Montag das neueste Kamerabild mit einem früheren und legt ein Problem an, wenn etwas nicht stimmt. Jeder Blick ist ein KI-Aufruf mit Kosten; das Budget gilt.",
+          "ai_image": "Erzeugt die Bilder im Traumgarten. Das können nur OpenAI, Google Gemini und OpenRouter; ohne Auswahl wird der erste davon genommen. Ein Bild kostet mehrere Cent - vor jedem Bild zeigt die Oberfläche die Schätzung.",
+          "ai_image_model": "Leer lassen für den Standard (gpt-image-2, gemini-nano-banana-2.1 oder openai/gpt-image-2 bei OpenRouter). Ein Modell ohne Preis auf der Technik-Seite zeigt unbekannte Kosten."
         }
       }
     }
@@ -133,19 +138,19 @@
   "issues": {
     "long_run": {
       "title": "Bewässerungszone {zone} läuft seit {hours} h",
-      "description": "{entity} ist seit {hours} Stunden eingeschaltet. Prüfe, ob das Ventil hängt. Plant Garden schaltet selbst nichts. Der Hinweis verschwindet, sobald die Zone wieder aus ist."
+      "description": "{entity} ist seit {hours} Stunden eingeschaltet. Prüfe, ob das Ventil hängt. Autogarten schaltet selbst nichts. Der Hinweis verschwindet, sobald die Zone wieder aus ist."
     },
     "budget_warning": {
       "title": "80 % des KI-Monatsbudgets verbraucht",
-      "description": "Plant Garden hat in diesem Monat {spent} von {budget} {currency} für KI ausgegeben."
+      "description": "Autogarten hat in diesem Monat {spent} von {budget} {currency} für KI ausgegeben."
     },
     "budget_exceeded": {
       "title": "KI-Monatsbudget verbraucht",
-      "description": "Plant Garden hat in diesem Monat {spent} von {budget} {currency} für KI ausgegeben. Ist der Stopp eingeschaltet, gibt es bis zum nächsten Monat keine KI-Aufrufe mehr."
+      "description": "Autogarten hat in diesem Monat {spent} von {budget} {currency} für KI ausgegeben. Ist der Stopp eingeschaltet, gibt es bis zum nächsten Monat keine KI-Aufrufe mehr."
     },
     "ai_auth": {
       "title": "KI-Anbieter {provider}: Key abgelehnt",
-      "description": "Der Anbieter hat den Key nicht akzeptiert. Öffne Plant Garden unter Einstellungen → Geräte & Dienste, wähle den Anbieter und „Neuer Key oder Modell“. Der Hinweis verschwindet nach dem nächsten erfolgreichen Aufruf oder Verbindungstest."
+      "description": "Der Anbieter hat den Key nicht akzeptiert. Öffne Autogarten unter Einstellungen → Geräte & Dienste, wähle den Anbieter und „Neuer Key oder Modell“. Der Hinweis verschwindet nach dem nächsten erfolgreichen Aufruf oder Verbindungstest."
     },
     "missing_entity": {
       "title": "Bewässerungszone {zone}: Entität fehlt",
@@ -154,10 +159,10 @@
   },
   "exceptions": {
     "not_loaded": {
-      "message": "Plant Garden ist nicht eingerichtet."
+      "message": "Autogarten ist nicht eingerichtet."
     },
     "not_plant_or_zone": {
-      "message": "{device_id} ist keine Pflanze und keine Bewässerungszone von Plant Garden."
+      "message": "{device_id} ist keine Pflanze und keine Bewässerungszone von Autogarten."
     },
     "liters_needed": {
       "message": "Für Pflanzen bitte die Liter angeben."
@@ -181,11 +186,11 @@
   "services": {
     "log_watering": {
       "name": "Gießen erfassen",
-      "description": "Trägt Wasser ein, das Plant Garden nicht selbst gesehen hat: Liter pro Pflanze (Gießkanne) oder Minuten für eine Zone (z. B. mit dem Schlauch).",
+      "description": "Trägt Wasser ein, das Autogarten nicht selbst gesehen hat: Liter pro Pflanze (Gießkanne) oder Minuten für eine Zone (z. B. mit dem Schlauch).",
       "fields": {
         "device_id": {
           "name": "Pflanzen oder Zonen",
-          "description": "Geräte von Plant Garden: Pflanzen und/oder Bewässerungszonen."
+          "description": "Geräte von Autogarten: Pflanzen und/oder Bewässerungszonen."
         },
         "liters": {
           "name": "Liter pro Pflanze",
@@ -211,7 +216,7 @@
       "fields": {
         "device_id": {
           "name": "Pflanze",
-          "description": "Eine Pflanze von Plant Garden."
+          "description": "Eine Pflanze von Autogarten."
         },
         "photos": {
           "name": "Fotos",

@@ -37,7 +37,7 @@ async def async_get_media_source(hass: HomeAssistant) -> MediaSource:
 
 
 class PlantPhotoSource(MediaSource):
-    name = "Plant Garden"
+    name = "Autogarden"
 
     def __init__(self, hass: HomeAssistant) -> None:
         super().__init__(DOMAIN)
@@ -46,7 +46,7 @@ class PlantPhotoSource(MediaSource):
     async def async_resolve_media(self, item: MediaSourceItem) -> PlayMedia:
         manager = get_manager(self.hass)
         if manager is None or not item.identifier:
-            raise Unresolvable("Plant Garden is not loaded")
+            raise Unresolvable("Autogarden is not loaded")
         try:
             photo = await manager.async_get_photo(item.identifier)
         except NotFoundError as err:
@@ -57,7 +57,7 @@ class PlantPhotoSource(MediaSource):
     async def async_browse_media(self, item: MediaSourceItem) -> BrowseMediaSource:
         manager = get_manager(self.hass)
         if manager is None:
-            raise Unresolvable("Plant Garden is not loaded")
+            raise Unresolvable("Autogarden is not loaded")
         if item.identifier:
             plant_id = item.identifier.removeprefix("plant/")
             try:

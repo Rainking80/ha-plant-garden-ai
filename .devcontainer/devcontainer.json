@@ -1,5 +1,5 @@
 {
-  "name": "Plant Garden",
+  "name": "Autogarden",
   "image": "mcr.microsoft.com/devcontainers/python:3.14",
   "features": {
     "ghcr.io/devcontainers/features/node:1": { "version": "24" }

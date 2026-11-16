@@ -1,1 +1,1 @@
-"""Tests for the Plant Garden integration."""
+"""Tests for the Autogarden integration."""

@@ -1,4 +1,4 @@
-"""The Plant Garden integration."""
+"""The Autogarden integration."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 
 from .ai.assistant import Assistant
+from .ai.dream import DreamGarden
 from .ai.pricing import load_defaults as load_pricing
 from .ai.research import Researcher
 from .ai.service import AIService
@@ -40,6 +41,7 @@ from .water_balance import load_defaults
 from .websocket_ai import async_register_ai_commands
 from .websocket_api import async_register_websocket_commands
 from .websocket_care import async_register_care_commands
+from .websocket_dream import async_register_dream_commands
 from .websocket_research import async_register_research_commands
 from .websocket_sun import async_register_sun_commands
 
@@ -64,13 +66,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async_register_ai_commands(hass)
     async_register_care_commands(hass)
     async_register_sun_commands(hass)
+    async_register_dream_commands(hass)
     async_register_research_commands(hass)
     async_register_services(hass)
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) -> bool:
-    """Set up Plant Garden from a config entry."""
+    """Set up Autogarden from a config entry."""
     integration = await async_get_integration(hass, DOMAIN)
     # Data is not keyed by entry id: removing and re-adding the integration
     # keeps the garden (see docs/DECISIONS.md D-002).
@@ -99,6 +102,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) 
         hass, entry, manager=manager, water=water, knowledge=researcher.knowledge
     )
     await alerts.async_setup()
+    dream = DreamGarden(
+        hass,
+        entry,
+        manager=manager,
+        care=care,
+        ai=ai,
+        root=Path(hass.config.path(DOMAIN)) / "dreams",
+    )
+    await dream.async_setup()
     camera = CameraWatcher(hass, entry, manager=manager, assistant=assistant, ai=ai)
     camera.async_start()
     entry.runtime_data = PlantGardenData(
@@ -112,6 +124,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry) 
         researcher=researcher,
         alerts=alerts,
         camera=camera,
+        dream=dream,
     )
     async_garden_device(hass, entry)
     # conversation agents can be given the garden as a tool set (the user's choice per agent)
@@ -134,6 +147,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: PlantGardenConfigEntry)
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         async_unregister_panel(hass)
+        await entry.runtime_data.dream.async_shutdown()
         entry.runtime_data.camera.async_stop()
         entry.runtime_data.alerts.async_stop()
         entry.runtime_data.researcher.async_stop()

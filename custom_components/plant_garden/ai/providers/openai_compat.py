@@ -80,7 +80,7 @@ class OpenAICompatibleProvider:
         if self._key:
             headers["authorization"] = f"Bearer {self._key}"
         if self.preset == "openrouter":
-            headers["X-OpenRouter-Title"] = "Plant Garden for Home Assistant"
+            headers["X-OpenRouter-Title"] = "Autogarden for Home Assistant"
         return headers
 
     async def async_validate(self) -> None:

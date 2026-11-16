@@ -1,4 +1,4 @@
-"""Devices and the common entity base of Plant Garden (D-025).
+"""Devices and the common entity base of Autogarden (D-025).
 
 Every plant and every irrigation zone is a device below the garden device.
 Platforms register factories; new plants and zones get their entities
@@ -41,7 +41,7 @@ def async_garden_device(hass: HomeAssistant, entry: PlantGardenConfigEntry) -> d
         config_entry_id=entry.entry_id,
         identifiers={GARDEN_DEVICE},
         name=entry.title,
-        manufacturer="Plant Garden",
+        manufacturer="Autogarden",
         entry_type=dr.DeviceEntryType.SERVICE,
     )
 
@@ -105,7 +105,7 @@ def async_track_items(
                 info = DeviceInfo(
                     identifiers={plant_device(plant_id)},
                     name=plant.name,
-                    manufacturer="Plant Garden",
+                    manufacturer="Autogarden",
                     model=plant.scientific_name,
                     via_device_id=garden.id,
                 )
@@ -125,7 +125,7 @@ def async_track_items(
                 info = DeviceInfo(
                     identifiers={zone_device(zone_id)},
                     name=name,
-                    manufacturer="Plant Garden",
+                    manufacturer="Autogarden",
                     model="Irrigation zone",
                     via_device_id=garden.id,
                 )

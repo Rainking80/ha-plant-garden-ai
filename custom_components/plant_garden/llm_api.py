@@ -1,4 +1,4 @@
-"""Talk to the garden: Plant Garden as an API for Home Assistant's voice assistants.
+"""Talk to the garden: Autogarden as an API for Home Assistant's voice assistants.
 
 A conversation agent (Assist with a language model) that has this API switched
 on can answer "what needs water today?" and act on "I watered the tomatoes with
@@ -21,12 +21,11 @@ from homeassistant.helpers import llm
 from homeassistant.util import dt as dt_util
 
 from .care import TaskKind, TaskStatus
-from .const import DOMAIN
+from .const import DOMAIN, brand_name
 from .models import Plant, PlantStatus
 from .runtime import PlantGardenConfigEntry, get_loaded_entry
 
 API_ID = DOMAIN
-API_NAME = "Plant Garden"
 MAX_NAMES = 80
 MAX_TASKS = 25
 
@@ -34,7 +33,7 @@ MAX_TASKS = 25
 # tools must use the one the LLM helper serialises.
 _schema = importlib.import_module(type(llm.Tool.parameters).__module__.split(".")[0])
 
-API_PROMPT = """You can read and update the user's garden with the Plant Garden tools.
+API_PROMPT = """You can read and update the user's garden with the Autogarden tools.
 - Use garden_overview for questions about what to do today: watering, frost, due tasks, problems.
 - Plants are addressed by their name. Use the names exactly as listed below; if the user's \
 wording fits several plants, ask which one is meant.
@@ -67,7 +66,7 @@ def _annotations(*, read_only: bool) -> Any:
 def _entry(hass: HomeAssistant) -> PlantGardenConfigEntry:
     entry = get_loaded_entry(hass)
     if entry is None:
-        raise ToolError("Plant Garden is not set up")
+        raise ToolError("Autogarden is not set up")
     return entry
 
 
@@ -390,7 +389,7 @@ class PlantGardenAPI(llm.API):
     """The garden's tools, with the plant names in the prompt."""
 
     def __init__(self, hass: HomeAssistant) -> None:
-        super().__init__(hass=hass, id=API_ID, name=API_NAME)
+        super().__init__(hass=hass, id=API_ID, name=brand_name(hass.config.language))
         # nothing about the tools depends on the request: build them once
         self._tools: list[llm.Tool] = [
             OverviewTool(),

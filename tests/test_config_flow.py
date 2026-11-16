@@ -1,4 +1,4 @@
-"""Tests for the Plant Garden config flow."""
+"""Tests for the Autogarden config flow."""
 
 from __future__ import annotations
 

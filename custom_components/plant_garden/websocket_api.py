@@ -1,4 +1,4 @@
-"""WebSocket API used by the Plant Garden panel."""
+"""WebSocket API used by the Autogarden panel."""
 
 from __future__ import annotations
 
@@ -260,7 +260,7 @@ def garden_command(
         ) -> None:
             manager = get_manager(hass)
             if manager is None:
-                connection.send_error(msg["id"], ERR_NOT_LOADED, "Plant Garden is not set up")
+                connection.send_error(msg["id"], ERR_NOT_LOADED, "Autogarden is not set up")
                 return
             try:
                 result = await func(hass, connection, msg, manager)
@@ -322,7 +322,7 @@ def ws_info(
     """Return basic information about the loaded garden."""
     entry = get_loaded_entry(hass)
     if entry is None:
-        connection.send_error(msg["id"], ERR_NOT_LOADED, "Plant Garden is not set up")
+        connection.send_error(msg["id"], ERR_NOT_LOADED, "Autogarden is not set up")
         return
     connection.send_result(
         msg["id"],
@@ -345,7 +345,7 @@ def ws_subscribe(
     """Push a small event whenever garden data changes; clients then refetch."""
     manager = get_manager(hass)
     if manager is None:
-        connection.send_error(msg["id"], ERR_NOT_LOADED, "Plant Garden is not set up")
+        connection.send_error(msg["id"], ERR_NOT_LOADED, "Autogarden is not set up")
         return
 
     @callback

@@ -104,7 +104,7 @@ async def ws_ai_identify(
     """Identify a plant from 1 to 3 photos; answers with the suggestions."""
     service = get_ai(hass)
     if service is None:
-        connection.send_error(msg["id"], "not_loaded", "Plant Garden is not set up")
+        connection.send_error(msg["id"], "not_loaded", "Autogarden is not set up")
         return
     photos = [(p["photo_id"], p["organ"]) for p in msg["photos"]]
     language = hass.config.language
@@ -151,7 +151,7 @@ async def ws_ai_decide(
     """Take over or dismiss one suggestion (the user's own values are never replaced)."""
     service = get_ai(hass)
     if service is None:
-        connection.send_error(msg["id"], "not_loaded", "Plant Garden is not set up")
+        connection.send_error(msg["id"], "not_loaded", "Autogarden is not set up")
         return
     result = await _ai_call(
         connection,

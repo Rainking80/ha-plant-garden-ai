@@ -1,4 +1,4 @@
-# Plant Garden – notes for coding agents
+# Autogarden – notes for coding agents
 
 Home Assistant custom integration (HACS) with a Lit sidebar panel: garden planner,
 plant journal, irrigation tracking, water balance, AI assistant with token/cost page.

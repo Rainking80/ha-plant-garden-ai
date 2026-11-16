@@ -673,3 +673,95 @@ def clean_sketch(data: dict[str, Any]) -> dict[str, Any]:
                 {"kind": item["kind"], "label": _text(item.get("label"), 100), "points": points}
             )
     return {"areas": areas, "note": _text(data.get("note"), 500)}
+
+
+# ---------------------------------------------------------------- dream garden
+DREAM_STYLES = [
+    "natural",
+    "cottage",
+    "modern",
+    "mediterranean",
+    "low_maintenance",
+    "kitchen",
+    "pollinator",
+    "woodland",
+    "japanese",
+]
+DREAM_STRENGTHS = ["gentle", "medium", "bold"]
+MAX_DREAM_PLANTS = 10
+
+DREAM_LOOK_SCHEMA: dict[str, Any] = _object(
+    {
+        "description": {"type": "string"},
+        "elements": {"type": "array", "items": {"type": "string"}},
+        "questions": {
+            "type": "array",
+            "items": _object(
+                {
+                    "question": {"type": "string"},
+                    "options": {"type": "array", "items": {"type": "string"}},
+                }
+            ),
+        },
+        "styles": {"type": "array", "items": {"type": "string", "enum": DREAM_STYLES}},
+    }
+)
+
+DREAM_CONCEPT_SCHEMA: dict[str, Any] = _object(
+    {
+        "summary": {"type": "string", "description": "Two or three sentences."},
+        "changes": {"type": "array", "items": {"type": "string"}},
+        "hardscape": {"type": "array", "items": {"type": "string"}},
+        "plants": {
+            "type": "array",
+            "items": _object(
+                {
+                    **PLAN_SCHEMA["properties"]["suggestions"]["items"]["properties"],
+                    "quantity": {"type": "integer"},
+                    "spacing_cm": _positive(),
+                }
+            ),
+        },
+        "image_prompt": {"type": "string", "description": "English."},
+    }
+)
+
+
+def clean_dream_look(data: dict[str, Any]) -> dict[str, Any]:
+    """What the AI saw in the photo and what it asks back."""
+    questions = []
+    for raw in data.get("questions") or []:
+        item = _dict(raw)
+        text = _text(item.get("question"), 300)
+        if text:
+            questions.append({"question": text, "options": _texts(item.get("options"), 80, 4)})
+    return {
+        "description": _text(data.get("description"), 1200) or "",
+        "elements": _texts(data.get("elements"), 60, 12),
+        "questions": questions[:4],
+        "styles": [s for s in data.get("styles") or [] if s in DREAM_STYLES][:4],
+    }
+
+
+def clean_dream_concept(data: dict[str, Any]) -> dict[str, Any]:
+    """The design: steps, plants with quantities, and the words for the picture."""
+    plants = []
+    for raw in data.get("plants") or []:
+        found = clean_plan({"suggestions": [raw]})["suggestions"]
+        if not found:
+            continue
+        quantity = _number(_dict(raw).get("quantity"))
+        plants.append(
+            {
+                **found[0],
+                "quantity": int(quantity) if quantity is not None and 1 <= quantity <= 500 else 1,
+                "spacing_cm": _positive_number(_dict(raw).get("spacing_cm")),
+            }
+        )
+    return {
+        "summary": _text(data.get("summary"), 1200) or "",
+        "changes": _texts(data.get("changes"), 300, 10),
+        "hardscape": _texts(data.get("hardscape"), 300, 8),
+        "plants": plants[:MAX_DREAM_PLANTS],
+        "image_prompt": _text(data.get("image_prompt"), 2000) or "",
+    }

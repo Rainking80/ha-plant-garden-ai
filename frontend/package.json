@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.3.0",
   "type": "module",
-  "description": "Sidebar panel of the Plant Garden Home Assistant integration",
+  "description": "Sidebar panel of the Autogarden Home Assistant integration",
   "license": "MIT",
   "engines": {
     "node": ">=24"

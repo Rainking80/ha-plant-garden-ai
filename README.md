@@ -1,4 +1,4 @@
-# Plant Garden – the AI gardener for Home Assistant
+# Autogarden – the AI gardener for Home Assistant
 
 **AI first.** Photograph your plants and the AI names them, fills in their care,
 watches their health and plans what to plant where. Smart algorithms do the daily
@@ -7,6 +7,9 @@ warnings – and Home Assistant automates the rest. Garden care and planning
 become fun.
 
 **What the AI does for you**
+- **Dream garden**: upload a photo of your garden, tell the AI what you wish for
+  and get a planting concept that fits your soil, sun and climate - and, if you
+  like, a picture of how it could look, with a before/after slider.
 - **Garden walk**: photograph one plant after the other – each photo becomes a
   plant, placed on the plan by its GPS, identified and named.
 - **A plan from a picture**: the AI traces house, lawn, beds and paths from your
@@ -44,7 +47,7 @@ option you switch on, with every token and cent on record – and everything in
 > **Status:** early development, version 0.3.0. Changes are listed in the
 > [changelog](CHANGELOG.md).
 
-Plant Garden never switches anything. It reads the state of your valves and
+Autogarden never switches anything. It reads the state of your valves and
 sensors and offers recommendations as entities for your own automations.
 
 ![The garden plan: lawn, terrace, beds, buildings, a beech hedge drawn as one plant, plants with their names, sprinklers watering the lawn and drip lines along the hedge and the beds; dashed amber outlines mark plants that need water](https://raw.githubusercontent.com/Rainking80/ha-plant-garden-ai/main/docs/images/plan.png)
@@ -181,7 +184,7 @@ The interface is available in English and German.
 1. In HACS, open the menu (⋮) → **Custom repositories**.
 2. Add `https://github.com/Rainking80/ha-plant-garden-ai` with the type
    **Integration**.
-3. Search for **Plant Garden**, choose **Download** and restart Home Assistant.
+3. Search for **Autogarden**, choose **Download** and restart Home Assistant.
 
 ### Manually
 
@@ -195,8 +198,8 @@ To update, replace the folder and restart again.
 
 ### Set up
 
-1. **Settings → Devices & services → Add integration → Plant Garden.**
-2. Give your garden a name. A new sidebar entry **Plant Garden** appears.
+1. **Settings → Devices & services → Add integration → Autogarden.**
+2. Give your garden a name. A new sidebar entry **Autogarden** appears.
 
 ## First steps
 
@@ -210,7 +213,7 @@ To update, replace the folder and restart again.
      an area (✎ next to it).
 3. For irrigation: in the edit tool bar under **Irrigation**, place sprinklers or
    drip lines (or draw an irrigation area), then link the valve that waters them.
-4. For the water balance: **Settings → Devices & services → Plant Garden → Add
+4. For the water balance: **Settings → Devices & services → Autogarden → Add
    weather source**.
 5. Optional, for the AI: **Add AI provider** in the same place.
 
@@ -221,13 +224,13 @@ every part in detail.
 
 Everything is set up in the user interface; there is no YAML.
 
-**Weather sources** (Plant Garden → *Add weather source*): your own sensors (rain,
+**Weather sources** (Autogarden → *Add weather source*): your own sensors (rain,
 ET₀, temperature, humidity, wind, solar radiation, a weather entity for the
 forecast), Open-Meteo or Bright Sky. Your own sensors win; services fill the gaps.
 Nothing is fetched before you add a source, and the services only receive the
 garden's location rounded to about 1 km.
 
-**AI providers** (Plant Garden → *Add AI provider*):
+**AI providers** (Autogarden → *Add AI provider*):
 
 | Provider | Key | Notes |
 |---|---|---|
@@ -241,7 +244,7 @@ garden's location rounded to about 1 km.
 
 Keys are checked when you add them and are only ever shown masked.
 
-**Options** (Plant Garden → *Configure*): warning limit for long irrigation runs;
+**Options** (Autogarden → *Configure*): warning limit for long irrigation runs;
 which AI to use for photos and for text; monthly AI budget (notice at 80 %,
 optionally stop at 100 %); a fixed US dollar to euro rate; identify new plants
 after a photo upload; weekly garden check; how much garden data the AI may
@@ -302,7 +305,7 @@ actions:
   states; elsewhere add your country's WMS service or upload a site plan. Weather
   comes from Open-Meteo worldwide.
 - **My valves have no flow meter.** Enter the precipitation rate or the flow of
-  the zone; Plant Garden estimates the litres from the run time.
+  the zone; Autogarden estimates the litres from the run time.
 - **How do I move my garden to another Home Assistant?** Tech tab → *Export as
   JSON*, then in the other Home Assistant Tech tab → *Import a file* (into an
   empty garden). Photos and history stay behind; they are in your backups.
@@ -336,7 +339,7 @@ decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Deutsch
 
-**KI zuerst.** Plant Garden ist der KI-Gärtner für Home Assistant: Pflanzen
+**KI zuerst.** Autogarten ist der KI-Gärtner für Home Assistant: Pflanzen
 fotografieren, und die KI benennt sie, füllt ihre Pflege aus, behält ihre
 Gesundheit im Blick und plant, was wohin passt. Schlaue Algorithmen übernehmen das
 tägliche Rechnen, Home Assistant automatisiert den Rest – so machen Gartenpflege
@@ -344,6 +347,9 @@ und Planung Spaß.
 
 Was die KI übernimmt:
 
+- **Traumgarten**: ein Foto des Gartens hochladen, Wünsche nennen und ein
+  Pflanzkonzept passend zu Boden, Sonne und Klima bekommen - auf Wunsch mit einem
+  Bild, wie es aussehen könnte, samt Vorher-Nachher-Schieber,
 - **Garten-Rundgang**: eine Pflanze nach der anderen fotografieren – jedes Foto
   wird zur Pflanze, per GPS auf dem Plan platziert, bestimmt und benannt,
 - **Plan aus einem Bild**: Haus, Rasen, Beete und Wege aus Skizze oder Lageplan,

@@ -1,10 +1,10 @@
-# Plant Garden – Anleitung
+# Autogarten – Anleitung
 
 [English](USER_GUIDE.md)
 
-Plant Garden ergänzt Home Assistant um einen Gartenplaner und ein Pflanzentagebuch.
+Autogarten ergänzt Home Assistant um einen Gartenplaner und ein Pflanzentagebuch.
 Alles passiert im Seitenleisten-Eintrag der Integration; die Einstellungen liegen
-unter **Einstellungen → Geräte & Dienste → Plant Garden**.
+unter **Einstellungen → Geräte & Dienste → Autogarten**.
 
 ## 1. Erste Schritte
 
@@ -99,7 +99,7 @@ an einem Zähler teilen sich seine Liter). Regner, Versenkregner, Tropfschlauch,
 Tropfer pro Pflanze oder „von Hand“ und die Niederschlagsrate oder Durchflussmenge
 wählen.
 
-Plant Garden **schaltet nie etwas**. Es erfasst jeden Lauf, berechnet, wie viel
+Autogarten **schaltet nie etwas**. Es erfasst jeden Lauf, berechnet, wie viel
 Wasser jede Pflanze der Zone bekommen hat, und bietet Sensoren und den
 Binärsensor „Bewässerung empfohlen“ für eigene Automationen. Gießen mit der Kanne
 wird auf der Pflanzenseite oder mit der Aktion `plant_garden.log_watering` erfasst.
@@ -110,7 +110,7 @@ In den Einstellungen eine Wetterquelle hinzufügen: eigene Sensoren (haben Vorra
 Open-Meteo (weltweit) oder Bright Sky / Deutscher Wetterdienst. Vorher wird nichts
 abgerufen; die Dienste erhalten den Standort auf etwa 1 km gerundet.
 
-Plant Garden führt für jede Pflanze einen Bodenwasser-„Eimer“ aus Regen,
+Autogarten führt für jede Pflanze einen Bodenwasser-„Eimer“ aus Regen,
 Verdunstung (FAO-56 ET₀), Boden, Wurzeltiefe, Wasserbedarf und Bewässerung;
 Gießbedarf besteht, wenn das leicht verfügbare Wasser verbraucht ist. Pflanzen
 unter einem Dach bekommen keinen Regen.
@@ -197,6 +197,29 @@ wird ein neues Foto einer Pflanze ohne botanischen Namen automatisch bestimmt.
   kommen auch als Home-Assistant-Benachrichtigung und als Event
   `plant_garden_weather_alert` (Option *Wetter-Warnungen*, an; ohne KI, ohne
   Kosten).
+- **Traumgarten** (eigener Reiter): Ideen für die Umgestaltung aus einem Foto, in
+  vier Schritten - jeder startet erst, wenn du seine Schaltfläche drückst.
+  1. *Foto hochladen* vom Garten oder einem Teil davon. *Foto ansehen lassen*:
+     Die KI beschreibt, was sie sieht („Ich sehe einen Rasen mit einem
+     Plattenweg ...“), und stellt ein paar Fragen mit Antworten zum Antippen.
+  2. Wünsche nennen, antippen, was bleiben soll, einen Stil wählen (von der KI
+     als passend erkannte sind umrandet) und wie stark sich etwas ändern darf.
+  3. *Konzept erstellen*: Schritte und eine Pflanzenliste, die zum Standort
+     passt - Boden der Beete, kälteste Nacht, heißester Tag und Niederschlag des
+     letzten Jahres, vorhandene Pflanzen - mit Stückzahl, Abstand und
+     Warnhinweisen. Das ist ein Text-Aufruf, der wenig kostet. Pflanzen, die du
+     nicht möchtest, abwählen.
+  4. *Bild erzeugen*: Die KI bearbeitet dein Foto so, dass es die angekreuzten
+     Pflanzen zeigt. **Ein Bild kostet mehrere Cent**; der geschätzte Preis und
+     der Anbieter stehen dabei, und du bestätigst jedes Bild. Mit dem
+     Vorher-Nachher-Schieber vergleichen, eine Änderung beschreiben („mehr Weiß,
+     ohne Bank“) oder ein neues Bild erzeugen.
+  *Übernehmen* macht aus den angekreuzten Pflanzen geplante Pflanzen mit einer
+  Pflanzaufgabe. Das Bild ist eine Idee, kein Bauplan: Bildmodelle können Details
+  am Haus oder an der Aufteilung verändern - verbindlich ist die Pflanzenliste.
+  Bilder brauchen OpenAI, Google Gemini oder OpenRouter als KI-Anbieter (Anbieter
+  und auf Wunsch das Bildmodell in den Optionen der Integration wählen); die
+  ersten beiden Schritte gehen mit jedem Anbieter, der Fotos liest.
 - **Was passt hier hin?** (die Funkel-Schaltfläche im Plan): eine freie Stelle
   antippen, bei Bedarf einen Wunsch ergänzen („etwas für Bienen“) und *Vorschläge
   holen* wählen. Die KI bekommt, was der Plan über die Stelle weiß - berechnete
@@ -252,7 +275,7 @@ Ordner oder Kamera-Schnappschuss).
 Events: `plant_garden_irrigation_finished`, `plant_garden_task_due`,
 `plant_garden_problem_detected`, `plant_garden_weather_alert`.
 
-**Sprachassistenten**: Plant Garden erscheint als Werkzeugsatz *Plant Garden* für
+**Sprachassistenten**: Autogarten erscheint als Werkzeugsatz *Autogarten* für
 Konversationsagenten mit Sprachmodell. Eingeschaltet wird er in den Einstellungen
 des Agenten (**Einstellungen → Sprachassistenten →** dein Agent **→** die Liste,
 was der Assistent steuern darf). Danach per Sprache oder im Assist-Chat fragen:
@@ -296,7 +319,7 @@ actions:
 
 Auf der Seite **Technik** (Administratoren) speichert *Als JSON exportieren* den
 Plan (mit Standort und Hintergrund), die Pflanzen, Messungen und offenen Aufgaben.
-Im anderen Home Assistant Plant Garden einrichten, die Technikseite öffnen und
+Im anderen Home Assistant Autogarten einrichten, die Technikseite öffnen und
 *Datei importieren …* wählen: Du siehst, was die Datei enthält, und bestätigst. Der
 Import geht nur in einen leeren Garten, und alles landet an derselben Stelle auf
 der Karte, egal welchen Zuhause-Standort dieses Home Assistant hat. Fotos, Verlauf,

@@ -753,3 +753,59 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   `integration`. The module checks what `helpers.llm` offers and takes the
   schema library from `llm.Tool.parameters`, so one code path serves both.
 - **Not done**: sentence-based intents for agents without a language model.
+
+## D-049 The name: Autogarden, in German Autogarten (2026-11-16)
+
+- **What**: the name people see changes from "Plant Garden" to "Autogarden";
+  German texts say "Autogarten". It stands for the AI and the automation the
+  project is about, which "Plant Garden" did not say.
+- **Where the language decides**: the integration title comes from the `title`
+  key of the translations, the panel and the documentation from their language
+  files, notifications and the name of the LLM API (D-048) from
+  `const.brand_name(language)`. Everything without a language (manifest, HACS
+  name, device manufacturer, HTTP and WebSocket errors, user agent) says
+  "Autogarden".
+- **What stays**: the domain `plant_garden`, entity ids, actions, events, the
+  export format, class and file names and the repository. Renaming the domain
+  would cost every installation its entities and data for no gain to the user.
+- **History**: older changelog entries and decisions keep the old name.
+
+## D-049 Dream garden: from a photo to a concept to a picture (2026-11-16)
+
+- **Why in this order**: apps of this kind render first and list plants after;
+  testers find they alter the house, invent structures and plant too densely,
+  and that plant lists ignore the climate. Here the cheap, checkable part comes
+  first: the AI describes the photo and asks back, the user states wishes, a
+  style, a strength and what must stay, and a text call returns steps and a plant
+  list fitted to the site. Only then - and only on request - a picture is made
+  from the photo and the plants the user kept.
+- **Site data, not a place**: last year's coldest night, hottest day and (with
+  at least 300 days of data) rainfall, hemisphere and month, the most common soil
+  of the beds, the species already in the garden, whether irrigation exists; with
+  a place on the plan also sun, room and neighbours (`planner.site_facts`). No
+  coordinates, notes or entity ids. The photo is re-encoded (1536 px, no
+  metadata) before it is stored or sent.
+- **The picture is the dear step**: about $0.03 to $0.07 at 1K (2026-11-16:
+  gpt-image-2 $8 / $30 per million input / output image tokens; Gemini picture
+  models $0.034 to $0.134 per 1K picture; OpenRouter reports the cost itself).
+  The panel shows the estimate and the provider next to the button and asks
+  before every picture; the call is budget-checked and logged with its real
+  cost. A failed call is never retried (it would be billed again).
+- **Providers**: only OpenAI, Gemini and OpenRouter edit pictures here
+  (`ai/images.py`, plain HTTP). The option `ai_image` chooses the provider (else
+  the first that can), `ai_image_model` the model (else gpt-image-2,
+  gemini-nano-banana-2.1, openai/gpt-image-2). Home Assistant AI tasks,
+  Anthropic and local servers are not used for pictures.
+- **Guard rails in the prompt**: keep the camera position, buildings, walls,
+  fences, paths, large trees and whatever the user listed; add nothing that was
+  not asked for; show the listed plants, established but not overcrowded, for
+  the current month. The panel still labels every picture "an idea, not a
+  building plan" - the plant list is what counts.
+- **Refining** edits the chosen picture with an instruction in words; a new
+  picture always starts from the photo. At most 12 pictures per design, 60
+  designs.
+- **Taking over** creates planned plants (not placed: the photo has no reliable
+  place on the plan) with their values as AI suggestions and a task
+  "5 x Lavender to plant" in the next planting month.
+- **Not done (yet)**: masking an area by drawing, several variants per call,
+  seasonal previews, a shopping list.

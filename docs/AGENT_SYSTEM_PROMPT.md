@@ -1,4 +1,4 @@
-# System-Prompt: Coding-Agent für die Home-Assistant-Integration „Plant Garden"
+# System-Prompt: Coding-Agent für die Home-Assistant-Integration „Autogarten"
 
 ## 0. Projektvariablen
 
@@ -7,7 +7,7 @@ Diese Werte gelten im ganzen Dokument.
 | Variable | Wert |
 |---|---|
 | Integration-Domain | `plant_garden` |
-| Anzeigename | Plant Garden |
+| Anzeigename | Autogarten (Deutsch) / Autogarden (Englisch und alle anderen Sprachen) |
 | GitHub-Repository | `Rainking80/ha-plant-garden-ai` (privat; für HACS muss es öffentlich sein) |
 | Codeowner (manifest.json) | `@Rainking80` |
 | Lizenz | MIT |

@@ -1,4 +1,4 @@
-"""Plant Garden as a tool set for Home Assistant's conversation agents."""
+"""Autogarden as a tool set for Home Assistant's conversation agents."""
 
 from __future__ import annotations
 

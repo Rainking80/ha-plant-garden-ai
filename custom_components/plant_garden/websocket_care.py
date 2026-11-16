@@ -44,7 +44,7 @@ def care_command(
         ) -> None:
             care, assistant = get_care(hass), get_assistant(hass)
             if care is None or assistant is None:
-                connection.send_error(msg["id"], ERR_NOT_LOADED, "Plant Garden is not set up")
+                connection.send_error(msg["id"], ERR_NOT_LOADED, "Autogarden is not set up")
                 return
             try:
                 result = await func(hass, connection, msg, care, assistant)
@@ -540,7 +540,7 @@ async def ws_chat(
     """
     assistant = get_assistant(hass)
     if assistant is None:
-        connection.send_error(msg["id"], ERR_NOT_LOADED, "Plant Garden is not set up")
+        connection.send_error(msg["id"], ERR_NOT_LOADED, "Autogarden is not set up")
         return
     msg_id = msg["id"]
     connection.send_result(msg_id)

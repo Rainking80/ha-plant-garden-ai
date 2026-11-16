@@ -1,9 +1,10 @@
 {
+  "title": "Autogarden",
   "config": {
     "step": {
       "user": {
         "title": "Set up your garden",
-        "description": "Plant Garden adds a garden planner to the sidebar. AI providers and weather sources can be added later.",
+        "description": "Autogarden adds a garden planner to the sidebar. AI providers and weather sources can be added later.",
         "data": {
           "garden_name": "Garden name"
         },
@@ -16,7 +17,7 @@
       "name_required": "Please enter a name."
     },
     "abort": {
-      "single_instance_allowed": "Plant Garden is already set up."
+      "single_instance_allowed": "Autogarden is already set up."
     }
   },
   "options": {
@@ -40,7 +41,9 @@
           "research_schedule": "Research plants on its own",
           "weather_alerts": "Weather warnings",
           "photo_compare": "Compare new photos with earlier ones",
-          "camera_check": "Weekly look at the camera pictures"
+          "camera_check": "Weekly look at the camera pictures",
+          "ai_image": "AI provider for pictures (dream garden)",
+          "ai_image_model": "Picture model"
         },
         "data_description": {
           "max_runtime_hours": "If an irrigation zone runs longer, a notice appears under Repairs (e.g. a stuck valve).",
@@ -53,7 +56,9 @@
           "research_schedule": "The assistant looks up care, pests, toxicity and more for one plant without knowledge at a time - on the web with Claude, Gemini or OpenRouter, else from Wikipedia - and keeps it. Every research costs money; the budget applies. Plants that have their knowledge are not researched again.",
           "weather_alerts": "A notification with what to do when frost below a plant's limit, heat, storm, heavy rain, or weather for plant diseases and slugs is coming. No AI, no costs.",
           "photo_compare": "After a photo upload the AI compares it with an earlier photo of the plant (growth, discolouration, pests) and opens a problem if something is wrong. Every comparison is an AI call with costs; the budget applies.",
-          "camera_check": "Plants with a camera get a picture every day at noon (free, no AI). With this option the AI compares the newest camera picture with an earlier one every Monday and opens a problem if something is wrong. Every look is an AI call with costs; the budget applies."
+          "camera_check": "Plants with a camera get a picture every day at noon (free, no AI). With this option the AI compares the newest camera picture with an earlier one every Monday and opens a problem if something is wrong. Every look is an AI call with costs; the budget applies.",
+          "ai_image": "Creates the pictures of the dream garden. Only OpenAI, Google Gemini and OpenRouter can; without a choice the first of them is used. A picture costs several cents - the panel shows the estimate before each one.",
+          "ai_image_model": "Leave empty for the default (gpt-image-2, gemini-nano-banana-2.1, or openai/gpt-image-2 on OpenRouter). A model without a price on the Tech page shows an unknown cost."
         }
       }
     }
@@ -133,19 +138,19 @@
   "issues": {
     "long_run": {
       "title": "Irrigation zone {zone} has been running for {hours} h",
-      "description": "{entity} has been on for {hours} hours. Check whether the valve is stuck. Plant Garden never switches anything itself. This notice disappears once the zone is off again."
+      "description": "{entity} has been on for {hours} hours. Check whether the valve is stuck. Autogarden never switches anything itself. This notice disappears once the zone is off again."
     },
     "budget_warning": {
       "title": "80 % of the monthly AI budget used",
-      "description": "Plant Garden has spent {spent} of {budget} {currency} on AI this month."
+      "description": "Autogarden has spent {spent} of {budget} {currency} on AI this month."
     },
     "budget_exceeded": {
       "title": "Monthly AI budget used up",
-      "description": "Plant Garden has spent {spent} of {budget} {currency} on AI this month. With the stop option on, no more AI calls are made until next month."
+      "description": "Autogarden has spent {spent} of {budget} {currency} on AI this month. With the stop option on, no more AI calls are made until next month."
     },
     "ai_auth": {
       "title": "AI provider {provider}: key rejected",
-      "description": "The provider did not accept the key. Open Plant Garden under Settings → Devices & services, choose the provider and \"New key or model\". The notice disappears after the next successful call or connection test."
+      "description": "The provider did not accept the key. Open Autogarden under Settings → Devices & services, choose the provider and \"New key or model\". The notice disappears after the next successful call or connection test."
     },
     "missing_entity": {
       "title": "Irrigation zone {zone}: entity missing",
@@ -154,10 +159,10 @@
   },
   "exceptions": {
     "not_loaded": {
-      "message": "Plant Garden is not set up."
+      "message": "Autogarden is not set up."
     },
     "not_plant_or_zone": {
-      "message": "{device_id} is neither a plant nor an irrigation zone of Plant Garden."
+      "message": "{device_id} is neither a plant nor an irrigation zone of Autogarden."
     },
     "liters_needed": {
       "message": "Please give the litres for plants."
@@ -181,11 +186,11 @@
   "services": {
     "log_watering": {
       "name": "Log watering",
-      "description": "Records water that Plant Garden did not see itself: litres per plant (watering can) or minutes for a zone (e.g. with the hose).",
+      "description": "Records water that Autogarden did not see itself: litres per plant (watering can) or minutes for a zone (e.g. with the hose).",
       "fields": {
         "device_id": {
           "name": "Plants or zones",
-          "description": "Plant Garden devices: plants and/or irrigation zones."
+          "description": "Autogarden devices: plants and/or irrigation zones."
         },
         "liters": {
           "name": "Litres per plant",
@@ -211,7 +216,7 @@
       "fields": {
         "device_id": {
           "name": "Plant",
-          "description": "A plant of Plant Garden."
+          "description": "A plant of Autogarden."
         },
         "photos": {
           "name": "Photos",

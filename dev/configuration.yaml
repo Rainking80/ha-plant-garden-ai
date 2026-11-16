@@ -1,7 +1,7 @@
-# Minimal Home Assistant configuration for developing Plant Garden.
+# Minimal Home Assistant configuration for developing Autogarden.
 # Used by scripts/develop (WSL/devcontainer) and docker-compose.yml.
 homeassistant:
-  name: Plant Garden Dev
+  name: Autogarden Dev
   latitude: 52.52
   longitude: 13.40
   elevation: 34

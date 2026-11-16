@@ -20,6 +20,10 @@ import type {
   Photo,
   Plant,
   PlantDetail,
+  DreamBrief,
+  DreamDesign,
+  DreamImageInfo,
+  DreamStyle,
   MoistureFields,
   PlacePlan,
   SketchResult,
@@ -623,6 +627,95 @@ export function getTips(hass: HomeAssistant, plantId?: string | null): Promise<T
     type: `${WS_PREFIX}/assistant/tips`,
     ...plantArg(plantId),
   });
+}
+
+// ------------------------------------------------------------ dream garden
+export const DREAM_UPLOAD_URL = "/api/plant_garden/dreams";
+
+export function listDreams(
+  hass: HomeAssistant,
+): Promise<{ designs: DreamDesign[]; image: DreamImageInfo | null; styles: DreamStyle[] }> {
+  return hass.callWS({ type: `${WS_PREFIX}/dream/list` });
+}
+
+/** A new design from a garden photo (no AI call yet). */
+export async function createDream(
+  hass: HomeAssistant,
+  file: Blob,
+  filename: string,
+): Promise<DreamDesign> {
+  const form = new FormData();
+  form.append("file", file, filename);
+  const response = await hass.fetchWithAuth(DREAM_UPLOAD_URL, { method: "POST", body: form });
+  if (!response.ok) {
+    let code: string | null = null;
+    let message = response.statusText;
+    try {
+      const body = (await response.json()) as { message?: string; code?: string };
+      code = body.code ?? null;
+      message = body.message ?? message;
+    } catch {
+      // body was not JSON
+    }
+    throw new UploadError(message, code, response.status);
+  }
+  return (await response.json()) as DreamDesign;
+}
+
+/** Step 1: the AI describes the photo and asks back. */
+export function dreamLook(hass: HomeAssistant, designId: string): Promise<DreamDesign> {
+  return hass.callWS<DreamDesign>({ type: `${WS_PREFIX}/dream/look`, design_id: designId });
+}
+
+/** Step 2: the planting concept for the wishes and the site. */
+export function dreamConcept(
+  hass: HomeAssistant,
+  designId: string,
+  brief: DreamBrief,
+): Promise<DreamDesign> {
+  return hass.callWS<DreamDesign>({
+    type: `${WS_PREFIX}/dream/concept`,
+    design_id: designId,
+    ...brief,
+  });
+}
+
+/** Step 3: a picture (costs several cents; ask the user first). */
+export function dreamPicture(
+  hass: HomeAssistant,
+  designId: string,
+  options: { plants?: string[]; instruction?: string; base?: string },
+): Promise<DreamDesign> {
+  return hass.callWS<DreamDesign>({
+    type: `${WS_PREFIX}/dream/picture`,
+    design_id: designId,
+    ...options,
+  });
+}
+
+export function deleteDreamPicture(
+  hass: HomeAssistant,
+  designId: string,
+  pictureId: string,
+): Promise<DreamDesign> {
+  return hass.callWS<DreamDesign>({
+    type: `${WS_PREFIX}/dream/picture/delete`,
+    design_id: designId,
+    picture_id: pictureId,
+  });
+}
+
+/** Take plants of the concept over as planned plants with a task each. */
+export function plantDream(
+  hass: HomeAssistant,
+  designId: string,
+  plants: string[],
+): Promise<{ design: DreamDesign; plants: string[] }> {
+  return hass.callWS({ type: `${WS_PREFIX}/dream/plant`, design_id: designId, plants });
+}
+
+export async function deleteDream(hass: HomeAssistant, designId: string): Promise<void> {
+  await hass.callWS<null>({ type: `${WS_PREFIX}/dream/delete`, design_id: designId });
 }
 
 /** Areas the AI sees in the plan's background picture (an AI call with costs; nothing is saved). */

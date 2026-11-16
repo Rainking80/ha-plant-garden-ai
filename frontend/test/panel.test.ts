@@ -66,6 +66,7 @@ describe("plant-garden-panel", () => {
       "Pflanzen",
       "Aufgaben",
       "Assistent",
+      "Traumgarten",
       "Wasser & Wetter",
       "Technik",
     ]);
@@ -74,7 +75,7 @@ describe("plant-garden-panel", () => {
 
   it("shows the tech page to admins only", async () => {
     const user = await mount(fakeBackend({ isAdmin: false }), "/tech");
-    await vi.waitFor(() => expect(user.shadowRoot?.querySelectorAll(".tabs a")).toHaveLength(5));
+    await vi.waitFor(() => expect(user.shadowRoot?.querySelectorAll(".tabs a")).toHaveLength(6));
     expect(deepQuery(user, "pg-tech-view")).toBeNull();
     document.body.innerHTML = "";
 
@@ -308,10 +309,10 @@ describe("plant-garden-panel", () => {
     const backend = fakeBackend();
     backend.callWS.mockRejectedValueOnce({
       code: "not_loaded",
-      message: "Plant Garden is not set up",
+      message: "Autogarden is not set up",
     });
     const el = await mount(backend, "/plants");
-    await vi.waitFor(() => expect(deepText(el)).toContain("Plant Garden is not set up"));
+    await vi.waitFor(() => expect(deepText(el)).toContain("Autogarden is not set up"));
     el.shadowRoot?.querySelector<HTMLButtonElement>(".state .button")?.click();
     await vi.waitFor(() => expect(deepText(el)).toContain("Willkommen in Schrebergarten"));
   });

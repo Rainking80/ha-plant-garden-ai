@@ -30,6 +30,8 @@ from ..const import (
     CONF_AI_BUDGET_STOP,
     CONF_AI_DEBUG,
     CONF_AI_IDENTIFY,
+    CONF_AI_IMAGE,
+    CONF_AI_IMAGE_MODEL,
     CONF_AI_RETENTION_DAYS,
     CONF_AI_TEXT,
     CONF_USD_EUR,
@@ -39,7 +41,7 @@ from ..const import (
 )
 from ..models import Source
 from ..photos import PhotoVariant
-from . import pricing
+from . import images as image_api, pricing
 from .base import (
     AIError,
     AIRequest,
@@ -562,6 +564,69 @@ class AIService:
                     ),
                 ]
         raise AIError("The AI did not answer with valid JSON")
+
+    # ------------------------------------------------------------ pictures
+    def image_subentry(self) -> ConfigSubentry | None:
+        """The provider that creates pictures: the chosen one, else the first that can."""
+        able = [s for s in self.subentries() if image_api.flavour(s.data) is not None]
+        chosen = self._entry.options.get(CONF_AI_IMAGE)
+        return next((s for s in able if s.subentry_id == chosen), able[0] if able else None)
+
+    def image_model(self, subentry: ConfigSubentry) -> str:
+        own = str(self._entry.options.get(CONF_AI_IMAGE_MODEL) or "").strip()
+        return own or image_api.DEFAULT_MODELS[image_api.flavour(subentry.data) or "openai"]
+
+    def image_info(self) -> dict[str, Any]:
+        """Who would create a picture and what it roughly costs (display currency)."""
+        subentry = self.image_subentry()
+        if subentry is None:
+            return {"available": False, "provider": None, "model": None, "cost": None,
+                    "currency": self.currency(), "cost_known": False}  # fmt: skip
+        model = self.image_model(subentry)
+        usage = image_api.estimate_usage(subentry.data)
+        price = pricing.price_for(self.prices(), subentry.data["kind"], model)
+        usd = pricing.cost_of(usage, price) if usage is not None else None
+        return {
+            "available": True,
+            "provider": subentry.title,
+            "model": model,
+            "cost": self.display_cost(usd),
+            "currency": self.currency(),
+            # False: the price is only known after the call (OpenRouter) or not at all
+            "cost_known": usd is not None,
+        }
+
+    async def async_edit_image(
+        self, feature: Feature, prompt: str, photo: bytes, *, portrait: bool
+    ) -> image_api.ImageResult:
+        """One picture from the image provider: budget-checked and logged like every call."""
+        subentry = self.image_subentry()
+        if subentry is None:
+            raise AIError("No AI provider that creates pictures is set up")
+        model = self.image_model(subentry)
+        usage = image_api.estimate_usage(subentry.data)
+        price = pricing.price_for(self.prices(), subentry.data["kind"], model)
+        await self._async_check_budget(pricing.cost_of(usage, price) if usage else None)
+        start = time.monotonic()
+        try:
+            result = await image_api.async_edit(
+                self._session, subentry.data, model, prompt, photo, portrait=portrait
+            )
+        except AIError as err:
+            await self._async_log(
+                feature=feature, subentry=subentry, model=model, plant_id=None,
+                status="error", error=str(err), usage=err.usage or Usage(),
+                latency_ms=int((time.monotonic() - start) * 1000), prompt=prompt,
+            )  # fmt: skip
+            if isinstance(err, AuthError):
+                self._set_status(subentry.subentry_id, ok=False, error=str(err), auth_failed=True)
+            raise
+        result.cost = await self._async_log(
+            feature=feature, subentry=subentry, model=model, plant_id=None,
+            status="ok", error=None, usage=result.usage, latency_ms=result.latency_ms,
+            provider_cost=result.provider_cost, prompt=prompt,
+        )  # fmt: skip
+        return result
 
     # ------------------------------------------------------------ identification
     async def async_images(

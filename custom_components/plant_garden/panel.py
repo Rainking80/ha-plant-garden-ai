@@ -1,4 +1,4 @@
-"""Registration of the Plant Garden sidebar panel and its static files."""
+"""Registration of the Autogarden sidebar panel and its static files."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ def _bundle_fingerprint() -> str:
 
 
 async def async_register_panel(hass: HomeAssistant, entry: PlantGardenConfigEntry) -> None:
-    """Add the Plant Garden panel to the sidebar."""
+    """Add the Autogarden panel to the sidebar."""
     fingerprint = await hass.async_add_executor_job(_bundle_fingerprint)
     await panel_custom.async_register_panel(
         hass,
@@ -59,5 +59,5 @@ async def async_register_panel(hass: HomeAssistant, entry: PlantGardenConfigEntr
 
 
 def async_unregister_panel(hass: HomeAssistant) -> None:
-    """Remove the Plant Garden panel from the sidebar."""
+    """Remove the Autogarden panel from the sidebar."""
     frontend.async_remove_panel(hass, PANEL_URL_PATH, warn_if_unknown=False)

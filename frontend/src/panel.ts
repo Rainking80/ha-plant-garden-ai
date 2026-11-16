@@ -12,6 +12,7 @@ import { navigate } from "./util/navigate";
 import "./views/garden-view";
 import "./views/plant-detail";
 import "./views/assistant-view";
+import "./views/dream-view";
 import "./views/plants-view";
 import "./views/tasks-view";
 import "./views/tech-view";
@@ -23,6 +24,7 @@ export type View =
   | { name: "water" }
   | { name: "tasks" }
   | { name: "assistant" }
+  | { name: "dream" }
   | { name: "tech" }
   | { name: "plant"; plantId: string };
 
@@ -38,6 +40,7 @@ export function parseRoute(path: string | undefined): View {
   if (/^\/tech\/?$/.test(value)) return { name: "tech" };
   if (/^\/tasks\/?$/.test(value)) return { name: "tasks" };
   if (/^\/assistant\/?$/.test(value)) return { name: "assistant" };
+  if (/^\/dream\/?$/.test(value)) return { name: "dream" };
   const focus = /^\/plan\/([0-9A-Za-z]+)\/?$/.exec(value);
   return { name: "plan", focusPlantId: focus?.[1] ?? null };
 }
@@ -140,7 +143,7 @@ export class PlantGardenPanel extends LitElement {
   protected override render() {
     const t = this._localize;
     const view = parseRoute(this.route?.path);
-    const gardenName = this._info?.garden_name ?? this.panel?.title ?? "Plant Garden";
+    const gardenName = this._info?.garden_name ?? this.panel?.title ?? t("panel.brand");
     const plantName =
       view.name === "plant" ? (this._store.getPlant(view.plantId)?.name ?? gardenName) : "";
 
@@ -198,6 +201,12 @@ export class PlantGardenPanel extends LitElement {
                   aria-current=${view.name === "assistant" ? "page" : "false"}
                   @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/assistant`)}
                   >${t("nav.assistant")}</a
+                >
+                <a
+                  href="${this._prefix}/dream"
+                  aria-current=${view.name === "dream" ? "page" : "false"}
+                  @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/dream`)}
+                  >${t("nav.dream")}</a
                 >
                 <a
                   href="${this._prefix}/water"
@@ -289,6 +298,12 @@ export class PlantGardenPanel extends LitElement {
           .store=${this._store}
           .prefix=${this._prefix}
         ></pg-assistant-view>`;
+      case "dream":
+        return html`<pg-dream-view
+          .hass=${this.hass}
+          .store=${this._store}
+          .prefix=${this._prefix}
+        ></pg-dream-view>`;
       case "tech":
         if (!this._info.is_admin) return nothing;
         return html`<pg-tech-view .hass=${this.hass} .store=${this._store}></pg-tech-view>`;

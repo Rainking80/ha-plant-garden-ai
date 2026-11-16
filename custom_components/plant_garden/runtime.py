@@ -1,4 +1,4 @@
-"""Runtime data attached to the Plant Garden config entry."""
+"""Runtime data attached to the Autogarden config entry."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .ai.assistant import Assistant
+from .ai.dream import DreamGarden
 from .ai.research import Researcher
 from .ai.service import AIService
 from .alerts import AlertNotifier
@@ -33,13 +34,14 @@ class PlantGardenData:
     researcher: Researcher
     alerts: AlertNotifier
     camera: CameraWatcher
+    dream: DreamGarden
 
 
 type PlantGardenConfigEntry = ConfigEntry[PlantGardenData]
 
 
 def get_loaded_entry(hass: HomeAssistant) -> PlantGardenConfigEntry | None:
-    """Return the (single) loaded Plant Garden entry, if any."""
+    """Return the (single) loaded Autogarden entry, if any."""
     entries: list[PlantGardenConfigEntry] = hass.config_entries.async_loaded_entries(DOMAIN)
     return entries[0] if entries else None
 

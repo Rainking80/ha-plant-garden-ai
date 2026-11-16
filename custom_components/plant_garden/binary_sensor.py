@@ -18,7 +18,7 @@ from .runtime import PlantGardenConfigEntry
 
 @dataclass(frozen=True, kw_only=True)
 class GardenBinarySensorDescription(GardenEntityDescription, BinarySensorEntityDescription):
-    """A Plant Garden binary sensor."""
+    """A Autogarden binary sensor."""
 
 
 NEEDS_WATER = GardenBinarySensorDescription(

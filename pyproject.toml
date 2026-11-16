@@ -1,7 +1,7 @@
 [project]
 name = "ha-plant-garden"
 version = "0.3.0"
-description = "Plant Garden – Home Assistant custom integration (garden planner, plant journal, water balance, AI assistant)"
+description = "Autogarden – Home Assistant custom integration (garden planner, plant journal, water balance, AI assistant)"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.14.2"

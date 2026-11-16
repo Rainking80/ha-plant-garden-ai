@@ -1,7 +1,7 @@
 """Prepare a local dev Home Assistant (scripts/develop) for trying the panel.
 
 On a fresh instance it creates the login `dev` with a random password (printed
-once), finishes onboarding, adds Plant Garden and fills it with an invented demo
+once), finishes onboarding, adds Autogarden and fills it with an invented demo
 garden. A long-lived token is kept in the HA config dir, so later runs need no
 login. Existing gardens are left alone unless --reset is given.
 
@@ -383,7 +383,7 @@ async def main(base: str, reset: bool) -> None:
                     headers=headers,
                 ) as resp:
                     assert (await resp.json())["type"] == "create_entry"
-                print("  Plant Garden eingerichtet")
+                print("  Autogarten eingerichtet")
 
             existing = (await call(type="plant_garden/plants/list"))["plants"]
             layout = await call(type="plant_garden/layout/get")

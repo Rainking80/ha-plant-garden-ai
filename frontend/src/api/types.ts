@@ -262,6 +262,80 @@ export interface SunMap {
   day_hours: number;
 }
 
+// ------------------------------------------------------------ dream garden
+export type DreamStyle =
+  | "natural"
+  | "cottage"
+  | "modern"
+  | "mediterranean"
+  | "low_maintenance"
+  | "kitchen"
+  | "pollinator"
+  | "woodland"
+  | "japanese";
+export type DreamStrength = "gentle" | "medium" | "bold";
+
+/** A plant of a dream garden concept: a suggestion with how many and how far apart. */
+export interface DreamPlant extends PlanSuggestion {
+  quantity: number;
+  spacing_cm: number | null;
+}
+
+export interface DreamBrief {
+  wish: string;
+  style: DreamStyle | null;
+  strength: DreamStrength;
+  /** what must stay as it is */
+  keep: string[];
+  answers: { question: string; answer: string }[];
+}
+
+export interface DreamPicture {
+  id: string;
+  created: string;
+  model: string;
+  /** what it cost, display currency (null: unknown) */
+  cost: number | null;
+  instruction: string | null;
+  url: string;
+}
+
+/** A dream garden design: a photo, what the AI saw, the concept and its pictures. */
+export interface DreamDesign {
+  id: string;
+  created: string;
+  width: number;
+  height: number;
+  photo_url: string;
+  look: {
+    description: string;
+    elements: string[];
+    questions: { question: string; options: string[] }[];
+    styles: DreamStyle[];
+  } | null;
+  brief: DreamBrief | null;
+  concept: {
+    summary: string;
+    changes: string[];
+    hardscape: string[];
+    plants: DreamPlant[];
+  } | null;
+  pictures: DreamPicture[];
+  /** ids of concept plants already taken over into the garden */
+  planted: string[];
+}
+
+/** Who creates pictures and what one roughly costs. */
+export interface DreamImageInfo {
+  available: boolean;
+  provider: string | null;
+  model: string | null;
+  cost: number | null;
+  currency: string;
+  /** false: the price is only known after the call, or not at all */
+  cost_known: boolean;
+}
+
 /** An area the AI outlined in the plan's background picture (not saved yet). */
 export interface SketchShape {
   kind: ShapeKind;

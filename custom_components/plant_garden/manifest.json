@@ -1,6 +1,6 @@
 {
   "domain": "plant_garden",
-  "name": "Plant Garden",
+  "name": "Autogarden",
   "after_dependencies": ["ai_task", "camera", "media_source", "recorder"],
   "categories": ["garden_plants"],
   "codeowners": ["@Rainking80"],

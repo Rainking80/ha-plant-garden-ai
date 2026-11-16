@@ -21,7 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 
 API = "https://{language}.wikipedia.org/w/api.php"
 USER_AGENT = (
-    "PlantGarden/0.1 (Home Assistant integration; https://github.com/Rainking80/ha-plant-garden-ai)"
+    "Autogarden/0.1 (Home Assistant integration; https://github.com/Rainking80/ha-plant-garden-ai)"
 )
 MAX_CHARS = 12000
 

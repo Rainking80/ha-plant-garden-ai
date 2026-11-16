@@ -1,4 +1,4 @@
-"""Constants for the Plant Garden integration."""
+"""Constants for the Autogarden integration."""
 
 from __future__ import annotations
 
@@ -6,6 +6,17 @@ from pathlib import Path
 from typing import Final
 
 DOMAIN: Final = "plant_garden"
+
+# The name people see: "Autogarten" in German, "Autogarden" everywhere else.
+# The domain keeps its first name, so entities and data survive (D-049).
+BRAND_NAME: Final = "Autogarden"
+BRAND_NAMES: Final = {"de": "Autogarten"}
+
+
+def brand_name(language: str | None) -> str:
+    """Return the integration's name in a language."""
+    return BRAND_NAMES.get(language or "", BRAND_NAME)
+
 
 CONF_GARDEN_NAME: Final = "garden_name"
 
@@ -56,6 +67,8 @@ RESEARCH_SCHEDULES: Final = ("off", "weekly", "daily", "three_daily", "hourly")
 CONF_WEATHER_ALERTS: Final = "weather_alerts"
 # compare a new photo with earlier ones of the plant (an AI call, off by default)
 CONF_PHOTO_COMPARE: Final = "photo_compare"
+CONF_AI_IMAGE: Final = "ai_image"  # provider that creates pictures (dream garden)
+CONF_AI_IMAGE_MODEL: Final = "ai_image_model"  # its model, empty: the default
 CAMERA_TAG: Final = "camera"  # tag of the daily pictures taken by a plant's camera
 CONF_CAMERA_CHECK: Final = "camera_check"  # weekly look of the AI at the camera pictures
 # context size (estimated tokens) the assistant may send, per feature: option

@@ -1,4 +1,4 @@
-"""Tests for setting up and unloading Plant Garden."""
+"""Tests for setting up and unloading Autogarden."""
 
 from __future__ import annotations
 

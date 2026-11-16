@@ -11,6 +11,8 @@ import type {
   Task,
   TipsRecord,
   Background,
+  DreamDesign,
+  DreamImageInfo,
   Identification,
   IrrigationEvent,
   IrrigationSummary,
@@ -491,6 +493,8 @@ export interface FakeBackend {
   sunMap: SunMap | null;
   placePlan: PlacePlan | null;
   sketch: SketchResult | null;
+  dreams: DreamDesign[];
+  dreamImage: DreamImageInfo | null;
   isAdmin: boolean;
 }
 
@@ -516,6 +520,94 @@ function moveOrigin(backend: FakeBackend, to: GeoOrigin): void {
   });
 }
 
+/** A dream garden design as the backend sends it after an upload. */
+export function makeDream(overrides: Partial<DreamDesign> = {}): DreamDesign {
+  return {
+    id: "01JDREAM00000000000000000A",
+    created: "2026-07-01T10:00:00+00:00",
+    width: 1536,
+    height: 1024,
+    photo_url: "/api/plant_garden/dreams/D/photo?authSig=x",
+    look: null,
+    brief: null,
+    concept: null,
+    pictures: [],
+    planted: [],
+    ...overrides,
+  };
+}
+
+/** What the backend makes of a design in each step of the dream garden. */
+function dreamStep(design: DreamDesign, step: string, msg: Record<string, unknown>): DreamDesign {
+  if (step === "look") {
+    return {
+      ...design,
+      look: {
+        description: "Ich sehe einen Rasen mit einem Plattenweg und links eine Hecke.",
+        elements: ["Rasen", "Plattenweg", "Hecke"],
+        questions: [
+          { question: "Was soll sich ändern?", options: ["Mehr Blüten", "Sichtschutz"] },
+          { question: "Wie viel Pflege?", options: ["wenig", "gern viel"] },
+        ],
+        styles: ["cottage"],
+      },
+    };
+  }
+  if (step === "concept") {
+    const plant = {
+      id: "DP1",
+      name: "Lavendel",
+      scientific_name: "Lavandula angustifolia",
+      category: "perennial" as const,
+      reason: "Sonnig und trocken.",
+      light: "full_sun" as const,
+      water_need: "low" as const,
+      height_cm: 50,
+      width_cm: 50,
+      min_temperature_c: -20,
+      planting_months: [4, 5],
+      neighbours: null,
+      caution: "Für Katzen leicht giftig.",
+      quantity: 5,
+      spacing_cm: 40,
+    };
+    return {
+      ...design,
+      brief: {
+        wish: String(msg.wish ?? ""),
+        style: msg.style ?? null,
+        strength: "medium",
+        keep: (msg.keep as string[]) ?? [],
+        answers: (msg.answers as { question: string; answer: string }[]) ?? [],
+      } as DreamDesign["brief"],
+      concept: {
+        summary: "Ein Staudenbeet entlang des Wegs, die Hecke bleibt.",
+        changes: ["Rasenkante abstechen"],
+        hardscape: ["Stahlkante"],
+        plants: [plant, { ...plant, id: "DP2", name: "Katzenminze", quantity: 3, caution: null }],
+      },
+    };
+  }
+  if (step === "picture") {
+    const n = design.pictures.length + 1;
+    return {
+      ...design,
+      pictures: [
+        ...design.pictures,
+        {
+          id: `PIC${n}`,
+          created: "2026-07-01T10:05:00+00:00",
+          model: "gpt-image-2",
+          cost: 0.061,
+          instruction: (msg.instruction as string | undefined) ?? null,
+          url: `/api/plant_garden/dreams/D/PIC${n}?authSig=x`,
+        },
+      ],
+    };
+  }
+  return { ...design, pictures: design.pictures.filter((p) => p.id !== msg.picture_id) };
+}
+
 /** A hass object whose callWS answers the plant_garden commands from in-memory data. */
 export function fakeBackend(
   options: {
@@ -537,6 +629,8 @@ export function fakeBackend(
     sunMap?: SunMap | null;
     placePlan?: PlacePlan | null;
     sketch?: SketchResult | null;
+    dreams?: DreamDesign[];
+    dreamImage?: DreamImageInfo | null;
     isAdmin?: boolean;
     country?: string | null;
     language?: string;
@@ -560,6 +654,8 @@ export function fakeBackend(
     sunMap: options.sunMap ?? null,
     placePlan: options.placePlan ?? null,
     sketch: options.sketch ?? null,
+    dreams: options.dreams ?? [],
+    dreamImage: options.dreamImage ?? null,
     comparison: options.comparison ?? null,
     isAdmin: options.isAdmin ?? true,
   } as FakeBackend;
@@ -605,6 +701,33 @@ export function fakeBackend(
       }
       case "plant_garden/layout/get":
         return layout();
+      case "plant_garden/dream/list":
+        return {
+          designs: backend.dreams,
+          image: backend.dreamImage,
+          styles: ["natural", "cottage", "modern"],
+        };
+      case "plant_garden/dream/look":
+      case "plant_garden/dream/concept":
+      case "plant_garden/dream/picture":
+      case "plant_garden/dream/picture/delete": {
+        const design = backend.dreams.find((d) => d.id === msg.design_id);
+        if (!design) throw { code: "not_found", message: "Not found" };
+        const step = msg.type.split("/").slice(2).join("/");
+        const next = dreamStep(design, step, msg);
+        backend.dreams = backend.dreams.map((d) => (d.id === next.id ? next : d));
+        return next;
+      }
+      case "plant_garden/dream/plant": {
+        const design = backend.dreams.find((d) => d.id === msg.design_id);
+        if (!design) throw { code: "not_found", message: "Not found" };
+        const next = { ...design, planted: [...design.planted, ...(msg.plants as string[])] };
+        backend.dreams = backend.dreams.map((d) => (d.id === next.id ? next : d));
+        return { design: next, plants: (msg.plants as string[]).map((id) => `PLANT-${id}`) };
+      }
+      case "plant_garden/dream/delete":
+        backend.dreams = backend.dreams.filter((d) => d.id !== msg.design_id);
+        return null;
       case "plant_garden/assistant/sketch":
         if (!backend.sketch) throw { code: "ai_error", message: "No AI provider is set up" };
         return backend.sketch;

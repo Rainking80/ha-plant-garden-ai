@@ -115,7 +115,7 @@ def test_alert_texts() -> None:
         )
     )
     title, message = alert_text(alerts["frost"], "de", ["Feige"])
-    assert title == "Plant Garden: Frost"
+    assert title == "Autogarten: Frost"
     assert message.startswith("Bis -4 °C ab 11.05. - Kübel ins Haus")
     assert message.endswith("Betrifft: Feige")
     title, message = alert_text(alerts["frost"], "en", [f"P{i}" for i in range(10)])

@@ -1,4 +1,4 @@
-"""Config flow for Plant Garden."""
+"""Config flow for Autogarden."""
 
 from __future__ import annotations
 
@@ -26,6 +26,8 @@ from .const import (
     CONF_AI_BUDGET_STOP,
     CONF_AI_DEBUG,
     CONF_AI_IDENTIFY,
+    CONF_AI_IMAGE,
+    CONF_AI_IMAGE_MODEL,
     CONF_AI_RETENTION_DAYS,
     CONF_AI_TEXT,
     CONF_CAMERA_CHECK,
@@ -120,9 +122,11 @@ class PlantGardenOptionsFlow(OptionsFlow):
                 data[CONF_CONTEXT_TOKENS + feature] = int(
                     user_input.get(CONF_CONTEXT_TOKENS + feature) or default
                 )
-            for key in (CONF_AI_IDENTIFY, CONF_AI_TEXT):
+            for key in (CONF_AI_IDENTIFY, CONF_AI_TEXT, CONF_AI_IMAGE):
                 if user_input.get(key):
                     data[key] = user_input[key]
+            if str(user_input.get(CONF_AI_IMAGE_MODEL) or "").strip():
+                data[CONF_AI_IMAGE_MODEL] = str(user_input[CONF_AI_IMAGE_MODEL]).strip()
             return self.async_create_entry(data=data)
         options = self.config_entry.options
 
@@ -146,10 +150,17 @@ class PlantGardenOptionsFlow(OptionsFlow):
             ): number(1, 48, 1, "h"),
         }
         if providers:
-            for key in (CONF_AI_IDENTIFY, CONF_AI_TEXT):
+            for key in (CONF_AI_IDENTIFY, CONF_AI_TEXT, CONF_AI_IMAGE):
                 fields[
                     probatio.Optional(key, description={"suggested_value": options.get(key)})
                 ] = selector.SelectSelector(selector.SelectSelectorConfig(options=providers))
+        if providers:
+            fields[
+                probatio.Optional(
+                    CONF_AI_IMAGE_MODEL,
+                    description={"suggested_value": options.get(CONF_AI_IMAGE_MODEL)},
+                )
+            ] = selector.TextSelector()
         fields.update(
             {
                 probatio.Required(CONF_AI_BUDGET, default=options.get(CONF_AI_BUDGET, 0)): number(

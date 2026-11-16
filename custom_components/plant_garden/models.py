@@ -1,4 +1,4 @@
-"""Domain model of Plant Garden.
+"""Domain model of Autogarden.
 
 Plain dataclasses with explicit (de)serialisation. Plants live in the HA Store
 (JSON); photos and measurements live in SQLite (see database.py).
