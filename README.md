@@ -47,7 +47,7 @@ OpenRouter or a local model. Every AI call happens on your request or by an
 option you switch on, with every token and cent on record – and everything in
 "Smart without AI" works with no AI at all.
 
-> **Status:** early development, version 0.4.0. Changes are listed in the
+> **Status:** early development, version 0.5.0. Changes are listed in the
 > [changelog](CHANGELOG.md).
 
 Autogarden never switches anything. It reads the state of your valves and
