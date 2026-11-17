@@ -101,6 +101,13 @@ SEARCH_SYSTEM = {
     "factually in at most 200 words. Name uncertainties. In English.",
 }
 
+TITLE_SYSTEM = {
+    "de": "Gib dieser Unterhaltung über einen Garten einen Titel: höchstens fünf Wörter, "
+    "das Thema, ohne Anführungszeichen und ohne Punkt. Antworte nur mit dem Titel, auf Deutsch.",
+    "en": "Give this conversation about a garden a title: at most five words, the topic, "
+    "without quotes and without a full stop. Answer with the title only, in English.",
+}
+
 NO_ANSWER = {
     "de": "Ich bin zu keinem Ergebnis gekommen. Stell die Frage bitte etwas enger.",
     "en": "I did not get to a result. Please ask a little more narrowly.",

@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Saved chats: every conversation with the garden assistant is kept and gets a
+  short title from the AI. A list shows the chats by title and date - go on
+  with one, delete it, or start a new one.
+
 ## [0.5.0] - 2026-11-17
 
 ### Added

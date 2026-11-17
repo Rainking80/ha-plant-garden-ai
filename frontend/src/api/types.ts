@@ -302,13 +302,25 @@ export interface AgentState {
   web: boolean;
   /** of the costs shown with the answers */
   currency: string;
-  messages: AgentMessage[];
+  /** the saved conversations, the one used last first */
+  chats: AgentChat[];
+}
+
+/** A saved conversation with the assistant; the AI gives it its title. */
+export interface AgentChat {
+  id: string;
+  /** empty until the first answer */
+  title: string;
+  created: string;
+  updated: string;
+  /** how many messages it has */
+  messages: number;
 }
 
 export type AgentEvent =
   | { step: string }
   | { action: AgentAction }
-  | { done: true; message: AgentMessage }
+  | { done: true; message: AgentMessage; chat: AgentChat }
   | { error: string; code: string };
 
 // ------------------------------------------------------------ dream garden

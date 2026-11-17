@@ -43,8 +43,12 @@ _LOGGER = logging.getLogger(__name__)
 
 STORE_KEY = f"{DOMAIN}.agent"
 STORE_VERSION = 1
+MAX_CHATS = 50  # the oldest conversation goes when a new one would be one too many
+TITLE_LENGTH = 60
+# what a model likes to wrap a title in: spaces, quotes of all kinds, markdown, a final dot
+TITLE_EDGES = " \"'\u201e\u201c\u201d\u201a\u2018\u2019\u00ab\u00bb*#."
 MAX_STEPS = 8  # rounds of tool calls per question
-KEEP_MESSAGES = 60  # shown in the panel
+KEEP_MESSAGES = 60  # per conversation
 SEND_MESSAGES = 12  # earlier messages the model gets with a question
 MAX_RESULT_CHARS = 6000  # a tool result is cut to this for the model
 MAX_PLANTS_LISTED = 150
@@ -238,6 +242,20 @@ def search_handbook(sections: list[tuple[str, str]], topic: str) -> list[tuple[s
     return [(heading, body) for _score, heading, body in scored[:HELP_SECTIONS]]
 
 
+def clean_title(text: str) -> str:
+    """A title as the model gave it: one line, without quotes or a final dot."""
+    line = next((part.strip() for part in text.splitlines() if part.strip()), "")
+    return line.strip(TITLE_EDGES).strip()[:TITLE_LENGTH]
+
+
+def fallback_title(question: str) -> str:
+    """The first words of the question, when the AI gave no title."""
+    words = " ".join(question.split())
+    if len(words) <= TITLE_LENGTH:
+        return words
+    return words[:TITLE_LENGTH].rsplit(" ", 1)[0] + " …"
+
+
 class GardenAgent:
     """Answers questions with tools and keeps the conversation."""
 
@@ -246,6 +264,8 @@ class GardenAgent:
         self._entry = entry
         self._ai = ai
         self._store: Store[dict[str, Any]] = Store(hass, STORE_VERSION, STORE_KEY)
+        # conversations by id; `_messages` is the one a question is being answered in
+        self._chats: dict[str, dict[str, Any]] = {}
         self._messages: list[dict[str, Any]] = []
         self._handbook: dict[str, list[tuple[str, str]]] = {}
         self._busy = False
@@ -258,7 +278,17 @@ class GardenAgent:
 
     async def async_setup(self) -> None:
         data = await self._store.async_load() or {}
-        self._messages = data.get("messages", [])
+        self._chats = data.get("chats", {})
+        if data.get("messages"):
+            # before 0.6 there was one conversation: it becomes the first saved one
+            old = data["messages"]
+            chat = self._new_chat()
+            chat["messages"] = old
+            chat["created"] = old[0].get("created", chat["created"])
+            chat["updated"] = old[-1].get("created", chat["updated"])
+            chat["title"] = fallback_title(
+                next((m["text"] for m in old if m["role"] == "user"), "")
+            )
 
         def load() -> dict[str, list[tuple[str, str]]]:
             books = {}
@@ -272,10 +302,84 @@ class GardenAgent:
         self._handbook = await self.hass.async_add_executor_job(load)
 
     async def async_shutdown(self) -> None:
-        await self._store.async_save({"messages": self._messages})
+        await self._store.async_save({"chats": self._chats})
 
     def _save(self) -> None:
-        self._store.async_delay_save(lambda: {"messages": self._messages}, 1)
+        self._store.async_delay_save(lambda: {"chats": self._chats}, 1)
+
+    # ------------------------------------------------------------ conversations
+    def _new_chat(self) -> dict[str, Any]:
+        """An empty conversation; the oldest one makes room when there are too many."""
+        while len(self._chats) >= MAX_CHATS:
+            oldest = min(self._chats.values(), key=lambda chat: chat["updated"])
+            del self._chats[oldest["id"]]
+        now = dt_util.utcnow().isoformat()
+        chat: dict[str, Any] = {
+            "id": ulid_now(),
+            "title": "",
+            "created": now,
+            "updated": now,
+            "messages": [],
+        }
+        self._chats[chat["id"]] = chat
+        return chat
+
+    def _chat(self, chat_id: str) -> dict[str, Any]:
+        try:
+            return self._chats[chat_id]
+        except KeyError:
+            raise NotFoundError(chat_id) from None
+
+    @staticmethod
+    def _summary(chat: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "id": chat["id"],
+            "title": chat["title"],
+            "created": chat["created"],
+            "updated": chat["updated"],
+            "messages": len(chat["messages"]),
+        }
+
+    def chats(self) -> list[dict[str, Any]]:
+        """The saved conversations, the one used last first."""
+        ordered = sorted(self._chats.values(), key=lambda chat: chat["updated"], reverse=True)
+        return [self._summary(chat) for chat in ordered]
+
+    def history(self, chat_id: str) -> dict[str, Any]:
+        """A conversation with its messages."""
+        chat = self._chat(chat_id)
+        return {
+            **self._summary(chat),
+            "messages": [self._public(message) for message in chat["messages"]],
+        }
+
+    async def async_delete(self, chat_id: str) -> None:
+        """Forget a conversation (what the agent did in the garden stays)."""
+        self._chat(chat_id)
+        if self._busy and self._chats[chat_id]["messages"] is self._messages:
+            raise ValueError("the assistant is still answering in this conversation")
+        del self._chats[chat_id]
+        self._save()
+
+    async def _async_title(self, question: str, answer: str, subentry: Any) -> str:
+        """A short title for a conversation, from its first question and answer."""
+        language = self._language()
+        try:
+            response = await self._ai.async_generate(
+                Feature.AGENT,
+                AIRequest(
+                    feature=Feature.AGENT,
+                    system=prompts.TITLE_SYSTEM[language],
+                    messages=[Message(role="user", text=f"{question[:600]}\n\n{answer[:600]}")],
+                    max_output_tokens=60,
+                    prompt_version=prompts.VERSION,
+                ),
+                subentry,
+            )
+        except AIError as err:
+            _LOGGER.debug("No title from the AI: %s", err)
+            return fallback_title(question)
+        return clean_title(response.text) or fallback_title(question)
 
     def _language(self) -> str:
         return "de" if self.hass.config.language == "de" else "en"
@@ -305,13 +409,6 @@ class GardenAgent:
                 for action in message.get("actions", [])
             ],
         }
-
-    def history(self) -> list[dict[str, Any]]:
-        return [self._public(message) for message in self._messages]
-
-    async def async_clear(self) -> None:
-        self._messages = []
-        self._save()
 
     # ------------------------------------------------------------ tools
     def _plants(self) -> list[Any]:
@@ -624,10 +721,16 @@ class GardenAgent:
         self,
         text: str,
         *,
+        chat_id: str | None = None,
         page: dict[str, Any] | None = None,
         on_event: Callable[[dict[str, Any]], None] | None = None,
     ) -> dict[str, Any]:
-        """Answer a question; tool use and actions are reported through `on_event`."""
+        """Answer a question in a conversation (a new one without `chat_id`).
+
+        Tool use and actions are reported through `on_event`. Returns the answer
+        and the conversation: `{"message": ..., "chat": ...}`. A new conversation
+        gets its title from the AI after its first answer.
+        """
         text = text.strip()[:4000]
         if not text:
             raise ValueError("question must not be empty")
@@ -636,13 +739,26 @@ class GardenAgent:
         subentry = self._ai.agent_subentry()
         if subentry is None:
             raise AIError("No AI provider that can use tools is set up")
+        chat = self._chat(chat_id) if chat_id else self._new_chat()
+        self._messages = chat["messages"]
         self._busy = True
         try:
-            return await self._async_answer(
+            reply = await self._async_answer(
                 text, page or {}, subentry, on_event or (lambda _e: None)
             )
+            if not chat["title"]:
+                chat["title"] = await self._async_title(text, reply["text"], subentry)
+        except Exception:
+            if not chat["messages"]:  # a conversation that never got an answer
+                self._chats.pop(chat["id"], None)
+            elif not chat["title"]:
+                chat["title"] = fallback_title(text)
+            raise
         finally:
+            chat["updated"] = dt_util.utcnow().isoformat()
             self._busy = False
+            self._save()
+        return {"message": reply, "chat": self._summary(chat)}
 
     async def _async_answer(
         self,
@@ -749,14 +865,15 @@ class GardenAgent:
     # ------------------------------------------------------------ undo
     async def async_undo(self, action_id: str) -> dict[str, Any]:
         """Take an action of the agent back; returns the message it belongs to."""
-        for message in self._messages:
-            for action in message.get("actions", []):
-                if action["id"] == action_id:
-                    if not action.get("undone"):
-                        await self._async_revert(action["kind"], action["undo"])
-                        action["undone"] = True
-                        self._save()
-                    return self._public(message)
+        for chat in self._chats.values():
+            for message in chat["messages"]:
+                for action in message.get("actions", []):
+                    if action["id"] == action_id:
+                        if not action.get("undone"):
+                            await self._async_revert(action["kind"], action["undo"])
+                            action["undone"] = True
+                            self._save()
+                        return self._public(message)
         raise NotFoundError(action_id)
 
     async def _async_revert(self, kind: str, undo: dict[str, Any]) -> None:

@@ -880,3 +880,22 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   drawer on click: 50 % of the window, 90 % when enlarged (remembered per
   device), full width on phones. The tab "Assistant" was removed; its chat is
   this one. The per-plant chat, tips and questions stay on the plant page.
+
+## D-052 Saved conversations with AI titles (2026-11-17)
+
+- **Every conversation is kept**: a question without a conversation starts one;
+  with `chat_id` it goes on in a saved one, which then is the model's context
+  (its last 12 messages). Conversations do not see each other.
+- **Title**: after the first answer one small extra call (60 output tokens, the
+  agent's provider, logged like every call) asks for a title of at most five
+  words from the first question and answer. Quotes, markdown and a final dot are
+  stripped; if the call fails or answers nothing, the title is the beginning of
+  the question. A title is given once and not changed by later messages.
+- **List**: title and date of the last use, the one used last first; open to go
+  on, delete after a confirmation. Deleting forgets the conversation only - what
+  the agent did in the garden stays (and can then no longer be undone from the
+  chat).
+- **Bounds**: 50 conversations; a new one beyond that drops the one unused
+  longest. A new conversation whose first question fails is not kept. The single
+  conversation of 0.5 becomes the first saved one, titled with its first
+  question.

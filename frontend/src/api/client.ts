@@ -21,6 +21,7 @@ import type {
   Plant,
   PlantDetail,
   AgentAction,
+  AgentChat,
   AgentEvent,
   AgentMessage,
   AgentState,
@@ -660,20 +661,32 @@ export function agentState(hass: HomeAssistant): Promise<AgentState> {
   return hass.callWS<AgentState>({ type: `${WS_PREFIX}/agent/state` });
 }
 
-/** Ask the agent. `onEvent` reports the tools it uses and what it changes meanwhile. */
+/** A saved conversation with its messages. */
+export function agentChat(
+  hass: HomeAssistant,
+  chatId: string,
+): Promise<Omit<AgentChat, "messages"> & { messages: AgentMessage[] }> {
+  return hass.callWS({ type: `${WS_PREFIX}/agent/chat`, chat_id: chatId });
+}
+
+/**
+ * Ask the agent, in a saved conversation or (without `chatId`) a new one.
+ * `onEvent` reports the tools it uses and what it changes meanwhile. Answers
+ * with its message and the conversation, which has its title by then.
+ */
 export async function askAgent(
   hass: HomeAssistant,
   text: string,
-  page: { view?: string; plantId?: string | null },
+  page: { chatId?: string | null; view?: string; plantId?: string | null },
   onEvent: (event: { step: string } | { action: AgentAction }) => void,
-): Promise<AgentMessage> {
+): Promise<{ message: AgentMessage; chat: AgentChat }> {
   let unsubscribe: (() => Promise<void>) | undefined;
   try {
-    return await new Promise<AgentMessage>((resolve, reject) => {
+    return await new Promise<{ message: AgentMessage; chat: AgentChat }>((resolve, reject) => {
       hass.connection
         .subscribeMessage<AgentEvent>(
           (event) => {
-            if ("done" in event) resolve(event.message);
+            if ("done" in event) resolve({ message: event.message, chat: event.chat });
             else if ("error" in event) {
               reject(Object.assign(new Error(event.error), { code: event.code }));
             } else onEvent(event);
@@ -681,6 +694,7 @@ export async function askAgent(
           {
             type: `${WS_PREFIX}/agent/ask`,
             text,
+            ...(page.chatId ? { chat_id: page.chatId } : {}),
             ...(page.view ? { view: page.view } : {}),
             ...(page.plantId ? { plant_id: page.plantId } : {}),
           },
@@ -700,8 +714,9 @@ export function undoAgentAction(hass: HomeAssistant, actionId: string): Promise<
   return hass.callWS<AgentMessage>({ type: `${WS_PREFIX}/agent/undo`, action_id: actionId });
 }
 
-export async function clearAgent(hass: HomeAssistant): Promise<void> {
-  await hass.callWS<null>({ type: `${WS_PREFIX}/agent/clear` });
+/** Delete a saved conversation (what the agent did in the garden stays). */
+export async function deleteAgentChat(hass: HomeAssistant, chatId: string): Promise<void> {
+  await hass.callWS<null>({ type: `${WS_PREFIX}/agent/delete`, chat_id: chatId });
 }
 
 // ------------------------------------------------------------ dream garden

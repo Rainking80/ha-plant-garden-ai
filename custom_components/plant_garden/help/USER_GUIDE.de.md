@@ -191,6 +191,11 @@ wird ein neues Foto einer Pflanze ohne botanischen Namen automatisch bestimmt.
   Standort. Jede Antwort ist ein oder mehrere KI-Aufrufe; die Kosten stehen
   darunter. Er braucht Claude, OpenAI, OpenRouter oder Gemini als KI-Anbieter -
   eine in Home Assistant eingerichtete KI (AI Task) reicht dafür nicht.
+  Jede Unterhaltung wird gespeichert und bekommt nach der ersten Antwort einen
+  kurzen Titel von der KI. Die Uhr-Schaltfläche listet deine Chats mit Titel und
+  Datum: antippen, um weiterzumachen, oder den Papierkorb zum Löschen; *Neuer
+  Chat* (das Plus) beginnt einen frischen. Bis zu 50 Chats bleiben erhalten, der
+  am längsten ungenutzte macht Platz.
 - **Chat zu einer Pflanze**: „KI fragen“ auf ihrer Seite. Die Antwort erscheint,
   während sie geschrieben wird.
 - **Wochencheck** (Option, standardmäßig aus): jeden Montag um 8 Uhr schaut die KI

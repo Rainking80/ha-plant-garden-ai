@@ -277,7 +277,7 @@ async def test_question_answered_with_tools(
         "provider": "Claude",
         "web": True,
         "currency": "USD",
-        "messages": [],
+        "chats": [],
     }
 
     aioclient_mock.post(
@@ -285,18 +285,25 @@ async def test_question_answered_with_tools(
         side_effect=_replies(
             claude_turn(use("t1", "garden_overview"), use("t2", "list_plants"), stop="tool_use"),
             claude_turn(say("Heute ist nichts fällig. Im Garten stehen Rose und Tomate.")),
+            claude_turn(say('"Aufgaben heute."')),  # the title of the new conversation
         ),
     )
     events = await _ask(client, "Was ist heute zu tun?", view="plan")
     assert [e.get("step") for e in events[:-1]] == ["garden_overview", "list_plants"]
     message = events[-1]["message"]
+    # a new conversation: saved, with a title from the AI (quotes and dot removed)
+    chat = events[-1]["chat"]
+    assert (chat["title"], chat["messages"]) == ("Aufgaben heute", 2)
+    title_call = aioclient_mock.mock_calls[-1][2]
+    assert "tools" not in title_call
+    assert "Was ist heute zu tun?" in title_call["messages"][0]["content"][0]["text"]
     assert message["text"].startswith("Heute ist nichts fällig.")
     assert message["steps"] == ["garden_overview", "list_plants"]
     assert message["actions"] == []
     assert message["cost"] == pytest.approx(2 * (1000 * 4e-6 + 100 * 20e-6))
 
     # the second request carries both tool results; notes never leave the house
-    second = aioclient_mock.mock_calls[-1][2]
+    second = _turns(aioclient_mock)[-1]
     results = second["messages"][-1]["content"]
     assert [r["tool_use_id"] for r in results] == ["t1", "t2"]
     listed = json.loads(results[1]["content"])
@@ -306,20 +313,71 @@ async def test_question_answered_with_tools(
     assert "Garden plan" in second["system"][0]["text"]
 
     rows = await garden.runtime_data.manager.async_usage_log(limit=5)
-    assert [row["feature"] for row in rows] == ["agent", "agent"]
-    history = (await _call(client, type="plant_garden/agent/state"))["result"]["messages"]
-    assert [m["role"] for m in history] == ["user", "assistant"]
+    assert [row["feature"] for row in rows] == ["agent", "agent", "agent"]
+    [listed_chat] = (await _call(client, type="plant_garden/agent/state"))["result"]["chats"]
+    assert listed_chat == chat
+    history = (await _call(client, type="plant_garden/agent/chat", chat_id=chat["id"]))["result"]
+    assert [m["role"] for m in history["messages"]] == ["user", "assistant"]
+    assert history["title"] == "Aufgaben heute"
 
-    # the next question gets the conversation so far
+    # going on in the same conversation: it gets what was said, and keeps its title
     aioclient_mock.clear_requests()
     aioclient_mock.post(MESSAGES, json=claude_turn(say("Gern.")))
-    await _ask(client, "Danke")
+    events = await _ask(client, "Danke", chat_id=chat["id"])
+    assert aioclient_mock.call_count == 1  # no second title
     sent = aioclient_mock.mock_calls[-1][2]["messages"]
     assert [m["role"] for m in sent] == ["user", "assistant", "user"]
     assert sent[0]["content"][0]["text"] == "Was ist heute zu tun?"
+    assert events[-1]["chat"]["messages"] == 4
 
-    assert (await _call(client, type="plant_garden/agent/clear"))["success"]
-    assert (await _call(client, type="plant_garden/agent/state"))["result"]["messages"] == []
+    # a question without a conversation starts another one, which knows nothing of the first
+    events = await _ask(client, "Wie schneide ich Rosen?")
+    other = events[-1]["chat"]
+    assert other["id"] != chat["id"]
+    assert other["title"] == "Gern"  # what the (mocked) AI answered when asked for a title
+    first_turn = _turns(aioclient_mock)[-1]["messages"]
+    assert [m["role"] for m in first_turn] == ["user"]
+    chats = (await _call(client, type="plant_garden/agent/state"))["result"]["chats"]
+    assert [c["id"] for c in chats] == [other["id"], chat["id"]]  # the one used last first
+
+    # deleting one leaves the other
+    assert (await _call(client, type="plant_garden/agent/delete", chat_id=chat["id"]))["success"]
+    chats = (await _call(client, type="plant_garden/agent/state"))["result"]["chats"]
+    assert [c["id"] for c in chats] == [other["id"]]
+    gone = await _call(client, type="plant_garden/agent/chat", chat_id=chat["id"])
+    assert gone["error"]["code"] == "not_found"
+    events = await _ask(client, "Noch da?", chat_id=chat["id"])
+    assert events[-1]["code"] == "not_found"
+
+    # conversations survive a reload
+    assert await hass.config_entries.async_unload(garden.entry_id)
+    await hass.async_block_till_done()
+    assert await hass.config_entries.async_setup(garden.entry_id)
+    await hass.async_block_till_done()
+    client = await hass_ws_client(hass)
+    kept = (await _call(client, type="plant_garden/agent/state"))["result"]["chats"]
+    assert [c["title"] for c in kept] == ["Gern"]
+
+
+def _turns(aioclient_mock: AiohttpClientMocker) -> list[dict[str, Any]]:
+    """The requests of the agent's loop (not the ones for a title or a web search)."""
+    return [
+        call[2]
+        for call in aioclient_mock.mock_calls
+        if "input_schema" in ((call[2] or {}).get("tools") or [{}])[0]
+    ]
+
+
+def test_titles() -> None:
+    assert agent_module.clean_title('  "Rosen schneiden."\nmehr Text') == "Rosen schneiden"
+    assert agent_module.clean_title("**Blattläuse an Rosen**") == "Blattläuse an Rosen"
+    assert agent_module.clean_title("\u201eTomaten gießen\u201c") == "Tomaten gießen"
+    assert agent_module.clean_title("   ") == ""
+    assert len(agent_module.clean_title("x" * 200)) == 60
+    assert agent_module.fallback_title("  Was ist\n heute zu tun? ") == "Was ist heute zu tun?"
+    long = agent_module.fallback_title("Wie " + "sehr " * 30 + "lange Frage")
+    assert long.endswith(" …")
+    assert len(long) <= 62
 
 
 def _replies(*payloads: dict[str, Any]) -> Any:
@@ -327,7 +385,9 @@ def _replies(*payloads: dict[str, Any]) -> Any:
     queue = list(payloads)
 
     async def reply(method: str, url: Any, data: Any) -> AiohttpClientMockResponse:
-        return AiohttpClientMockResponse(method, url, json=queue.pop(0))
+        # after the prepared answers: the title of a new conversation
+        payload = queue.pop(0) if queue else claude_turn(say("Titel"))
+        return AiohttpClientMockResponse(method, url, json=payload)
 
     return reply
 
@@ -385,7 +445,7 @@ async def test_actions_and_undo(
     assert data.irrigation.summary()["plants"][rose.id]["today_l"] == 5
 
     # errors went back to the model as answers: a duplicate, an unknown plant
-    results = aioclient_mock.mock_calls[-1][2]["messages"][-1]["content"]
+    results = _turns(aioclient_mock)[-1]["messages"][-1]["content"]
     assert results[5]["is_error"] is True
     assert "exists already" in results[5]["content"]
     assert results[6]["is_error"] is True
@@ -445,7 +505,8 @@ async def test_help_web_search_and_limits(
     events = await _ask(client, "Wie werde ich Blattläuse los und wo stelle ich Wetter ein?")
     message = events[-1]["message"]
     assert message["sources"] == [{"url": "https://example.org/laus", "title": "Blattläuse"}]
-    results = aioclient_mock.mock_calls[-1][2]["messages"][-1]["content"]
+    chat_id = events[-1]["chat"]["id"]
+    results = _turns(aioclient_mock)[-1]["messages"][-1]["content"]
     handbook = json.loads(results[0]["content"])
     assert "eather" in handbook["chapters"][0]["heading"]
     assert json.loads(results[1]["content"])["answer"] == "Blattläuse mit Wasser abspritzen."
@@ -455,18 +516,23 @@ async def test_help_web_search_and_limits(
     # a model that never stops calling tools is stopped after 8 rounds
     aioclient_mock.clear_requests()
     aioclient_mock.post(MESSAGES, json=claude_turn(use("x", "list_tasks"), stop="tool_use"))
-    events = await _ask(client, "Und jetzt?")
+    events = await _ask(client, "Und jetzt?", chat_id=chat_id)
     assert aioclient_mock.call_count == agent_module.MAX_STEPS + 1
     assert events[-1]["message"]["text"] == prompts.NO_ANSWER["en"]
 
     # a failing provider is an error event; the question is not kept
     aioclient_mock.clear_requests()
     aioclient_mock.post(MESSAGES, status=529, json={"error": {"message": "overloaded"}})
+    events = await _ask(client, "Hallo?", chat_id=chat_id)
+    assert events[-1]["code"] == "ai_error"
+    history = (await _call(client, type="plant_garden/agent/chat", chat_id=chat_id))["result"]
+    assert history["messages"][-1]["role"] == "assistant"
+    assert all(m["text"] != "Hallo?" for m in history["messages"])
+    # a new conversation whose first question fails is not kept
     events = await _ask(client, "Hallo?")
     assert events[-1]["code"] == "ai_error"
-    history = (await _call(client, type="plant_garden/agent/state"))["result"]["messages"]
-    assert history[-1]["role"] == "assistant"
-    assert all(m["text"] != "Hallo?" for m in history)
+    chats = (await _call(client, type="plant_garden/agent/state"))["result"]["chats"]
+    assert [c["id"] for c in chats] == [chat_id]
 
 
 async def test_without_a_provider(

@@ -1,22 +1,33 @@
 import {
   mdiArrowCollapseHorizontal,
   mdiArrowExpandHorizontal,
-  mdiBroom,
   mdiCheck,
   mdiClose,
+  mdiDeleteOutline,
+  mdiHistory,
+  mdiPlus,
   mdiRobotHappyOutline,
   mdiSendOutline,
   mdiUndoVariant,
 } from "@mdi/js";
 import { css, html, nothing, type PropertyValues } from "lit";
 
-import { agentState, askAgent, clearAgent, errorMessage, undoAgentAction } from "../api/client";
-import type { AgentAction, AgentMessage, AgentState } from "../api/types";
+import {
+  agentChat,
+  agentState,
+  askAgent,
+  deleteAgentChat,
+  errorMessage,
+  undoAgentAction,
+} from "../api/client";
+import type { AgentAction, AgentChat, AgentMessage, AgentState } from "../api/types";
 import type { GardenStore } from "../state/garden-store";
 import { shared } from "../styles/shared";
-import { formatMoney } from "../util/format";
+import { formatDate, formatMoney } from "../util/format";
 import { renderMarkdown } from "../util/markdown";
 import { PgElement, define, icon } from "./base";
+import "./confirm-dialog";
+import type { PgConfirmDialog } from "./confirm-dialog";
 
 const WIDE_KEY = "plant-garden.agent-wide.v1";
 const STEPS = [
@@ -49,6 +60,9 @@ const QUESTIONS = ["agent.ask_today", "agent.ask_water", "agent.ask_setup"] as c
  * 90 % when enlarged. The agent behind it knows the garden, explains the
  * software, searches the web and does small things on request; whatever it
  * changed is listed under its answer with "undo".
+ *
+ * Conversations are saved with a title the AI gives them. The list shows them
+ * by title and date, to go on with one or to delete it.
  */
 export class PgAgentChat extends PgElement {
   static override properties = {
@@ -59,6 +73,9 @@ export class PgAgentChat extends PgElement {
     _open: { state: true },
     _wide: { state: true },
     _state: { state: true },
+    _chats: { state: true },
+    _chatId: { state: true },
+    _listing: { state: true },
     _messages: { state: true },
     _steps: { state: true },
     _pending: { state: true },
@@ -74,6 +91,12 @@ export class PgAgentChat extends PgElement {
   declare _open: boolean;
   declare _wide: boolean;
   declare _state: AgentState | null;
+  /** the saved conversations, the one used last first */
+  declare _chats: AgentChat[];
+  /** the conversation shown; null: a new one that starts with the next question */
+  declare _chatId: string | null;
+  /** the list of conversations is shown instead of the chat */
+  declare _listing: boolean;
   declare _messages: AgentMessage[];
   /** tools the agent is using for the running question */
   declare _steps: string[];
@@ -91,6 +114,9 @@ export class PgAgentChat extends PgElement {
     this.plantId = null;
     this._open = false;
     this._state = null;
+    this._chats = [];
+    this._chatId = null;
+    this._listing = false;
     this._messages = [];
     this._steps = [];
     this._pending = [];
@@ -118,7 +144,7 @@ export class PgAgentChat extends PgElement {
     try {
       const state = await agentState(this.hass);
       this._state = state;
-      if (!this._busy) this._messages = state.messages;
+      this._chats = state.chats;
       this._error = "";
     } catch (err) {
       this._error = errorMessage(err);
@@ -136,6 +162,56 @@ export class PgAgentChat extends PgElement {
     }
   }
 
+  // ------------------------------------------------------------ conversations
+  private _newChat(): void {
+    if (this._busy) return;
+    this._chatId = null;
+    this._messages = [];
+    this._listing = false;
+    this._error = "";
+    void this.updateComplete.then(() => this.renderRoot.querySelector("textarea")?.focus());
+  }
+
+  /** Open a saved conversation to go on with it. */
+  private async _openChat(chat: AgentChat): Promise<void> {
+    if (this._busy) return;
+    try {
+      const saved = await agentChat(this.hass, chat.id);
+      this._chatId = saved.id;
+      this._messages = saved.messages;
+      this._listing = false;
+      this._error = "";
+    } catch (err) {
+      this._error = errorMessage(err);
+    }
+  }
+
+  private async _deleteChat(chat: AgentChat): Promise<void> {
+    const confirm = this.renderRoot.querySelector<PgConfirmDialog>("pg-confirm-dialog");
+    const ok = await confirm?.ask(
+      this.t("agent.delete_title"),
+      this.t("agent.delete_text", { title: chat.title || this.t("agent.untitled") }),
+      this.t("common.delete"),
+    );
+    if (!ok) return;
+    try {
+      await deleteAgentChat(this.hass, chat.id);
+      this._chats = this._chats.filter((other) => other.id !== chat.id);
+      if (this._chatId === chat.id) {
+        this._chatId = null;
+        this._messages = [];
+      }
+    } catch (err) {
+      this._error = errorMessage(err);
+    }
+  }
+
+  private get _title(): string {
+    const chat = this._chats.find((other) => other.id === this._chatId);
+    return chat?.title || this.t("agent.title");
+  }
+
+  // ------------------------------------------------------------ asking
   private async _ask(text: string): Promise<void> {
     const question = text.trim();
     if (!question || this._busy) return;
@@ -146,24 +222,27 @@ export class PgAgentChat extends PgElement {
     this._steps = [];
     this._pending = [];
     try {
-      const answer = await askAgent(
+      const { message, chat } = await askAgent(
         this.hass,
         question,
-        { view: this.view, plantId: this.plantId },
+        { chatId: this._chatId, view: this.view, plantId: this.plantId },
         (event) => {
           if ("step" in event) this._steps = [...this._steps, event.step];
           else if ("action" in event) this._pending = [...this._pending, event.action];
         },
       );
       const asked: AgentMessage = {
-        id: `q-${answer.id}`,
+        id: `q-${message.id}`,
         role: "user",
         text: question,
-        created: answer.created,
+        created: message.created,
       };
-      this._messages = [...this._messages, asked, answer];
+      this._messages = [...this._messages, asked, message];
+      // the conversation is saved now (a new one got its title) and moves to the top
+      this._chatId = chat.id;
+      this._chats = [chat, ...this._chats.filter((other) => other.id !== chat.id)];
       // plants, tasks or waterings may have changed
-      if (answer.actions?.length) void this.store?.refresh();
+      if (message.actions?.length) void this.store?.refresh();
     } catch (err) {
       this._error = errorMessage(err);
       this._input = question;
@@ -186,16 +265,6 @@ export class PgAgentChat extends PgElement {
     }
   }
 
-  private async _clear(): Promise<void> {
-    if (this._busy) return;
-    try {
-      await clearAgent(this.hass);
-      this._messages = [];
-    } catch (err) {
-      this._error = errorMessage(err);
-    }
-  }
-
   private _onKey(event: KeyboardEvent): void {
     // Enter sends, Shift+Enter makes a new line
     if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
@@ -204,6 +273,7 @@ export class PgAgentChat extends PgElement {
     }
   }
 
+  // ------------------------------------------------------------ rendering
   private _renderAction(action: AgentAction, undoable: boolean) {
     const { t } = this;
     return html`<li class="action ${action.undone ? "undone" : ""}">
@@ -258,12 +328,11 @@ export class PgAgentChat extends PgElement {
 
   private _renderRunning() {
     const { t } = this;
-    const last = this._steps.at(-1);
     return html`<div class="message user"><p>${this._asked}</p></div>
       <div class="message assistant running" aria-live="polite">
         <p class="muted">
           <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          ${t(stepKey(last))}
+          ${t(stepKey(this._steps.at(-1)))}
         </p>
         ${
           this._pending.length
@@ -275,12 +344,50 @@ export class PgAgentChat extends PgElement {
       </div>`;
   }
 
+  /** The saved conversations: title and date, to go on with one or to delete it. */
+  private _renderList() {
+    const { t, language } = this;
+    return html`<div class="log list">
+      <button class="button secondary new" @click=${() => this._newChat()}>
+        ${icon(mdiPlus)} ${t("agent.new")}
+      </button>
+      ${this._error ? html`<p class="error-text" role="alert">${this._error}</p>` : nothing}
+      ${
+        this._chats.length
+          ? html`<ul class="chats">
+              ${this._chats.map(
+                (chat) =>
+                  html`<li class=${chat.id === this._chatId ? "current" : ""}>
+                    <button class="chat" @click=${() => this._openChat(chat)}>
+                      <strong>${chat.title || t("agent.untitled")}</strong>
+                      <span class="muted small">
+                        ${formatDate(chat.updated, language)} ·
+                        ${t("agent.count", { count: chat.messages })}
+                      </span>
+                    </button>
+                    <button
+                      class="icon-button small delete"
+                      aria-label=${t("agent.delete_title")}
+                      title=${t("agent.delete_title")}
+                      @click=${() => this._deleteChat(chat)}
+                    >
+                      ${icon(mdiDeleteOutline)}
+                    </button>
+                  </li>`,
+              )}
+            </ul>`
+          : html`<p class="empty muted">${t("agent.no_chats")}</p>`
+      }
+    </div>`;
+  }
+
   private _renderBody() {
     const { t } = this;
     const state = this._state;
     if (state && !state.available) {
       return html`<div class="log"><p class="empty">${t("agent.no_provider")}</p></div>`;
     }
+    if (this._listing) return this._renderList();
     const empty = !this._messages.length && !this._busy;
     return html`<div class="log">
         ${
@@ -348,15 +455,25 @@ export class PgAgentChat extends PgElement {
           ? html`<aside class="drawer ${this._wide ? "wide" : ""}" aria-label=${t("agent.title")}>
               <header>
                 ${icon(mdiRobotHappyOutline)}
-                <h2>${t("agent.title")}</h2>
+                <h2>${this._listing ? t("agent.chats") : this._title}</h2>
                 <button
-                  class="icon-button clear"
-                  ?disabled=${this._busy || !this._messages.length}
-                  aria-label=${t("agent.clear")}
-                  title=${t("agent.clear")}
-                  @click=${this._clear}
+                  class="icon-button new-chat"
+                  ?disabled=${this._busy}
+                  aria-label=${t("agent.new")}
+                  title=${t("agent.new")}
+                  @click=${() => this._newChat()}
                 >
-                  ${icon(mdiBroom)}
+                  ${icon(mdiPlus)}
+                </button>
+                <button
+                  class="icon-button history"
+                  aria-pressed=${this._listing}
+                  ?disabled=${this._busy}
+                  aria-label=${t("agent.chats")}
+                  title=${t("agent.chats")}
+                  @click=${() => (this._listing = !this._listing)}
+                >
+                  ${icon(mdiHistory)}
                 </button>
                 <button
                   class="icon-button size"
@@ -376,6 +493,7 @@ export class PgAgentChat extends PgElement {
                 </button>
               </header>
               ${this._renderBody()}
+              <pg-confirm-dialog .hass=${this.hass}></pg-confirm-dialog>
             </aside>`
           : nothing
       }
@@ -446,9 +564,21 @@ export class PgAgentChat extends PgElement {
       }
       header h2 {
         flex: 1;
+        min-width: 0;
         margin: 0 0 0 8px;
         font-size: 18px;
         font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      header .icon-button[aria-pressed="true"] {
+        background: color-mix(in srgb, var(--pg-accent) 16%, transparent);
+        color: var(--pg-accent);
+      }
+      header .icon-button:disabled {
+        opacity: 0.35;
+        cursor: default;
       }
       .log {
         flex: 1;
@@ -462,6 +592,45 @@ export class PgAgentChat extends PgElement {
       .empty {
         margin: auto 0;
         text-align: center;
+      }
+      .list .new {
+        align-self: flex-start;
+      }
+      .chats {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 4px;
+      }
+      .chats li {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid var(--pg-divider);
+        border-radius: 10px;
+      }
+      .chats li.current {
+        border-color: var(--pg-accent);
+      }
+      .chat {
+        flex: 1;
+        min-width: 0;
+        display: grid;
+        gap: 2px;
+        padding: 10px 12px;
+        border: none;
+        background: none;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .chat strong {
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .chips {
         display: flex;

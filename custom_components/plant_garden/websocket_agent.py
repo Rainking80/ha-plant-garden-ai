@@ -28,18 +28,38 @@ def _agent(hass: HomeAssistant) -> GardenAgent | None:
 def ws_agent_state(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
-    """Can the agent run (provider, web search), and the conversation so far."""
+    """Can the agent run (provider, web search), and the saved conversations."""
     agent = _agent(hass)
     if agent is None:
         connection.send_error(msg["id"], ERR_NOT_LOADED, "Autogarden is not set up")
         return
-    connection.send_result(msg["id"], {**agent.status(), "messages": agent.history()})
+    connection.send_result(msg["id"], {**agent.status(), "chats": agent.chats()})
+
+
+@websocket_api.websocket_command(
+    {probatio.Required("type"): f"{DOMAIN}/agent/chat", probatio.Required("chat_id"): str}
+)
+@callback
+def ws_agent_chat(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """A saved conversation with its messages."""
+    agent = _agent(hass)
+    if agent is None:
+        connection.send_error(msg["id"], ERR_NOT_LOADED, "Autogarden is not set up")
+        return
+    try:
+        connection.send_result(msg["id"], agent.history(msg["chat_id"]))
+    except NotFoundError as err:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, f"Not found: {err}")
 
 
 @websocket_api.websocket_command(
     {
         probatio.Required("type"): f"{DOMAIN}/agent/ask",
         probatio.Required("text"): probatio.All(str, probatio.Length(min=1, max=4000)),
+        # the conversation to go on with; without it a new one starts
+        probatio.Optional("chat_id"): probatio.Any(None, str),
         probatio.Optional("view"): probatio.All(str, probatio.Length(max=40)),
         probatio.Optional("plant_id"): probatio.Any(None, str),
     }
@@ -51,8 +71,8 @@ async def ws_agent_ask(
     """Ask the agent; a subscription that reports what it does.
 
     Events: `{"step": tool}` when a tool runs, `{"action": {...}}` when something
-    in the garden was changed, then `{"done": true, "message": {...}}` or
-    `{"error": text, "code": ...}`.
+    in the garden was changed, then `{"done": true, "message": {...}, "chat":
+    {...}}` (the conversation, with its title) or `{"error": text, "code": ...}`.
     """
     agent = _agent(hass)
     if agent is None:
@@ -67,9 +87,12 @@ async def ws_agent_ask(
     try:
         answer = await agent.async_ask(
             msg["text"],
+            chat_id=msg.get("chat_id"),
             page={"view": msg.get("view"), "plant_id": msg.get("plant_id")},
             on_event=send,
         )
+    except NotFoundError as err:
+        send({"error": f"Not found: {err}", "code": websocket_api.ERR_NOT_FOUND})
     except BudgetExceededError as err:
         send({"error": str(err), "code": ERR_BUDGET})
     except AIError as err:
@@ -77,7 +100,7 @@ async def ws_agent_ask(
     except ValueError as err:
         send({"error": str(err), "code": websocket_api.ERR_INVALID_FORMAT})
     else:
-        send({"done": True, "message": answer})
+        send({"done": True, **answer})
 
 
 @websocket_api.websocket_command(
@@ -100,21 +123,35 @@ async def ws_agent_undo(
         connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, str(err))
 
 
-@websocket_api.websocket_command({probatio.Required("type"): f"{DOMAIN}/agent/clear"})
+@websocket_api.websocket_command(
+    {probatio.Required("type"): f"{DOMAIN}/agent/delete", probatio.Required("chat_id"): str}
+)
 @websocket_api.async_response
-async def ws_agent_clear(
+async def ws_agent_delete(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
-    """Forget the conversation (what the agent did in the garden stays)."""
+    """Delete a saved conversation (what the agent did in the garden stays)."""
     agent = _agent(hass)
     if agent is None:
         connection.send_error(msg["id"], ERR_NOT_LOADED, "Autogarden is not set up")
         return
-    await agent.async_clear()
-    connection.send_result(msg["id"])
+    try:
+        await agent.async_delete(msg["chat_id"])
+    except NotFoundError as err:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, f"Not found: {err}")
+    except ValueError as err:
+        connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, str(err))
+    else:
+        connection.send_result(msg["id"])
 
 
 @callback
 def async_register_agent_commands(hass: HomeAssistant) -> None:
-    for command in (ws_agent_state, ws_agent_ask, ws_agent_undo, ws_agent_clear):
+    for command in (
+        ws_agent_state,
+        ws_agent_chat,
+        ws_agent_ask,
+        ws_agent_undo,
+        ws_agent_delete,
+    ):
         websocket_api.async_register_command(hass, command)

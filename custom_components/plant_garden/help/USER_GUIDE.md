@@ -179,6 +179,10 @@ new photo of a plant without botanical name is identified automatically.
   location. Every answer is one or more AI calls; its cost stands below it. It
   needs Claude, OpenAI, OpenRouter or Gemini as AI provider - an AI set up in
   Home Assistant (AI task) cannot run it.
+  Every conversation is saved and gets a short title from the AI after its
+  first answer. The clock button lists your chats by title and date: tap one to
+  go on with it, or the bin to delete it; *New chat* (the plus) starts a fresh
+  one. Up to 50 chats are kept, the one unused longest makes room.
 - **Chat about one plant**: "Ask the AI" on its page. The answer appears while it
   is written.
 - **Weekly check** (option, off by default): every Monday at 8:00 the AI looks at

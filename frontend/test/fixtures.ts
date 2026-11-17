@@ -11,6 +11,7 @@ import type {
   Task,
   TipsRecord,
   AgentAction,
+  AgentChat,
   AgentMessage,
   AgentState,
   Background,
@@ -499,6 +500,8 @@ export interface FakeBackend {
   dreams: DreamDesign[];
   dreamImage: DreamImageInfo | null;
   agent: AgentState;
+  /** the messages of the saved conversations, by conversation id */
+  agentChats: Record<string, AgentMessage[]>;
   /** what the agent does with the next question: tool steps, actions, its answer */
   agentReply: { steps: string[]; actions: AgentAction[]; message: AgentMessage } | null;
   isAdmin: boolean;
@@ -667,9 +670,10 @@ export function fakeBackend(
       provider: "Claude",
       web: true,
       currency: "EUR",
-      messages: [],
+      chats: [],
       ...options.agent,
     },
+    agentChats: {},
     agentReply: null,
     dreamImage: options.dreamImage ?? null,
     comparison: options.comparison ?? null,
@@ -733,11 +737,19 @@ export function fakeBackend(
         return layout();
       case "plant_garden/agent/state":
         return backend.agent;
-      case "plant_garden/agent/clear":
-        backend.agent = { ...backend.agent, messages: [] };
+      case "plant_garden/agent/chat": {
+        const chat = backend.agent.chats.find((c) => c.id === msg.chat_id);
+        if (!chat) throw { code: "not_found", message: "Not found" };
+        return { ...chat, messages: backend.agentChats[chat.id] ?? [] };
+      }
+      case "plant_garden/agent/delete":
+        backend.agent = {
+          ...backend.agent,
+          chats: backend.agent.chats.filter((c) => c.id !== msg.chat_id),
+        };
         return null;
       case "plant_garden/agent/undo": {
-        for (const message of backend.agent.messages) {
+        for (const message of Object.values(backend.agentChats).flat()) {
           const action = message.actions?.find((a) => a.id === msg.action_id);
           if (action) {
             action.undone = true;
@@ -1018,11 +1030,32 @@ export function fakeBackend(
               }
               for (const step of reply.steps) callback({ step });
               for (const action of reply.actions) callback({ action });
+              // a question without a conversation starts one; the AI gives it a title
+              const chatId = (msg as { chat_id?: string }).chat_id;
+              const known = backend.agent.chats.find((c) => c.id === chatId);
+              const messages = [
+                ...(known ? (backend.agentChats[known.id] ?? []) : []),
+                {
+                  id: `u${reply.message.id}`,
+                  role: "user" as const,
+                  text: msg.text ?? "",
+                  created: reply.message.created,
+                },
+                reply.message,
+              ];
+              const chat: AgentChat = {
+                id: known?.id ?? `CHAT${backend.agent.chats.length + 1}`,
+                title: known?.title ?? "Aufgaben heute",
+                created: known?.created ?? reply.message.created,
+                updated: reply.message.created,
+                messages: messages.length,
+              };
+              backend.agentChats[chat.id] = messages;
               backend.agent = {
                 ...backend.agent,
-                messages: [...backend.agent.messages, reply.message],
+                chats: [chat, ...backend.agent.chats.filter((c) => c.id !== chat.id)],
               };
-              callback({ done: true, message: reply.message });
+              callback({ done: true, message: reply.message, chat });
             });
             return async () => undefined;
           }
