@@ -19,6 +19,7 @@ class Feature(StrEnum):
     RESEARCH = "research"  # collecting knowledge about a plant
     COMPARE = "compare"  # a new photo against an earlier one
     PLAN = "plan"  # plants proposed for a place on the plan
+    AGENT = "agent"  # the chat in the panel: questions answered with tools
     DREAM = "dream"  # dream garden: understanding a photo and the planting concept
     DREAM_IMAGE = "dream_image"  # dream garden: the generated picture
     SKETCH = "sketch"  # a plan drawn from a photo of a sketch or an aerial image

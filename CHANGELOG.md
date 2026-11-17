@@ -6,6 +6,23 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Garden assistant: a robot button in the panel's header (it stays in view while
+  scrolling) opens a chat beside the page - half the window wide, enlargeable.
+  The agent behind it knows the garden (plants, soil water, weather, tasks,
+  problems, plant knowledge), explains the software from the handbook, searches
+  the web for gardening knowledge and acts on request: create plants, change
+  their details, log waterings, create and complete tasks, report problems.
+  Whatever it changed is listed under its answer and can be undone. Needs
+  Claude, OpenAI, OpenRouter or Gemini.
+
+### Changed
+
+- The tab "Assistant" is gone; the garden assistant in the header replaces its
+  chat. Weather warnings stay on "Water & weather", the research schedule on
+  "Tech", knowledge, tips and questions of a plant on its page.
+
 ## [0.4.0] - 2026-11-16
 
 ### Added

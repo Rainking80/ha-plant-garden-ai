@@ -264,6 +264,53 @@ export interface SunMap {
   day_hours: number;
 }
 
+// ------------------------------------------------------------ garden agent
+/** Something the agent changed in the garden; it can be undone. */
+export interface AgentAction {
+  id: string;
+  kind:
+    | "create_plant"
+    | "update_plant"
+    | "log_watering"
+    | "create_task"
+    | "complete_task"
+    | "report_problem";
+  /** what it concerns: a plant, a task ... */
+  label: string;
+  undone: boolean;
+}
+
+export interface AgentMessage {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  created: string;
+  actions?: AgentAction[];
+  /** tools it used for this answer */
+  steps?: string[];
+  sources?: { url: string; title: string }[];
+  model?: string;
+  /** display currency; null: unknown */
+  cost?: number | null;
+}
+
+export interface AgentState {
+  /** a provider that can use tools is set up */
+  available: boolean;
+  provider: string | null;
+  /** it can search the web */
+  web: boolean;
+  /** of the costs shown with the answers */
+  currency: string;
+  messages: AgentMessage[];
+}
+
+export type AgentEvent =
+  | { step: string }
+  | { action: AgentAction }
+  | { done: true; message: AgentMessage }
+  | { error: string; code: string };
+
 // ------------------------------------------------------------ dream garden
 export type DreamStyle =
   | "natural"

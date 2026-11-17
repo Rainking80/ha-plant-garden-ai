@@ -839,3 +839,44 @@ required. Prompts `identify-3`, `tips-2`, `digest-2` say "empty" instead of null
   cost estimate before a call still uses the answer size.
 - **Not done**: switching thinking off or lowering its effort per provider - the
   parameters differ per provider and model, and the answers are better with it.
+
+## D-051 The garden agent: tools, no SQL, no RAG (2026-11-17)
+
+- **Where the work happens**: the model thinks at the AI provider. Home Assistant
+  sends a few kilobytes, runs the tool calls (lookups in data it holds in memory,
+  or small SQLite queries through the existing manager methods) and shows the
+  answer. No local model, no embeddings, no vector store, no background service -
+  nothing a small machine would notice.
+- **Tools instead of SQL**: the model never gets the database. Plants live in
+  Home Assistant's Store, not in SQLite; a schema in the prompt would be brittle
+  and a write a risk. Each tool returns exactly what was asked, current, and can
+  do only what it was built for.
+- **Tools instead of RAG**: the garden is some dozens to hundreds of structured
+  records, and the handbook is 30 kB. The `help` tool splits the shipped user
+  guide into its chapters and returns the ones whose heading or text contain the
+  words of the topic - a keyword lookup. The copies in `help/` must equal
+  `docs/` (a test checks it).
+- **Web search is the provider's**: `web_search` runs a separate call with the
+  provider's own search (Claude, Gemini grounding, OpenRouter's web plugin) - the
+  path the plant research already uses. Home Assistant fetches no web pages.
+  Without such a provider the tool is not offered and the prompt says so.
+- **What it may do**: additive things on request - create a plant (unplaced; the
+  user drags it onto the plan), change plant details, log a watering, create or
+  complete a task, report a problem. Each action is recorded with how to undo it
+  and shown under the answer. No deleting, no settings, nothing that switches.
+- **What it never sees**: plant notes, coordinates, entity ids (as for every AI
+  call). Text from the web and from plant data is declared information, not
+  instruction, in the prompt; the limited, visible, undoable actions bound what
+  an injected instruction could do.
+- **Providers**: tool calling over plain HTTP for Anthropic (Messages), OpenAI-
+  compatible APIs (Chat Completions; OpenAI, OpenRouter, local servers) and
+  Gemini (generateContent). The provider's own assistant message is sent back
+  unchanged within a question (thinking blocks, Gemini's thought signatures).
+  Home Assistant AI tasks cannot run a tool loop and are not used.
+- **Bounds**: at most 8 rounds per question, tool results cut to 6,000
+  characters, the last 12 messages as context, 60 kept. Every turn is
+  budget-checked and logged; the cost of an answer is the sum of its turns.
+- **Panel**: a button in the sticky header (so it stays while scrolling) opens a
+  drawer on click: 50 % of the window, 90 % when enlarged (remembered per
+  device), full width on phones. The tab "Assistant" was removed; its chat is
+  this one. The per-plant chat, tips and questions stay on the plant page.

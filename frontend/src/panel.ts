@@ -11,7 +11,7 @@ import type { HomeAssistant, PanelInfo, PlantGardenPanelConfig, Route } from "./
 import { navigate } from "./util/navigate";
 import "./views/garden-view";
 import "./views/plant-detail";
-import "./views/assistant-view";
+import "./components/agent-chat";
 import "./views/dream-view";
 import "./views/plants-view";
 import "./views/tasks-view";
@@ -23,7 +23,6 @@ export type View =
   | { name: "plants" }
   | { name: "water" }
   | { name: "tasks" }
-  | { name: "assistant" }
   | { name: "dream" }
   | { name: "tech" }
   | { name: "plant"; plantId: string };
@@ -39,7 +38,6 @@ export function parseRoute(path: string | undefined): View {
   if (/^\/water\/?$/.test(value)) return { name: "water" };
   if (/^\/tech\/?$/.test(value)) return { name: "tech" };
   if (/^\/tasks\/?$/.test(value)) return { name: "tasks" };
-  if (/^\/assistant\/?$/.test(value)) return { name: "assistant" };
   if (/^\/dream\/?$/.test(value)) return { name: "dream" };
   const focus = /^\/plan\/([0-9A-Za-z]+)\/?$/.exec(value);
   return { name: "plan", focusPlantId: focus?.[1] ?? null };
@@ -197,12 +195,6 @@ export class PlantGardenPanel extends LitElement {
                   >${t("nav.tasks")}${this._badge()}</a
                 >
                 <a
-                  href="${this._prefix}/assistant"
-                  aria-current=${view.name === "assistant" ? "page" : "false"}
-                  @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/assistant`)}
-                  >${t("nav.assistant")}</a
-                >
-                <a
                   href="${this._prefix}/dream"
                   aria-current=${view.name === "dream" ? "page" : "false"}
                   @click=${(e: MouseEvent) => this._go(e, `${this._prefix}/dream`)}
@@ -226,6 +218,13 @@ export class PlantGardenPanel extends LitElement {
                 }
               </nav>`
         }
+        <pg-agent-chat
+          class=${view.name === "plant" ? "push" : ""}
+          .hass=${this.hass}
+          .store=${this._store}
+          .view=${view.name === "plant" ? "plant" : t(`nav.${view.name}`)}
+          .plantId=${view.name === "plant" ? view.plantId : null}
+        ></pg-agent-chat>
       </header>
       <main class=${view.name === "plan" ? "full" : ""}>
         ${this._renderBody(t, view, gardenName)}
@@ -292,12 +291,6 @@ export class PlantGardenPanel extends LitElement {
           .store=${this._store}
           .prefix=${this._prefix}
         ></pg-tasks-view>`;
-      case "assistant":
-        return html`<pg-assistant-view
-          .hass=${this.hass}
-          .store=${this._store}
-          .prefix=${this._prefix}
-        ></pg-assistant-view>`;
       case "dream":
         return html`<pg-dream-view
           .hass=${this.hass}
@@ -352,6 +345,9 @@ export class PlantGardenPanel extends LitElement {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+      pg-agent-chat.push {
+        margin-left: auto;
       }
       .tabs {
         display: flex;

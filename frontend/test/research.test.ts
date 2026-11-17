@@ -6,8 +6,8 @@ import type { PgConfirmDialog } from "../src/components/confirm-dialog";
 import type { PgKnowledgePanel } from "../src/components/knowledge-panel";
 import { monthNames } from "../src/components/knowledge-panel";
 import { GardenStore } from "../src/state/garden-store";
-import "../src/views/assistant-view";
-import type { PgAssistantView } from "../src/views/assistant-view";
+import "../src/components/research-schedule";
+import type { PgResearchSchedule } from "../src/components/research-schedule";
 import {
   deepGet,
   deepQuery,
@@ -113,35 +113,24 @@ describe("plant knowledge on the plant page", () => {
   });
 });
 
-describe("plant knowledge in the assistant", () => {
-  async function mount(backend: FakeBackend): Promise<PgAssistantView> {
-    const view = document.createElement("pg-assistant-view") as PgAssistantView;
-    view.hass = backend.hass;
-    view.store = await storeFor(backend);
-    view.prefix = "/plant-garden";
-    document.body.append(view);
-    await view.updateComplete;
-    return view;
+describe("how often the assistant researches on its own", () => {
+  async function mount(backend: FakeBackend): Promise<PgResearchSchedule> {
+    const schedule = document.createElement("pg-research-schedule") as PgResearchSchedule;
+    schedule.hass = backend.hass;
+    schedule.store = await storeFor(backend);
+    document.body.append(schedule);
+    await schedule.updateComplete;
+    return schedule;
   }
 
-  it("lists the knowledge, the queue and sets how often to research", async () => {
+  it("sets the schedule", async () => {
     const backend = fakeBackend({
       plants: [ROSE, LAVENDER],
-      research: fakeResearch({
-        schedule: "off",
-        queue: ["L"],
-        plants: { R: makeKnowledge() },
-      }),
+      research: fakeResearch({ schedule: "off", queue: ["L"], plants: { R: makeKnowledge() } }),
     });
-    const view = await mount(backend);
-    const text = deepText(view);
-    expect(text).toContain("Pflanzenwissen");
-    expect(text).toContain("1 von 2 Pflanzen haben Wissen");
-    expect(text).toContain("Gesammeltes Wissen (1)");
-    expect(text).toContain("Noch ohne Wissen (1)");
-    expect(text).toContain("Deine KI sucht selbst im Web.");
-
-    const select = deepGet<HTMLSelectElement>(view, "pg-research-schedule select");
+    const schedule = await mount(backend);
+    expect(deepText(schedule)).toContain("Deine KI sucht selbst im Web.");
+    const select = deepGet<HTMLSelectElement>(schedule, "select");
     expect(select.disabled).toBe(false);
     select.value = "daily";
     select.dispatchEvent(new Event("change"));
@@ -149,16 +138,6 @@ describe("plant knowledge in the assistant", () => {
       expect(backend.callWS).toHaveBeenCalledWith({
         type: "plant_garden/research/schedule",
         schedule: "daily",
-      }),
-    );
-
-    // research the next plant by hand
-    const button = [...(view.shadowRoot?.querySelectorAll(".queue button") ?? [])][0];
-    (button as HTMLButtonElement).click();
-    await vi.waitFor(() =>
-      expect(backend.callWS).toHaveBeenCalledWith({
-        type: "plant_garden/research/run",
-        plant_id: "L",
       }),
     );
   });
@@ -169,8 +148,8 @@ describe("plant knowledge in the assistant", () => {
       isAdmin: false,
       research: fakeResearch({ queue: ["R"] }),
     });
-    const view = await mount(backend);
-    expect(deepGet<HTMLSelectElement>(view, "pg-research-schedule select").disabled).toBe(true);
-    expect(deepText(view)).toContain("Nur Administratoren ändern die Häufigkeit.");
+    const schedule = await mount(backend);
+    expect(deepGet<HTMLSelectElement>(schedule, "select").disabled).toBe(true);
+    expect(deepText(schedule)).toContain("Nur Administratoren ändern die Häufigkeit.");
   });
 });

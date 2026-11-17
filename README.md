@@ -20,6 +20,9 @@ become fun.
   photo comparisons that open a problem when something is wrong.
 - **Plant knowledge**: care, pests, toxicity and a care calendar researched for
   every plant, turned into tasks.
+- **Garden assistant**: a chat on every page that knows your garden, explains the
+  software, searches the web and does what you ask - "create a lavender", "what
+  is to do today?" - with an undo for everything it changed.
 - **Talk to the garden**: ask your voice assistant what needs water, log a
   watering, add or tick off tasks.
 
@@ -359,6 +362,9 @@ Was die KI übernimmt:
   Gartenkamera, Fotovergleich,
 - **Pflanzenwissen**: Pflege, Schädlinge, Giftigkeit und Pflegekalender je
   Pflanze, als Aufgaben übernehmbar,
+- **Garten-Assistent**: ein Chat auf jeder Seite, der den Garten kennt, die
+  Software erklärt, im Web sucht und Aufträge ausführt - „Leg einen Lavendel an“,
+  „Was ist heute zu tun?“ - mit Rückgängig für alles, was er geändert hat,
 - **Mit dem Garten sprechen**: per Sprachassistent fragen, was Wasser braucht,
   Gießen erfassen, Aufgaben anlegen und abhaken.
 

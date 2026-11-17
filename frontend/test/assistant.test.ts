@@ -338,7 +338,7 @@ describe("assistant on the plan and in the panel", () => {
     );
   });
 
-  it("has tabs for tasks and the assistant", async () => {
+  it("has a tab for tasks and the assistant in the header", async () => {
     const backend = fakeBackend({
       plants: [ROSE],
       care: { tasks: [makeTask({ id: "A", title: "Gießen", due: shift(-3) })] },
@@ -357,7 +357,7 @@ describe("assistant on the plan and in the panel", () => {
     await vi.waitFor(() => expect(deepQuery(panel, "pg-tasks-view")).not.toBeNull());
     await vi.waitFor(() => expect(deepText(panel)).toContain("Keine offenen Probleme."));
     expect(deepGet(panel, ".tabs .badge").textContent).toBe("1");
-    panel.route = { prefix: "/plant-garden", path: "/assistant" };
-    await vi.waitFor(() => expect(deepQuery(panel, "pg-assistant-view")).not.toBeNull());
+    // the assistant is no tab any more: it is the chat button in the header
+    expect(deepQuery(panel, "pg-agent-chat")).not.toBeNull();
   });
 });

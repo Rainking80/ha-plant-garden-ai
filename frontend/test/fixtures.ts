@@ -10,6 +10,9 @@ import type {
   Question,
   Task,
   TipsRecord,
+  AgentAction,
+  AgentMessage,
+  AgentState,
   Background,
   DreamDesign,
   DreamImageInfo,
@@ -495,6 +498,9 @@ export interface FakeBackend {
   sketch: SketchResult | null;
   dreams: DreamDesign[];
   dreamImage: DreamImageInfo | null;
+  agent: AgentState;
+  /** what the agent does with the next question: tool steps, actions, its answer */
+  agentReply: { steps: string[]; actions: AgentAction[]; message: AgentMessage } | null;
   isAdmin: boolean;
 }
 
@@ -630,6 +636,7 @@ export function fakeBackend(
     placePlan?: PlacePlan | null;
     sketch?: SketchResult | null;
     dreams?: DreamDesign[];
+    agent?: Partial<AgentState>;
     dreamImage?: DreamImageInfo | null;
     isAdmin?: boolean;
     country?: string | null;
@@ -655,6 +662,15 @@ export function fakeBackend(
     placePlan: options.placePlan ?? null,
     sketch: options.sketch ?? null,
     dreams: options.dreams ?? [],
+    agent: {
+      available: true,
+      provider: "Claude",
+      web: true,
+      currency: "EUR",
+      messages: [],
+      ...options.agent,
+    },
+    agentReply: null,
     dreamImage: options.dreamImage ?? null,
     comparison: options.comparison ?? null,
     isAdmin: options.isAdmin ?? true,
@@ -715,6 +731,21 @@ export function fakeBackend(
       }
       case "plant_garden/layout/get":
         return layout();
+      case "plant_garden/agent/state":
+        return backend.agent;
+      case "plant_garden/agent/clear":
+        backend.agent = { ...backend.agent, messages: [] };
+        return null;
+      case "plant_garden/agent/undo": {
+        for (const message of backend.agent.messages) {
+          const action = message.actions?.find((a) => a.id === msg.action_id);
+          if (action) {
+            action.undone = true;
+            return message;
+          }
+        }
+        throw { code: "not_found", message: "Not found" };
+      }
       case "plant_garden/dream/list":
         return {
           designs: backend.dreams,
@@ -975,6 +1006,26 @@ export function fakeBackend(
     connection: {
       subscribeMessage: vi.fn(
         async (callback: (event: unknown) => void, msg?: { type: string; text?: string }) => {
+          if (msg?.type === "plant_garden/agent/ask") {
+            const reply = backend.agentReply;
+            queueMicrotask(() => {
+              if (!reply) {
+                callback({
+                  error: "No AI provider that can use tools is set up",
+                  code: "ai_error",
+                });
+                return;
+              }
+              for (const step of reply.steps) callback({ step });
+              for (const action of reply.actions) callback({ action });
+              backend.agent = {
+                ...backend.agent,
+                messages: [...backend.agent.messages, reply.message],
+              };
+              callback({ done: true, message: reply.message });
+            });
+            return async () => undefined;
+          }
           if (msg?.type === "plant_garden/assistant/chat") {
             // the assistant answers in two pieces, then sends the stored message
             const plantId = (msg as { plant_id?: string }).plant_id ?? null;

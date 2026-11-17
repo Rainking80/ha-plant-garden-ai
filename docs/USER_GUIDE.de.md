@@ -176,22 +176,36 @@ wird ein neues Foto einer Pflanze ohne botanischen Namen automatisch bestimmt.
   Bodenwasser, Aufgaben und Probleme. Vorgeschlagene Arbeiten werden per Klick zu
   Aufgaben. Der Assistent stellt manchmal Rückfragen (z. B. zum Boden) – beantworten
   oder überspringen.
-- **Chat**: Fragen zum Garten (Tab *Assistent*) oder zu einer Pflanze („KI fragen“
-  auf ihrer Seite). Die Antwort erscheint, während sie geschrieben wird.
+- **Garten-Assistent** (die Roboter-Schaltfläche im Kopfbereich, auf jeder Seite;
+  sie bleibt beim Scrollen sichtbar): ein Chat neben der Seite - halb so breit wie
+  das Fenster, mit einer Schaltfläche zum Vergrößern. Er kennt deine Pflanzen,
+  Bodenwasser, Wetter, Aufgaben und Probleme, schlägt in dieser Anleitung nach und
+  sucht - mit Claude, Gemini oder OpenRouter - im Web nach Gartenwissen. Frag „Was
+  ist heute zu tun?“, „Welche Pflanzen brauchen Wasser?“ oder „Wie richte ich die
+  Bewässerung ein?“, oder gib ihm einen Auftrag: „Leg einen Lavendel an und erinnere
+  mich im Frühjahr an den Schnitt“, „Ich habe die Tomaten mit fünf Litern gegossen“,
+  „Das Basilikum hat braune Flecken“. Angelegte Pflanzen stehen noch nicht auf dem
+  Plan - dorthin ziehst du sie selbst. Alles, was er geändert hat, steht unter
+  seiner Antwort mit *Rückgängig*. Er kann nichts löschen, keine Einstellungen
+  ändern und nichts schalten, und er bekommt nie deine Pflanzennotizen oder deinen
+  Standort. Jede Antwort ist ein oder mehrere KI-Aufrufe; die Kosten stehen
+  darunter. Er braucht Claude, OpenAI, OpenRouter oder Gemini als KI-Anbieter -
+  eine in Home Assistant eingerichtete KI (AI Task) reicht dafür nicht.
+- **Chat zu einer Pflanze**: „KI fragen“ auf ihrer Seite. Die Antwort erscheint,
+  während sie geschrieben wird.
 - **Wochencheck** (Option, standardmäßig aus): jeden Montag um 8 Uhr schaut die KI
   auf den Garten und hinterlässt Tipps.
-- **Pflanzenwissen** (Tab *Assistent* und auf jeder Pflanzenseite): Der Assistent
+- **Pflanzenwissen** (auf jeder Pflanzenseite): Der Assistent
   recherchiert Pflege nach Themen, einen Pflegekalender, Warnungen (z. B.
   Giftigkeit) und die Quellen zu einer Pflanze – im Web mit Claude, Gemini oder
   OpenRouter, sonst in Wikipedia. *Wissen recherchieren* auf der Pflanzenseite,
-  *Jetzt recherchieren* in der Liste, oder selbstständig: eine Pflanze pro Woche,
-  pro Tag, drei pro Tag oder eine pro Stunde (standardmäßig aus; im Tab Assistent
-  und Technik, nur Administratoren). Die Kosten für eine Pflanze werden angezeigt,
+  oder selbstständig: eine Pflanze pro Woche, pro Tag, drei pro Tag oder eine pro
+  Stunde (standardmäßig aus; im Tab Technik, nur Administratoren). Die Kosten für eine Pflanze werden angezeigt,
   mit Websuche meist um 10 Cent. Eine Pflanze mit Wissen wird nie erneut
   recherchiert – lösche ihr Wissen auf der Pflanzenseite, um es neu zu holen.
   Arbeiten aus ihrem Pflegekalender werden mit *Als Aufgabe* (oder alle auf
   einmal) zu jährlichen Aufgaben.
-- **Wetter-Warnungen** (Tab *Wasser & Wetter* und *Assistent*): Frost unter der
+- **Wetter-Warnungen** (Tab *Wasser & Wetter*): Frost unter der
   Grenze einer Pflanze, Hitze, Sturm, Starkregen sowie Pilz- und Schneckenwetter,
   jeweils mit dem, was zu tun ist, und den betroffenen Pflanzen. Neue Warnungen
   kommen auch als Home-Assistant-Benachrichtigung und als Event

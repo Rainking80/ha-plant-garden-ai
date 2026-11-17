@@ -41,7 +41,7 @@ from ..const import (
 )
 from ..models import Source
 from ..photos import PhotoVariant
-from . import images as image_api, pricing
+from . import images as image_api, pricing, toolcalls
 from .base import (
     AIError,
     AIRequest,
@@ -67,7 +67,7 @@ _LOGGER = logging.getLogger(__name__)
 STORAGE_KEY = "plant_garden.ai"
 ADOPT_NAME_CONFIDENCE = 0.5  # the garden walk names a plant only when the AI is this sure
 TEXT_FEATURES = frozenset(
-    {Feature.TIPS, Feature.CHAT, Feature.DIGEST, Feature.RESEARCH, Feature.PLAN}
+    {Feature.TIPS, Feature.CHAT, Feature.DIGEST, Feature.RESEARCH, Feature.PLAN, Feature.AGENT}
 )
 BUDGET_WARN = 0.8
 MAX_PHOTOS = 3
@@ -451,7 +451,7 @@ class AIService:
 
     def can_search_web(self, feature: Feature = Feature.RESEARCH) -> bool:
         """Does the provider of a feature search the web itself (Claude, Gemini, OpenRouter)?"""
-        subentry = self.subentry_for(feature)
+        subentry = self.agent_subentry() if feature is Feature.AGENT else self.subentry_for(feature)
         return subentry is not None and bool(getattr(self.build(subentry), "web_search", False))
 
     def estimate_research(self) -> float | None:
@@ -564,6 +564,57 @@ class AIService:
                     ),
                 ]
         raise AIError("The AI did not answer with valid JSON")
+
+    # ------------------------------------------------------------ tool calling
+    def agent_subentry(self) -> ConfigSubentry | None:
+        """The provider that runs the agent: the one for texts if it can use tools,
+        else the first that can (Home Assistant AI tasks cannot)."""
+        chosen = self.subentry_for(Feature.AGENT)
+        if chosen is not None and toolcalls.can_call_tools(chosen.data):
+            return chosen
+        return next((s for s in self._language_models() if toolcalls.can_call_tools(s.data)), None)
+
+    async def async_tool_turn(
+        self,
+        feature: Feature,
+        subentry: ConfigSubentry,
+        *,
+        system: str,
+        messages: list[dict[str, Any]],
+        tools: list[toolcalls.ToolSpec],
+    ) -> tuple[toolcalls.Turn, float | None]:
+        """One turn of a tool-using conversation, budget-checked and logged; with its cost."""
+        model = str(subentry.data.get("model") or "")
+        size = len(system) + sum(
+            len(str(m.get("text") or "")) + sum(len(r["content"]) for r in m.get("results", []))
+            for m in messages
+        )
+        estimate = pricing.cost_of(
+            Usage(input=size // 4 + 150 * len(tools), output=600),
+            pricing.price_for(self.prices(), subentry.data["kind"], model),
+        )
+        await self._async_check_budget(estimate)
+        start = time.monotonic()
+        try:
+            turn = await toolcalls.async_turn(
+                self._session, subentry.data, system=system, messages=messages, tools=tools
+            )
+        except AIError as err:
+            await self._async_log(
+                feature=feature, subentry=subentry, model=model, plant_id=None,
+                status="error", error=str(err), usage=err.usage or Usage(),
+                latency_ms=int((time.monotonic() - start) * 1000),
+            )  # fmt: skip
+            if isinstance(err, AuthError):
+                self._set_status(subentry.subentry_id, ok=False, error=str(err), auth_failed=True)
+            raise
+        cost = await self._async_log(
+            feature=feature, subentry=subentry, model=turn.model, plant_id=None,
+            status="ok", error=None, usage=turn.usage, latency_ms=turn.latency_ms,
+            provider_cost=turn.provider_cost, request_id=turn.request_id,
+            response=turn.text,
+        )  # fmt: skip
+        return turn, cost
 
     # ------------------------------------------------------------ pictures
     def image_subentry(self) -> ConfigSubentry | None:

@@ -20,6 +20,10 @@ import type {
   Photo,
   Plant,
   PlantDetail,
+  AgentAction,
+  AgentEvent,
+  AgentMessage,
+  AgentState,
   DreamBrief,
   DreamDesign,
   DreamImageInfo,
@@ -649,6 +653,55 @@ export function getTips(hass: HomeAssistant, plantId?: string | null): Promise<T
     type: `${WS_PREFIX}/assistant/tips`,
     ...plantArg(plantId),
   });
+}
+
+// ------------------------------------------------------------ garden agent
+export function agentState(hass: HomeAssistant): Promise<AgentState> {
+  return hass.callWS<AgentState>({ type: `${WS_PREFIX}/agent/state` });
+}
+
+/** Ask the agent. `onEvent` reports the tools it uses and what it changes meanwhile. */
+export async function askAgent(
+  hass: HomeAssistant,
+  text: string,
+  page: { view?: string; plantId?: string | null },
+  onEvent: (event: { step: string } | { action: AgentAction }) => void,
+): Promise<AgentMessage> {
+  let unsubscribe: (() => Promise<void>) | undefined;
+  try {
+    return await new Promise<AgentMessage>((resolve, reject) => {
+      hass.connection
+        .subscribeMessage<AgentEvent>(
+          (event) => {
+            if ("done" in event) resolve(event.message);
+            else if ("error" in event) {
+              reject(Object.assign(new Error(event.error), { code: event.code }));
+            } else onEvent(event);
+          },
+          {
+            type: `${WS_PREFIX}/agent/ask`,
+            text,
+            ...(page.view ? { view: page.view } : {}),
+            ...(page.plantId ? { plant_id: page.plantId } : {}),
+          },
+        )
+        .then((unsub) => {
+          unsubscribe = unsub;
+        }, reject);
+    });
+  } finally {
+    // the backend ends the subscription itself; this only cleans up the client side
+    void unsubscribe?.().catch(() => undefined);
+  }
+}
+
+/** Take an action of the agent back; answers with the message it belongs to. */
+export function undoAgentAction(hass: HomeAssistant, actionId: string): Promise<AgentMessage> {
+  return hass.callWS<AgentMessage>({ type: `${WS_PREFIX}/agent/undo`, action_id: actionId });
+}
+
+export async function clearAgent(hass: HomeAssistant): Promise<void> {
+  await hass.callWS<null>({ type: `${WS_PREFIX}/agent/clear` });
 }
 
 // ------------------------------------------------------------ dream garden

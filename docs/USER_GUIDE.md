@@ -165,21 +165,35 @@ new photo of a plant without botanical name is identified automatically.
 - **Tips** for a plant or the whole garden consider season, weather, soil water,
   tasks and problems. Proposed jobs become tasks with one click. The assistant
   may ask you questions (e.g. the soil type) – answer or skip them.
-- **Chat**: ask about the garden (tab *Assistant*) or about one plant ("Ask the
-  AI" on its page). The answer appears while it is written.
+- **Garden assistant** (the robot button in the header, on every page; it stays
+  in view while you scroll): a chat beside the page - half the window wide, with
+  a button to enlarge it. It knows your plants, soil water, weather, tasks and
+  problems, looks things up in this guide and - with Claude, Gemini or
+  OpenRouter - searches the web for gardening knowledge. Ask "What is to do
+  today?", "Which plants need water?" or "How do I set up the irrigation?", or
+  give it a job: "Create a lavender and remind me to prune it in spring", "I
+  watered the tomatoes with five litres", "The basil has brown spots". Plants it
+  creates are not on the plan yet - drag them there yourself. Everything it
+  changed is listed under its answer with *Undo*. It cannot delete, change
+  settings or switch anything, and it never gets your plant notes or your
+  location. Every answer is one or more AI calls; its cost stands below it. It
+  needs Claude, OpenAI, OpenRouter or Gemini as AI provider - an AI set up in
+  Home Assistant (AI task) cannot run it.
+- **Chat about one plant**: "Ask the AI" on its page. The answer appears while it
+  is written.
 - **Weekly check** (option, off by default): every Monday at 8:00 the AI looks at
   the garden and leaves tips.
-- **Plant knowledge** (tab *Assistant* and on every plant page): the assistant
+- **Plant knowledge** (on every plant page): the assistant
   researches care by topic, a care calendar, warnings (e.g. toxicity) and the
   sources for a plant - on the web with Claude, Gemini or OpenRouter, else from
-  Wikipedia. Choose *Research knowledge* on a plant page, *Research now* in the
-  list, or let it research on its own: one plant a week, a day, three a day or an
-  hour (off by default; on the Assistant and the Tech tab, administrators only).
+  Wikipedia. Choose *Research knowledge* on a plant page, or let it research on
+  its own: one plant a week, a day, three a day or an hour (off by default; on
+  the Tech tab, administrators only).
   The cost of one plant is shown, usually around 10 cents with web search. A
   plant with knowledge is never researched again - delete its knowledge on the
   plant page to have it researched anew. Jobs of its care calendar become yearly
   tasks with *As a task* (or all at once).
-- **Weather warnings** (tab *Water & weather* and *Assistant*): frost below a
+- **Weather warnings** (tab *Water & weather*): frost below a
   plant's limit, heat, storm, heavy rain, and weather for fungal diseases and
   slugs, each with what to do and the plants at risk. New warnings also arrive as
   a Home Assistant notification and as the event `plant_garden_weather_alert`

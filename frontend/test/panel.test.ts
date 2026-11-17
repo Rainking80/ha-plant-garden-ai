@@ -65,7 +65,6 @@ describe("plant-garden-panel", () => {
       "Gartenplan",
       "Pflanzen",
       "Aufgaben",
-      "Assistent",
       "Traumgarten",
       "Wasser & Wetter",
       "Technik",
@@ -75,7 +74,7 @@ describe("plant-garden-panel", () => {
 
   it("shows the tech page to admins only", async () => {
     const user = await mount(fakeBackend({ isAdmin: false }), "/tech");
-    await vi.waitFor(() => expect(user.shadowRoot?.querySelectorAll(".tabs a")).toHaveLength(6));
+    await vi.waitFor(() => expect(user.shadowRoot?.querySelectorAll(".tabs a")).toHaveLength(5));
     expect(deepQuery(user, "pg-tech-view")).toBeNull();
     document.body.innerHTML = "";
 
